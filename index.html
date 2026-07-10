@@ -327,7 +327,6 @@
 
     function setDynamischenPatientenNamen() {
         const nameField = document.getElementById('pName');
-        // Nur überschreiben, wenn das Feld leer ist oder bereits ein automatischer "Patient X" String drinsteht
         if (!nameField.value || nameField.value.startsWith("Patient ")) {
             const aktuellerZaehler = (Number(daten.patienten) || 0) + 1;
             nameField.value = "Patient " + aktuellerZaehler;
@@ -481,7 +480,6 @@
         if(!vorname || !nachname) { alert("⚠️ Bitte trage zuerst oben deinen Vor- und Nachnamen ein!"); return; }
 
         let patientNameLive = document.getElementById('pName').value.trim();
-        // Falls das Feld komplett leer gelöscht wurde, greift ein Fallback-Sicherheitsnetz
         if (!patientNameLive) {
             patientNameLive = "Patient " + ((Number(daten.patienten) || 0) + 1);
         }
@@ -521,7 +519,6 @@
             document.getElementById('val_pVerletzungenAnzahl').textContent = 1;
             for(let key in materialKatalog) fallMaterial[key] = 0; 
             
-            // Textfeld leeren, damit setDynamischenPatientenNamen() die neue Nummer hineinschreiben kann
             document.getElementById('pName').value = "";
             setDynamischenPatientenNamen();
             
@@ -630,12 +627,18 @@
                 const i = archiv[k]; 
                 
                 let matListHtml = '<ul class="archiv-details-list">';
-                if(i.matDetailsObj && typeof i.matDetailsObj === 'object') {
+                
+                // FEHLERBEHEBUNG FÜR DAS ALTE ARCHIV-FORMAT:
+                // Prüft ob detaillierte Objektdaten da sind, falls nicht, greift es auf das alte Textformat zurück
+                if(i.matDetailsObj && typeof i.matDetailsObj === 'object' && Object.keys(i.matDetailsObj).length > 0) {
                     Object.keys(i.matDetailsObj).forEach(matName => {
                         matListHtml += `<li>${matName}: <b>${i.matDetailsObj[matName]}</b></li>`;
                     });
+                } else if(i.mat) {
+                    // Falls die alten Daten als String oder Textfeld gespeichert waren, lesen wir sie direkt aus
+                    matListHtml += `<li>${i.mat}</li>`;
                 } else {
-                    matListHtml += `<li>${i.mat || 'Kein Material verbraucht'}</li>`;
+                    matListHtml += `<li>Kein Material verbraucht / Altdaten ohne Log</li>`;
                 }
                 matListHtml += '</ul>';
 
