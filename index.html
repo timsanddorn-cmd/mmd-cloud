@@ -627,19 +627,53 @@
                 const i = archiv[k]; 
                 
                 let matListHtml = '<ul class="archiv-details-list">';
-                
-                // FEHLERBEHEBUNG FÜR DAS ALTE ARCHIV-FORMAT:
-                // Prüft ob detaillierte Objektdaten da sind, falls nicht, greift es auf das alte Textformat zurück
+                let hatMaterial = false;
+
+                // 1. STRATEGIE: Suche nach dem neuen Format (matDetailsObj)
                 if(i.matDetailsObj && typeof i.matDetailsObj === 'object' && Object.keys(i.matDetailsObj).length > 0) {
                     Object.keys(i.matDetailsObj).forEach(matName => {
                         matListHtml += `<li>${matName}: <b>${i.matDetailsObj[matName]}</b></li>`;
                     });
-                } else if(i.mat) {
-                    // Falls die alten Daten als String oder Textfeld gespeichert waren, lesen wir sie direkt aus
-                    matListHtml += `<li>${i.mat}</li>`;
-                } else {
-                    matListHtml += `<li>Kein Material verbraucht / Altdaten ohne Log</li>`;
+                    hatMaterial = true;
                 }
+                
+                // 2. STRATEGIE: Suche nach alternativen Bezeichnungen (z.B. matVerbrauch, materialVerbrauch)
+                if(!hatMaterial) {
+                    let alternativerVerbrauch = i.matVerbrauch || i.materialVerbrauch || i.verbrauch || i.matVerbraucht;
+                    if(alternativerVerbrauch && typeof alternativerVerbrauch === 'object') {
+                        Object.keys(alternativerVerbrauch).forEach(key => {
+                            let menge = alternativerVerbrauch[key];
+                            if(Number(menge) > 0) {
+                                // Versuche den Klarnamen aus dem Katalog zu holen, sonst nimm die ID
+                                let klarName = materialKatalog[key] ? materialKatalog[key].name : key;
+                                matListHtml += `<li>${klarName}: <b>${menge}</b></li>`;
+                                hatMaterial = true;
+                            }
+                        });
+                    }
+                }
+
+                // 3. STRATEGIE: Altes Textfeld-Format (mat)
+                if(!hatMaterial && i.mat && typeof i.mat === 'string') {
+                    matListHtml += `<li>${i.mat}</li>`;
+                    hatMaterial = true;
+                }
+
+                // 4. STRATEGIE: Universeller Brute-Force-Scan
+                // Durchsuche alle Variablen im Datensatz nach bekannten Material-IDs aus dem Katalog
+                if(!hatMaterial) {
+                    Object.keys(materialKatalog).forEach(key => {
+                        if(i[key] !== undefined && Number(i[key]) > 0) {
+                            matListHtml += `<li>${materialKatalog[key].name}: <b>${i[key]}</b></li>`;
+                            hatMaterial = true;
+                        }
+                    });
+                }
+
+                if(!hatMaterial) {
+                    matListHtml += `<li>Keine Verbrauchsmaterialien hinterlegt</li>`;
+                }
+                
                 matListHtml += '</ul>';
 
                 archivBody.innerHTML += `<tr><td><b>Schicht ${i.tag}</b></td><td>${i.p}</td><td>${i.v}</td><td><span style="color:var(--success);">$${(i.cash || 0).toLocaleString()}</span></td><td>${matListHtml}</td><td><button class="btn-delete-row" onclick="deleteArchivSchicht('${k}')">🗑️</button></td></tr>`; 
