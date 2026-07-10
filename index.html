@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>MMD Cloud-Patientenverwaltung Live</title>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+    <style>
+        :root {
+            --bg-color: #0f172a; --card-bg: #1e293b; --text-main: #f8fafc; --text-muted: #94a3b8;
+            --primary: #38bdf8; --primary-hover: #0ea5e9; --success: #34d399; --success-hover: #10b981;
+            --danger: #f87171; --danger-hover: #ef4444; --warning: #fbbf24; --warning-hover: #f59e0b; --border: #334155;
+        }
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg-color); color: var(--text-main); margin: 0; padding: 12px; font-size: 13px; -webkit-tap-highlight-color: transparent; }
+        .container { max-width: 1300px; margin: 0 auto; background: var(--card-bg); padding: 15px; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 10px 25px rgba(0,0,0,0.3); }
+        
+        /* KOMPAKTE TOP-BAR */
+        .top-bar { display: grid; grid-template-columns: auto 1fr auto; gap: 15px; align-items: center; background: rgba(15, 23, 42, 0.4); padding: 8px 15px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 12px; }
+        .top-bar h1 { font-size: 1.4rem; font-weight: 800; background: linear-gradient(to right, #38bdf8, #818cf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin: 0; }
+        .medic-id-zone { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        .medic-id-zone input { width: 110px; padding: 8px 10px; font-size: 12px; background: var(--bg-color); color: var(--text-main); border: 1px solid var(--border); border-radius: 6px; }
+        .info-zone { display: flex; align-items: center; gap: 15px; font-size: 12px; font-weight: 600; }
+        .date-display { color: var(--warning); background: rgba(251, 191, 36, 0.1); padding: 6px 10px; border-radius: 6px; border: 1px solid rgba(251, 191, 36, 0.2); }
+        .online-medics { background: rgba(56, 189, 248, 0.08); border: 1px solid var(--primary); padding: 6px 10px; border-radius: 6px; display: flex; align-items: center; gap: 6px; }
+        .online-dot { width: 8px; height: 8px; background: var(--success); border-radius: 50%; display: inline-block; }
+
+        /* TABS NAV */
+        .tab-nav { display: flex; gap: 8px; margin-bottom: 15px; background: rgba(15, 23, 42, 0.3); padding: 4px; border-radius: 10px; border: 1px solid var(--border); overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        .tab-btn { background: transparent; color: var(--text-muted); border: none; padding: 10px 16px; font-size: 13px; font-weight: 600; border-radius: 6px; cursor: pointer; flex: 1; min-width: 140px; text-align: center; white-space: nowrap; transition: all 0.2s; }
+        .tab-btn:hover { color: var(--text-main); background: rgba(255, 255, 255, 0.03); }
+        .tab-btn.active { background-color: var(--primary); color: #0f172a; font-weight: 700; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* MULTI-SPALTEN LAYOUTS */
+        .action-grid { display: grid; grid-template-columns: 280px 1fr 400px; gap: 15px; align-items: start; }
+        .stats-main-grid { display: grid; grid-template-columns: 1fr; gap: 15px; }
+        .table-responsive { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; margin-top: 10px; border-radius: 6px; border: 1px solid var(--border); }
+        
+        @media (max-width: 1200px) {
+            .action-grid { grid-template-columns: 1fr 1fr; }
+            .action-grid > div:last-child { grid-column: span 2; }
+        }
+        @media (max-width: 768px) {
+            .top-bar { grid-template-columns: 1fr; gap: 10px; text-align: center; }
+            .medic-id-zone { justify-content: center; }
+            .online-medics, .info-zone { justify-content: center; width: 100%; box-sizing: border-box; }
+            .action-grid { grid-template-columns: 1fr; }
+            .action-grid > div:last-child { grid-column: span 1; }
+        }
+        
+        .section { padding: 14px; border: 1px solid var(--border); border-radius: 10px; background: rgba(15, 23, 42, 0.2); margin-bottom: 12px; }
+        .section h3 { font-size: 14px; margin-top: 0; margin-bottom: 10px; border-bottom: 1px solid var(--border); padding-bottom: 4px; color: var(--primary); }
+        
+        label { font-size: 11px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px; margin-top: 8px; text-transform: uppercase; }
+        select, input[type="text"], input[type="number"] { width: 100%; padding: 10px; font-size: 13px; background-color: var(--bg-color); color: var(--text-main); border: 1px solid var(--border); border-radius: 6px; box-sizing: border-box; -webkit-appearance: none; }
+
+        /* COUNTERS */
+        .counter-group { display: flex; align-items: center; justify-content: space-between; background: var(--bg-color); padding: 6px 10px; border: 1px solid var(--border); border-radius: 6px; margin-bottom: 8px; }
+        .counter-btn { background-color: #334155; color: var(--text-main); border: none; width: 32px; height: 30px; font-size: 16px; font-weight: bold; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .counter-btn:hover { background-color: #475569; }
+        .counter-btn.plus-main { background-color: var(--primary); color: #0f172a; }
+        .counter-value { font-size: 14px; font-weight: 700; width: 45px; text-align: center; }
+
+        /* CHECKLIST ITEMS */
+        .todo-item { display: flex; align-items: center; background: var(--bg-color); padding: 10px 12px; margin: 6px 0; border-radius: 6px; border: 1px solid var(--border); border-left: 3px solid var(--primary); font-size: 12px; }
+        .todo-item.completed { border-left-color: var(--success); background: rgba(52, 211, 153, 0.03); text-decoration: line-through; color: var(--text-muted); }
+        input[type="checkbox"] { margin-right: 10px; transform: scale(1.2); cursor: pointer; accent-color: var(--primary); }
+
+        /* ACTION BUTTONS */
+        .btn { color: #0f172a; border: none; padding: 12px 15px; font-size: 13px; font-weight: 700; border-radius: 6px; cursor: pointer; width: 100%; margin-top: 10px; background-color: var(--success); box-shadow: 0 4px 10px rgba(52, 211, 153, 0.15); transition: background 0.2s; }
+        .btn:hover { background-color: var(--success-hover); }
+        .btn-group { display: flex; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
+        .btn-day-reset { background-color: var(--warning); color: #0f172a; border: none; padding: 12px 15px; font-size: 13px; font-weight: 700; border-radius: 6px; cursor: pointer; flex: 2; min-width: 200px; }
+        .btn-full-reset { background-color: var(--danger); color: var(--text-main); border: none; padding: 12px 15px; font-size: 13px; font-weight: 700; border-radius: 8px; cursor: pointer; flex: 1; min-width: 100px; }
+
+        .btn-delete-row { background: transparent; color: var(--danger); border: none; font-size: 14px; cursor: pointer; padding: 6px 10px; border-radius: 4px; transition: background 0.2s; }
+        .btn-delete-row:hover { background: rgba(248, 113, 113, 0.15); }
+
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 12px; }
+        .stat-card { background: var(--bg-color); padding: 12px; border-radius: 8px; border: 1px solid var(--border); text-align: center; }
+        .stat-card h5 { margin: 0 0 4px 0; color: var(--text-muted); font-size: 11px; text-transform: uppercase; }
+        .stat-card span { display: block; font-size: 20px; font-weight: 800; color: var(--primary); }
+
+        table { width: 100%; border-collapse: collapse; background: var(--bg-color); }
+        th, td { padding: 12px 10px; text-align: left; font-size: 12px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+        th { background-color: rgba(255, 255, 255, 0.03); color: var(--text-main); font-weight: 700; }
+        .material-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        @media (max-width: 480px) { .material-grid { grid-template-columns: 1fr; } }
+        .settings-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; }
+        .setting-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; padding-bottom: 6px; border-bottom: 1px solid rgba(255,255,255,0.03); }
+        .archiv-details-list { margin: 0; padding-left: 14px; color: var(--text-muted); font-size: 11px; list-style-type: square; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <!-- TOP BAR -->
+        <div class="top-bar">
+            <div class="medic-id-zone">
+                <h1>🚑 MMD</h1>
+                <input type="text" id="medicVorname" placeholder="Vorname" oninput="saveMedicIdentity()">
+                <input type="text" id="medicNachname" placeholder="Nachname" oninput="saveMedicIdentity()">
+            </div>
+            <div class="online-medics">
+                <span class="online-dot"></span>
+                <span>Im Dienst: <span id="onlineMedicsList" style="color:var(--primary);">Verbinde...</span></span>
+            </div>
+            <div class="info-zone">
+                <div class="date-display">📅 <span id="liveDateDisplay">--.--.----</span></div>
+            </div>
+        </div>
+
+        <div class="tab-nav">
+            <button class="tab-btn active" onclick="switchTab('docTab', this)">📝 Dokumentation & Einsatz</button>
+            <button class="tab-btn" onclick="switchTab('statsTab', this)">📊 Gesamt-Statistiken & Archiv</button>
+            <button class="tab-btn" onclick="settingsTabClick()">⚙️ Einstellungen</button>
+        </div>
+
+        <!-- REITER 1: EINSATZ -->
+        <div id="docTab" class="tab-content active">
+            <div class="action-grid">
+                
+                <!-- SPALTE 1: PATIENTEN-BASISDATEN -->
+                <div>
+                    <div class="section">
+                        <h3>👤 Patient</h3>
+                        <label for="pName">Patienten-Name (optional):</label>
+                        <input type="text" id="pName" placeholder="Z.B. Max Mustermann" style="font-weight:bold; color:var(--warning);">
+                        
+                        <label for="pVerletzungenAnzahl">Anzahl Verletzungen:</label>
+                        <div class="counter-group">
+                            <button class="counter-btn" onclick="stepVerletzungenAnzahl(-1)">-</button>
+                            <span class="counter-value" id="val_pVerletzungenAnzahl">1</span>
+                            <button class="counter-btn plus-main" onclick="stepVerletzungenAnzahl(1)">+</button>
+                        </div>
+                        
+                        <label for="verletzungSelect">Szenario wählen:</label>
+                        <select id="verletzungSelect" onchange="ladeCheckliste()">
+                            <option value="">-- Bitte wählen --</option>
+                            <option value="Stumpfe Gewalt">Stumpfe Gewalt</option>
+                            <option value="Schusswunde">Schusswunde</option>
+                            <option value="Schnittwunde">Schnittwunde</option>
+                            <option value="Undefinierbar">Undefinierbar</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <!-- SPALTE 2: ABLAUF CHECKLISTE -->
+                <div>
+                    <div class="section" style="min-height: 200px;">
+                        <h3>📋 Medizinischer Ablauf</h3>
+                        <div id="checklisteContainer"><p style="color: var(--text-muted); font-size:12px;">Wähle links ein Szenario aus, um die Schritte zu sehen.</p></div>
+                    </div>
+                </div>
+                
+                <!-- SPALTE 3: VERBRAUCH & KOSTEN -->
+                <div>
+                    <div class="section">
+                        <h3>📦 Verbrauch & Ausgaben</h3>
+                        <div class="material-grid" id="dynamischerMaterialVerbrauchGrid"></div>
+                        
+                        <div style="background: rgba(56, 189, 248, 0.1); padding: 10px; border-radius: 8px; border: 1px dashed var(--primary); margin-top: 10px; text-align: center;">
+                            💧 Wasser-Automatik (<span id="wasserPreisLabel">$200</span>): <span id="val_mat_wasser" style="font-weight:bold; color:var(--primary);">0</span> Flasche(n) inklusive
+                        </div>
+                        <label style="margin-top:20px;">Gesamtausgaben für diesen Fall ($)</label>
+                        <div class="counter-group" style="padding: 6px 10px; background: rgba(15, 23, 42, 0.5);">
+                            <button class="counter-btn" style="width:40px;" onclick="stepKosten(-250)">-250</button>
+                            <button class="counter-btn" onclick="stepKosten(-50)">-50</button>
+                            <span id="val_pKosten" style="font-size:18px; font-weight:800; color:var(--success);">$0</span>
+                            <button class="counter-btn plus-main" onclick="stepKosten(50)">+50</button>
+                            <button class="counter-btn plus-main" style="width:40px;" onclick="stepKosten(250)">+250</button>
+                        </div>
+                        <button class="btn" onclick="patientHinzufuegen()">Eintrag live buchen</button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- REITER 2: STATISTIKEN -->
+        <div id="statsTab" class="tab-content">
+            <h2>📊 Live-Auswertung (Gesamtübersicht)</h2>
+            <div class="section" style="background: rgba(56, 189, 248, 0.05); border-color: var(--primary);">
+                <div class="stats-grid">
+                    <div class="stat-card"><h5>Behandelte Patienten</h5><span id="statPatienten">0</span></div>
+                    <div class="stat-card"><h5>Anzahl Verletzungen</h5><span id="statVerletzungen" style="color: var(--warning);">0</span></div>
+                    <div class="stat-card"><h5>Ausgaben (Heute)</h5><span id="statAusgaben" style="color: var(--success);">$0</span></div>
+                </div>
+                <div class="btn-group">
+                    <button class="btn-day-reset" onclick="tagesstatistikZuruecksetzen()">Schicht beenden: Tagesstatistik archivieren & nullen</button>
+                    <button class="btn-full-reset" onclick="allesKomplettLoeschen()">Alles komplett zurücksetzen</button>
+                </div>
+            </div>
+            <div class="stats-main-grid">
+                <div class="section">
+                    <h3>📦 Gesamter Materialverbrauch (Heute)</h3>
+                    <div class="table-responsive">
+                        <table><thead><tr><th>Material</th><th>Menge</th></tr></thead><tbody id="tagesVerbrauchTableBody"></tbody></table>
+                    </div>
+                </div>
+                <div class="section">
+                    <h3>📜 Patientenprotokoll (Heute)</h3>
+                    <div class="table-responsive">
+                        <table><thead><tr><th>Patient</th><th>Szenario</th><th>Verletzungen</th><th>Ausgaben</th><th>Eingetragen von</th><th style="width:40px;">Aktion</th></tr></thead><tbody id="logTableBody"></tbody></table>
+                    </div>
+                </div>
+            </div>
+            <div class="section" style="background: rgba(251, 191, 36, 0.02); border-color: var(--warning); margin-top: 15px;">
+                <h3>🗄️ Abgeschlossene Schichten & Historie</h3>
+                <div class="table-responsive">
+                    <table><thead><tr><th>Schicht</th><th>Patienten</th><th>Verletzungen</th><th>Ausgaben</th><th>Detaillierter Verbrauch</th><th style="width:40px;">Aktion</th></tr></thead><tbody id="archivTableBody"></tbody></table>
+                </div>
+            </div>
+        </div>
+
+        <!-- REITER 3: EINSTELLUNGEN -->
+        <div id="settingsTab" class="tab-content">
+            <h2>⚙️ MMD Systemsteuerung & Tarife</h2>
+            <div class="settings-grid">
+                <div class="section">
+                    <h3>💰 Materialpreise ändern</h3>
+                    <div id="preiseEinstellungsContainer"></div>
+                    <button class="btn" onclick="speicherePreise()">Preise übernehmen</button>
+                </div>
+                <div class="section">
+                    <h3>🛠️ Szenario-Voreinstellungen ändern</h3>
+                    <label>Szenario wählen:</label>
+                    <select id="templateSzenarioSelect" onchange="ladeSzenarioTemplateInSettings()">
+                        <option value="Stumpfe Gewalt">Stumpfe Gewalt</option><option value="Schusswunde">Schusswunde</option><option value="Schnittwunde">Schnittwunde</option><option value="Undefinierbar">Undefinierbar</option>
+                    </select>
+                    <div id="templateMaterialsContainer" style="margin-top:15px; max-height:250px; overflow-y:auto;"></div>
+                    <button class="btn" style="background-color: var(--primary);" onclick="speichereSzenarioTemplate()">Voreinstellungen speichern</button>
+                </div>
+                <div class="section">
+                    <h3>➕ Neues Verbrauchsmaterial</h3>
+                    <label>Name:</label><input type="text" id="newMatName">
+                    <label>Preis ($):</label><input type="number" id="newMatPrice" value="100">
+                    <button class="btn" onclick="neuesMaterialAnlegen()">Hinzufügen</button>
+                    <h3 style="margin-top:25px;">📋 Checkliste erweitern</h3>
+                    <label>Szenario:</label>
+                    <select id="clSzenarioSelect">
+                        <option value="Stumpfe Gewalt">Stumpfe Gewalt</option><option value="Schusswunde">Schusswunde</option><option value="Schnittwunde">Schnittwunde</option><option value="Undefinierbar">Undefinierbar</option>
+                    </select>
+                    <label>Schritt:</label><input type="text" id="newStepText">
+                    <button class="btn" onclick="schrittHinzufuegen()">Schritt hinzufügen</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<script>
+    const FIREBASE_DB_URL = "https://mmd-live-default-rtdb.europe-west1.firebasedatabase.app";
+
+    firebase.initializeApp({ databaseURL: FIREBASE_DB_URL });
+    const db = firebase.database();
+
+    let tagesZaehler = 1; let aktuellerFallKosten = 0; let anzahlVerletzungenFall = 1;
+    let fallMaterial = {}; let daten = { patienten: 0, verletzungen: 0, ausgaben: 0 };
+    let mySessionRef = null;
+    
+    let materialKatalog = {
+        mat_05mg: { name: "05mg Schmerzmittel", preis: 200, isMeds: true },
+        mat_10mg: { name: "10mg Schmerzmittel", preis: 400, isMeds: true },
+        mat_15mg: { name: "15mg Schmerzmittel", preis: 600, isMeds: true },
+        mat_20mg: { name: "20mg Schmerzmittel", preis: 800, isMeds: true },
+        mat_schiene: { name: "Schiene", preis: 600, isMeds: false },
+        mat_naehset: { name: "Nähset", preis: 350, isMeds: false },
+        mat_wundreiniger: { name: "Wundreiniger", preis: 150, isMeds: false },
+        mat_ehk: { name: "EHK", preis: 400, isMeds: false },
+        mat_kuehlpack: { name: "Kühlpack", preis: 200, isMeds: false },
+        mat_verband: { name: "Verband", preis: 200, isMeds: false },
+        mat_wasser: { name: "Wasser", preis: 200, isMeds: false }
+    };
+    let szenarioTemplates = {
+        "Undefinierbar": { mat_wundreiniger: 1, mat_naehset: 1, mat_verband: 1, mat_10mg: 1 },
+        "Schnittwunde": { mat_wundreiniger: 1, mat_naehset: 1, mat_verband: 1, mat_15mg: 1 },
+        "Schusswunde": { mat_wundreiniger: 1, mat_naehset: 1, mat_verband: 1, mat_20mg: 1 },
+        "Stumpfe Gewalt": { mat_schiene: 1, mat_naehset: 1, mat_verband: 1, mat_kuehlpack: 1, mat_05mg: 1 }
+    };
+    let medicDatenbank = {
+        "Stumpfe Gewalt": ["Rechnung stellen", "Vitalwerte prüfen", "Schiene anlegen", "Wunde nähen", "Verband anlegen", "Kühlpack verwenden", "Schmerzmittel verabreichen (5 mg)"],
+        "Schusswunde": ["Rechnung stellen", "Vitalwerte prüfen", "Kugelzange benutzen", "Wundreinigung durchführen", "Wunde nähen", "Verband anlegen", "Schmerzmittel verabreichen (20 mg)"],
+        "Schnittwunde": ["Rechnung stellen", "Vitalwerte prüfen", "Wundreinigung durchführen", "Wunde nähen", "Verband anlegen", "Schmerzmittel verabreichen (15 mg)"],
+        "Undefinierbar": ["Rechnung stellen", "Vitalwerte prüfen", "Wundreinigung durchführen", "Wunde nähen", "Verband anlegen", "Schmerzmittel verabreichen (10 mg)"]
+    };
+
+    function ladeMedicIdentity() {
+        const gespeicherterVorname = localStorage.getItem('mmd_vorname');
+        const gespeicherterNachname = localStorage.getItem('mmd_nachname');
+        if (gespeicherterVorname) document.getElementById('medicVorname').value = gespeicherterVorname;
+        if (gespeicherterNachname) document.getElementById('medicNachname').value = gespeicherterNachname;
+        updateOnlineStatus();
+    }
+
+    function saveMedicIdentity() {
+        const vorname = document.getElementById('medicVorname').value.trim();
+        const nachname = document.getElementById('medicNachname').value.trim();
+        localStorage.setItem('mmd_vorname', vorname);
+        localStorage.setItem('mmd_nachname', nachname);
+        updateOnlineStatus();
+    }
+
+    function updateOnlineStatus() {
+        const vorname = document.getElementById('medicVorname').value.trim();
+        const nachname = document.getElementById('medicNachname').value.trim();
+        if (!vorname || !nachname) { document.getElementById('onlineMedicsList').textContent = "Trage Namen ein!"; return; }
+        const fullName = vorname + " " + nachname;
+        if (!mySessionRef) {
+            mySessionRef = db.ref("data/presence").push();
+            mySessionRef.onDisconnect().remove();
+        }
+        mySessionRef.set(fullName);
+    }
+
+    function startPresenceWatcher() {
+        db.ref("data/presence").on("value", snapshot => {
+            const list = snapshot.val();
+            const display = document.getElementById('onlineMedicsList');
+            if (!list) { display.textContent = "Keiner im Dienst"; return; }
+            let eindeutigeNamen = [...new Set(Object.values(list))];
+            display.textContent = eindeutigeNamen.join(", ");
+        });
+    }
+
+    function setDynamischenPatientenNamen() {
+        const nameField = document.getElementById('pName');
+        // Nur überschreiben, wenn das Feld leer ist oder bereits ein automatischer "Patient X" String drinsteht
+        if (!nameField.value || nameField.value.startsWith("Patient ")) {
+            const aktuellerZaehler = (Number(daten.patienten) || 0) + 1;
+            nameField.value = "Patient " + aktuellerZaehler;
+        }
+    }
+
+    // CLOUD MAIN SYNC
+    db.ref("data").on("value", snapshot => {
+        const cloud = snapshot.val();
+        if(cloud) {
+            if(cloud.materialKatalog) materialKatalog = cloud.materialKatalog;
+            if(cloud.szenarioTemplates) szenarioTemplates = cloud.szenarioTemplates;
+            
+            if(cloud.daten) {
+                daten.patienten = Number(cloud.daten.patienten) || 0;
+                daten.verletzungen = Number(cloud.daten.verletzungen) || 0;
+                daten.ausgaben = Number(cloud.daten.ausgaben) || Number(cloud.daten.umsatz) || 0;
+                Object.keys(materialKatalog).forEach(key => {
+                    daten[key] = Number(cloud.daten[key]) || 0;
+                });
+            }
+            
+            if(cloud.tagesZaehler) tagesZaehler = cloud.tagesZaehler;
+            baueMaterialUIAuf(); ladeSzenarioTemplateInSettings(); uiAktualisieren(); renderLogsAndArchiv(cloud.protokoll, cloud.archiv);
+            setDynamischenPatientenNamen();
+            if(materialKatalog.mat_wasser) {
+                document.getElementById('wasserPreisLabel').textContent = "$" + materialKatalog.mat_wasser.preis;
+            }
+        } else {
+            db.ref("data").set({ materialKatalog, szenarioTemplates, medicDatenbank, daten, tagesZaehler });
+        }
+    });
+
+    window.onload = function() {
+        ladeMedicIdentity(); startPresenceWatcher();
+        document.getElementById('liveDateDisplay').textContent = new Date().toLocaleDateString('de-DE');
+    };
+
+    function baueMaterialUIAuf() {
+        const grid = document.getElementById('dynamischerMaterialVerbrauchGrid');
+        if(!grid) return; grid.innerHTML = "";
+        let htmlLeft = "<div>"; let htmlRight = "<div>"; let counter = 0;
+        
+        Object.keys(materialKatalog).forEach(key => {
+            if(key === 'mat_wasser') return;
+            let currentQty = fallMaterial[key] || 0;
+            let itemHtml = `<label style="margin-top:4px;">${materialKatalog[key].name} ($${materialKatalog[key].preis})</label><div class="counter-group"><button class="counter-btn" onclick="stepMat('${key}', -1)">-</button><span class="counter-value" id="val_${key}">${currentQty}</span><button class="counter-btn plus-main" onclick="stepMat('${key}', 1)">+</button></div>`;
+            if(counter < (Object.keys(materialKatalog).length - 1) / 2) htmlLeft += itemHtml; else htmlRight += itemHtml; counter++;
+        });
+        grid.innerHTML = htmlLeft + "</div>" + htmlRight + "</div>";
+    }
+
+    function settingsTabClick() {
+        switchTab('settingsTab', document.querySelector("button[onclick='settingsTabClick()']"));
+        bauePreiseEinstellungenUI();
+    }
+
+    function bauePreiseEinstellungenUI() {
+        const settingsContainer = document.getElementById('preiseEinstellungsContainer');
+        if(!settingsContainer) return; settingsContainer.innerHTML = "";
+        Object.keys(materialKatalog).forEach(key => {
+            settingsContainer.innerHTML += `<div class="setting-row"><span>${materialKatalog[key].name}:</span><input type="number" style="width:100px; padding:6px;" id="setPrice_${key}" value="${materialKatalog[key].preis}"></div>`;
+        });
+    }
+
+    function ladeSzenarioTemplateInSettings() {
+        const szenario = document.getElementById('templateSzenarioSelect').value;
+        const container = document.getElementById('templateMaterialsContainer');
+        if(!container) return; container.innerHTML = "";
+        let currentTemplate = szenarioTemplates[szenario] || {};
+        for (let key in materialKatalog) {
+            if (key === 'mat_wasser') continue;
+            container.innerHTML += `<div class="setting-row"><span>${materialKatalog[key].name}:</span><input type="number" style="width:70px; padding:6px;" id="setTpl_${key}" value="${currentTemplate[key] || 0}" min="0"></div>`;
+        }
+    }
+
+    function speichereSzenarioTemplate() {
+        const szenario = document.getElementById('templateSzenarioSelect').value;
+        szenarioTemplates[szenario] = {};
+        for (let key in materialKatalog) {
+            if (key === 'mat_wasser') continue;
+            let val = parseInt(document.getElementById(`setTpl_${key}`).value) || 0;
+            if (val > 0) szenarioTemplates[szenario][key] = val;
+        }
+        db.ref("data/szenarioTemplates").set(szenarioTemplates); alert("Voreinstellungen gespeichert!");
+    }
+
+    function switchTab(tabId, btn) {
+        document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+        document.getElementById(tabId).classList.add('active'); btn.classList.add('active');
+    }
+
+    function stepVerletzungenAnzahl(amount) { 
+        anzahlVerletzungenFall = Math.max(1, anzahlVerletzungenFall + amount); 
+        document.getElementById('val_pVerletzungenAnzahl').textContent = anzahlVerletzungenFall; 
+        
+        let gewaehltesSzenario = document.getElementById('verletzungSelect').value;
+        if(gewaehltesSzenario) {
+            let template = szenarioTemplates[gewaehltesSzenario] || {};
+            for(let key in materialKatalog) {
+                if(key === 'mat_wasser') continue;
+                fallMaterial[key] = (template[key] || 0) * anzahlVerletzungenFall;
+            }
+            recalcCosts();
+        }
+    }
+
+    function stepMat(id, amount) {
+        fallMaterial[id] = Math.max(0, (fallMaterial[id] || 0) + amount);
+        recalcCosts();
+    }
+
+    function checkWasserAutomatik() {
+        let summeMeds = 0;
+        for(let k in materialKatalog) { if(materialKatalog[k].isMeds) summeMeds += (fallMaterial[k] || 0); }
+        fallMaterial.mat_wasser = summeMeds;
+    }
+
+    function recalcCosts() {
+        checkWasserAutomatik(); aktuellerFallKosten = 0;
+        for (let key in fallMaterial) { if(materialKatalog[key]) aktuellerFallKosten += fallMaterial[key] * materialKatalog[key].preis; }
+        for(let key in materialKatalog) { if(document.getElementById('val_' + key)) document.getElementById('val_' + key).textContent = fallMaterial[key] || 0; }
+        document.getElementById('val_mat_wasser').textContent = fallMaterial.mat_wasser;
+        document.getElementById('val_pKosten').textContent = "$" + aktuellerFallKosten.toLocaleString();
+    }
+
+    function stepKosten(amount) { aktuellerFallKosten = Math.max(0, aktuellerFallKosten + amount); document.getElementById('val_pKosten').textContent = "$" + aktuellerFallKosten.toLocaleString(); }
+
+    function ladeCheckliste() {
+        const select = document.getElementById('verletzungSelect'); const container = document.getElementById('checklisteContainer'); const gewaehlteVerletzung = select.value; container.innerHTML = "";
+        if (!gewaehlteVerletzung || !medicDatenbank[gewaehlteVerletzung]) { container.innerHTML = '<p style="color: var(--text-muted);">Wähle ein Szenario...</p>'; return; }
+        
+        for(let key in materialKatalog) fallMaterial[key] = 0;
+        
+        let template = szenarioTemplates[gewaehlteVerletzung] || {};
+        for(let key in template) { 
+            fallMaterial[key] = template[key] * anzahlVerletzungenFall; 
+        }
+        recalcCosts();
+
+        medicDatenbank[gewaehlteVerletzung].forEach((schritt, index) => {
+            container.innerHTML += `<div class="todo-item"><input type="checkbox" id="step-${index}" onclick="this.parentNode.classList.toggle('completed')"><label style="margin:0; cursor:pointer;" for="step-${index}">Schritt ${index + 1}: ${schritt}</label></div>`;
+        });
+    }
+
+    function patientHinzufuegen() {
+        const verletzung = document.getElementById('verletzungSelect').value; if (!verletzung) { alert("Bitte wählen!"); return; }
+        const vorname = document.getElementById('medicVorname').value.trim();
+        const nachname = document.getElementById('medicNachname').value.trim();
+        if(!vorname || !nachname) { alert("⚠️ Bitte trage zuerst oben deinen Vor- und Nachnamen ein!"); return; }
+
+        let patientNameLive = document.getElementById('pName').value.trim();
+        // Falls das Feld komplett leer gelöscht wurde, greift ein Fallback-Sicherheitsnetz
+        if (!patientNameLive) {
+            patientNameLive = "Patient " + ((Number(daten.patienten) || 0) + 1);
+        }
+        const heutigesDatum = new Date().toLocaleDateString('de-DE');
+
+        let neuePatienten = (Number(daten.patienten) || 0) + 1;
+        let neueVerletzungen = (Number(daten.verletzungen) || 0) + Number(anzahlVerletzungenFall);
+        let neueAusgaben = (Number(daten.ausgaben) || 0) + Number(aktuellerFallKosten);
+
+        let updatePayload = {
+            patienten: neuePatienten,
+            verletzungen: neueVerletzungen,
+            ausgaben: neueAusgaben
+        };
+
+        Object.keys(materialKatalog).forEach(key => {
+            let bisher = Number(daten[key]) || 0;
+            let fallVerbrauch = Number(fallMaterial[key]) || 0;
+            updatePayload[key] = bisher + fallVerbrauch;
+        });
+
+        const logPayload = { 
+            name: patientNameLive, 
+            szenario: verletzung, 
+            count: Number(anzahlVerletzungenFall), 
+            cash: Number(aktuellerFallKosten), 
+            medicName: vorname + " " + nachname,
+            datum: heutigesDatum,
+            matVerbrauch: JSON.parse(JSON.stringify(fallMaterial))
+        };
+
+        db.ref("data/protokoll").push(logPayload); 
+        db.ref("data/daten").set(updatePayload).then(() => {
+            document.getElementById('verletzungSelect').value = ""; 
+            document.getElementById('checklisteContainer').innerHTML = '<p style="color: var(--text-muted);">Wähle ein Szenario...</p>';
+            anzahlVerletzungenFall = 1; 
+            document.getElementById('val_pVerletzungenAnzahl').textContent = 1;
+            for(let key in materialKatalog) fallMaterial[key] = 0; 
+            
+            // Textfeld leeren, damit setDynamischenPatientenNamen() die neue Nummer hineinschreiben kann
+            document.getElementById('pName').value = "";
+            setDynamischenPatientenNamen();
+            
+            recalcCosts(); 
+            alert("Erfolgreich verbucht und Statistiken synchronisiert!");
+        });
+    }
+
+    function speicherePreise() {
+        for(let key in materialKatalog) { 
+            materialKatalog[key].preis = parseFloat(document.getElementById(`setPrice_${key}`).value) || 0; 
+        }
+        db.ref("data/materialKatalog").set(materialKatalog); alert("Preise global synchronisiert!");
+    }
+
+    function neuesMaterialAnlegen() {
+        const name = document.getElementById('newMatName').value.trim();
+        const preis = parseFloat(document.getElementById('newMatPrice').value) || 0;
+        if(!name) return;
+        const id = "mat_" + name.toLowerCase().replace(/[^a-z0-9]/g, "");
+        materialKatalog[id] = { name: name, preis: preis, isMeds: false };
+        db.ref("data/materialKatalog").set(materialKatalog);
+        document.getElementById('newMatName').value = "";
+    }
+
+    function schrittHinzufuegen() {
+        const szenario = document.getElementById('clSzenarioSelect').value;
+        const schritt = document.getElementById('newStepText').value.trim();
+        if(!schritt) return;
+        medicDatenbank[szenario].push(schritt);
+        db.ref("data/medicDatenbank").set(medicDatenbank);
+        document.getElementById('newStepText').value = "";
+    }
+
+    function tagesstatistikZuruecksetzen() {
+        let aktuellePatienten = Number(daten.patienten) || 0;
+        let aktuelleAusgaben = Number(daten.ausgaben) || 0;
+
+        if (aktuellePatienten === 0 && aktuelleAusgaben === 0) {
+            alert("Es sind aktuell keine aktiven Tagesdaten vorhanden, die archiviert werden könnten.");
+            return;
+        }
+
+        if (confirm("Schicht für das gesamte Team beenden? Der Patienten-Zähler startet danach wieder bei Patient 1!")) {
+            let detaillierterVerbrauch = {}; 
+            Object.keys(materialKatalog).forEach(key => { 
+                let verb = Number(daten[key]) || 0;
+                if(verb > 0) {
+                    detaillierterVerbrauch[materialKatalog[key].name] = verb;
+                }
+            });
+            
+            const tagesDatum = new Date().toLocaleDateString('de-DE');
+            
+            const archivPayload = { 
+                tag: tagesZaehler + " (" + tagesDatum + ")", 
+                p: aktuellePatienten, 
+                v: Number(daten.verletzungen) || 0, 
+                cash: aktuelleAusgaben, 
+                matDetailsObj: detaillierterVerbrauch
+            };
+
+            db.ref("data/archiv").push(archivPayload).then(() => {
+                tagesZaehler++; 
+                db.ref("data/tagesZaehler").set(tagesZaehler);
+                
+                let resetDaten = { patienten: 0, verletzungen: 0, ausgaben: 0 };
+                Object.keys(materialKatalog).forEach(key => resetDaten[key] = 0); 
+                
+                db.ref("data/daten").set(resetDaten); 
+                db.ref("data/protokoll").remove(); 
+                
+                document.getElementById('pName').value = "";
+                alert("Schicht erfolgreich beendet, detailliert archiviert und genullt!");
+            }).catch(err => {
+                alert("Fehler beim Archivieren: " + err.message);
+            });
+        }
+    }
+
+    function allesKomplettLoeschen() { if (confirm("🚨 Komplettes System löschen?") && confirm("Wirklich sicher?")) { db.ref("data").remove().then(() => location.reload()); } }
+
+    function uiAktualisieren() {
+        document.getElementById('statPatienten').textContent = daten.patienten || 0; 
+        document.getElementById('statVerletzungen').textContent = daten.verletzungen || 0; 
+        document.getElementById('statAusgaben').textContent = "$" + (Number(daten.ausgaben) || 0).toLocaleString();
+        
+        const tbody = document.getElementById('tagesVerbrauchTableBody'); if(!tbody) return; tbody.innerHTML = "";
+        Object.keys(materialKatalog).forEach(key => { 
+            tbody.innerHTML += `<tr><td>${materialKatalog[key].name}</td><td style="font-weight:bold; color:var(--primary);">${daten[key] || 0}</td></tr>`; 
+        });
+    }
+
+    function renderLogsAndArchiv(protokoll, archiv) {
+        const logBody = document.getElementById('logTableBody'); const archivBody = document.getElementById('archivTableBody'); if(!logBody) return;
+        logBody.innerHTML = "";
+        if(protokoll) { 
+            Object.keys(protokoll).reverse().forEach(k => { 
+                const i = protokoll[k]; 
+                logBody.innerHTML += `<tr><td><b>${i.name}</b> <small style="color:var(--text-muted); font-weight:normal; display:block;">${i.datum || ''}</small></td><td><span style="color:var(--primary);">${i.szenario}</span></td><td>${i.count}</td><td><span style="color:var(--success);">$${(i.cash || 0).toLocaleString()}</span></td><td><span style="color:var(--warning); font-weight:600;">${i.medicName || 'Unbekannt'}</span></td><td><button class="btn-delete-row" onclick="deletePatient('${k}')">🗑️</button></td></tr>`; 
+            }); 
+        }
+        archivBody.innerHTML = "";
+        if(archiv) { 
+            Object.keys(archiv).reverse().forEach(k => { 
+                const i = archiv[k]; 
+                
+                let matListHtml = '<ul class="archiv-details-list">';
+                if(i.matDetailsObj && typeof i.matDetailsObj === 'object') {
+                    Object.keys(i.matDetailsObj).forEach(matName => {
+                        matListHtml += `<li>${matName}: <b>${i.matDetailsObj[matName]}</b></li>`;
+                    });
+                } else {
+                    matListHtml += `<li>${i.mat || 'Kein Material verbraucht'}</li>`;
+                }
+                matListHtml += '</ul>';
+
+                archivBody.innerHTML += `<tr><td><b>Schicht ${i.tag}</b></td><td>${i.p}</td><td>${i.v}</td><td><span style="color:var(--success);">$${(i.cash || 0).toLocaleString()}</span></td><td>${matListHtml}</td><td><button class="btn-delete-row" onclick="deleteArchivSchicht('${k}')">🗑️</button></td></tr>`; 
+            }); 
+        }
+    }
+
+    function deletePatient(key) {
+        db.ref("data/protokoll/" + key).once("value", snapshot => {
+            const patient = snapshot.val();
+            if(patient && confirm(`Möchtest du den Eintrag von "${patient.name}" wirklich löschen? Die Werte werden von der heutigen Statistik abgezogen.`)) {
+                
+                daten.patienten = Math.max(0, (Number(daten.patienten) || 0) - 1);
+                daten.verletzungen = Math.max(0, (Number(daten.verletzungen) || 0) - (Number(patient.count) || 0));
+                daten.ausgaben = Math.max(0, (Number(daten.ausgaben) || 0) - (Number(patient.cash) || 0));
+                
+                if(patient.matVerbrauch) {
+                    Object.keys(patient.matVerbrauch).forEach(k => {
+                        if(daten[k] !== undefined) daten[k] = Math.max(0, (Number(daten[k]) || 0) - (Number(patient.matVerbrauch[k]) || 0));
+                    });
+                }
+                
+                db.ref("data/daten").set(daten);
+                db.ref("data/protokoll/" + key).remove();
+            }
+        });
+    }
+
+    function deleteArchivSchicht(key) {
+        if(confirm("Möchtest du diese archivierte Schicht wirklich unwiderruflich löschen?")) {
+            db.ref("data/archiv/" + key).remove();
+        }
+    }
+
+    window.deletePatient = deletePatient;
+    window.deleteArchivSchicht = deleteArchivSchicht;
+</script>
+</body>
+</html>
