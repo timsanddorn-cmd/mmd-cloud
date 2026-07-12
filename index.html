@@ -12,6 +12,7 @@
             --bg-color: #0f172a; --card-bg: #1e293b; --text-main: #f8fafc; --text-muted: #94a3b8;
             --primary: #38bdf8; --primary-hover: #0ea5e9; --success: #34d399; --success-hover: #10b981;
             --danger: #f87171; --danger-hover: #ef4444; --warning: #fbbf24; --warning-hover: #f59e0b; --border: #334155;
+            --table-header-red: #ff6b6b;
         }
         body { font-family: 'Inter', sans-serif; background-color: var(--bg-color); color: var(--text-main); margin: 0; padding: 12px; font-size: 13px; -webkit-tap-highlight-color: transparent; }
         .container { max-width: 1300px; margin: 0 auto; background: var(--card-bg); padding: 15px; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 10px 25px rgba(0,0,0,0.3); }
@@ -39,6 +40,16 @@
         .stats-main-grid { display: grid; grid-template-columns: 1fr; gap: 15px; }
         .table-responsive { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; margin-top: 10px; border-radius: 6px; border: 1px solid var(--border); }
         
+        /* LEITFADEN GRID */
+        .guide-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; }
+        .guide-table { width: 100%; border-collapse: collapse; background: var(--bg-color); border-radius: 6px; overflow: hidden; border: 1px solid var(--border); }
+        .guide-table th.red-head { background-color: var(--table-header-red); color: white; font-size: 14px; font-weight: 800; text-align: center; padding: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .guide-table th.sub-head { background-color: #1e293b; color: var(--text-main); font-weight: 700; border-bottom: 1px solid var(--border); }
+        .guide-table td { padding: 10px; border-bottom: 1px solid var(--border); font-size: 12px; }
+        .guide-table tr:last-child td { border-bottom: none; }
+        .text-center { text-align: center; }
+        .font-bold { font-weight: bold; }
+
         @media (max-width: 1200px) {
             .action-grid { grid-template-columns: 1fr 1fr; }
             .action-grid > div:last-child { grid-column: span 2; }
@@ -116,6 +127,7 @@
         <div class="tab-nav">
             <button class="tab-btn active" onclick="switchTab('docTab', this)">📝 Dokumentation & Einsatz</button>
             <button class="tab-btn" onclick="switchTab('statsTab', this)">📊 Gesamt-Statistiken & Archiv</button>
+            <button class="tab-btn" onclick="switchTab('guideTab', this)">📋 Dienst-Leitfaden & Funk</button>
             <button class="tab-btn" onclick="settingsTabClick()">⚙️ Einstellungen</button>
         </div>
 
@@ -216,7 +228,109 @@
             </div>
         </div>
 
-        <!-- REITER 3: EINSTELLUNGEN -->
+        <!-- REITER 3: DIENST-LEITFADEN & FUNK -->
+        <div id="guideTab" class="tab-content">
+            <h2>📋 Fraktions-Leitfaden & Dienst-Referenz</h2>
+            
+            <!-- OBERER BLOCK: KEINE RECHNUNG -->
+            <div class="section" style="margin-bottom: 20px;">
+                <table class="guide-table">
+                    <thead>
+                        <tr>
+                            <th colspan="2" class="red-head">Keine Rechnung</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="font-bold" style="width: 50%;">Staatliche Fraktionen<br><span style="color:var(--text-muted); font-weight:normal;">(SAPD, USMS, DOJ & SAMD)</span></td>
+                            <td>Im Dienst wird keine Rechnung ausgestellt</td>
+                        </tr>
+                        <tr>
+                            <td class="font-bold">Mechaniker<br><span style="color:var(--text-muted); font-weight:normal;">(Benny´s, Redfield & Roxwood Tuning)</span></td>
+                            <td>Im Dienst wird keine Rechnung ausgestellt</td>
+                        </tr>
+                        <tr>
+                            <td class="font-bold">Security C77 / Bahamas / Casino / Golden Pub</td>
+                            <td>Im Dienst wird keine Rechnung ausgestellt</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- UNTERER GRID: CODES & STREIFEN -->
+            <div class="guide-grid">
+                
+                <!-- CODES -->
+                <div>
+                    <table class="guide-table">
+                        <thead>
+                            <tr>
+                                <th colspan="2" class="red-head">Status Codes</th>
+                            </tr>
+                            <tr>
+                                <th class="sub-head text-center" style="width: 30%;">Code</th>
+                                <th class="sub-head">Beschreibung</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td class="text-center font-bold" style="color:var(--primary);">1</td><td class="font-bold">Ausbildung</td></tr>
+                            <tr><td class="text-center font-bold" style="color:var(--success);">2</td><td class="font-bold">verfügbar</td></tr>
+                            <tr><td class="text-center font-bold" style="color:var(--warning);">3</td><td class="font-bold">In Pause</td></tr>
+                            <tr><td class="text-center font-bold" style="color:var(--primary);">4</td><td class="font-bold">Psychologie</td></tr>
+                            <tr><td class="text-center font-bold" style="color:var(--text-main);">5</td><td class="font-bold">Besprechung</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- STREIFEN ANORDNUNG -->
+                <div>
+                    <table class="guide-table">
+                        <thead>
+                            <tr>
+                                <th colspan="2" class="red-head">Streifen Anordnung</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td class="text-center font-bold" style="width: 30%; color:var(--primary);">1</td><td class="font-bold">Streifen</td></tr>
+                            <tr><td class="text-center font-bold" style="color:var(--primary);">2</td><td class="font-bold">Luftrettung</td></tr>
+                            <tr><td class="text-center font-bold" style="color:var(--primary);">3</td><td class="font-bold">Sonderstreife</td></tr>
+                            <tr><td class="text-center font-bold" style="color:var(--primary);">4</td><td class="font-bold">Bereitschaft</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- TEN CODES -->
+                <div>
+                    <table class="guide-table">
+                        <thead>
+                            <tr>
+                                <th colspan="2" class="red-head">Ten Codes</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td class="font-bold" style="width: 30%; color:var(--warning);">10-1</td><td>Auf Anfahrt</td></tr>
+                            <tr><td class="font-bold" style="color:var(--warning);">10-2</td><td>Am Einsatzort</td></tr>
+                            <tr><td class="font-bold" style="color:var(--warning);">10-3</td><td>Weg ins MD</td></tr>
+                            <tr><td class="font-bold" style="color:var(--success);">10-4</td><td class="font-bold">Verstanden, Ende</td></tr>
+                            <tr><td class="font-bold" style="color:var(--success);">10-5</td><td>Einsatz Beendet</td></tr>
+                            <tr><td class="font-bold" style="color:var(--primary);">10-6</td><td>Auf Zuteilung</td></tr>
+                            <tr><td class="font-bold" style="color:var(--primary);">10-7</td><td>Auf Bereitschaft</td></tr>
+                            <tr><td class="font-bold" style="color:var(--primary);">10-8</td><td>Statusabfrage</td></tr>
+                            <tr><td class="font-bold" style="color:var(--text-main);">10-9</td><td>Funkspruch wiederholen</td></tr>
+                            <tr><td class="font-bold" style="color:var(--warning);">10-10</td><td>Weiterer RTW benötigt</td></tr>
+                            <tr><td class="font-bold" style="color:var(--success);">10-11</td><td>Im Dienst</td></tr>
+                            <tr><td class="font-bold" style="color:var(--danger);">10-12</td><td>Dienstende</td></tr>
+                            <tr><td class="font-bold" style="color:var(--warning);">10-19</td><td>Abholung benötigt</td></tr>
+                            <tr><td class="font-bold" style="color:var(--danger);">11-44</td><td class="font-bold" style="color:var(--danger);">RTW von PD/USMS benötigt</td></tr>
+                            <tr><td class="font-bold" style="background-color:rgba(248,113,113,0.15); color:var(--danger);">11-99</td><td class="font-bold" style="background-color:rgba(248,113,113,0.15); color:var(--danger);">Medic in Gefahr (Code Red)</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- REITER 4: EINSTELLUNGEN -->
         <div id="settingsTab" class="tab-content">
             <h2>⚙️ MMD Systemsteuerung & Tarife</h2>
             <div class="settings-grid">
@@ -629,7 +743,6 @@
                 let matListHtml = '<ul class="archiv-details-list">';
                 let hatMaterial = false;
 
-                // 1. STRATEGIE: Suche nach dem neuen Format (matDetailsObj)
                 if(i.matDetailsObj && typeof i.matDetailsObj === 'object' && Object.keys(i.matDetailsObj).length > 0) {
                     Object.keys(i.matDetailsObj).forEach(matName => {
                         matListHtml += `<li>${matName}: <b>${i.matDetailsObj[matName]}</b></li>`;
@@ -637,14 +750,12 @@
                     hatMaterial = true;
                 }
                 
-                // 2. STRATEGIE: Suche nach alternativen Bezeichnungen (z.B. matVerbrauch, materialVerbrauch)
                 if(!hatMaterial) {
                     let alternativerVerbrauch = i.matVerbrauch || i.materialVerbrauch || i.verbrauch || i.matVerbraucht;
                     if(alternativerVerbrauch && typeof alternativerVerbrauch === 'object') {
                         Object.keys(alternativerVerbrauch).forEach(key => {
                             let menge = alternativerVerbrauch[key];
                             if(Number(menge) > 0) {
-                                // Versuche den Klarnamen aus dem Katalog zu holen, sonst nimm die ID
                                 let klarName = materialKatalog[key] ? materialKatalog[key].name : key;
                                 matListHtml += `<li>${klarName}: <b>${menge}</b></li>`;
                                 hatMaterial = true;
@@ -653,14 +764,6 @@
                     }
                 }
 
-                // 3. STRATEGIE: Altes Textfeld-Format (mat)
-                if(!hatMaterial && i.mat && typeof i.mat === 'string') {
-                    matListHtml += `<li>${i.mat}</li>`;
-                    hatMaterial = true;
-                }
-
-                // 4. STRATEGIE: Universeller Brute-Force-Scan
-                // Durchsuche alle Variablen im Datensatz nach bekannten Material-IDs aus dem Katalog
                 if(!hatMaterial) {
                     Object.keys(materialKatalog).forEach(key => {
                         if(i[key] !== undefined && Number(i[key]) > 0) {
@@ -668,6 +771,33 @@
                             hatMaterial = true;
                         }
                     });
+                }
+
+                if(!hatMaterial && Number(i.cash) > 0) {
+                    let verletzungenAnzahl = Number(i.v) || Number(i.p) || 1;
+                    let gesamtUmsatz = Number(i.cash);
+                    let preisProEinheit = gesamtUmsatz / verletzungenAnzahl;
+
+                    if (preisProEinheit >= 1800) {
+                        matListHtml += `<li>20mg Schmerzmittel: <b>${1 * verletzungenAnzahl}</b></li>`;
+                        matListHtml += `<li>Nähset: <b>${1 * verletzungenAnzahl}</b></li>`;
+                        matListHtml += `<li>Verband: <b>${1 * verletzungenAnzahl}</b></li>`;
+                        matListHtml += `<li>Wundreiniger: <b>${1 * verletzungenAnzahl}</b></li>`;
+                        matListHtml += `<li>Wasser (Auto): <b>${1 * verletzungenAnzahl}</b></li>`;
+                    } else if (preisProEinheit >= 1400) {
+                        matListHtml += `<li>15mg Schmerzmittel: <b>${1 * verletzungenAnzahl}</b></li>`;
+                        matListHtml += `<li>Nähset: <b>${1 * verletzungenAnzahl}</b></li>`;
+                        matListHtml += `<li>Verband: <b>${1 * verletzungenAnzahl}</b></li>`;
+                        matListHtml += `<li>Wundreiniger: <b>${1 * verletzungenAnzahl}</b></li>`;
+                        matListHtml += `<li>Wasser (Auto): <b>${1 * verletzungenAnzahl}</b></li>`;
+                    } else {
+                        matListHtml += `<li>05mg Schmerzmittel: <b>${1 * verletzungenAnzahl}</b></li>`;
+                        matListHtml += `<li>Nähset: <b>${1 * verletzungenAnzahl}</b></li>`;
+                        matListHtml += `<li>Verband: <b>${1 * verletzungenAnzahl}</b></li>`;
+                        matListHtml += `<li>Schiene: <b>${1 * verletzungenAnzahl}</b></li>`;
+                        matListHtml += `<li>Wasser (Auto): <b>${1 * verletzungenAnzahl}</b></li>`;
+                    }
+                    hatMaterial = true;
                 }
 
                 if(!hatMaterial) {
