@@ -40,8 +40,8 @@
         .stats-main-grid { display: grid; grid-template-columns: 1fr; gap: 15px; }
         .table-responsive { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; margin-top: 10px; border-radius: 6px; border: 1px solid var(--border); }
         
-        /* LEITFADEN GRID */
-        .guide-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; }
+        /* LEITFADEN GRIDS */
+        .guide-row-two { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; margin-bottom: 15px; align-items: start; }
         .guide-table { width: 100%; border-collapse: collapse; background: var(--bg-color); border-radius: 6px; overflow: hidden; border: 1px solid var(--border); }
         .guide-table th.red-head { background-color: var(--table-header-red); color: white; font-size: 14px; font-weight: 800; text-align: center; padding: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
         .guide-table th.sub-head { background-color: #1e293b; color: var(--text-main); font-weight: 700; border-bottom: 1px solid var(--border); }
@@ -232,36 +232,10 @@
         <div id="guideTab" class="tab-content">
             <h2>📋 Fraktions-Leitfaden & Dienst-Referenz</h2>
             
-            <!-- OBERER BLOCK: KEINE RECHNUNG -->
-            <div class="section" style="margin-bottom: 20px;">
-                <table class="guide-table">
-                    <thead>
-                        <tr>
-                            <th colspan="2" class="red-head">Keine Rechnung</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td class="font-bold" style="width: 50%;">Staatliche Fraktionen<br><span style="color:var(--text-muted); font-weight:normal;">(SAPD, USMS, DOJ & SAMD)</span></td>
-                            <td>Im Dienst wird keine Rechnung ausgestellt</td>
-                        </tr>
-                        <tr>
-                            <td class="font-bold">Mechaniker<br><span style="color:var(--text-muted); font-weight:normal;">(Benny´s, Redfield & Roxwood Tuning)</span></td>
-                            <td>Im Dienst wird keine Rechnung ausgestellt</td>
-                        </tr>
-                        <tr>
-                            <td class="font-bold">Security C77 / Bahamas / Casino / Golden Pub</td>
-                            <td>Im Dienst wird keine Rechnung ausgestellt</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <!-- UNTERER GRID: CODES & STREIFEN -->
-            <div class="guide-grid">
-                
-                <!-- CODES -->
-                <div>
+            <!-- OBERER BEREICH: STATUSCODES UND STREIFEN CODES NEBENEINANDER -->
+            <div class="guide-row-two">
+                <!-- STATUS CODES -->
+                <div class="section">
                     <table class="guide-table">
                         <thead>
                             <tr>
@@ -283,24 +257,31 @@
                 </div>
 
                 <!-- STREIFEN ANORDNUNG -->
-                <div>
+                <div class="section">
                     <table class="guide-table">
                         <thead>
                             <tr>
                                 <th colspan="2" class="red-head">Streifen Anordnung</th>
                             </tr>
+                            <tr>
+                                <th class="sub-head text-center" style="width: 30%;">Code</th>
+                                <th class="sub-head">Beschreibung</th>
+                            </tr>
                         </thead>
                         <tbody>
-                            <tr><td class="text-center font-bold" style="width: 30%; color:var(--primary);">1</td><td class="font-bold">Streifen</td></tr>
+                            <tr><td class="text-center font-bold" style="color:var(--primary);">1</td><td class="font-bold">Streifen</td></tr>
                             <tr><td class="text-center font-bold" style="color:var(--primary);">2</td><td class="font-bold">Luftrettung</td></tr>
                             <tr><td class="text-center font-bold" style="color:var(--primary);">3</td><td class="font-bold">Sonderstreife</td></tr>
                             <tr><td class="text-center font-bold" style="color:var(--primary);">4</td><td class="font-bold">Bereitschaft</td></tr>
                         </tbody>
                     </table>
                 </div>
+            </div>
 
-                <!-- TEN CODES -->
-                <div>
+            <!-- UNTERER BEREICH: TEN CODES LINKS UND KEINE RECHNUNG RECHTS -->
+            <div class="guide-row-two">
+                <!-- TEN CODES LINKS -->
+                <div class="section">
                     <table class="guide-table">
                         <thead>
                             <tr>
@@ -327,6 +308,30 @@
                     </table>
                 </div>
 
+                <!-- KEINE RECHNUNG RECHTS -->
+                <div class="section">
+                    <table class="guide-table">
+                        <thead>
+                            <tr>
+                                <th colspan="2" class="red-head">Keine Rechnung</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="font-bold" style="width: 50%;">Staatliche Fraktionen<br><span style="color:var(--text-muted); font-weight:normal;">(SAPD, USMS, DOJ & SAMD)</span></td>
+                                <td>Im Dienst wird keine Rechnung ausgestellt</td>
+                            </tr>
+                            <tr>
+                                <td class="font-bold">Mechaniker<br><span style="color:var(--text-muted); font-weight:normal;">(Benny´s, Redfield & Roxwood Tuning)</span></td>
+                                <td>Im Dienst wird keine Rechnung ausgestellt</td>
+                            </tr>
+                            <tr>
+                                <td class="font-bold">Security C77 / Bahamas / Casino / Golden Pub</td>
+                                <td>Im Dienst wird keine Rechnung ausgestellt</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
