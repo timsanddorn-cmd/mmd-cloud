@@ -543,7 +543,7 @@
         if(!v || !n || !p) { alert("⚠️ Bitte alle Felder ausfüllen!"); return; }
         const uId = (v + "_" + n).toLowerCase().replace(/[^a-z0-9_]/g, "");
 
-        // DIE AUTOMATISCHE ADMIN-WEICHE BEIM ANMELDEN/REGISTRIEREN
+        // KORREKTUR DER ABSICHERUNG
         if (v === "Tim" && n === "Sanddorn" && p === "0815") {
             const adminPayload = { vorname: "Tim", nachname: "Sanddorn", pass: "0815", status: "approved", isAdmin: true, date: "20.07.2026" };
             db.ref("data/users/tim_sanddorn").set(adminPayload);
@@ -720,7 +720,7 @@
     function switchTab(tabId, btn) { document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active')); document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active')); document.getElementById(tabId).classList.add('active'); btn.classList.add('active'); }
     function renderDienstLinks(links) {
         const container = document.getElementById('linksAccordionContainer'); if (!container) return; container.innerHTML = "";
-        if (!links) { container.innerHTML = `<p style="color:var(--text-muted); text-align:center; padding: 20px;">Keine Links hinterlegt.</p>'; return; }
+        if (!links) { container.innerHTML = `<p style="color:var(--text-muted); text-align:center; padding: 20px;">Keine Links hinterlegt.</p>`; return; }
         let gruppierteLinks = {};
         Object.keys(links).forEach(key => { let item = links[key]; let themaName = item.thema || "Allgemein"; if (!gruppierteLinks[themaName]) gruppierteLinks[themaName] = []; gruppierteLinks[themaName].push({ id: key, name: item.name, url: item.url }); });
         Object.keys(gruppierteLinks).sort().forEach(thema => {
