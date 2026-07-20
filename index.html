@@ -13,6 +13,12 @@
             --primary: #38bdf8; --primary-hover: #0ea5e9; --success: #34d399; --success-hover: #10b981;
             --danger: #f87171; --danger-hover: #ef4444; --warning: #fbbf24; --warning-hover: #f59e0b; --border: #334155;
             --table-header-red: #ff6b6b;
+            --rank-trainee: rgba(74, 222, 128, 0.15);
+            --rank-low: rgba(251, 191, 36, 0.15);
+            --rank-mid: rgba(249, 115, 22, 0.15);
+            --rank-high: rgba(248, 113, 113, 0.15);
+            --rank-chief: rgba(239, 68, 68, 0.25);
+            --rank-interne: rgba(34, 211, 238, 0.2);
         }
         body { font-family: 'Inter', sans-serif; background-color: var(--bg-color); color: var(--text-main); margin: 0; padding: 12px; font-size: 13px; -webkit-tap-highlight-color: transparent; }
         .container { max-width: 1300px; margin: 0 auto; background: var(--card-bg); padding: 15px; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 10px 25px rgba(0,0,0,0.3); }
@@ -65,6 +71,9 @@
         .theme-accordion-content { display: block; padding: 0; }
         .theme-accordion-group.collapsed .theme-accordion-content { display: none; }
         .theme-accordion-group table { border: none; }
+
+        /* INPUTS UND DATUMSTYLING */
+        input[type="date"] { width: 100%; padding: 10px; font-size: 13px; background-color: var(--bg-color); color: var(--text-main); border: 1px solid var(--border); border-radius: 6px; box-sizing: border-box; }
 
         @media (max-width: 1200px) {
             .action-grid { grid-template-columns: 1fr 1fr; }
@@ -148,6 +157,7 @@
             <button class="tab-btn" onclick="switchTab('statsTab', this)">📊 Gesamt-Statistiken & Archiv</button>
             <button class="tab-btn" onclick="switchTab('guideTab', this)">📋 Dienst-Leitfaden & Funk</button>
             <button class="tab-btn" onclick="switchTabSecure('linksTab', this)">🔗 Dienst-Links & Dokumente</button>
+            <button class="tab-btn" onclick="switchTab('miscTab', this)">🗂️ Sonstiges & Gehalt</button>
             <button class="tab-btn" onclick="settingsTabClick()">⚙️ Einstellungen</button>
         </div>
 
@@ -362,7 +372,7 @@
             </div>
         </div>
 
-        <!-- REITER 4: DIENST-LINKS & DOKUMENTE (CODE-GESCHÜTZT + THEMEN-AKKORDEON) -->
+        <!-- REITER 4: DIENST-LINKS & DOKUMENTE -->
         <div id="linksTab" class="tab-content">
             <h2>🔗 Interne Dokumente & Lesezeichen-Cloud</h2>
             <div class="link-grid">
@@ -379,20 +389,79 @@
                     <input type="text" id="linkThema" placeholder="Z.B. EHK, Psychologie, CLS, MDI intern">
                     <p style="color: var(--text-muted); font-size: 11px; margin-top: 4px;">Hinweis: Gleiche Themen (Groß-/Kleinschreibung beachten) werden automatisch in eine einklappbare Gruppe sortiert!</p>
 
-                    <button class="btn" onclick="linkHinzufuegen()">Link in Cloud speichern</button>
+                    <button class="btn" onclick="linkHinzufuegen()">Link in Cloud保存</button>
                 </div>
 
                 <!-- LINK BEREICH MIT AUF- UND ZUKLAPPPARER LOGIK -->
                 <div class="section">
                     <h3>📜 Gespeicherte Fraktions-Links</h3>
                     <div id="linksAccordionContainer" style="margin-top: 10px;">
-                        <!-- Wird live nach Themen gruppiert aufgebaut -->
+                        <!-- Wird live befüllt -->
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- REITER 5: EINSTELLUNGEN -->
+        <!-- REITER 5: SONSTIGES & GEHALT -->
+        <div id="miscTab" class="tab-content">
+            <div class="guide-split-container">
+                
+                <!-- LINKS: DIENSTTAGEZÄHLER -->
+                <div class="section">
+                    <h3>📅 Diensttage-Rechner</h3>
+                    <div style="background: rgba(15, 23, 42, 0.4); padding: 15px; border-radius: 8px; border: 1px solid var(--border);">
+                        <p style="margin-top:0; font-size:14px;">Mitarbeiter: <b id="daysMedicName" style="color:var(--primary);">Bitte Namen eintragen!</b></p>
+                        
+                        <label for="einstellungsDatum">Eingestellt am:</label>
+                        <input type="date" id="einstellungsDatum" onchange="berechneDienstTage()">
+                        
+                        <div style="margin-top:20px; text-align:center; background:rgba(56, 189, 248, 0.08); padding:15px; border-radius:6px; border:1px dashed var(--primary);">
+                            <span style="font-size:11px; font-weight:700; color:var(--text-muted); display:block; text-transform:uppercase;">Dienstzeit aktuell</span>
+                            <span id="val_dienstTage" style="font-size:36px; font-weight:800; color:var(--warning);">0</span>
+                            <span style="font-size:14px; font-weight:700; display:block; color:var(--text-main); margin-top:4px;">Tage im Dienst</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- RECHTS: GEHALTSLISTE -->
+                <div class="section">
+                    <h3>💵 Gehaltstabelle (SAMD)</h3>
+                    <div class="table-responsive" style="margin-top:0;">
+                        <table class="guide-table">
+                            <thead>
+                                <tr>
+                                    <th class="sub-head">IC Rang</th>
+                                    <th class="sub-head">Rang-Name</th>
+                                    <th class="sub-head">Command</th>
+                                    <th class="sub-head">pro 15 Min.</th>
+                                    <th class="sub-head">volle Stunde</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr style="background-color: var(--rank-trainee);"><td class="font-bold">Rang 1</td><td class="font-bold">Trainee</td><td>SAMD Trainee</td><td>5.500k</td><td>22.000k</td></tr>
+                                <tr style="background-color: var(--rank-trainee);"><td class="font-bold">Rang 2</td><td class="font-bold">Solo Trainee</td><td>SAMD Trainee</td><td>7.000k</td><td>28.000k</td></tr>
+                                <tr style="background-color: var(--rank-low);"><td class="font-bold">Rang 3</td><td class="font-bold">EMT</td><td>Low Command</td><td>7.500k</td><td>30.000k</td></tr>
+                                <tr style="background-color: var(--rank-low);"><td class="font-bold">Rang 4</td><td class="font-bold">A-EMT</td><td>Low Command</td><td>8.250k</td><td>33.000k</td></tr>
+                                <tr style="background-color: var(--rank-mid);"><td class="font-bold">Rang 5</td><td class="font-bold">Paramedic / Resident Phys.</td><td>Mid Command</td><td>9.500k</td><td>38.000k</td></tr>
+                                <tr style="background-color: var(--rank-mid);"><td class="font-bold">Rang 6</td><td class="font-bold">Senior Paramedic</td><td>Mid Command</td><td>11.000k</td><td>44.000k</td></tr>
+                                <tr style="background-color: var(--rank-mid);"><td class="font-bold">Rang 7</td><td class="font-bold">Physician</td><td>Mid Command</td><td>11.000k</td><td>44.000k</td></tr>
+                                <tr style="background-color: var(--rank-mid);"><td class="font-bold">Rang 8</td><td class="font-bold">Medical Supervisor</td><td>Mid Command</td><td>11.500k</td><td>46.000k</td></tr>
+                                <tr style="background-color: var(--rank-mid);"><td class="font-bold">Rang 9</td><td class="font-bold">Attending</td><td>Mid Command</td><td>11.500k</td><td>46.000k</td></tr>
+                                <tr style="background-color: var(--rank-high);"><td class="font-bold">Rang 10</td><td class="font-bold">Lieutenant / Field Op. Dir.</td><td>High Command</td><td>12.500k</td><td>50.000k</td></tr>
+                                <tr style="background-color: var(--rank-high);"><td class="font-bold">Rang 11</td><td class="font-bold">Chief Phys. / Dir. of Med. Op.</td><td>High Command</td><td>12.500k</td><td>50.000k</td></tr>
+                                <tr style="background-color: var(--rank-chief);"><td class="font-bold">Rang 12</td><td class="font-bold">Deputy Chief</td><td>Chiefebene</td><td>15.000k</td><td>60.000k</td></tr>
+                                <tr style="background-color: var(--rank-chief);"><td class="font-bold">Rang 13</td><td class="font-bold">Assistant Chief</td><td>Chiefebene</td><td>15.500k</td><td>62.000k</td></tr>
+                                <tr style="background-color: var(--rank-chief);"><td class="font-bold">Rang 14</td><td class="font-bold">Chief of SAMD</td><td>Chiefebene</td><td>16.250k</td><td>65.000k</td></tr>
+                                <tr style="background-color: var(--rank-interne);"><td class="font-bold">Rang 15</td><td class="font-bold">Interne</td><td>Interne</td><td>0</td><td>0</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- REITER 6: EINSTELLUNGEN -->
         <div id="settingsTab" class="tab-content">
             <h2>⚙️ MMD Systemsteuerung & Tarife</h2>
             <div class="settings-grid">
@@ -468,6 +537,17 @@
         const gespeicherterNachname = localStorage.getItem('mmd_nachname');
         if (gespeicherterVorname) document.getElementById('medicVorname').value = gespeicherterVorname;
         if (gespeicherterNachname) document.getElementById('medicNachname').value = gespeicherterNachname;
+        
+        // Name im Dienstzeit-Rechner aktualisieren
+        syncNameInDienstzeitRechner();
+        
+        // Gespeichertes Datum laden
+        const gespDatum = localStorage.getItem('mmd_einstellungsdatum');
+        if(gespDatum) {
+            document.getElementById('einstellungsDatum').value = gespDatum;
+            berechneDienstTage();
+        }
+        
         updateOnlineStatus();
     }
 
@@ -476,7 +556,40 @@
         const nachname = document.getElementById('medicNachname').value.trim();
         localStorage.setItem('mmd_vorname', vorname);
         localStorage.setItem('mmd_nachname', nachname);
+        
+        syncNameInDienstzeitRechner();
         updateOnlineStatus();
+    }
+
+    function syncNameInDienstzeitRechner() {
+        const v = localStorage.getItem('mmd_vorname') || "";
+        const n = localStorage.getItem('mmd_nachname') || "";
+        const disp = document.getElementById('daysMedicName');
+        if(disp) {
+            disp.textContent = (v || n) ? (v + " " + n) : "Bitte Namen eintragen!";
+        }
+    }
+
+    function berechneDienstTage() {
+        const inputField = document.getElementById('einstellungsDatum');
+        if(!inputField || !inputField.value) return;
+        
+        localStorage.setItem('mmd_einstellungsdatum', inputField.value);
+        
+        const einstellungsDatum = new Date(inputField.value);
+        einstellungsDatum.setHours(0,0,0,0);
+        
+        // Serverzeit/Aktuelles Systemdatum
+        const heute = new Date();
+        heute.setHours(0,0,0,0);
+        
+        const zeitDifferenz = heute.getTime() - einstellungsDatum.getTime();
+        // Umwandlung in Tage (+1 um den Starttag voll mitzuzählen)
+        let tage = Math.floor(zeitDifferenz / (1000 * 60 * 60 * 24)) + 1;
+        
+        if (tage < 0) tage = 0;
+        
+        document.getElementById('val_dienstTage').textContent = tage;
     }
 
     function updateOnlineStatus() {
@@ -611,7 +724,6 @@
         }
     }
 
-    // DIENST LINKS LOGIK MIT GRUPPIERUNG & AKKORDEON
     function linkHinzufuegen() {
         const name = document.getElementById('linkName').value.trim();
         let url = document.getElementById('linkUrl').value.trim();
@@ -645,7 +757,6 @@
             return;
         }
 
-        // 1. Gruppierung nach Thema aufbauen
         let gruppierteLinks = {};
         Object.keys(links).forEach(key => {
             let item = links[key];
@@ -656,12 +767,10 @@
             gruppierteLinks[themaName].push({ id: key, name: item.name, url: item.url });
         });
 
-        // 2. HTML für jede Themengruppe generieren (Akkordeon-Struktur)
         Object.keys(gruppierteLinks).sort().forEach(thema => {
             let safeThemaId = "theme-" + thema.replace(/[^a-z0-9]/gi, '-');
             let linksListe = gruppierteLinks[thema];
             
-            // Prüfen, ob dieses spezifische Thema im Browser lokal als "eingeklappt" gespeichert war
             let istEingeklappt = localStorage.getItem('mmd_collapse_' + thema) === 'true';
             let collapseKlasse = istEingeklappt ? "theme-accordion-group collapsed" : "theme-accordion-group";
 
@@ -704,13 +813,10 @@
         });
     }
 
-    // Schaltet das Auf- und Zuklappen der Themengruppen um
     function toggleThemeCollapse(themaName, elementId) {
         const el = document.getElementById(elementId);
         if (!el) return;
-        
         el.classList.toggle('collapsed');
-        // Status lokal auf dem PC merken, damit es beim Neuladen so bleibt, wie der Medic es eingestellt hat
         let aktuellCollapsed = el.classList.contains('collapsed');
         localStorage.setItem('mmd_collapse_' + themaName, aktuellCollapsed);
     }
@@ -1029,6 +1135,7 @@
     window.deleteArchivSchicht = deleteArchivSchicht;
     window.deleteDienstLink = deleteDienstLink;
     window.toggleThemeCollapse = toggleThemeCollapse;
+    window.berechneDienstTage = berechneDienstTage;
 </script>
 </body>
 </html>
