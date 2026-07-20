@@ -4,132 +4,388 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>MMD Cloud-Patientenverwaltung Live</title>
-    <!-- Firebase SDK -->
+    <!-- Google Fonts & Firebase SDK -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
     <style>
         :root {
-            --bg-color: #0f172a; --card-bg: #1e293b; --text-main: #f8fafc; --text-muted: #94a3b8;
-            --primary: #38bdf8; --primary-hover: #0ea5e9; --success: #34d399; --success-hover: #10b981;
-            --danger: #f87171; --danger-hover: #ef4444; --warning: #fbbf24; --warning-hover: #f59e0b; --border: #334155;
-            --table-header-red: #ff6b6b;
-            --rank-trainee: rgba(74, 222, 128, 0.15);
-            --rank-low: rgba(251, 191, 36, 0.15);
-            --rank-mid: rgba(249, 115, 22, 0.15);
-            --rank-high: rgba(248, 113, 113, 0.15);
-            --rank-chief: rgba(239, 68, 68, 0.25);
-            --rank-interne: rgba(34, 211, 238, 0.2);
+            --bg-color: #0b0f19; 
+            --card-bg: rgba(30, 41, 59, 0.45); 
+            --card-bg-solid: #1e293b;
+            --text-main: #f1f5f9; 
+            --text-muted: #64748b;
+            --primary: #38bdf8; 
+            --primary-hover: #0ea5e9; 
+            --success: #10b981; 
+            --success-hover: #059669;
+            --danger: #f43f5e; 
+            --danger-hover: #e11d48; 
+            --warning: #f59e0b; 
+            --warning-hover: #d97706; 
+            --border: rgba(51, 65, 85, 0.5);
+            --border-glow: rgba(56, 189, 248, 0.15);
+            --grad-red: linear-gradient(135deg, #ff6b6b, #ee5253);
+            --grad-dark: linear-gradient(180deg, rgba(30, 41, 59, 0.7) 0%, rgba(15, 23, 42, 0.7) 100%);
+            
+            --rank-trainee: rgba(74, 222, 128, 0.08);
+            --rank-low: rgba(251, 191, 36, 0.08);
+            --rank-mid: rgba(249, 115, 22, 0.08);
+            --rank-high: rgba(248, 113, 113, 0.08);
+            --rank-chief: rgba(239, 68, 68, 0.12);
+            --rank-interne: rgba(34, 211, 238, 0.08);
         }
-        body { font-family: 'Inter', sans-serif; background-color: var(--bg-color); color: var(--text-main); margin: 0; padding: 12px; font-size: 13px; -webkit-tap-highlight-color: transparent; }
-        .container { max-width: 1300px; margin: 0 auto; background: var(--card-bg); padding: 15px; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 10px 25px rgba(0,0,0,0.3); }
+        
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            background-color: var(--bg-color); 
+            background-image: radial-gradient(circle at top right, rgba(56, 189, 248, 0.03), transparent 40%),
+                              radial-gradient(circle at bottom left, rgba(129, 140, 248, 0.03), transparent 40%);
+            color: var(--text-main); 
+            margin: 0; 
+            padding: 8px; 
+            font-size: 13px; 
+            -webkit-tap-highlight-color: transparent;
+            letter-spacing: -0.1px;
+        }
+        
+        @media (min-width: 768px) {
+            body { padding: 16px; }
+        }
+        
+        .container { 
+            max-width: 1350px; 
+            margin: 0 auto; 
+            background: rgba(15, 23, 42, 0.6); 
+            padding: 12px; 
+            border-radius: 16px; 
+            border: 1px solid var(--border); 
+            box-shadow: 0 20px 40px -15px rgba(0,0,0,0.5);
+            backdrop-filter: blur(8px);
+        }
+        
+        @media (min-width: 768px) {
+            .container { padding: 20px; }
+        }
         
         /* KOMPAKTE TOP-BAR */
-        .top-bar { display: grid; grid-template-columns: auto 1fr auto; gap: 15px; align-items: center; background: rgba(15, 23, 42, 0.4); padding: 8px 15px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 12px; }
-        .top-bar h1 { font-size: 1.4rem; font-weight: 800; background: linear-gradient(to right, #38bdf8, #818cf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin: 0; }
-        .medic-id-zone { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-        .medic-id-zone input { width: 110px; padding: 8px 10px; font-size: 12px; background: var(--bg-color); color: var(--text-main); border: 1px solid var(--border); border-radius: 6px; }
-        .info-zone { display: flex; align-items: center; gap: 15px; font-size: 12px; font-weight: 600; }
-        .date-display { color: var(--warning); background: rgba(251, 191, 36, 0.1); padding: 6px 10px; border-radius: 6px; border: 1px solid rgba(251, 191, 36, 0.2); }
-        .online-medics { background: rgba(56, 189, 248, 0.08); border: 1px solid var(--primary); padding: 6px 10px; border-radius: 6px; display: flex; align-items: center; gap: 6px; }
-        .online-dot { width: 8px; height: 8px; background: var(--success); border-radius: 50%; display: inline-block; }
+        .top-bar { 
+            display: grid; 
+            grid-template-columns: 1fr; 
+            gap: 12px; 
+            align-items: center; 
+            text-align: center;
+            background: var(--grad-dark); 
+            padding: 12px; 
+            border-radius: 12px; 
+            border: 1px solid rgba(255,255,255,0.03); 
+            margin-bottom: 12px;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
+        }
+        
+        @media (min-width: 768px) {
+            .top-bar { grid-template-columns: auto 1fr auto; text-align: left; padding: 10px 20px; margin-bottom: 16px; }
+        }
+
+        .top-bar h1 { 
+            font-size: 1.4rem; 
+            font-weight: 800; 
+            background: linear-gradient(to right, #38bdf8, #818cf8); 
+            -webkit-background-clip: text; 
+            -webkit-text-fill-color: transparent; 
+            margin: 0; 
+            letter-spacing: -0.5px;
+        }
+        .medic-id-zone { display: flex; align-items: center; gap: 8px; justify-content: center; width: 100%; }
+        @media (min-width: 768px) { .medic-id-zone { justify-content: flex-start; width: auto; } }
+
+        .medic-id-zone input { 
+            flex: 1;
+            max-width: 130px; 
+            padding: 10px 12px; 
+            font-size: 12px; 
+            background: rgba(11, 15, 25, 0.6); 
+            color: var(--text-main); 
+            border: 1px solid var(--border); 
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+        .medic-id-zone input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.15);
+            outline: none;
+        }
+        .info-zone { display: flex; align-items: center; gap: 10px; font-size: 12px; font-weight: 600; justify-content: center; width: 100%; }
+        @media (min-width: 768px) { .info-zone { justify-content: flex-end; width: auto; } }
+
+        .date-display { 
+            color: var(--warning); 
+            background: rgba(251, 191, 36, 0.06); 
+            padding: 6px 12px; 
+            border-radius: 8px; 
+            border: 1px solid rgba(251, 191, 36, 0.15); 
+        }
+        .online-medics { 
+            background: rgba(56, 189, 248, 0.04); 
+            border: 1px solid rgba(56, 189, 248, 0.2); 
+            padding: 6px 12px; 
+            border-radius: 8px; 
+            display: flex; 
+            align-items: center; 
+            gap: 8px; 
+            justify-content: center;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        @media (min-width: 768px) { .online-medics { width: auto; } }
+
+        .online-dot { 
+            width: 8px; 
+            height: 8px; 
+            background: var(--success); 
+            border-radius: 50%; 
+            display: inline-block; 
+            box-shadow: 0 0 8px var(--success);
+        }
 
         /* TABS NAV */
-        .tab-nav { display: flex; gap: 8px; margin-bottom: 15px; background: rgba(15, 23, 42, 0.3); padding: 4px; border-radius: 10px; border: 1px solid var(--border); overflow-x: auto; -webkit-overflow-scrolling: touch; }
-        .tab-btn { background: transparent; color: var(--text-muted); border: none; padding: 10px 16px; font-size: 13px; font-weight: 600; border-radius: 6px; cursor: pointer; flex: 1; min-width: 140px; text-align: center; white-space: nowrap; transition: all 0.2s; }
+        .tab-nav { 
+            display: flex; 
+            gap: 6px; 
+            margin-bottom: 16px; 
+            background: rgba(11, 15, 25, 0.4); 
+            padding: 4px; 
+            border-radius: 12px; 
+            border: 1px solid var(--border); 
+            overflow-x: auto; 
+            -webkit-overflow-scrolling: touch; 
+            scrollbar-width: none;
+        }
+        .tab-nav::-webkit-scrollbar { display: none; }
+
+        .tab-btn { 
+            background: transparent; 
+            color: var(--text-muted); 
+            border: none; 
+            padding: 12px 16px; 
+            font-size: 12px; 
+            font-weight: 600; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            flex: 1; 
+            min-width: 145px; 
+            text-align: center; 
+            white-space: nowrap; 
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); 
+        }
+        @media (min-width: 768px) { .tab-btn { font-size: 13px; padding: 10px 18px; } }
         .tab-btn:hover { color: var(--text-main); background: rgba(255, 255, 255, 0.03); }
-        .tab-btn.active { background-color: var(--primary); color: #0f172a; font-weight: 700; }
-        .tab-content { display: none; }
+        .tab-btn.active { 
+            background-color: var(--text-main); 
+            color: #0b0f19; 
+            font-weight: 700;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .tab-content { display: none; shortcut-animation: fadeIn 0.3s ease; }
         .tab-content.active { display: block; }
 
-        /* MULTI-SPALTEN LAYOUTS */
-        .action-grid { display: grid; grid-template-columns: 280px 1fr 400px; gap: 15px; align-items: start; }
-        .stats-main-grid { display: grid; grid-template-columns: 1fr; gap: 15px; }
-        .table-responsive { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; margin-top: 10px; border-radius: 6px; border: 1px solid var(--border); }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* MULTI-SPALTEN LAYOUTS (RESPONSIV) */
+        .action-grid { display: grid; grid-template-columns: 1fr; gap: 12px; align-items: start; }
+        @media (min-width: 992px) { .action-grid { grid-template-columns: 280px 1fr; } }
+        @media (min-width: 1200px) { .action-grid { grid-template-columns: 290px 1fr 410px; gap: 20px; } }
+
+        .stats-main-grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
+        .table-responsive { 
+            width: 100%; 
+            overflow-x: auto; 
+            -webkit-overflow-scrolling: touch; 
+            margin-top: 10px; 
+            border-radius: 10px; 
+            border: 1px solid var(--border); 
+            background: rgba(11, 15, 25, 0.3);
+        }
         
-        /* LEITFADEN GRIDS */
-        .guide-split-container { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start; }
-        .guide-right-stack { display: flex; flex-direction: column; gap: 15px; }
+        /* LEITFADEN GRIDS (RESPONSIV) */
+        .guide-split-container { display: grid; grid-template-columns: 1fr; gap: 16px; align-items: start; }
+        @media (min-width: 900px) { .guide-split-container { grid-template-columns: 1fr 1fr; gap: 20px; } }
+
+        .guide-right-stack { display: flex; flex-direction: column; gap: 16px; }
+        @media (min-width: 900px) { .guide-right-stack { gap: 20px; } }
         
-        .guide-table { width: 100%; border-collapse: collapse; background: var(--bg-color); border-radius: 6px; overflow: hidden; border: 1px solid var(--border); }
-        .guide-table th.red-head { background-color: var(--table-header-red); color: white; font-size: 14px; font-weight: 800; text-align: center; padding: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
-        .guide-table th.sub-head { background-color: #1e293b; color: var(--text-main); font-weight: 700; border-bottom: 1px solid var(--border); }
-        .guide-table td { padding: 10px; border-bottom: 1px solid var(--border); font-size: 12px; }
+        .guide-table { width: 100%; border-collapse: collapse; background: rgba(11, 15, 25, 0.2); border-radius: 10px; overflow: hidden; border: 1px solid var(--border); }
+        .guide-table th.red-head { 
+            background: var(--grad-red); 
+            color: white; 
+            font-size: 13px; 
+            font-weight: 800; 
+            text-align: center; 
+            padding: 12px; 
+            text-transform: uppercase; 
+            letter-spacing: 0.5px; 
+            text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+        }
+        .guide-table th.sub-head { background-color: rgba(30, 41, 59, 0.8); color: var(--text-main); font-weight: 700; border-bottom: 1px solid var(--border); padding: 10px; }
+        .guide-table td { padding: 12px; border-bottom: 1px solid var(--border); font-size: 12px; transition: background 0.15s; }
+        .guide-table tr:hover td { background: rgba(255,255,255,0.01); }
         .guide-table tr:last-child td { border-bottom: none; }
         .text-center { text-align: center; }
-        .font-bold { font-weight: bold; }
+        .font-bold { font-weight: 600; }
 
         /* LINK VERWALTUNG LAYOUT & AKKORDEON */
-        .link-grid { display: grid; grid-template-columns: 320px 1fr; gap: 20px; align-items: start; }
-        .link-btn-clickable { display: inline-block; background: rgba(56, 189, 248, 0.1); color: var(--primary); padding: 6px 12px; border-radius: 4px; border: 1px solid rgba(56, 189, 248, 0.2); font-weight: bold; text-decoration: none; transition: all 0.2s; }
-        .link-btn-clickable:hover { background: var(--primary); color: #0f172a; }
+        .link-grid { display: grid; grid-template-columns: 1fr; gap: 16px; align-items: start; }
+        @media (min-width: 900px) { .link-grid { grid-template-columns: 320px 1fr; gap: 20px; } }
 
-        .theme-accordion-group { margin-bottom: 12px; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; background: var(--bg-color); }
-        .theme-accordion-header { background: #1e293b; padding: 12px 15px; font-size: 13px; font-weight: 700; color: var(--warning); display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none; transition: background 0.2s; border-bottom: 1px solid rgba(255,255,255,0.02); }
-        .theme-accordion-header:hover { background: #2d3748; }
-        .theme-accordion-header::after { content: '▼'; font-size: 10px; color: var(--text-muted); transition: transform 0.2s; }
+        .link-btn-clickable { 
+            display: inline-block; 
+            background: rgba(56, 189, 248, 0.06); 
+            color: var(--primary); 
+            padding: 8px 16px; 
+            border-radius: 6px; 
+            border: 1px solid rgba(56, 189, 248, 0.15); 
+            font-weight: 700; 
+            text-decoration: none; 
+            transition: all 0.2s; 
+        }
+        .link-btn-clickable:hover { 
+            background: var(--primary); 
+            color: #0b0f19; 
+            box-shadow: 0 0 12px rgba(56, 189, 248, 0.3);
+            transform: translateY(-1px);
+        }
+
+        .theme-accordion-group { margin-bottom: 12px; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; background: rgba(11, 15, 25, 0.2); transition: border-color 0.2s; }
+        .theme-accordion-group:hover { border-color: rgba(56, 189, 248, 0.3); }
+        .theme-accordion-header { 
+            background: rgba(30, 41, 59, 0.6); 
+            padding: 14px 18px; 
+            font-size: 13px; 
+            font-weight: 700; 
+            color: var(--warning); 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            cursor: pointer; 
+            user-select: none; 
+            transition: background 0.2s; 
+        }
+        .theme-accordion-header:hover { background: rgba(45, 55, 72, 0.6); }
+        .theme-accordion-header::after { content: '▼'; font-size: 9px; color: var(--text-muted); transition: transform 0.2s; }
         .theme-accordion-group.collapsed .theme-accordion-header::after { transform: rotate(-90deg); color: var(--primary); }
-        .theme-accordion-content { display: block; padding: 0; }
+        .theme-accordion-content { display: block; padding: 0; animation: slideDown 0.2s ease; }
         .theme-accordion-group.collapsed .theme-accordion-content { display: none; }
-        .theme-accordion-group table { border: none; }
 
-        /* INPUTS UND DATUMSTYLING */
-        input[type="date"] { width: 100%; padding: 10px; font-size: 13px; background-color: var(--bg-color); color: var(--text-main); border: 1px solid var(--border); border-radius: 6px; box-sizing: border-box; }
-
-        @media (max-width: 1200px) {
-            .action-grid { grid-template-columns: 1fr 1fr; }
-            .action-grid > div:last-child { grid-column: span 2; }
+        /* CARD SECTIONS */
+        .section { 
+            padding: 14px; 
+            border: 1px solid var(--border); 
+            border-radius: 12px; 
+            background: var(--card-bg); 
+            margin-bottom: 12px; 
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            backdrop-filter: blur(10px);
+            transition: border-color 0.2s;
         }
-        @media (max-width: 900px) {
-            .guide-split-container, .link-grid { grid-template-columns: 1fr; gap: 15px; }
-        }
-        @media (max-width: 768px) {
-            .top-bar { grid-template-columns: 1fr; gap: 10px; text-align: center; }
-            .medic-id-zone { justify-content: center; }
-            .online-medics, .info-zone { justify-content: center; width: 100%; box-sizing: border-box; }
-            .action-grid { grid-template-columns: 1fr; }
-            .action-grid > div:last-child { grid-column: span 1; }
-        }
+        @media (min-width: 768px) { .section { padding: 16px; margin-bottom: 16px; } }
+        .section:hover { border-color: var(--border-glow); }
+        .section h3 { font-size: 14px; font-weight: 700; margin-top: 0; margin-bottom: 12px; border-bottom: 1px solid var(--border); padding-bottom: 6px; color: var(--primary); }
         
-        .section { padding: 14px; border: 1px solid var(--border); border-radius: 10px; background: rgba(15, 23, 42, 0.2); margin-bottom: 12px; }
-        .section h3 { font-size: 14px; margin-top: 0; margin-bottom: 10px; border-bottom: 1px solid var(--border); padding-bottom: 4px; color: var(--primary); }
+        label { font-size: 10px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 6px; margin-top: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
         
-        label { font-size: 11px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px; margin-top: 8px; text-transform: uppercase; }
-        select, input[type="text"], input[type="number"] { width: 100%; padding: 10px; font-size: 13px; background-color: var(--bg-color); color: var(--text-main); border: 1px solid var(--border); border-radius: 6px; box-sizing: border-box; -webkit-appearance: none; }
+        select, input[type="text"], input[type="number"], input[type="date"] { 
+            width: 100%; 
+            padding: 12px 14px; 
+            font-size: 13px; 
+            font-family: inherit;
+            background-color: rgba(11, 15, 25, 0.5); 
+            color: var(--text-main); 
+            border: 1px solid var(--border); 
+            border-radius: 8px; 
+            box-sizing: border-box; 
+            -webkit-appearance: none; 
+            transition: all 0.2s;
+        }
+        select:focus, input[type="text"]:focus, input[type="number"]:focus, input[type="date"]:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.15);
+            outline: none;
+            background-color: rgba(11, 15, 25, 0.7);
+        }
 
         /* COUNTERS */
-        .counter-group { display: flex; align-items: center; justify-content: space-between; background: var(--bg-color); padding: 6px 10px; border: 1px solid var(--border); border-radius: 6px; margin-bottom: 8px; }
-        .counter-btn { background-color: #334155; color: var(--text-main); border: none; width: 32px; height: 30px; font-size: 16px; font-weight: bold; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .counter-group { display: flex; align-items: center; justify-content: space-between; background: rgba(11, 15, 25, 0.4); padding: 6px 10px; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 8px; }
+        .counter-btn { 
+            background-color: #334155; 
+            color: var(--text-main); 
+            border: none; 
+            width: 36px; 
+            height: 36px; 
+            font-size: 18px; 
+            font-weight: 700; 
+            border-radius: 6px; 
+            cursor: pointer; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            transition: background 0.15s;
+        }
         .counter-btn:hover { background-color: #475569; }
-        .counter-btn.plus-main { background-color: var(--primary); color: #0f172a; }
-        .counter-value { font-size: 14px; font-weight: 700; width: 45px; text-align: center; }
+        .counter-btn.plus-main { background-color: var(--primary); color: #0b0f19; }
+        .counter-btn.plus-main:hover { background-color: var(--primary-hover); }
+        .counter-value { font-size: 14px; font-weight: 700; width: 45px; text-align: center; color: var(--text-main); }
 
         /* CHECKLIST ITEMS */
-        .todo-item { display: flex; align-items: center; background: var(--bg-color); padding: 10px 12px; margin: 6px 0; border-radius: 6px; border: 1px solid var(--border); border-left: 3px solid var(--primary); font-size: 12px; }
-        .todo-item.completed { border-left-color: var(--success); background: rgba(52, 211, 153, 0.03); text-decoration: line-through; color: var(--text-muted); }
-        input[type="checkbox"] { margin-right: 10px; transform: scale(1.2); cursor: pointer; accent-color: var(--primary); }
+        .todo-item { display: flex; align-items: center; background: rgba(11, 15, 25, 0.4); padding: 14px 12px; margin: 8px 0; border-radius: 8px; border: 1px solid var(--border); border-left: 4px solid var(--primary); font-size: 12px; transition: all 0.2s; }
+        .todo-item.completed { border-left-color: var(--success); background: rgba(16, 185, 129, 0.02); text-decoration: line-through; color: var(--text-muted); }
+        input[type="checkbox"] { margin-right: 12px; transform: scale(1.3); cursor: pointer; accent-color: var(--primary); }
 
         /* ACTION BUTTONS */
-        .btn { color: #0f172a; border: none; padding: 12px 15px; font-size: 13px; font-weight: 700; border-radius: 6px; cursor: pointer; width: 100%; margin-top: 10px; background-color: var(--success); box-shadow: 0 4px 10px rgba(52, 211, 153, 0.15); transition: background 0.2s; }
-        .btn:hover { background-color: var(--success-hover); }
+        .btn { 
+            color: #0b0f19; 
+            border: none; 
+            padding: 14px 16px; 
+            font-size: 13px; 
+            font-weight: 700; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            width: 100%; 
+            margin-top: 12px; 
+            background-color: var(--success); 
+            box-shadow: 0 4px 14px rgba(16, 185, 129, 0.2); 
+            transition: all 0.2s; 
+        }
+        .btn:hover { background-color: var(--success-hover); transform: translateY(-1px); box-shadow: 0 6px 20px rgba(16, 185, 129, 0.3); }
+        
         .btn-group { display: flex; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
-        .btn-day-reset { background-color: var(--warning); color: #0f172a; border: none; padding: 12px 15px; font-size: 13px; font-weight: 700; border-radius: 6px; cursor: pointer; flex: 2; min-width: 200px; }
-        .btn-full-reset { background-color: var(--danger); color: var(--text-main); border: none; padding: 12px 15px; font-size: 13px; font-weight: 700; border-radius: 8px; cursor: pointer; flex: 1; min-width: 100px; }
+        .btn-day-reset { background-color: var(--warning); color: #0b0f19; border: none; padding: 14px 18px; font-size: 13px; font-weight: 700; border-radius: 8px; cursor: pointer; flex: 2; min-width: 200px; transition: all 0.2s; box-shadow: 0 4px 12px rgba(245, 158, 11, 0.15); }
+        .btn-day-reset:hover { background-color: var(--warning-hover); transform: translateY(-1px); }
+        .btn-full-reset { background-color: rgba(244, 63, 94, 0.1); color: var(--danger); border: 1px solid rgba(244, 63, 94, 0.2); padding: 14px 15px; font-size: 13px; font-weight: 700; border-radius: 8px; cursor: pointer; flex: 1; min-width: 100px; transition: all 0.2s; }
+        .btn-full-reset:hover { background-color: var(--danger); color: #0b0f19; }
 
-        .btn-delete-row { background: transparent; color: var(--danger); border: none; font-size: 14px; cursor: pointer; padding: 6px 10px; border-radius: 4px; transition: background 0.2s; }
-        .btn-delete-row:hover { background: rgba(248, 113, 113, 0.15); }
+        .btn-delete-row { background: transparent; color: var(--text-muted); border: none; font-size: 14px; cursor: pointer; padding: 6px 12px; border-radius: 6px; transition: all 0.2s; }
+        .btn-delete-row:hover { color: var(--danger); background: rgba(244, 63, 94, 0.1); }
 
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 12px; }
-        .stat-card { background: var(--bg-color); padding: 12px; border-radius: 8px; border: 1px solid var(--border); text-align: center; }
-        .stat-card h5 { margin: 0 0 4px 0; color: var(--text-muted); font-size: 11px; text-transform: uppercase; }
-        .stat-card span { display: block; font-size: 20px; font-weight: 800; color: var(--primary); }
+        /* STATS OVERVIEW CARDS */
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin-bottom: 12px; }
+        .stat-card { background: rgba(11, 15, 25, 0.4); padding: 12px; border-radius: 10px; border: 1px solid var(--border); text-align: center; }
+        .stat-card h5 { margin: 0 0 6px 0; color: var(--text-muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .stat-card span { display: block; font-size: 20px; font-weight: 800; color: var(--primary); text-shadow: 0 0 10px rgba(56, 189, 248, 0.2); }
 
-        table { width: 100%; border-collapse: collapse; background: var(--bg-color); }
-        th, td { padding: 12px 10px; text-align: left; font-size: 12px; border-bottom: 1px solid var(--border); white-space: nowrap; }
-        th { background-color: rgba(255, 255, 255, 0.03); color: var(--text-main); font-weight: 700; }
+        /* UNIVERSAL TABLES */
+        table { width: 100%; border-collapse: collapse; background: transparent; }
+        th, td { padding: 12px 14px; text-align: left; font-size: 12px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+        th { background-color: rgba(255, 255, 255, 0.02); color: var(--text-main); font-weight: 700; }
+        
         .material-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        @media (max-width: 480px) { .material-grid { grid-template-columns: 1fr; } }
-        .settings-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; }
-        .setting-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; padding-bottom: 6px; border-bottom: 1px solid rgba(255,255,255,0.03); }
+        .settings-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+        @media (min-width: 768px) { .settings-grid { gap: 20px; } }
+        .setting-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.02); }
         .archiv-details-list { margin: 0; padding-left: 14px; color: var(--text-muted); font-size: 11px; list-style-type: square; }
     </style>
 </head>
@@ -170,7 +426,7 @@
                     <div class="section">
                         <h3>👤 Patient</h3>
                         <label for="pName">Patienten-Name (optional):</label>
-                        <input type="text" id="pName" placeholder="Z.B. Max Mustermann" style="font-weight:bold; color:var(--warning);">
+                        <input type="text" id="pName" placeholder="Z.B. Max Mustermann" style="font-weight:700; color:var(--warning);">
                         
                         <label for="pVerletzungenAnzahl">Anzahl Verletzungen:</label>
                         <div class="counter-group">
@@ -192,7 +448,7 @@
                 
                 <!-- SPALTE 2: ABLAUF CHECKLISTE -->
                 <div>
-                    <div class="section" style="min-height: 200px;">
+                    <div class="section" style="min-height: 180px;">
                         <h3>📋 Medizinischer Ablauf</h3>
                         <div id="checklisteContainer"><p style="color: var(--text-muted); font-size:12px;">Wähle links ein Szenario aus, um die Schritte zu sehen.</p></div>
                     </div>
@@ -204,14 +460,14 @@
                         <h3>📦 Verbrauch & Ausgaben</h3>
                         <div class="material-grid" id="dynamischerMaterialVerbrauchGrid"></div>
                         
-                        <div style="background: rgba(56, 189, 248, 0.1); padding: 10px; border-radius: 8px; border: 1px dashed var(--primary); margin-top: 10px; text-align: center;">
-                            💧 Wasser-Automatik (<span id="wasserPreisLabel">$200</span>): <span id="val_mat_wasser" style="font-weight:bold; color:var(--primary);">0</span> Flasche(n) inklusive
+                        <div style="background: rgba(56, 189, 248, 0.05); padding: 12px; border-radius: 8px; border: 1px dashed rgba(56, 189, 248, 0.3); margin-top: 10px; text-align: center; font-weight: 500;">
+                            💧 Wasser-Automatik (<span id="wasserPreisLabel">$200</span>): <span id="val_mat_wasser" style="font-weight:700; color:var(--primary);">0</span> Flasche(n) inklusive
                         </div>
                         <label style="margin-top:20px;">Gesamtausgaben für diesen Fall ($)</label>
-                        <div class="counter-group" style="padding: 6px 10px; background: rgba(15, 23, 42, 0.5);">
+                        <div class="counter-group" style="padding: 8px 12px; background: rgba(11, 15, 25, 0.5); border-color: rgba(16, 185, 129, 0.3);">
                             <button class="counter-btn" style="width:40px;" onclick="stepKosten(-250)">-250</button>
                             <button class="counter-btn" onclick="stepKosten(-50)">-50</button>
-                            <span id="val_pKosten" style="font-size:18px; font-weight:800; color:var(--success);">$0</span>
+                            <span id="val_pKosten" style="font-size:20px; font-weight:800; color:var(--success); text-shadow: 0 0 10px rgba(16,185,129,0.2);">$0</span>
                             <button class="counter-btn plus-main" onclick="stepKosten(50)">+50</button>
                             <button class="counter-btn plus-main" style="width:40px;" onclick="stepKosten(250)">+250</button>
                         </div>
@@ -225,11 +481,11 @@
         <!-- REITER 2: STATISTIKEN -->
         <div id="statsTab" class="tab-content">
             <h2>📊 Live-Auswertung (Gesamtübersicht)</h2>
-            <div class="section" style="background: rgba(56, 189, 248, 0.05); border-color: var(--primary);">
+            <div class="section" style="background: rgba(56, 189, 248, 0.02); border-color: rgba(56, 189, 248, 0.3);">
                 <div class="stats-grid">
                     <div class="stat-card"><h5>Behandelte Patienten</h5><span id="statPatienten">0</span></div>
-                    <div class="stat-card"><h5>Anzahl Verletzungen</h5><span id="statVerletzungen" style="color: var(--warning);">0</span></div>
-                    <div class="stat-card"><h5>Ausgaben (Heute)</h5><span id="statAusgaben" style="color: var(--success);">$0</span></div>
+                    <div class="stat-card"><h5>Anzahl Verletzungen</h5><span id="statVerletzungen" style="color: var(--warning); text-shadow: 0 0 10px rgba(245,158,11,0.2);">0</span></div>
+                    <div class="stat-card"><h5>Ausgaben (Heute)</h5><span id="statAusgaben" style="color: var(--success); text-shadow: 0 0 10px rgba(16,185,129,0.2);">$0</span></div>
                 </div>
                 <div class="btn-group">
                     <button class="btn-day-reset" onclick="tagesstatistikZuruecksetzen()">Schicht beenden: Tagesstatistik archivieren & nullen</button>
@@ -250,7 +506,7 @@
                     </div>
                 </div>
             </div>
-            <div class="section" style="background: rgba(251, 191, 36, 0.02); border-color: var(--warning); margin-top: 15px;">
+            <div class="section" style="background: rgba(251, 191, 36, 0.01); border-color: rgba(251, 191, 36, 0.2); margin-top: 15px;">
                 <h3>🗄️ Abgeschlossene Schichten & Historie</h3>
                 <div class="table-responsive">
                     <table><thead><tr><th>Schicht</th><th>Patienten</th><th>Verletzungen</th><th>Ausgaben</th><th>Detaillierter Verbrauch</th><th style="width:40px;">Aktion</th></tr></thead><tbody id="archivTableBody"></tbody></table>
@@ -291,7 +547,7 @@
                             <tr><td class="font-bold" style="color:var(--danger);">10-12</td><td>Dienstende</td></tr>
                             <tr><td class="font-bold" style="color:var(--warning);">10-19</td><td>Abholung benötigt</td></tr>
                             <tr><td class="font-bold" style="color:var(--danger);">11-44</td><td class="font-bold" style="color:var(--danger);">RTW von PD/USMS benötigt</td></tr>
-                            <tr><td class="font-bold" style="background-color:rgba(248,113,113,0.15); color:var(--danger);">11-99</td><td class="font-bold" style="background-color:rgba(248,113,113,0.15); color:var(--danger);">Medic in Gefahr (Code Red)</td></tr>
+                            <tr style="background: rgba(244, 63, 94, 0.08);"><td class="font-bold" style="color:var(--danger);">11-99</td><td class="font-bold" style="color:var(--danger); text-shadow: 0 0 8px rgba(244,63,94,0.4);">Medic in Gefahr (Code Red)</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -300,7 +556,7 @@
                 <div class="guide-right-stack">
                     
                     <!-- 1. STATUS CODES -->
-                    <div class="section" style="margin-bottom: 0;">
+                    <div class="section" style="padding:0; overflow:hidden;">
                         <table class="guide-table">
                             <thead>
                                 <tr>
@@ -322,7 +578,7 @@
                     </div>
 
                     <!-- 2. STREIFEN ANORDNUNG -->
-                    <div class="section" style="margin-bottom: 0;">
+                    <div class="section" style="padding:0; overflow:hidden;">
                         <table class="guide-table">
                             <thead>
                                 <tr>
@@ -343,7 +599,7 @@
                     </div>
 
                     <!-- 3. KEINE RECHNUNG -->
-                    <div class="section" style="margin-bottom: 0;">
+                    <div class="section" style="padding:0; overflow:hidden;">
                         <table class="guide-table">
                             <thead>
                                 <tr>
@@ -352,16 +608,16 @@
                             </thead>
                             <tbody>
                                 <tr>
-                                    <td class="font-bold" style="width: 50%;">Staatliche Fraktionen<br><span style="color:var(--text-muted); font-weight:normal;">(SAPD, USMS, DOJ & SAMD)</span></td>
-                                    <td>Im Dienst wird keine Rechnung ausgestellt</td>
+                                    <td class="font-bold" style="width: 50%;">Staatliche Fraktionen<br><span style="color:var(--text-muted); font-weight:normal; font-size:11px;">(SAPD, USMS, DOJ & SAMD)</span></td>
+                                    <td style="color:var(--danger); font-weight:600;">Im Dienst wird keine Rechnung ausgestellt</td>
                                 </tr>
                                 <tr>
-                                    <td class="font-bold">Mechaniker<br><span style="color:var(--text-muted); font-weight:normal;">(Benny´s, Redfield & Roxwood Tuning)</span></td>
-                                    <td>Im Dienst wird keine Rechnung ausgestellt</td>
+                                    <td class="font-bold">Mechaniker<br><span style="color:var(--text-muted); font-weight:normal; font-size:11px;">(Benny´s, Redfield & Roxwood Tuning)</span></td>
+                                    <td style="color:var(--danger); font-weight:600;">Im Dienst wird keine Rechnung ausgestellt</td>
                                 </tr>
                                 <tr>
                                     <td class="font-bold">Security C77 / Bahamas / Casino / Golden Pub</td>
-                                    <td>Im Dienst wird keine Rechnung ausgestellt</td>
+                                    <td style="color:var(--danger); font-weight:600;">Im Dienst wird keine Rechnung ausgestellt</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -389,7 +645,7 @@
                     <input type="text" id="linkThema" placeholder="Z.B. EHK, Psychologie, CLS, MDI intern">
                     <p style="color: var(--text-muted); font-size: 11px; margin-top: 4px;">Hinweis: Gleiche Themen (Groß-/Kleinschreibung beachten) werden automatisch in eine einklappbare Gruppe sortiert!</p>
 
-                    <button class="btn" onclick="linkHinzufuegen()">Link in Cloud保存</button>
+                    <button class="btn" onclick="linkHinzufuegen()">Link in Cloud speichern</button>
                 </div>
 
                 <!-- LINK BEREICH MIT AUF- UND ZUKLAPPPARER LOGIK -->
@@ -409,26 +665,28 @@
                 <!-- LINKS: DIENSTTAGEZÄHLER -->
                 <div class="section">
                     <h3>📅 Diensttage-Rechner</h3>
-                    <div style="background: rgba(15, 23, 42, 0.4); padding: 15px; border-radius: 8px; border: 1px solid var(--border);">
-                        <p style="margin-top:0; font-size:14px;">Mitarbeiter: <b id="daysMedicName" style="color:var(--primary);">Bitte Namen eintragen!</b></p>
+                    <div style="background: rgba(11, 15, 25, 0.4); padding: 18px; border-radius: 10px; border: 1px solid var(--border);">
+                        <p style="margin-top:0; font-size:14px; font-weight:600;">Mitarbeiter: <b id="daysMedicName" style="color:var(--primary); text-shadow:0 0 8px rgba(56,189,248,0.2);">Bitte Namen eintragen!</b></p>
                         
                         <label for="einstellungsDatum">Eingestellt am:</label>
                         <input type="date" id="einstellungsDatum" onchange="berechneDienstTage()">
                         
-                        <div style="margin-top:20px; text-align:center; background:rgba(56, 189, 248, 0.08); padding:15px; border-radius:6px; border:1px dashed var(--primary);">
-                            <span style="font-size:11px; font-weight:700; color:var(--text-muted); display:block; text-transform:uppercase;">Dienstzeit aktuell</span>
-                            <span id="val_dienstTage" style="font-size:36px; font-weight:800; color:var(--warning);">0</span>
-                            <span style="font-size:14px; font-weight:700; display:block; color:var(--text-main); margin-top:4px;">Tage im Dienst</span>
+                        <div style="margin-top:20px; text-align:center; background: rgba(56, 189, 248, 0.03); padding:20px; border-radius:10px; border:1px dashed rgba(56, 189, 248, 0.3);">
+                            <span style="font-size:10px; font-weight:700; color:var(--text-muted); display:block; text-transform:uppercase; letter-spacing:1px;">Dienstzeit aktuell</span>
+                            <span id="val_dienstTage" style="font-size:42px; font-weight:800; color:var(--warning); display:block; margin: 4px 0; text-shadow: 0 0 15px rgba(245,158,11,0.3);">0</span>
+                            <span style="font-size:13px; font-weight:700; display:block; color:var(--text-main);">Tage im Dienst</span>
                         </div>
                     </div>
                 </div>
 
                 <!-- RECHTS: GEHALTSLISTE -->
-                <div class="section">
-                    <h3>💵 Gehaltstabelle (SAMD)</h3>
-                    <div class="table-responsive" style="margin-top:0;">
+                <div class="section" style="padding:0; overflow:hidden;">
+                    <div class="table-responsive" style="margin-top:0; border:none;">
                         <table class="guide-table">
                             <thead>
+                                <tr>
+                                    <th colspan="5" class="red-head" style="background: linear-gradient(135deg, #475569, #334155);">Gehaltstabelle (SAMD)</th>
+                                </tr>
                                 <tr>
                                     <th class="sub-head">IC Rang</th>
                                     <th class="sub-head">Rang-Name</th>
@@ -538,10 +796,8 @@
         if (gespeicherterVorname) document.getElementById('medicVorname').value = gespeicherterVorname;
         if (gespeicherterNachname) document.getElementById('medicNachname').value = gespeicherterNachname;
         
-        // Name im Dienstzeit-Rechner aktualisieren
         syncNameInDienstzeitRechner();
         
-        // Gespeichertes Datum laden
         const gespDatum = localStorage.getItem('mmd_einstellungsdatum');
         if(gespDatum) {
             document.getElementById('einstellungsDatum').value = gespDatum;
@@ -579,12 +835,10 @@
         const einstellungsDatum = new Date(inputField.value);
         einstellungsDatum.setHours(0,0,0,0);
         
-        // Serverzeit/Aktuelles Systemdatum
         const heute = new Date();
         heute.setHours(0,0,0,0);
         
         const zeitDifferenz = heute.getTime() - einstellungsDatum.getTime();
-        // Umwandlung in Tage (+1 um den Starttag voll mitzuzählen)
         let tage = Math.floor(zeitDifferenz / (1000 * 60 * 60 * 24)) + 1;
         
         if (tage < 0) tage = 0;
@@ -649,11 +903,6 @@
             db.ref("data").set({ materialKatalog, szenarioTemplates, medicDatenbank, daten, tagesZaehler });
         }
     });
-
-    window.onload = function() {
-        ladeMedicIdentity(); startPresenceWatcher();
-        document.getElementById('liveDateDisplay').textContent = new Date().toLocaleDateString('de-DE');
-    };
 
     function baueMaterialUIAuf() {
         const grid = document.getElementById('dynamischerMaterialVerbrauchGrid');
@@ -842,6 +1091,7 @@
         }
     }
 
+    // MATH & SYSTEM FUNKTIONEN BLEIBEN IDENTISCH (SICHERT ALTE DATENSÄTZE)
     function stepMat(id, amount) {
         fallMaterial[id] = Math.max(0, (fallMaterial[id] || 0) + amount);
         recalcCosts();
