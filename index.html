@@ -12,11 +12,11 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
     <style>
         :root {
-            --bg-color: #0b0f19; 
-            --card-bg: rgba(30, 41, 59, 0.45); 
-            --card-bg-solid: #1e293b;
-            --text-main: #f1f5f9; 
-            --text-muted: #64748b;
+            --bg-color: #080c14; 
+            --card-bg: rgba(22, 30, 46, 0.55); 
+            --card-bg-solid: #161e2e;
+            --text-main: #f8fafc; 
+            --text-muted: #94a3b8;
             --primary: #38bdf8; 
             --primary-hover: #0ea5e9; 
             --success: #10b981; 
@@ -25,24 +25,27 @@
             --danger-hover: #e11d48; 
             --warning: #f59e0b; 
             --warning-hover: #d97706; 
-            --border: rgba(51, 65, 85, 0.5);
-            --border-glow: rgba(56, 189, 248, 0.15);
-            --grad-red: linear-gradient(135deg, #ff6b6b, #ee5253);
-            --grad-dark: linear-gradient(180deg, rgba(30, 41, 59, 0.7) 0%, rgba(15, 23, 42, 0.7) 100%);
+            --border: rgba(255, 255, 255, 0.08);
+            --border-glow: rgba(56, 189, 248, 0.25);
+            --grad-red: linear-gradient(135deg, #ef4444, #dc2626);
+            --grad-dark: linear-gradient(180deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.8) 100%);
+            --grad-primary: linear-gradient(135deg, #38bdf8, #6366f1);
             
-            --rank-trainee: rgba(74, 222, 128, 0.08);
-            --rank-low: rgba(251, 191, 36, 0.08);
-            --rank-mid: rgba(249, 115, 22, 0.08);
-            --rank-high: rgba(248, 113, 113, 0.08);
-            --rank-chief: rgba(239, 68, 68, 0.12);
-            --rank-interne: rgba(34, 211, 238, 0.08);
+            --rank-trainee: rgba(74, 222, 128, 0.1);
+            --rank-low: rgba(251, 191, 36, 0.1);
+            --rank-mid: rgba(249, 115, 22, 0.1);
+            --rank-high: rgba(248, 113, 113, 0.1);
+            --rank-chief: rgba(239, 68, 68, 0.15);
+            --rank-interne: rgba(34, 211, 238, 0.1);
         }
         
+        * { box-sizing: border-box; }
+
         body { 
             font-family: 'Plus Jakarta Sans', sans-serif; 
             background-color: var(--bg-color); 
-            background-image: radial-gradient(circle at top right, rgba(56, 189, 248, 0.03), transparent 40%),
-                              radial-gradient(circle at bottom left, rgba(129, 140, 248, 0.03), transparent 40%);
+            background-image: radial-gradient(circle at top right, rgba(56, 189, 248, 0.05), transparent 50%),
+                              radial-gradient(circle at bottom left, rgba(99, 102, 241, 0.05), transparent 50%);
             color: var(--text-main); 
             margin: 0; 
             padding: 8px; 
@@ -54,25 +57,24 @@
         @media (min-width: 768px) { body { padding: 16px; } }
         
         .container { 
-            max-width: 1350px; 
+            max-width: 1400px; 
             margin: 0 auto; 
-            background: rgba(15, 23, 42, 0.6); 
-            padding: 12px; 
-            border-radius: 16px; 
+            background: rgba(15, 23, 42, 0.65); 
+            padding: 14px; 
+            border-radius: 20px; 
             border: 1px solid var(--border); 
-            box-shadow: 0 20px 40px -15px rgba(0,0,0,0.5);
-            backdrop-filter: blur(8px);
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.6);
+            backdrop-filter: blur(12px);
         }
-        @media (min-width: 768px) { .container { padding: 20px; } }
+        @media (min-width: 768px) { .container { padding: 22px; } }
         
         /* LOGIN / AUTH MASK */
         .auth-screen { display: flex; align-items: center; justify-content: center; min-height: 90vh; }
-        .auth-card { background: rgba(30, 41, 59, 0.7); border: 1px solid var(--border); border-radius: 16px; padding: 25px; width: 100%; max-width: 400px; box-shadow: 0 20px 50px rgba(0,0,0,0.6); backdrop-filter: blur(12px); text-align: center; }
-        .auth-tabs { display: flex; gap: 5px; margin-bottom: 20px; background: rgba(11, 15, 25, 0.5); padding: 4px; border-radius: 8px; }
-        .auth-tab-btn { background: transparent; color: var(--text-muted); border: none; padding: 8px; flex: 1; font-weight: 600; cursor: pointer; border-radius: 6px; font-size: 12px; }
-        .auth-tab-btn.active { background: var(--text-main); color: #0b0f19; }
+        .auth-card { background: rgba(22, 30, 46, 0.85); border: 1px solid var(--border); border-radius: 20px; padding: 28px; width: 100%; max-width: 420px; box-shadow: 0 25px 60px rgba(0,0,0,0.7); backdrop-filter: blur(16px); text-align: center; }
+        .auth-tabs { display: flex; gap: 6px; margin-bottom: 22px; background: rgba(8, 12, 20, 0.6); padding: 5px; border-radius: 12px; }
+        .auth-tab-btn { background: transparent; color: var(--text-muted); border: none; padding: 10px; flex: 1; font-weight: 700; cursor: pointer; border-radius: 8px; font-size: 12px; transition: all 0.2s; }
+        .auth-tab-btn.active { background: var(--text-main); color: #080c14; box-shadow: 0 4px 12px rgba(255,255,255,0.15); }
 
-        /* MAIN APP VIEW CONTROL */
         #mainAppView { display: none; }
 
         /* TOP BAR */
@@ -83,60 +85,61 @@
             align-items: center; 
             text-align: center;
             background: var(--grad-dark); 
-            padding: 12px; 
-            border-radius: 12px; 
-            border: 1px solid rgba(255,255,255,0.03); 
-            margin-bottom: 12px;
+            padding: 14px 18px; 
+            border-radius: 16px; 
+            border: 1px solid var(--border); 
+            margin-bottom: 16px;
             box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
         }
-        @media (min-width: 768px) { .top-bar { grid-template-columns: auto 1fr auto; text-align: left; padding: 10px 20px; margin-bottom: 16px; } }
-        .top-bar h1 { font-size: 1.4rem; font-weight: 800; background: linear-gradient(to right, #38bdf8, #818cf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin: 0; }
+        @media (min-width: 768px) { .top-bar { grid-template-columns: auto 1fr auto; text-align: left; margin-bottom: 20px; } }
+        .top-bar h1 { font-size: 1.4rem; font-weight: 800; background: var(--grad-primary); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin: 0; }
         
-        .medic-identity-display { font-size: 14px; font-weight: 700; color: var(--primary); display: flex; align-items: center; gap: 10px; justify-content: center; }
+        .medic-identity-display { font-size: 14px; font-weight: 700; color: var(--primary); display: flex; align-items: center; gap: 12px; justify-content: center; }
         @media (min-width: 768px) { .medic-identity-display { justify-content: flex-start; } }
-        .btn-logout { background: rgba(244, 63, 94, 0.15); border: 1px solid rgba(244, 63, 94, 0.3); color: var(--danger); padding: 4px 10px; border-radius: 6px; font-size: 11px; cursor: pointer; font-weight: 700; transition: all 0.2s; }
-        .btn-logout:hover { background: var(--danger); color: #0b0f19; }
+        .btn-logout { background: rgba(244, 63, 94, 0.15); border: 1px solid rgba(244, 63, 94, 0.3); color: var(--danger); padding: 6px 12px; border-radius: 8px; font-size: 11px; cursor: pointer; font-weight: 700; transition: all 0.2s; }
+        .btn-logout:hover { background: var(--danger); color: #080c14; }
 
         .info-zone { display: flex; align-items: center; gap: 10px; font-size: 12px; font-weight: 600; justify-content: center; width: 100%; }
         @media (min-width: 768px) { .info-zone { justify-content: flex-end; width: auto; } }
-        .date-display { color: var(--warning); background: rgba(251, 191, 36, 0.06); padding: 6px 12px; border-radius: 8px; border: 1px solid rgba(251, 191, 36, 0.15); }
+        .date-display { color: var(--warning); background: rgba(251, 191, 36, 0.08); padding: 6px 14px; border-radius: 10px; border: 1px solid rgba(251, 191, 36, 0.2); }
         
-        .online-medics { background: rgba(56, 189, 248, 0.04); border: 1px solid rgba(56, 189, 248, 0.2); padding: 6px 12px; border-radius: 8px; display: flex; align-items: center; gap: 8px; justify-content: center; width: 100%; box-sizing: border-box; }
+        .online-medics { background: rgba(56, 189, 248, 0.06); border: 1px solid rgba(56, 189, 248, 0.2); padding: 6px 14px; border-radius: 10px; display: flex; align-items: center; gap: 8px; justify-content: center; width: 100%; }
         @media (min-width: 768px) { .online-medics { width: auto; } }
-        .online-dot { width: 8px; height: 8px; background: var(--success); border-radius: 50%; display: inline-block; box-shadow: 0 0 8px var(--success); }
+        .online-dot { width: 8px; height: 8px; background: var(--success); border-radius: 50%; display: inline-block; box-shadow: 0 0 10px var(--success); }
 
         /* TAB MANAGEMENT NAVIGATION */
-        .tab-nav { display: flex; gap: 6px; margin-bottom: 16px; background: rgba(11, 15, 25, 0.4); padding: 4px; border-radius: 12px; border: 1px solid var(--border); overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+        .tab-nav { display: flex; gap: 6px; margin-bottom: 20px; background: rgba(8, 12, 20, 0.5); padding: 5px; border-radius: 14px; border: 1px solid var(--border); overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
         .tab-nav::-webkit-scrollbar { display: none; }
-        .tab-btn { background: transparent; color: var(--text-muted); border: none; padding: 12px 16px; font-size: 12px; font-weight: 600; border-radius: 8px; cursor: pointer; flex: 1; min-width: 145px; text-align: center; white-space: nowrap; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
-        @media (min-width: 768px) { .tab-btn { font-size: 13px; padding: 10px 18px; } }
-        .tab-btn:hover { color: var(--text-main); background: rgba(255, 255, 255, 0.03); }
-        .tab-btn.active { background-color: var(--text-main); color: #0b0f19; font-weight: 700; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+        .tab-btn { background: transparent; color: var(--text-muted); border: none; padding: 12px 18px; font-size: 12px; font-weight: 700; border-radius: 10px; cursor: pointer; flex: 1; min-width: 150px; text-align: center; white-space: nowrap; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+        @media (min-width: 768px) { .tab-btn { font-size: 13px; padding: 12px 20px; } }
+        .tab-btn:hover { color: var(--text-main); background: rgba(255, 255, 255, 0.04); }
+        .tab-btn.active { background-color: var(--text-main); color: #080c14; font-weight: 800; box-shadow: 0 4px 15px rgba(255,255,255,0.2); }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
 
-        /* TABLES & GRID SYSTEM DESIGN */
-        .action-grid { display: grid; grid-template-columns: 1fr; gap: 12px; align-items: start; }
-        @media (min-width: 992px) { .action-grid { grid-template-columns: 280px 1fr; } }
-        @media (min-width: 1200px) { .action-grid { grid-template-columns: 290px 1fr 410px; gap: 20px; } }
+        /* GRIDS & CARDS */
+        .action-grid { display: grid; grid-template-columns: 1fr; gap: 16px; align-items: start; }
+        @media (min-width: 992px) { .action-grid { grid-template-columns: 310px 1fr; } }
+        @media (min-width: 1200px) { .action-grid { grid-template-columns: 310px 1fr 420px; gap: 20px; } }
+        
         .stats-main-grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
-        .table-responsive { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; margin-top: 10px; border-radius: 10px; border: 1px solid var(--border); background: rgba(11, 15, 25, 0.3); }
+        .table-responsive { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; margin-top: 10px; border-radius: 12px; border: 1px solid var(--border); background: rgba(8, 12, 20, 0.35); }
         
         .guide-split-container { display: grid; grid-template-columns: 1fr; gap: 16px; align-items: start; }
         @media (min-width: 900px) { .guide-split-container { grid-template-columns: 1fr 1fr; gap: 20px; } }
         .guide-right-stack { display: flex; flex-direction: column; gap: 16px; }
         
-        .guide-table { width: 100%; border-collapse: collapse; background: rgba(11, 15, 25, 0.2); border-radius: 10px; overflow: hidden; border: 1px solid var(--border); }
-        .guide-table th.red-head { background: var(--grad-red); color: white; font-size: 13px; font-weight: 800; text-align: center; padding: 12px; text-transform: uppercase; letter-spacing: 0.5px; text-shadow: 0 1px 2px rgba(0,0,0,0.2); }
+        .guide-table { width: 100%; border-collapse: collapse; background: rgba(8, 12, 20, 0.2); border-radius: 12px; overflow: hidden; border: 1px solid var(--border); }
+        .guide-table th.red-head { background: var(--grad-red); color: white; font-size: 13px; font-weight: 800; text-align: center; padding: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
         .guide-table th.sub-head { background-color: rgba(30, 41, 59, 0.8); color: var(--text-main); font-weight: 700; border-bottom: 1px solid var(--border); padding: 10px; }
         .guide-table td { padding: 12px; border-bottom: 1px solid var(--border); font-size: 12px; }
         
         .link-grid { display: grid; grid-template-columns: 1fr; gap: 16px; align-items: start; }
-        @media (min-width: 900px) { .link-grid { grid-template-columns: 320px 1fr; gap: 20px; } }
-        .link-btn-clickable { display: inline-block; background: rgba(56, 189, 248, 0.06); color: var(--primary); padding: 8px 16px; border-radius: 6px; border: 1px solid rgba(56, 189, 248, 0.15); font-weight: 700; text-decoration: none; transition: all 0.2s; }
-        .link-btn-clickable:hover { background: var(--primary); color: #0b0f19; box-shadow: 0 0 12px rgba(56, 189, 248, 0.3); transform: translateY(-1px); }
+        @media (min-width: 900px) { .link-grid { grid-template-columns: 340px 1fr; gap: 20px; } }
+        .link-btn-clickable { display: inline-block; background: rgba(56, 189, 248, 0.08); color: var(--primary); padding: 8px 14px; border-radius: 8px; border: 1px solid rgba(56, 189, 248, 0.2); font-weight: 700; text-decoration: none; transition: all 0.2s; }
+        .link-btn-clickable:hover { background: var(--primary); color: #080c14; box-shadow: 0 0 15px rgba(56, 189, 248, 0.4); transform: translateY(-1px); }
 
-        .theme-accordion-group { margin-bottom: 12px; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; background: rgba(11, 15, 25, 0.2); }
+        .theme-accordion-group { margin-bottom: 12px; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; background: rgba(8, 12, 20, 0.3); }
         .theme-accordion-header { background: rgba(30, 41, 59, 0.6); padding: 14px 18px; font-size: 13px; font-weight: 700; color: var(--warning); display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none; }
         .theme-accordion-header::after { content: '▼'; font-size: 9px; color: var(--text-muted); transition: transform 0.2s; }
         .theme-accordion-group.collapsed .theme-accordion-header::after { transform: rotate(-90deg); color: var(--primary); }
@@ -144,47 +147,57 @@
         .theme-accordion-group.collapsed .theme-accordion-content { display: none; }
 
         /* CARDS & CONTAINERS */
-        .section { padding: 14px; border: 1px solid var(--border); border-radius: 12px; background: var(--card-bg); margin-bottom: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); backdrop-filter: blur(10px); }
-        @media (min-width: 768px) { .section { padding: 16px; margin-bottom: 16px; } }
+        .section { padding: 16px; border: 1px solid var(--border); border-radius: 16px; background: var(--card-bg); margin-bottom: 16px; box-shadow: 0 8px 32px rgba(0,0,0,0.2); backdrop-filter: blur(12px); transition: border-color 0.2s; }
         .section:hover { border-color: var(--border-glow); }
-        .section h3 { font-size: 14px; font-weight: 700; margin-top: 0; margin-bottom: 12px; border-bottom: 1px solid var(--border); padding-bottom: 6px; color: var(--primary); }
+        .section h3 { font-size: 14px; font-weight: 800; margin-top: 0; margin-bottom: 14px; border-bottom: 1px solid var(--border); padding-bottom: 8px; color: var(--primary); display: flex; justify-content: space-between; align-items: center; }
         
-        label { font-size: 10px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 6px; margin-top: 10px; text-transform: uppercase; letter-spacing: 0.5px; text-align: left; }
-        select, input[type="text"], input[type="number"], input[type="date"], input[type="password"] { width: 100%; padding: 12px 14px; font-size: 13px; font-family: inherit; background-color: rgba(11, 15, 25, 0.5); color: var(--text-main); border: 1px solid var(--border); border-radius: 8px; box-sizing: border-box; transition: all 0.2s; }
-        select:focus, input[type="text"]:focus, input[type="number"]:focus, input[type="date"]:focus, input[type="password"]:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.15); outline: none; background-color: rgba(11, 15, 25, 0.7); }
+        label { font-size: 10px; font-weight: 800; color: var(--text-muted); display: block; margin-bottom: 6px; margin-top: 12px; text-transform: uppercase; letter-spacing: 0.5px; text-align: left; }
+        select, input[type="text"], input[type="number"], input[type="date"], input[type="password"] { width: 100%; padding: 12px 14px; font-size: 13px; font-family: inherit; background-color: rgba(8, 12, 20, 0.6); color: var(--text-main); border: 1px solid var(--border); border-radius: 10px; box-sizing: border-box; transition: all 0.2s; }
+        select:focus, input[type="text"]:focus, input[type="number"]:focus, input[type="date"]:focus, input[type="password"]:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2); outline: none; background-color: rgba(8, 12, 20, 0.8); }
 
-        .counter-group { display: flex; align-items: center; justify-content: space-between; background: rgba(11, 15, 25, 0.4); padding: 6px 10px; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 8px; }
-        .counter-btn { background-color: #334155; color: var(--text-main); border: none; width: 36px; height: 36px; font-size: 18px; font-weight: 700; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-        .counter-btn.plus-main { background-color: var(--primary); color: #0b0f19; }
-        .counter-value { font-size: 14px; font-weight: 700; width: 45px; text-align: center; color: var(--text-main); }
+        .counter-group { display: flex; align-items: center; justify-content: space-between; background: rgba(8, 12, 20, 0.5); padding: 6px 10px; border: 1px solid var(--border); border-radius: 10px; margin-bottom: 8px; }
+        .counter-btn { background-color: #1e293b; color: var(--text-main); border: 1px solid var(--border); width: 38px; height: 38px; font-size: 18px; font-weight: 700; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+        .counter-btn:hover { background-color: #334155; }
+        .counter-btn.plus-main { background-color: var(--primary); color: #080c14; border: none; }
+        .counter-btn.plus-main:hover { background-color: var(--primary-hover); }
+        .counter-value { font-size: 14px; font-weight: 800; width: 45px; text-align: center; color: var(--text-main); }
 
-        .todo-item { display: flex; align-items: center; background: rgba(11, 15, 25, 0.4); padding: 14px 12px; margin: 8px 0; border-radius: 8px; border: 1px solid var(--border); border-left: 4px solid var(--primary); font-size: 12px; }
-        .todo-item.completed { border-left-color: var(--success); background: rgba(16, 185, 129, 0.02); text-decoration: line-through; color: var(--text-muted); }
+        .todo-item { display: flex; align-items: center; background: rgba(8, 12, 20, 0.5); padding: 12px 14px; margin: 8px 0; border-radius: 10px; border: 1px solid var(--border); border-left: 4px solid var(--primary); font-size: 12px; transition: all 0.2s; }
+        .todo-item.completed { border-left-color: var(--success); background: rgba(16, 185, 129, 0.04); text-decoration: line-through; color: var(--text-muted); }
         input[type="checkbox"] { margin-right: 12px; transform: scale(1.3); cursor: pointer; accent-color: var(--primary); }
 
-        .btn { color: #0b0f19; border: none; padding: 14px 16px; font-size: 13px; font-weight: 700; border-radius: 8px; cursor: pointer; width: 100%; margin-top: 12px; background-color: var(--success); box-shadow: 0 4px 14px rgba(16, 185, 129, 0.2); transition: all 0.2s; }
-        .btn:hover { background-color: var(--success-hover); transform: translateY(-1px); }
+        .btn { color: #080c14; border: none; padding: 14px 18px; font-size: 13px; font-weight: 800; border-radius: 10px; cursor: pointer; width: 100%; margin-top: 12px; background-color: var(--success); box-shadow: 0 4px 16px rgba(16, 185, 129, 0.25); transition: all 0.2s; }
+        .btn:hover { background-color: var(--success-hover); transform: translateY(-1px); box-shadow: 0 6px 20px rgba(16, 185, 129, 0.35); }
+        .btn-quick { background: linear-gradient(135deg, #f59e0b, #d97706); color: #080c14; margin-top: 8px; }
+        .btn-quick:hover { background: #d97706; }
+
         .btn-group { display: flex; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
-        .btn-day-reset { background-color: var(--warning); color: #0b0f19; border: none; padding: 14px 18px; font-size: 13px; font-weight: 700; border-radius: 8px; cursor: pointer; flex: 2; min-width: 200px; box-shadow: 0 4px 12px rgba(245, 158, 11, 0.15); }
-        .btn-full-reset { background-color: rgba(244, 63, 94, 0.1); color: var(--danger); border: 1px solid rgba(244, 63, 94, 0.2); padding: 14px 15px; font-size: 13px; font-weight: 700; border-radius: 8px; cursor: pointer; flex: 1; min-width: 100px; }
+        .btn-day-reset { background-color: var(--warning); color: #080c14; border: none; padding: 14px 18px; font-size: 13px; font-weight: 800; border-radius: 10px; cursor: pointer; flex: 2; min-width: 200px; box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2); }
+        .btn-full-reset { background-color: rgba(244, 63, 94, 0.12); color: var(--danger); border: 1px solid rgba(244, 63, 94, 0.25); padding: 14px 15px; font-size: 13px; font-weight: 800; border-radius: 10px; cursor: pointer; flex: 1; min-width: 100px; }
+        .btn-export { background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.3); color: var(--primary); padding: 8px 14px; border-radius: 8px; font-size: 11px; cursor: pointer; font-weight: 700; transition: all 0.2s; margin-left: auto; }
+        .btn-export:hover { background: var(--primary); color: #080c14; }
 
-        .btn-delete-row { background: transparent; color: var(--text-muted); border: none; font-size: 14px; cursor: pointer; padding: 6px 12px; border-radius: 6px; }
+        .btn-delete-row, .btn-edit-row { background: transparent; color: var(--text-muted); border: none; font-size: 14px; cursor: pointer; padding: 6px 10px; border-radius: 6px; transition: all 0.2s; }
         .btn-delete-row:hover { color: var(--danger); background: rgba(244, 63, 94, 0.1); }
+        .btn-edit-row:hover { color: var(--primary); background: rgba(56, 189, 248, 0.1); }
 
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin-bottom: 12px; }
-        .stat-card { background: rgba(11, 15, 25, 0.4); padding: 12px; border-radius: 10px; border: 1px solid var(--border); text-align: center; }
-        .stat-card h5 { margin: 0 0 4px 0; font-size: 11px; color: var(--text-muted); text-transform: uppercase; }
-        .stat-card span { display: block; font-size: 20px; font-weight: 800; color: var(--primary); text-shadow: 0 0 10px rgba(56, 189, 248, 0.2); }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 12px; }
+        .stat-card { background: rgba(8, 12, 20, 0.5); padding: 16px; border-radius: 14px; border: 1px solid var(--border); text-align: center; }
+        .stat-card h5 { margin: 0 0 6px 0; font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+        .stat-card span { display: block; font-size: 22px; font-weight: 800; color: var(--primary); text-shadow: 0 0 12px rgba(56, 189, 248, 0.25); }
 
         table { width: 100%; border-collapse: collapse; background: transparent; }
         th, td { padding: 12px 14px; text-align: left; font-size: 12px; border-bottom: 1px solid var(--border); white-space: nowrap; }
-        th { background-color: rgba(255, 255, 255, 0.02); color: var(--text-main); font-weight: 700; }
+        th { background-color: rgba(255, 255, 255, 0.03); color: var(--text-main); font-weight: 700; }
         
         .material-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .settings-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
-        @media (min-width: 768px) { .settings-grid { gap: 20px; } }
-        .setting-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.02); }
+        .settings-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 18px; }
+        .setting-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.03); }
         .archiv-details-list { margin: 0; padding-left: 14px; color: var(--text-muted); font-size: 11px; list-style-type: square; }
+
+        /* MODAL POPUP (EDIT) */
+        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(8px); display: none; align-items: center; justify-content: center; z-index: 999; padding: 16px; }
+        .modal-card { background: var(--card-bg-solid); border: 1px solid var(--border); border-radius: 20px; padding: 24px; width: 100%; max-width: 450px; box-shadow: 0 25px 50px rgba(0,0,0,0.8); }
     </style>
 </head>
 <body>
@@ -215,7 +228,7 @@
         </div>
     </div>
 
-    <!-- MAIN SOFTWARE APP VIEW (WIRD ERST NACH LOGIN SICHTBAR) -->
+    <!-- MAIN SOFTWARE APP VIEW -->
     <div id="mainAppView" class="container">
         <!-- TOP BAR -->
         <div class="top-bar">
@@ -234,9 +247,9 @@
 
         <div class="tab-nav">
             <button class="tab-btn active" onclick="switchTab('docTab', this)">📝 Dokumentation & Einsatz</button>
-            <button class="tab-btn" onclick="switchTab('statsTab', this)">📊 Gesamt-Statistiken & Archiv</button>
-            <button class="tab-btn" onclick="switchTab('guideTab', this)">📋 Dienst-Leitfaden & Funk</button>
-            <button class="tab-btn" onclick="switchTab('linksTab', this)">🔗 Dienst-Links & Dokumente</button>
+            <button class="tab-btn" onclick="switchTab('statsTab', this)">📊 Statistiken & Archiv</button>
+            <button class="tab-btn" onclick="switchTab('guideTab', this)">📋 Leitfaden & Funk</button>
+            <button class="tab-btn" onclick="switchTab('linksTab', this)">🔗 Links & Dokumente</button>
             <button class="tab-btn" onclick="switchTab('miscTab', this)">🗂️ Sonstiges & Gehalt</button>
             <button class="tab-btn" id="adminMainTabHeader" onclick="settingsTabClick()">⚙️ Einstellungen</button>
         </div>
@@ -268,7 +281,7 @@
                     </div>
                 </div>
                 <div>
-                    <div class="section" style="min-height: 180px;">
+                    <div class="section" style="min-height: 200px;">
                         <h3>📋 Medizinischer Ablauf</h3>
                         <div id="checklisteContainer"><p style="color: var(--text-muted); font-size:12px;">Wähle links ein Szenario aus, um die Schritte zu sehen.</p></div>
                     </div>
@@ -277,11 +290,11 @@
                     <div class="section">
                         <h3>📦 Verbrauch & Ausgaben</h3>
                         <div class="material-grid" id="dynamischerMaterialVerbrauchGrid"></div>
-                        <div style="background: rgba(56, 189, 248, 0.05); padding: 12px; border-radius: 8px; border: 1px dashed rgba(56, 189, 248, 0.3); margin-top: 10px; text-align: center; font-weight: 500;">
-                            💧 Wasser-Automatik (<span id="wasserPreisLabel">$200</span>): <span id="val_mat_wasser" style="font-weight:700; color:var(--primary);">0</span> Flasche(n) inklusive
+                        <div style="background: rgba(56, 189, 248, 0.05); padding: 12px; border-radius: 10px; border: 1px dashed rgba(56, 189, 248, 0.3); margin-top: 12px; text-align: center; font-weight: 600;">
+                            💧 Wasser-Automatik (<span id="wasserPreisLabel">$200</span>): <span id="val_mat_wasser" style="font-weight:800; color:var(--primary);">0</span> Flasche(n) inklusive
                         </div>
-                        <label style="margin-top:20px;">Gesamtausgaben für diesen Fall ($)</label>
-                        <div class="counter-group" style="padding: 8px 12px; background: rgba(11, 15, 25, 0.5); border-color: rgba(16, 185, 129, 0.3);">
+                        <label style="margin-top:16px;">Gesamtausgaben für diesen Fall ($)</label>
+                        <div class="counter-group" style="padding: 8px 12px; background: rgba(8, 12, 20, 0.6); border-color: rgba(16, 185, 129, 0.3);">
                             <button class="counter-btn" style="width:40px;" onclick="stepKosten(-250)">-250</button>
                             <button class="counter-btn" onclick="stepKosten(-50)">-50</button>
                             <span id="val_pKosten" style="font-size:20px; font-weight:800; color:var(--success); text-shadow: 0 0 10px rgba(16,185,129,0.2);">$0</span>
@@ -289,6 +302,7 @@
                             <button class="counter-btn plus-main" style="width:40px;" onclick="stepKosten(250)">+250</button>
                         </div>
                         <button class="btn" onclick="patientHinzufuegen()">Eintrag live buchen</button>
+                        <button class="btn btn-quick" onclick="schnellBehandlungBuchen()">⚡ Schnell-Behandlung (Verband+Wasser)</button>
                     </div>
                 </div>
             </div>
@@ -309,29 +323,41 @@
                 </div>
                 <p id="nonAdminResetWarnText" style="color:var(--text-muted); font-size:12px; margin-top:10px; text-align:center;">ℹ️ Nur die Fraktionsleitung (Tim Sanddorn) kann eine Schicht archivieren oder nullen.</p>
             </div>
+            
             <div class="stats-main-grid">
-                <div class="section">
-                    <h3>📦 Gesamter Materialverbrauch (Heute)</h3>
-                    <div class="table-responsive">
-                        <table><thead><tr><th>Material</th><th>Menge</th></tr></thead><tbody id="tagesVerbrauchTableBody"></tbody></table>
+                <div class="theme-accordion-group" id="group-verbrauch">
+                    <div class="theme-accordion-header" onclick="toggleGroupCollapse('group-verbrauch')">📦 Gesamter Materialverbrauch (Heute)</div>
+                    <div class="theme-accordion-content">
+                        <div class="table-responsive" style="margin:0; border:none;">
+                            <table><thead><tr><th>Material</th><th>Menge</th></tr></thead><tbody id="tagesVerbrauchTableBody"></tbody></table>
+                        </div>
                     </div>
                 </div>
-                <div class="section">
-                    <h3>📜 Patientenprotokoll (Heute)</h3>
-                    <div class="table-responsive">
-                        <table><thead><tr><th>Patient</th><th>Szenario</th><th>Verletzungen</th><th>Ausgaben</th><th>Eingetragen von</th><th style="width:40px; display:none;" class="admin-action-th">Aktion</th></tr></thead><tbody id="logTableBody"></tbody></table>
+
+                <div class="theme-accordion-group" id="group-protokoll">
+                    <div class="theme-accordion-header" onclick="toggleGroupCollapse('group-protokoll')">📜 Patientenprotokoll (Heute)</div>
+                    <div class="theme-accordion-content">
+                        <div class="table-responsive" style="margin:0; border:none;">
+                            <table><thead><tr><th>Patient</th><th>Szenario</th><th>Verletzungen</th><th>Ausgaben</th><th>Eingetragen von</th><th style="width:70px;">Aktion</th></tr></thead><tbody id="logTableBody"></tbody></table>
+                        </div>
                     </div>
                 </div>
             </div>
-            <div class="section" style="background: rgba(251, 191, 36, 0.01); border-color: rgba(251, 191, 36, 0.2); margin-top: 15px;">
-                <h3>🗄️ Abgeschlossene Schichten & Historie</h3>
-                <div class="table-responsive">
-                    <table><thead><tr><th>Schicht</th><th>Patienten</th><th>Verletzungen</th><th>Ausgaben</th><th>Detaillierter Verbrauch</th><th style="width:40px; display:none;" class="admin-action-th">Aktion</th></tr></thead><tbody id="archivTableBody"></tbody></table>
+
+            <div class="theme-accordion-group" id="group-archiv" style="margin-top: 15px;">
+                <div class="theme-accordion-header" onclick="toggleGroupCollapse('group-archiv')">
+                    <span>🗄️ Abgeschlossene Schichten & Historie</span>
+                    <button class="btn-export" onclick="event.stopPropagation(); exportArchivCSV();">📥 Schicht als CSV exportieren</button>
+                </div>
+                <div class="theme-accordion-content">
+                    <div class="table-responsive" style="margin:0; border:none;">
+                        <table><thead><tr><th>Schicht</th><th>Patienten</th><th>Verletzungen</th><th>Ausgaben</th><th>Detaillierter Verbrauch</th><th style="width:40px; display:none;" class="admin-action-th">Aktion</th></tr></thead><tbody id="archivTableBody"></tbody></table>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- REITER 3: DIENST-LEITFADEN & FUNK -->
+        <!-- REITER 3: LEITFADEN & FUNK -->
         <div id="guideTab" class="tab-content">
             <h2>📋 Fraktions-Leitfaden & Dienst-Referenz</h2>
             <div class="guide-split-container">
@@ -421,42 +447,45 @@
             <div class="guide-split-container">
                 <div class="section">
                     <h3>📅 Diensttage-Rechner</h3>
-                    <div style="background: rgba(11, 15, 25, 0.4); padding: 18px; border-radius: 10px; border: 1px solid var(--border);">
-                        <p style="margin-top:0; font-size:14px; font-weight:600;">Mitarbeiter: <b id="daysMedicName" style="color:var(--primary); text-shadow:0 0 8px rgba(56,189,248,0.2);">--</b></p>
+                    <div style="background: rgba(8, 12, 20, 0.5); padding: 20px; border-radius: 14px; border: 1px solid var(--border);">
+                        <p style="margin-top:0; font-size:14px; font-weight:700;">Mitarbeiter: <b id="daysMedicName" style="color:var(--primary); text-shadow:0 0 8px rgba(56,189,248,0.2);">--</b></p>
                         <label for="einstellungsDatum">Eingestellt am:</label>
                         <input type="date" id="einstellungsDatum" onchange="berechneDienstTage()">
-                        <div style="margin-top:20px; text-align:center; background: rgba(56, 189, 248, 0.03); padding:20px; border-radius:10px; border:1px dashed rgba(56, 189, 248, 0.3);">
-                            <span style="font-size:10px; font-weight:700; color:var(--text-muted); display:block; text-transform:uppercase; letter-spacing:1px;">Dienstzeit aktuell</span>
-                            <span id="val_dienstTage" style="font-size:42px; font-weight:800; color:var(--warning); display:block; margin: 4px 0; text-shadow: 0 0 15px rgba(245,158,11,0.3);">0</span>
+                        <div style="margin-top:20px; text-align:center; background: rgba(56, 189, 248, 0.04); padding:22px; border-radius:14px; border:1px dashed rgba(56, 189, 248, 0.3);">
+                            <span style="font-size:10px; font-weight:800; color:var(--text-muted); display:block; text-transform:uppercase; letter-spacing:1px;">Dienstzeit aktuell</span>
+                            <span id="val_dienstTage" style="font-size:44px; font-weight:800; color:var(--warning); display:block; margin: 4px 0; text-shadow: 0 0 15px rgba(245,158,11,0.3);">0</span>
                             <span style="font-size:13px; font-weight:700; display:block; color:var(--text-main);">Tage im Dienst</span>
                         </div>
                     </div>
                 </div>
-                <div class="section" style="padding:0; overflow:hidden;">
-                    <div class="table-responsive" style="margin-top:0; border:none;">
-                        <table class="guide-table">
-                            <thead>
-                                <tr><th colspan="5" class="red-head" style="background: linear-gradient(135deg, #475569, #334155);">Gehaltstabelle (SAMD)</th></tr>
-                                <tr><th class="sub-head">IC Rang</th><th class="sub-head">Rang-Name</th><th class="sub-head">Command</th><th class="sub-head">pro 15 Min.</th><th class="sub-head">volle Stunde</th></tr>
-                            </thead>
-                            <tbody>
-                                <tr style="background-color: var(--rank-trainee);"><td style="font-weight:bold;">Rang 1</td><td style="font-weight:bold;">Trainee</td><td>SAMD Trainee</td><td>5.500k</td><td>22.000k</td></tr>
-                                <tr style="background-color: var(--rank-trainee);"><td style="font-weight:bold;">Rang 2</td><td style="font-weight:bold;">Solo Trainee</td><td>SAMD Trainee</td><td>7.000k</td><td>28.000k</td></tr>
-                                <tr style="background-color: var(--rank-low);"><td style="font-weight:bold;">Rang 3</td><td style="font-weight:bold;">EMT</td><td>Low Command</td><td>7.500k</td><td>30.000k</td></tr>
-                                <tr style="background-color: var(--rank-low);"><td style="font-weight:bold;">Rang 4</td><td style="font-weight:bold;">A-EMT</td><td>Low Command</td><td>8.250k</td><td>33.000k</td></tr>
-                                <tr style="background-color: var(--rank-mid);"><td style="font-weight:bold;">Rang 5</td><td style="font-weight:bold;">Paramedic / Resident Phys.</td><td>Mid Command</td><td>9.500k</td><td>38.000k</td></tr>
-                                <tr style="background-color: var(--rank-mid);"><td style="font-weight:bold;">Rang 6</td><td style="font-weight:bold;">Senior Paramedic</td><td>Mid Command</td><td>11.000k</td><td>44.000k</td></tr>
-                                <tr style="background-color: var(--rank-mid);"><td style="font-weight:bold;">Rang 7</td><td style="font-weight:bold;">Physician</td><td>Mid Command</td><td>11.000k</td><td>44.000k</td></tr>
-                                <tr style="background-color: var(--rank-mid);"><td style="font-weight:bold;">Rang 8</td><td style="font-weight:bold;">Medical Supervisor</td><td>Mid Command</td><td>11.500k</td><td>46.000k</td></tr>
-                                <tr style="background-color: var(--rank-mid);"><td style="font-weight:bold;">Rang 9</td><td style="font-weight:bold;">Attending</td><td>Mid Command</td><td>11.500k</td><td>46.000k</td></tr>
-                                <tr style="background-color: var(--rank-high);"><td style="font-weight:bold;">Rang 10</td><td style="font-weight:bold;">Lieutenant / Field Op. Dir.</td><td>High Command</td><td>12.500k</td><td>50.000k</td></tr>
-                                <tr style="background-color: var(--rank-high);"><td style="font-weight:bold;">Rang 11</td><td style="font-weight:bold;">Chief Phys. / Dir. of Med. Op.</td><td>High Command</td><td>12.500k</td><td>50.000k</td></tr>
-                                <tr style="background-color: var(--rank-chief);"><td style="font-weight:bold;">Rang 12</td><td style="font-weight:bold;">Deputy Chief</td><td>Chiefebene</td><td>15.000k</td><td>60.000k</td></tr>
-                                <tr style="background-color: var(--rank-chief);"><td style="font-weight:bold;">Rang 13</td><td style="font-weight:bold;">Assistant Chief</td><td>Chiefebene</td><td>15.500k</td><td>62.000k</td></tr>
-                                <tr style="background-color: var(--rank-chief);"><td style="font-weight:bold;">Rang 14</td><td style="font-weight:bold;">Chief of SAMD</td><td>Chiefebene</td><td>16.250k</td><td>65.000k</td></tr>
-                                <tr style="background-color: var(--rank-interne);"><td style="font-weight:bold;">Rang 15</td><td style="font-weight:bold;">Interne</td><td>Interne</td><td>0</td><td>0</td></tr>
-                            </tbody>
-                        </table>
+                
+                <div class="theme-accordion-group" id="group-gehalt">
+                    <div class="theme-accordion-header" onclick="toggleGroupCollapse('group-gehalt')">💰 Gehaltstabelle (SAMD)</div>
+                    <div class="theme-accordion-content">
+                        <div class="table-responsive" style="margin:0; border:none;">
+                            <table class="guide-table">
+                                <thead>
+                                    <tr><th class="sub-head">IC Rang</th><th class="sub-head">Rang-Name</th><th class="sub-head">Command</th><th class="sub-head">pro 15 Min.</th><th class="sub-head">volle Stunde</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr style="background-color: var(--rank-trainee);"><td style="font-weight:bold;">Rang 1</td><td style="font-weight:bold;">Trainee</td><td>SAMD Trainee</td><td>5.500k</td><td>22.000k</td></tr>
+                                    <tr style="background-color: var(--rank-trainee);"><td style="font-weight:bold;">Rang 2</td><td style="font-weight:bold;">Solo Trainee</td><td>SAMD Trainee</td><td>7.000k</td><td>28.000k</td></tr>
+                                    <tr style="background-color: var(--rank-low);"><td style="font-weight:bold;">Rang 3</td><td style="font-weight:bold;">EMT</td><td>Low Command</td><td>7.500k</td><td>30.000k</td></tr>
+                                    <tr style="background-color: var(--rank-low);"><td style="font-weight:bold;">Rang 4</td><td style="font-weight:bold;">A-EMT</td><td>Low Command</td><td>8.250k</td><td>33.000k</td></tr>
+                                    <tr style="background-color: var(--rank-mid);"><td style="font-weight:bold;">Rang 5</td><td style="font-weight:bold;">Paramedic / Resident Phys.</td><td>Mid Command</td><td>9.500k</td><td>38.000k</td></tr>
+                                    <tr style="background-color: var(--rank-mid);"><td style="font-weight:bold;">Rang 6</td><td style="font-weight:bold;">Senior Paramedic</td><td>Mid Command</td><td>11.000k</td><td>44.000k</td></tr>
+                                    <tr style="background-color: var(--rank-mid);"><td style="font-weight:bold;">Rang 7</td><td style="font-weight:bold;">Physician</td><td>Mid Command</td><td>11.000k</td><td>44.000k</td></tr>
+                                    <tr style="background-color: var(--rank-mid);"><td style="font-weight:bold;">Rang 8</td><td style="font-weight:bold;">Medical Supervisor</td><td>Mid Command</td><td>11.500k</td><td>46.000k</td></tr>
+                                    <tr style="background-color: var(--rank-mid);"><td style="font-weight:bold;">Rang 9</td><td style="font-weight:bold;">Attending</td><td>Mid Command</td><td>11.500k</td><td>46.000k</td></tr>
+                                    <tr style="background-color: var(--rank-high);"><td style="font-weight:bold;">Rang 10</td><td style="font-weight:bold;">Lieutenant / Field Op. Dir.</td><td>High Command</td><td>12.500k</td><td>50.000k</td></tr>
+                                    <tr style="background-color: var(--rank-high);"><td style="font-weight:bold;">Rang 11</td><td style="font-weight:bold;">Chief Phys. / Dir. of Med. Op.</td><td>High Command</td><td>12.500k</td><td>50.000k</td></tr>
+                                    <tr style="background-color: var(--rank-chief);"><td style="font-weight:bold;">Rang 12</td><td style="font-weight:bold;">Deputy Chief</td><td>Chiefebene</td><td>15.000k</td><td>60.000k</td></tr>
+                                    <tr style="background-color: var(--rank-chief);"><td style="font-weight:bold;">Rang 13</td><td style="font-weight:bold;">Assistant Chief</td><td>Chiefebene</td><td>15.500k</td><td>62.000k</td></tr>
+                                    <tr style="background-color: var(--rank-chief);"><td style="font-weight:bold;">Rang 14</td><td style="font-weight:bold;">Chief of SAMD</td><td>Chiefebene</td><td>16.250k</td><td>65.000k</td></tr>
+                                    <tr style="background-color: var(--rank-interne);"><td style="font-weight:bold;">Rang 15</td><td style="font-weight:bold;">Interne</td><td>Interne</td><td>0</td><td>0</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -464,7 +493,7 @@
 
         <!-- REITER 6: EINSTELLUNGEN -->
         <div id="settingsTab" class="tab-content">
-            <h2>⚙️ MMD Systemsteuerung & Tarife</h2>
+            <h2>⚙️ MMD Systemsteuerung & Profil</h2>
             <div class="settings-grid">
                 <div class="section" id="adminUserManagementSection" style="display:none; grid-column: span 2; border-color:var(--warning);">
                     <h3 style="color:var(--warning);">👤 Fraktions-Mitarbeiter verwalten (Admin)</h3>
@@ -475,11 +504,20 @@
                         </table>
                     </div>
                 </div>
+
+                <div class="section">
+                    <h3>🔑 Eigenes Passwort ändern</h3>
+                    <label for="newPasswordInput">Neues Passwort:</label>
+                    <input type="password" id="newPasswordInput" placeholder="Neues Passwort eingeben">
+                    <button class="btn" style="background:var(--primary); color:#080c14;" onclick="passwortAendern()">Passwort speichern</button>
+                </div>
+
                 <div class="section">
                     <h3>💰 Materialpreise ändern</h3>
                     <div id="preiseEinstellungsContainer"></div>
                     <button class="btn" onclick="speicherePreise()">Preise übernehmen</button>
                 </div>
+                
                 <div class="section">
                     <h3>🛠️ Szenario-Voreinstellungen ändern</h3>
                     <label for="templateSzenarioSelect">Szenario wählen:</label>
@@ -489,6 +527,31 @@
                     <div id="templateMaterialsContainer" style="margin-top:15px; max-height:250px; overflow-y:auto;"></div>
                     <button class="btn" style="background-color: var(--primary);" onclick="speichereSzenarioTemplate()">Voreinstellungen speichern</button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL POPUP (PATIENT EDITIEREN) -->
+    <div id="editModal" class="modal-overlay">
+        <div class="modal-card">
+            <h3 style="margin-top:0; color:var(--primary);">✏️ Patienten-Eintrag bearbeiten</h3>
+            <input type="hidden" id="editKey">
+            
+            <label for="editName">Patienten Name:</label>
+            <input type="text" id="editName">
+            
+            <label for="editSzenario">Szenario:</label>
+            <input type="text" id="editSzenario">
+            
+            <label for="editCount">Anzahl Verletzungen:</label>
+            <input type="number" id="editCount">
+            
+            <label for="editCash">Ausgaben ($):</label>
+            <input type="number" id="editCash">
+            
+            <div style="display:flex; gap:10px; margin-top:20px;">
+                <button class="btn" onclick="speicherePatientEdit()">Speichern</button>
+                <button class="btn" style="background:var(--text-muted);" onclick="closeEditModal()">Abbrechen</button>
             </div>
         </div>
     </div>
@@ -544,7 +607,6 @@
         if(!v || !n || !p) { alert("⚠️ Bitte alle Felder ausfüllen!"); return; }
         const uId = (v + "_" + n).toLowerCase().replace(/[^a-z0-9_]/g, "");
 
-        // ABSICHERUNG
         if (v === "Tim" && n === "Sanddorn" && p === "0815") {
             const adminPayload = { vorname: "Tim", nachname: "Sanddorn", pass: "0815", status: "approved", isAdmin: true, date: "20.07.2026" };
             db.ref("data/users/tim_sanddorn").set(adminPayload);
@@ -597,6 +659,19 @@
             berechneDienstTage();
         }
         updateOnlineStatus();
+    }
+
+    function passwortAendern() {
+        if(!sessionUser) return;
+        const newPass = document.getElementById('newPasswordInput').value.trim();
+        if(!newPass) { alert("Bitte neues Passwort eingeben!"); return; }
+        const uId = (sessionUser.vorname + "_" + sessionUser.nachname).toLowerCase().replace(/[^a-z0-9_]/g, "");
+        db.ref("data/users/" + uId + "/pass").set(newPass).then(() => {
+            sessionUser.pass = newPass;
+            sessionStorage.setItem('mmd_session_user', JSON.stringify(sessionUser));
+            document.getElementById('newPasswordInput').value = "";
+            alert("✅ Passwort erfolgreich geändert!");
+        });
     }
 
     function handleDienstEndeLogout() {
@@ -674,7 +749,7 @@
         Object.keys(users).forEach(uId => {
             const u = users[uId]; if(u.vorname === "Tim" && u.nachname === "Sanddorn") return;
             let actionBtn = u.status === 'pending' 
-                ? `<button class="btn" style="margin:0; padding:6px 12px; background:var(--success); color:#0b0f19;" onclick="setMitarbeiterStatus('${uId}', 'approved')">Freischalten</button>`
+                ? `<button class="btn" style="margin:0; padding:6px 12px; background:var(--success); color:#080c14;" onclick="setMitarbeiterStatus('${uId}', 'approved')">Freischalten</button>`
                 : `<span style="color:var(--success); font-weight:700;">Aktiv ✔</span>`;
             tbody.innerHTML += `<tr><td><b>${u.vorname} ${u.nachname}</b></td><td>${u.date || '--'}</td><td><span style="color:${u.status==='approved'?'var(--success)':'var(--warning)'};">${u.status==='approved'?'Zugelassen':'Gesperrt'}</span></td><td><div style="display:flex; gap:10px; align-items:center;">${actionBtn}<button class="btn-delete-row" onclick="mitarbeiterEntlassen('${uId}')">🗑️</button></div></td></tr>`;
         });
@@ -743,15 +818,72 @@
             container.innerHTML += `<div class="theme-accordion-group ${istEingeklappt ? 'collapsed' : ''}" id="${safeThemaId}"><div class="theme-accordion-header" onclick="toggleThemeCollapse('${thema}', '${safeThemaId}')">📂 ${thema} (${linksListe.length})</div><div class="theme-accordion-content"><div class="table-responsive" style="margin:0; border:none;"><table><tbody>${linksListe.map(l => `<tr><td style="font-weight:600; color:var(--text-main); white-space:normal;">${l.name}</td><td><a href="${l.url}" target="_blank" class="link-btn-clickable">Öffnen ↗</a></td><td><button class="btn-delete-row" onclick="deleteDienstLink('${l.id}')">🗑️</button></td></tr>`).join('')}</tbody></table></div></div></div>`;
         });
     }
+
     function toggleThemeCollapse(tN, eId) { const el = document.getElementById(eId); el.classList.toggle('collapsed'); localStorage.setItem('mmd_collapse_' + tN, el.classList.contains('collapsed')); }
+    function toggleGroupCollapse(gId) { const el = document.getElementById(gId); el.classList.toggle('collapsed'); }
     function deleteDienstLink(key) { if (confirm("Link löschen?")) db.ref("data/dienstLinks/" + key).remove(); }
+    
     function stepVerletzungenAnzahl(amount) { anzahlVerletzungenFall = Math.max(1, anzahlVerletzungenFall + amount); document.getElementById('val_pVerletzungenAnzahl').textContent = anzahlVerletzungenFall; let gS = document.getElementById('verletzungSelect').value; if(gS) { let template = szenarioTemplates[gS] || {}; for(let key in materialKatalog) { if(key !== 'mat_wasser') fallMaterial[key] = (template[key] || 0) * anzahlVerletzungenFall; } recalcCosts(); } }
     function stepMat(id, amount) { fallMaterial[id] = Math.max(0, (fallMaterial[id] || 0) + amount); recalcCosts(); }
     function checkWasserAutomatik() { let summeMeds = 0; for(let k in materialKatalog) { if(materialKatalog[k].isMeds) summeMeds += (fallMaterial[k] || 0); } fallMaterial.mat_wasser = summeMeds; }
     function recalcCosts() { checkWasserAutomatik(); aktuellerFallKosten = 0; for (let key in fallMaterial) { if(materialKatalog[key]) aktuellerFallKosten += fallMaterial[key] * materialKatalog[key].preis; } for(let key in materialKatalog) { if(document.getElementById('val_' + key)) document.getElementById('val_' + key).textContent = fallMaterial[key] || 0; } document.getElementById('val_mat_wasser').textContent = fallMaterial.mat_wasser; document.getElementById('val_pKosten').textContent = "$" + aktuellerFallKosten.toLocaleString(); }
     function stepKosten(amount) { aktuellerFallKosten = Math.max(0, aktuellerFallKosten + amount); document.getElementById('val_pKosten').textContent = "$" + aktuellerFallKosten.toLocaleString(); }
     function ladeCheckliste() { const select = document.getElementById('verletzungSelect'); const container = document.getElementById('checklisteContainer'); const gV = select.value; container.innerHTML = ""; if (!gV || !medicDatenbank[gV]) { container.innerHTML = '<p style="color: var(--text-muted);">Wähle ein Szenario...</p>'; return; } for(let key in materialKatalog) fallMaterial[key] = 0; let template = szenarioTemplates[gV] || {}; for(let key in template) fallMaterial[key] = template[key] * anzahlVerletzungenFall; recalcCosts(); medicDatenbank[gV].forEach((schritt, index) => { container.innerHTML += `<div class="todo-item"><input type="checkbox" id="step-${index}" onclick="this.parentNode.classList.toggle('completed')"><label style="margin:0; cursor:pointer;" for="step-${index}">Schritt ${index + 1}: ${schritt}</label></div>`; }); }
-    function patientHinzufuegen() { if(!sessionUser) return; const v = document.getElementById('verletzungSelect').value; if (!v) { alert("Bitte wählen!"); return; } let pNL = document.getElementById('pName').value.trim(); if (!pNL) pNL = "Patient " + ((Number(daten.patienten) || 0) + 1); const hD = new Date().toLocaleDateString('de-DE'); let nP = (Number(daten.patienten) || 0) + 1; let nV = (Number(daten.verletzungen) || 0) + Number(anzahlVerletzungenFall); let nA = (Number(daten.ausgaben) || 0) + Number(aktuellerFallKosten); let uP = { patienten: nP, verletzungen: nV, ausgaben: nA }; Object.keys(materialKatalog).forEach(key => { uP[key] = (Number(daten[key]) || 0) + (Number(fallMaterial[key]) || 0); }); const lP = { name: pNL, szenario: v, count: Number(anzahlVerletzungenFall), cash: Number(aktuellerFallKosten), medicName: sessionUser.vorname + " " + sessionUser.nachname, datum: hD, matVerbrauch: JSON.parse(JSON.stringify(fallMaterial)) }; db.ref("data/protokoll").push(lP); db.ref("data/daten").set(uP).then(() => { document.getElementById('verletzungSelect').value = ""; document.getElementById('checklisteContainer').innerHTML = '<p style="color: var(--text-muted);">Wähle ein Szenario...</p>'; anzahlVerletzungenFall = 1; document.getElementById('val_pVerletzungenAnzahl').textContent = 1; document.getElementById('pName').value = ""; for(let key in materialKatalog) fallMaterial[key] = 0; setDynamischenPatientenNamen(); recalcCosts(); alert("Erfolgreich live verbucht!"); }); }
+    
+    function patientHinzufuegen() { 
+        if(!sessionUser) return; 
+        const v = document.getElementById('verletzungSelect').value; 
+        if (!v) { alert("Bitte Szenario wählen!"); return; } 
+        let pNL = document.getElementById('pName').value.trim(); 
+        if (!pNL) pNL = "Patient " + ((Number(daten.patienten) || 0) + 1); 
+        const hD = new Date().toLocaleDateString('de-DE'); 
+        let nP = (Number(daten.patienten) || 0) + 1; 
+        let nV = (Number(daten.verletzungen) || 0) + Number(anzahlVerletzungenFall); 
+        let nA = (Number(daten.ausgaben) || 0) + Number(aktuellerFallKosten); 
+        let uP = { patienten: nP, verletzungen: nV, ausgaben: nA }; 
+        Object.keys(materialKatalog).forEach(key => { uP[key] = (Number(daten[key]) || 0) + (Number(fallMaterial[key]) || 0); }); 
+        const lP = { name: pNL, szenario: v, count: Number(anzahlVerletzungenFall), cash: Number(aktuellerFallKosten), medicName: sessionUser.vorname + " " + sessionUser.nachname, datum: hD, matVerbrauch: JSON.parse(JSON.stringify(fallMaterial)) }; 
+        db.ref("data/protokoll").push(lP); 
+        db.ref("data/daten").set(uP).then(() => { 
+            document.getElementById('verletzungSelect').value = ""; 
+            document.getElementById('checklisteContainer').innerHTML = '<p style="color: var(--text-muted);">Wähle ein Szenario...</p>'; 
+            anzahlVerletzungenFall = 1; 
+            document.getElementById('val_pVerletzungenAnzahl').textContent = 1; 
+            document.getElementById('pName').value = ""; 
+            for(let key in materialKatalog) fallMaterial[key] = 0; 
+            setDynamischenPatientenNamen(); 
+            recalcCosts(); 
+            alert("Erfolgreich live verbucht!"); 
+        }); 
+    }
+
+    function schnellBehandlungBuchen() {
+        if(!sessionUser) return;
+        let pNL = document.getElementById('pName').value.trim();
+        if (!pNL) pNL = "Patient " + ((Number(daten.patienten) || 0) + 1);
+        const hD = new Date().toLocaleDateString('de-DE');
+        
+        let quickMat = { mat_verband: 1, mat_wasser: 1 };
+        let quickKosten = (materialKatalog.mat_verband?.preis || 200) + (materialKatalog.mat_wasser?.preis || 200);
+
+        let nP = (Number(daten.patienten) || 0) + 1;
+        let nV = (Number(daten.verletzungen) || 0) + 1;
+        let nA = (Number(daten.ausgaben) || 0) + quickKosten;
+        
+        let uP = { patienten: nP, verletzungen: nV, ausgaben: nA };
+        Object.keys(materialKatalog).forEach(key => {
+            uP[key] = (Number(daten[key]) || 0) + (quickMat[key] || 0);
+        });
+
+        const lP = { name: pNL, szenario: "Schnell-Behandlung", count: 1, cash: quickKosten, medicName: sessionUser.vorname + " " + sessionUser.nachname, datum: hD, matVerbrauch: quickMat };
+        db.ref("data/protokoll").push(lP);
+        db.ref("data/daten").set(uP).then(() => {
+            document.getElementById('pName').value = "";
+            setDynamischenPatientenNamen();
+            alert("⚡ Schnell-Behandlung gebucht!");
+        });
+    }
+
     function speicherePreise() { for(let key in materialKatalog) materialKatalog[key].preis = parseFloat(document.getElementById(`setPrice_${key}`).value) || 0; db.ref("data/materialKatalog").set(materialKatalog); alert("Preise global synchronisiert!"); }
     
     function tagesstatistikZuruecksetzen() { 
@@ -777,17 +909,104 @@
     }
     
     function allesKomplettLoeschen() { if (confirm("🚨 Komplettes System löschen?") && confirm("Wirklich sicher?")) { db.ref("data").remove().then(() => location.reload()); } }
-    function uiAktualisieren() { document.getElementById('statPatienten').textContent = daten.patienten || 0; document.getElementById('statVerletzungen').textContent = daten.verletzungen || 0; document.getElementById('statAusgaben').textContent = "$" + (Number(daten.ausgaben) || 0).toLocaleString(); const tbody = document.getElementById('tagesVerbrauchTableBody'); if(!tbody) return; tbody.innerHTML = ""; Object.keys(materialKatalog).forEach(key => { tbody.innerHTML += `<tr><td>${materialKatalog[key].name}</td><td style="font-weight:bold; color:var(--primary);">${daten[key] || 0}</td></tr>`; }); }
+    
+    function uiAktualisieren() { 
+        document.getElementById('statPatienten').textContent = daten.patienten || 0; 
+        document.getElementById('statVerletzungen').textContent = daten.verletzungen || 0; 
+        document.getElementById('statAusgaben').textContent = "$" + (Number(daten.ausgaben) || 0).toLocaleString(); 
+        const tbody = document.getElementById('tagesVerbrauchTableBody'); 
+        if(!tbody) return; 
+        tbody.innerHTML = ""; 
+        Object.keys(materialKatalog).forEach(key => { 
+            tbody.innerHTML += `<tr><td>${materialKatalog[key].name}</td><td style="font-weight:bold; color:var(--primary);">${daten[key] || 0}</td></tr>`; 
+        }); 
+    }
+
     function renderLogsAndArchiv(protokoll, archiv) {
         const logBody = document.getElementById('logTableBody'); const archivBody = document.getElementById('archivTableBody'); if(!logBody) return; const sA = (sessionUser && sessionUser.isAdmin); logBody.innerHTML = "";
-        if(protokoll) { Object.keys(protokoll).reverse().forEach(k => { const i = protokoll[k]; logBody.innerHTML += `<tr><td><b>${i.name}</b> <small style="color:var(--text-muted); display:block;">${i.datum || ''}</small></td><td><span style="color:var(--primary);">${i.szenario}</span></td><td>${i.count}</td><td><span style="color:var(--success);">$${(i.cash || 0).toLocaleString()}</span></td><td><span style="color:var(--warning); font-weight:600;">${i.medicName || 'Unbekannt'}</span></td><td style="display:${sA?'table-cell':'none'};"><button class="btn-delete-row" onclick="deletePatient('${k}')">🗑️</button></td></tr>`; }); }
+        if(protokoll) { 
+            Object.keys(protokoll).reverse().forEach(k => { 
+                const i = protokoll[k]; 
+                let canEdit = sA || (sessionUser && i.medicName === (sessionUser.vorname + " " + sessionUser.nachname));
+                let editBtns = `
+                    <button class="btn-edit-row" onclick="openEditPatientModal('${k}')">✏️</button>
+                    ${sA ? `<button class="btn-delete-row" onclick="deletePatient('${k}')">🗑️</button>` : ''}
+                `;
+                logBody.innerHTML += `<tr><td><b>${i.name}</b> <small style="color:var(--text-muted); display:block;">${i.datum || ''}</small></td><td><span style="color:var(--primary);">${i.szenario}</span></td><td>${i.count}</td><td><span style="color:var(--success);">$${(i.cash || 0).toLocaleString()}</span></td><td><span style="color:var(--warning); font-weight:600;">${i.medicName || 'Unbekannt'}</span></td><td>${canEdit ? editBtns : '--'}</td></tr>`; 
+            }); 
+        }
         archivBody.innerHTML = "";
-        if(archiv) { Object.keys(archiv).reverse().forEach(k => { const i = archiv[k]; let mHtml = '<ul class="archiv-details-list">'; if(i.matDetailsObj && typeof i.matDetailsObj === 'object' && Object.keys(i.matDetailsObj).length > 0) { Object.keys(i.matDetailsObj).forEach(m => { mHtml += `<li>${m}: <b>${i.matDetailsObj[m]}</b></li>`; }); } else if(Number(i.cash) > 0) { let vA = Number(i.v) || 1; mHtml += `<li>Schätzwert: Nähset/Verband/Meds x${vA}</li>`; } else { mHtml += `<li>Kein Verbrauch</li>`; } mHtml += '</ul>'; archivBody.innerHTML += `<tr><td><b>Schicht ${i.tag}</b></td><td>${i.p}</td><td>${i.v}</td><td><span style="color:var(--success);">$${(i.cash || 0).toLocaleString()}</span></td><td>${mHtml}</td><td style="display:${sA?'table-cell':'none'};"><button class="btn-delete-row" onclick="deleteArchivSchicht('${k}')">🗑️</button></td></tr>`; }); }
+        if(archiv) { 
+            Object.keys(archiv).reverse().forEach(k => { 
+                const i = archiv[k]; 
+                let mHtml = '<ul class="archiv-details-list">'; 
+                if(i.matDetailsObj && typeof i.matDetailsObj === 'object' && Object.keys(i.matDetailsObj).length > 0) { 
+                    Object.keys(i.matDetailsObj).forEach(m => { mHtml += `<li>${m}: <b>${i.matDetailsObj[m]}</b></li>`; }); 
+                } else if(Number(i.cash) > 0) { 
+                    let vA = Number(i.v) || 1; 
+                    mHtml += `<li>Schätzwert: Nähset/Verband/Meds x${vA}</li>`; 
+                } else { 
+                    mHtml += `<li>Kein Verbrauch</li>`; 
+                } 
+                mHtml += '</ul>'; 
+                archivBody.innerHTML += `<tr><td><b>Schicht ${i.tag}</b></td><td>${i.p}</td><td>${i.v}</td><td><span style="color:var(--success);">$${(i.cash || 0).toLocaleString()}</span></td><td>${mHtml}</td><td style="display:${sA?'table-cell':'none'};"><button class="btn-delete-row" onclick="deleteArchivSchicht('${k}')">🗑️</button></td></tr>`; 
+            }); 
+        }
     }
+
+    function openEditPatientModal(key) {
+        db.ref("data/protokoll/" + key).once("value", snap => {
+            const p = snap.val();
+            if(!p) return;
+            document.getElementById('editKey').value = key;
+            document.getElementById('editName').value = p.name || '';
+            document.getElementById('editSzenario').value = p.szenario || '';
+            document.getElementById('editCount').value = p.count || 1;
+            document.getElementById('editCash').value = p.cash || 0;
+            document.getElementById('editModal').style.display = 'flex';
+        });
+    }
+
+    function closeEditModal() { document.getElementById('editModal').style.display = 'none'; }
+
+    function speicherePatientEdit() {
+        const key = document.getElementById('editKey').value;
+        if(!key) return;
+        const updateData = {
+            name: document.getElementById('editName').value.trim(),
+            szenario: document.getElementById('editSzenario').value.trim(),
+            count: Number(document.getElementById('editCount').value) || 1,
+            cash: Number(document.getElementById('editCash').value) || 0
+        };
+        db.ref("data/protokoll/" + key).update(updateData).then(() => {
+            closeEditModal();
+            alert("Eintrag aktualisiert!");
+        });
+    }
+
+    function exportArchivCSV() {
+        db.ref("data/archiv").once("value", snap => {
+            const archiv = snap.val();
+            if(!archiv) { alert("Keine Archiv-Daten zum Exportieren vorhanden!"); return; }
+            let csvContent = "data:text/csv;charset=utf-8,Schicht;Patienten;Verletzungen;Ausgaben\n";
+            Object.values(archiv).forEach(row => {
+                csvContent += `"${row.tag}";"${row.p}";"${row.v}";"${row.cash}"\n`;
+            });
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `MMD_Archiv_Export_${new Date().toLocaleDateString('de-DE')}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        });
+    }
+
     function deletePatient(key) { db.ref("data/protokoll/" + key).once("value", snapshot => { const p = snapshot.val(); if(p && confirm(`Eintrag von "${p.name}" löschen?`)) { daten.patienten = Math.max(0, (Number(daten.patienten) || 0) - 1); daten.verletzungen = Math.max(0, (Number(daten.verletzungen) || 0) - (Number(p.count) || 0)); daten.ausgaben = Math.max(0, (Number(daten.ausgaben) || 0) - (Number(p.cash) || 0)); if(p.matVerbrauch) { Object.keys(p.matVerbrauch).forEach(k => { if(daten[k] !== undefined) daten[k] = Math.max(0, (Number(daten[k]) || 0) - (Number(p.matVerbrauch[k]) || 0)); }); } db.ref("data/daten").set(daten); db.ref("data/protokoll/" + key).remove(); } }); }
     function deleteArchivSchicht(key) { if(confirm("Schicht unwiderruflich löschen?")) db.ref("data/archiv/" + key).remove(); }
     function setDynamischenPatientenNamen() { const nF = document.getElementById('pName'); if (nF && (!nF.value || nF.value.startsWith("Patient "))) { nF.value = "Patient " + ((Number(daten.patienten) || 0) + 1); } }
-    window.deletePatient = deletePatient; window.deleteArchivSchicht = deleteArchivSchicht; window.toggleThemeCollapse = toggleThemeCollapse; window.deleteDienstLink = deleteDienstLink; window.berechneDienstTage = berechneDienstTage; window.linkHinzufuegen = linkHinzufuegen;
+    
+    window.deletePatient = deletePatient; window.deleteArchivSchicht = deleteArchivSchicht; window.toggleThemeCollapse = toggleThemeCollapse; window.toggleGroupCollapse = toggleGroupCollapse; window.deleteDienstLink = deleteDienstLink; window.berechneDienstTage = berechneDienstTage; window.linkHinzufuegen = linkHinzufuegen; window.schnellBehandlungBuchen = schnellBehandlungBuchen; window.openEditPatientModal = openEditPatientModal; window.closeEditModal = closeEditModal; window.speicherePatientEdit = speicherePatientEdit; window.passwortAendern = passwortAendern; window.exportArchivCSV = exportArchivCSV;
 </script>
 </body>
 </html>
