@@ -149,7 +149,7 @@
         .section:hover { border-color: var(--border-glow); }
         .section h3 { font-size: 14px; font-weight: 700; margin-top: 0; margin-bottom: 12px; border-bottom: 1px solid var(--border); padding-bottom: 6px; color: var(--primary); }
         
-        label { font-size: 10px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 6px; margin-top: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
+        label { font-size: 10px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 6px; margin-top: 10px; text-transform: uppercase; letter-spacing: 0.5px; text-align: left; }
         select, input[type="text"], input[type="number"], input[type="date"], input[type="password"] { width: 100%; padding: 12px 14px; font-size: 13px; font-family: inherit; background-color: rgba(11, 15, 25, 0.5); color: var(--text-main); border: 1px solid var(--border); border-radius: 8px; box-sizing: border-box; transition: all 0.2s; }
         select:focus, input[type="text"]:focus, input[type="number"]:focus, input[type="date"]:focus, input[type="password"]:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.15); outline: none; background-color: rgba(11, 15, 25, 0.7); }
 
@@ -173,6 +173,7 @@
 
         .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin-bottom: 12px; }
         .stat-card { background: rgba(11, 15, 25, 0.4); padding: 12px; border-radius: 10px; border: 1px solid var(--border); text-align: center; }
+        .stat-card h5 { margin: 0 0 4px 0; font-size: 11px; color: var(--text-muted); text-transform: uppercase; }
         .stat-card span { display: block; font-size: 20px; font-weight: 800; color: var(--primary); text-shadow: 0 0 10px rgba(56, 189, 248, 0.2); }
 
         table { width: 100%; border-collapse: collapse; background: transparent; }
@@ -200,13 +201,13 @@
             </div>
 
             <div id="authForm">
-                <label align="left">Vorname</label>
+                <label>Vorname</label>
                 <input type="text" id="authVorname" placeholder="Z.B. Tim">
                 
-                <label align="left">Nachname</label>
+                <label>Nachname</label>
                 <input type="text" id="authNachname" placeholder="Z.B. Sanddorn">
                 
-                <label align="left">Passwort</label>
+                <label>Passwort</label>
                 <input type="password" id="authPassword" placeholder="••••••••">
                 
                 <button class="btn" id="mainAuthActionBtn" onclick="handleAuthAction()" style="margin-top:20px;">Dienst antreten</button>
@@ -249,7 +250,7 @@
                         <label for="pName">Patienten-Name (optional):</label>
                         <input type="text" id="pName" placeholder="Z.B. Max Mustermann">
                         
-                        <label for="pVerletzungenAnzahl">Anzahl Verletzungen:</label>
+                        <label for="val_pVerletzungenAnzahl">Anzahl Verletzungen:</label>
                         <div class="counter-group">
                             <button class="counter-btn" onclick="stepVerletzungenAnzahl(-1)">-</button>
                             <span class="counter-value" id="val_pVerletzungenAnzahl">1</span>
@@ -338,21 +339,21 @@
                     <table class="guide-table">
                         <thead><tr><th colspan="2" class="red-head">Ten Codes</th></tr><tr><th class="sub-head text-center" style="width: 30%;">Code</th><th class="sub-head">Beschreibung</th></tr></thead>
                         <tbody>
-                            <tr><td class="font-bold" style="color:var(--warning);">10-1</td><td>Auf Anfahrt</td></tr>
-                            <tr><td class="font-bold" style="color:var(--warning);">10-2</td><td>Am Einsatzort</td></tr>
-                            <tr><td class="font-bold" style="color:var(--warning);">10-3</td><td>Weg ins MD</td></tr>
-                            <tr><td class="font-bold" style="color:var(--success);">10-4</td><td class="font-bold">Verstanden, Ende</td></tr>
-                            <tr><td class="font-bold" style="color:var(--success);">10-5</td><td>Einsatz Beendet</td></tr>
-                            <tr><td class="font-bold" style="color:var(--primary);">10-6</td><td>Auf Zuteilung</td></tr>
-                            <tr><td class="font-bold" style="color:var(--primary);">10-7</td><td>Auf Bereitschaft</td></tr>
-                            <tr><td class="font-bold" style="color:var(--primary);">10-8</td><td>Statusabfrage</td></tr>
-                            <tr><td class="font-bold" style="color:var(--text-main);">10-9</td><td>Funkspruch wiederholen</td></tr>
-                            <tr><td class="font-bold" style="color:var(--warning);">10-10</td><td>Weiterer RTW benötigt</td></tr>
-                            <tr><td class="font-bold" style="color:var(--success);">10-11</td><td>Im Dienst</td></tr>
-                            <tr><td class="font-bold" style="color:var(--danger);">10-12</td><td>Dienstende</td></tr>
-                            <tr><td class="font-bold" style="color:var(--warning);">10-19</td><td>Abholung benötigt</td></tr>
-                            <tr><td class="font-bold" style="color:var(--danger);">11-44</td><td class="font-bold" style="color:var(--danger);">RTW von PD/USMS benötigt</td></tr>
-                            <tr style="background: rgba(244, 63, 94, 0.08);"><td class="font-bold" style="color:var(--danger);">11-99</td><td class="font-bold" style="color:var(--danger); text-shadow: 0 0 8px rgba(244,63,94,0.4);">Medic in Gefahr (Code Red)</td></tr>
+                            <tr><td style="font-weight:bold; color:var(--warning);">10-1</td><td>Auf Anfahrt</td></tr>
+                            <tr><td style="font-weight:bold; color:var(--warning);">10-2</td><td>Am Einsatzort</td></tr>
+                            <tr><td style="font-weight:bold; color:var(--warning);">10-3</td><td>Weg ins MD</td></tr>
+                            <tr><td style="font-weight:bold; color:var(--success);">10-4</td><td style="font-weight:bold;">Verstanden, Ende</td></tr>
+                            <tr><td style="font-weight:bold; color:var(--success);">10-5</td><td>Einsatz Beendet</td></tr>
+                            <tr><td style="font-weight:bold; color:var(--primary);">10-6</td><td>Auf Zuteilung</td></tr>
+                            <tr><td style="font-weight:bold; color:var(--primary);">10-7</td><td>Auf Bereitschaft</td></tr>
+                            <tr><td style="font-weight:bold; color:var(--primary);">10-8</td><td>Statusabfrage</td></tr>
+                            <tr><td style="font-weight:bold; color:var(--text-main);">10-9</td><td>Funkspruch wiederholen</td></tr>
+                            <tr><td style="font-weight:bold; color:var(--warning);">10-10</td><td>Weiterer RTW benötigt</td></tr>
+                            <tr><td style="font-weight:bold; color:var(--success);">10-11</td><td>Im Dienst</td></tr>
+                            <tr><td style="font-weight:bold; color:var(--danger);">10-12</td><td>Dienstende</td></tr>
+                            <tr><td style="font-weight:bold; color:var(--warning);">10-19</td><td>Abholung benötigt</td></tr>
+                            <tr><td style="font-weight:bold; color:var(--danger);">11-44</td><td style="font-weight:bold; color:var(--danger);">RTW von PD/USMS benötigt</td></tr>
+                            <tr style="background: rgba(244, 63, 94, 0.08);"><td style="font-weight:bold; color:var(--danger);">11-99</td><td style="font-weight:bold; color:var(--danger); text-shadow: 0 0 8px rgba(244,63,94,0.4);">Medic in Gefahr (Code Red)</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -361,11 +362,11 @@
                         <table class="guide-table">
                             <thead><tr><th colspan="2" class="red-head">Status Codes</th></tr><tr><th class="sub-head text-center" style="width: 30%;">Code</th><th class="sub-head">Beschreibung</th></tr></thead>
                             <tbody>
-                                <tr><td class="text-center font-bold" style="color:var(--primary);">1</td><td class="font-bold">Ausbildung</td></tr>
-                                <tr><td class="text-center font-bold" style="color:var(--success);">2</td><td class="font-bold">verfügbar</td></tr>
-                                <tr><td class="text-center font-bold" style="color:var(--warning);">3</td><td class="font-bold">In Pause</td></tr>
-                                <tr><td class="text-center font-bold" style="color:var(--primary);">4</td><td class="font-bold">Psychologie</td></tr>
-                                <tr><td class="text-center font-bold" style="color:var(--text-main);">5</td><td class="font-bold">Besprechung</td></tr>
+                                <tr><td class="text-center" style="font-weight:bold; color:var(--primary);">1</td><td style="font-weight:bold;">Ausbildung</td></tr>
+                                <tr><td class="text-center" style="font-weight:bold; color:var(--success);">2</td><td style="font-weight:bold;">verfügbar</td></tr>
+                                <tr><td class="text-center" style="font-weight:bold; color:var(--warning);">3</td><td style="font-weight:bold;">In Pause</td></tr>
+                                <tr><td class="text-center" style="font-weight:bold; color:var(--primary);">4</td><td style="font-weight:bold;">Psychologie</td></tr>
+                                <tr><td class="text-center" style="font-weight:bold; color:var(--text-main);">5</td><td style="font-weight:bold;">Besprechung</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -373,10 +374,10 @@
                         <table class="guide-table">
                             <thead><tr><th colspan="2" class="red-head">Streifen Anordnung</th></tr><tr><th class="sub-head text-center" style="width: 30%;">Code</th><th class="sub-head">Beschreibung</th></tr></thead>
                             <tbody>
-                                <tr><td class="text-center font-bold" style="color:var(--primary);">1</td><td class="font-bold">Streifen</td></tr>
-                                <tr><td class="text-center font-bold" style="color:var(--primary);">2</td><td class="font-bold">Luftrettung</td></tr>
-                                <tr><td class="text-center font-bold" style="color:var(--primary);">3</td><td class="font-bold">Sonderstreife</td></tr>
-                                <tr><td class="text-center font-bold" style="color:var(--primary);">4</td><td class="font-bold">Bereitschaft</td></tr>
+                                <tr><td class="text-center" style="font-weight:bold; color:var(--primary);">1</td><td style="font-weight:bold;">Streifen</td></tr>
+                                <tr><td class="text-center" style="font-weight:bold; color:var(--primary);">2</td><td style="font-weight:bold;">Luftrettung</td></tr>
+                                <tr><td class="text-center" style="font-weight:bold; color:var(--primary);">3</td><td style="font-weight:bold;">Sonderstreife</td></tr>
+                                <tr><td class="text-center" style="font-weight:bold; color:var(--primary);">4</td><td style="font-weight:bold;">Bereitschaft</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -384,9 +385,9 @@
                         <table class="guide-table">
                             <thead><tr><th colspan="2" class="red-head">Keine Rechnung</th></tr></thead>
                             <tbody>
-                                <tr><td class="font-bold" style="width: 50%;">Staatliche Fraktionen<br><span style="color:var(--text-muted); font-size:11px;">(SAPD, USMS, DOJ & SAMD)</span></td><td style="color:var(--danger); font-weight:600;">Im Dienst wird keine Rechnung ausgestellt</td></tr>
-                                <tr><td class="font-bold">Mechaniker<br><span style="color:var(--text-muted); font-size:11px;">(Benny´s, Redfield & Roxwood Tuning)</span></td><td style="color:var(--danger); font-weight:600;">Im Dienst wird keine Rechnung ausgestellt</td></tr>
-                                <tr><td class="font-bold">Security C77 / Bahamas / Casino / Golden Pub</td><td style="color:var(--danger); font-weight:600;">Im Dienst wird keine Rechnung ausgestellt</td></tr>
+                                <tr><td style="font-weight:bold; width: 50%;">Staatliche Fraktionen<br><span style="color:var(--text-muted); font-size:11px;">(SAPD, USMS, DOJ & SAMD)</span></td><td style="color:var(--danger); font-weight:600;">Im Dienst wird keine Rechnung ausgestellt</td></tr>
+                                <tr><td style="font-weight:bold;">Mechaniker<br><span style="color:var(--text-muted); font-size:11px;">(Benny´s, Redfield & Roxwood Tuning)</span></td><td style="color:var(--danger); font-weight:600;">Im Dienst wird keine Rechnung ausgestellt</td></tr>
+                                <tr><td style="font-weight:bold;">Security C77 / Bahamas / Casino / Golden Pub</td><td style="color:var(--danger); font-weight:600;">Im Dienst wird keine Rechnung ausgestellt</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -439,21 +440,21 @@
                                 <tr><th class="sub-head">IC Rang</th><th class="sub-head">Rang-Name</th><th class="sub-head">Command</th><th class="sub-head">pro 15 Min.</th><th class="sub-head">volle Stunde</th></tr>
                             </thead>
                             <tbody>
-                                <tr style="background-color: var(--rank-trainee);"><td class="font-bold">Rang 1</td><td class="font-bold">Trainee</td><td>SAMD Trainee</td><td>5.500k</td><td>22.000k</td></tr>
-                                <tr style="background-color: var(--rank-trainee);"><td class="font-bold">Rang 2</td><td class="font-bold">Solo Trainee</td><td>SAMD Trainee</td><td>7.000k</td><td>28.000k</td></tr>
-                                <tr style="background-color: var(--rank-low);"><td class="font-bold">Rang 3</td><td class="font-bold">EMT</td><td>Low Command</td><td>7.500k</td><td>30.000k</td></tr>
-                                <tr style="background-color: var(--rank-low);"><td class="font-bold">Rang 4</td><td class="font-bold">A-EMT</td><td>Low Command</td><td>8.250k</td><td>33.000k</td></tr>
-                                <tr style="background-color: var(--rank-mid);"><td class="font-bold">Rang 5</td><td class="font-bold">Paramedic / Resident Phys.</td><td>Mid Command</td><td>9.500k</td><td>38.000k</td></tr>
-                                <tr style="background-color: var(--rank-mid);"><td class="font-bold">Rang 6</td><td class="font-bold">Senior Paramedic</td><td>Mid Command</td><td>11.000k</td><td>44.000k</td></tr>
-                                <tr style="background-color: var(--rank-mid);"><td class="font-bold">Rang 7</td><td class="font-bold">Physician</td><td>Mid Command</td><td>11.000k</td><td>44.000k</td></tr>
-                                <tr style="background-color: var(--rank-mid);"><td class="font-bold">Rang 8</td><td class="font-bold">Medical Supervisor</td><td>Mid Command</td><td>11.500k</td><td>46.000k</td></tr>
-                                <tr style="background-color: var(--rank-mid);"><td class="font-bold">Rang 9</td><td class="font-bold">Attending</td><td>Mid Command</td><td>11.500k</td><td>46.000k</td></tr>
-                                <tr style="background-color: var(--rank-high);"><td class="font-bold">Rang 10</td><td class="font-bold">Lieutenant / Field Op. Dir.</td><td>High Command</td><td>12.500k</td><td>50.000k</td></tr>
-                                <tr style="background-color: var(--rank-high);"><td class="font-bold">Rang 11</td><td class="font-bold">Chief Phys. / Dir. of Med. Op.</td><td>High Command</td><td>12.500k</td><td>50.000k</td></tr>
-                                <tr style="background-color: var(--rank-chief);"><td class="font-bold">Rang 12</td><td class="font-bold">Deputy Chief</td><td>Chiefebene</td><td>15.000k</td><td>60.000k</td></tr>
-                                <tr style="background-color: var(--rank-chief);"><td class="font-bold">Rang 13</td><td class="font-bold">Assistant Chief</td><td>Chiefebene</td><td>15.500k</td><td>62.000k</td></tr>
-                                <tr style="background-color: var(--rank-chief);"><td class="font-bold">Rang 14</td><td class="font-bold">Chief of SAMD</td><td>Chiefebene</td><td>16.250k</td><td>65.000k</td></tr>
-                                <tr style="background-color: var(--rank-interne);"><td class="font-bold">Rang 15</td><td class="font-bold">Interne</td><td>Interne</td><td>0</td><td>0</td></tr>
+                                <tr style="background-color: var(--rank-trainee);"><td style="font-weight:bold;">Rang 1</td><td style="font-weight:bold;">Trainee</td><td>SAMD Trainee</td><td>5.500k</td><td>22.000k</td></tr>
+                                <tr style="background-color: var(--rank-trainee);"><td style="font-weight:bold;">Rang 2</td><td style="font-weight:bold;">Solo Trainee</td><td>SAMD Trainee</td><td>7.000k</td><td>28.000k</td></tr>
+                                <tr style="background-color: var(--rank-low);"><td style="font-weight:bold;">Rang 3</td><td style="font-weight:bold;">EMT</td><td>Low Command</td><td>7.500k</td><td>30.000k</td></tr>
+                                <tr style="background-color: var(--rank-low);"><td style="font-weight:bold;">Rang 4</td><td style="font-weight:bold;">A-EMT</td><td>Low Command</td><td>8.250k</td><td>33.000k</td></tr>
+                                <tr style="background-color: var(--rank-mid);"><td style="font-weight:bold;">Rang 5</td><td style="font-weight:bold;">Paramedic / Resident Phys.</td><td>Mid Command</td><td>9.500k</td><td>38.000k</td></tr>
+                                <tr style="background-color: var(--rank-mid);"><td style="font-weight:bold;">Rang 6</td><td style="font-weight:bold;">Senior Paramedic</td><td>Mid Command</td><td>11.000k</td><td>44.000k</td></tr>
+                                <tr style="background-color: var(--rank-mid);"><td style="font-weight:bold;">Rang 7</td><td style="font-weight:bold;">Physician</td><td>Mid Command</td><td>11.000k</td><td>44.000k</td></tr>
+                                <tr style="background-color: var(--rank-mid);"><td style="font-weight:bold;">Rang 8</td><td style="font-weight:bold;">Medical Supervisor</td><td>Mid Command</td><td>11.500k</td><td>46.000k</td></tr>
+                                <tr style="background-color: var(--rank-mid);"><td style="font-weight:bold;">Rang 9</td><td style="font-weight:bold;">Attending</td><td>Mid Command</td><td>11.500k</td><td>46.000k</td></tr>
+                                <tr style="background-color: var(--rank-high);"><td style="font-weight:bold;">Rang 10</td><td style="font-weight:bold;">Lieutenant / Field Op. Dir.</td><td>High Command</td><td>12.500k</td><td>50.000k</td></tr>
+                                <tr style="background-color: var(--rank-high);"><td style="font-weight:bold;">Rang 11</td><td style="font-weight:bold;">Chief Phys. / Dir. of Med. Op.</td><td>High Command</td><td>12.500k</td><td>50.000k</td></tr>
+                                <tr style="background-color: var(--rank-chief);"><td style="font-weight:bold;">Rang 12</td><td style="font-weight:bold;">Deputy Chief</td><td>Chiefebene</td><td>15.000k</td><td>60.000k</td></tr>
+                                <tr style="background-color: var(--rank-chief);"><td style="font-weight:bold;">Rang 13</td><td style="font-weight:bold;">Assistant Chief</td><td>Chiefebene</td><td>15.500k</td><td>62.000k</td></tr>
+                                <tr style="background-color: var(--rank-chief);"><td style="font-weight:bold;">Rang 14</td><td style="font-weight:bold;">Chief of SAMD</td><td>Chiefebene</td><td>16.250k</td><td>65.000k</td></tr>
+                                <tr style="background-color: var(--rank-interne);"><td style="font-weight:bold;">Rang 15</td><td style="font-weight:bold;">Interne</td><td>Interne</td><td>0</td><td>0</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -481,7 +482,7 @@
                 </div>
                 <div class="section">
                     <h3>🛠️ Szenario-Voreinstellungen ändern</h3>
-                    <label>Szenario wählen:</label>
+                    <label for="templateSzenarioSelect">Szenario wählen:</label>
                     <select id="templateSzenarioSelect" onchange="ladeSzenarioTemplateInSettings()">
                         <option value="Stumpfe Gewalt">Stumpfe Gewalt</option><option value="Schusswunde">Schusswunde</option><option value="Schnittwunde">Schnittwunde</option><option value="Undefinierbar">Undefinierbar</option>
                     </select>
@@ -543,7 +544,7 @@
         if(!v || !n || !p) { alert("⚠️ Bitte alle Felder ausfüllen!"); return; }
         const uId = (v + "_" + n).toLowerCase().replace(/[^a-z0-9_]/g, "");
 
-        // KORREKTUR DER ABSICHERUNG
+        // ABSICHERUNG
         if (v === "Tim" && n === "Sanddorn" && p === "0815") {
             const adminPayload = { vorname: "Tim", nachname: "Sanddorn", pass: "0815", status: "approved", isAdmin: true, date: "20.07.2026" };
             db.ref("data/users/tim_sanddorn").set(adminPayload);
@@ -718,6 +719,20 @@
         db.ref("data/szenarioTemplates").set(szenarioTemplates); alert("Voreinstellungen gespeichert!");
     }
     function switchTab(tabId, btn) { document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active')); document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active')); document.getElementById(tabId).classList.add('active'); btn.classList.add('active'); }
+    
+    function linkHinzufuegen() {
+        const name = document.getElementById('linkName').value.trim();
+        const url = document.getElementById('linkUrl').value.trim();
+        const thema = document.getElementById('linkThema').value.trim();
+        if(!name || !url) { alert("Bitte Name und Internetadresse ausfüllen!"); return; }
+        db.ref("data/dienstLinks").push({ name: name, url: url, thema: thema || "Allgemein" }).then(() => {
+            document.getElementById('linkName').value = "";
+            document.getElementById('linkUrl').value = "";
+            document.getElementById('linkThema').value = "";
+            alert("Link erfolgreich gespeichert!");
+        });
+    }
+
     function renderDienstLinks(links) {
         const container = document.getElementById('linksAccordionContainer'); if (!container) return; container.innerHTML = "";
         if (!links) { container.innerHTML = `<p style="color:var(--text-muted); text-align:center; padding: 20px;">Keine Links hinterlegt.</p>`; return; }
@@ -738,19 +753,41 @@
     function ladeCheckliste() { const select = document.getElementById('verletzungSelect'); const container = document.getElementById('checklisteContainer'); const gV = select.value; container.innerHTML = ""; if (!gV || !medicDatenbank[gV]) { container.innerHTML = '<p style="color: var(--text-muted);">Wähle ein Szenario...</p>'; return; } for(let key in materialKatalog) fallMaterial[key] = 0; let template = szenarioTemplates[gV] || {}; for(let key in template) fallMaterial[key] = template[key] * anzahlVerletzungenFall; recalcCosts(); medicDatenbank[gV].forEach((schritt, index) => { container.innerHTML += `<div class="todo-item"><input type="checkbox" id="step-${index}" onclick="this.parentNode.classList.toggle('completed')"><label style="margin:0; cursor:pointer;" for="step-${index}">Schritt ${index + 1}: ${schritt}</label></div>`; }); }
     function patientHinzufuegen() { if(!sessionUser) return; const v = document.getElementById('verletzungSelect').value; if (!v) { alert("Bitte wählen!"); return; } let pNL = document.getElementById('pName').value.trim(); if (!pNL) pNL = "Patient " + ((Number(daten.patienten) || 0) + 1); const hD = new Date().toLocaleDateString('de-DE'); let nP = (Number(daten.patienten) || 0) + 1; let nV = (Number(daten.verletzungen) || 0) + Number(anzahlVerletzungenFall); let nA = (Number(daten.ausgaben) || 0) + Number(aktuellerFallKosten); let uP = { patienten: nP, verletzungen: nV, ausgaben: nA }; Object.keys(materialKatalog).forEach(key => { uP[key] = (Number(daten[key]) || 0) + (Number(fallMaterial[key]) || 0); }); const lP = { name: pNL, szenario: v, count: Number(anzahlVerletzungenFall), cash: Number(aktuellerFallKosten), medicName: sessionUser.vorname + " " + sessionUser.nachname, datum: hD, matVerbrauch: JSON.parse(JSON.stringify(fallMaterial)) }; db.ref("data/protokoll").push(lP); db.ref("data/daten").set(uP).then(() => { document.getElementById('verletzungSelect').value = ""; document.getElementById('checklisteContainer').innerHTML = '<p style="color: var(--text-muted);">Wähle ein Szenario...</p>'; anzahlVerletzungenFall = 1; document.getElementById('val_pVerletzungenAnzahl').textContent = 1; document.getElementById('pName').value = ""; for(let key in materialKatalog) fallMaterial[key] = 0; setDynamischenPatientenNamen(); recalcCosts(); alert("Erfolgreich live verbucht!"); }); }
     function speicherePreise() { for(let key in materialKatalog) materialKatalog[key].preis = parseFloat(document.getElementById(`setPrice_${key}`).value) || 0; db.ref("data/materialKatalog").set(materialKatalog); alert("Preise global synchronisiert!"); }
-    function tagesstatistikZuruecksetzen() { if(!sessionUser || !sessionUser.isAdmin) return; if ((Number(daten.patienten) || 0) === 0 && (Number(daten.ausgaben) || 0) === 0) { alert("Keine aktiven Tagesdaten vorhanden."); return; } if (confirm("Schicht beenden und Tagesdaten archivieren?")) { let dV = {}; Object.keys(materialKatalog).forEach(key => { let verb = Number(daten[key]) || 0; if(verb > 0) dV[materialKatalog[key].name] = verb; }); const aP = { tag: tagesZaehler + " (" + new Date().toLocaleDateString('de-DE') + ")", p: Number(daten.patienten) || 0, v: Number(daten.verletzungen) || 0, cash: Number(daten.ausgaben) || 0, matDetailsObj: dV }; db.ref("data/archiv").push(aP).then(() => { tagesZaehler++; db.ref("data/tagesZaehler").set(tagesZaehler); let rD = { patienten: 0, verletzungen: 0, ausgaben: 0 }; Object.keys(materialKatalog).forEach(key => resetDaten[key] = 0); db.ref("data/daten").set(rD); db.ref("data/protokoll").remove(); alert("Schicht erfolgreich archiviert!"); }); } }
+    
+    function tagesstatistikZuruecksetzen() { 
+        if(!sessionUser || !sessionUser.isAdmin) return; 
+        if ((Number(daten.patienten) || 0) === 0 && (Number(daten.ausgaben) || 0) === 0) { alert("Keine aktiven Tagesdaten vorhanden."); return; } 
+        if (confirm("Schicht beenden und Tagesdaten archivieren?")) { 
+            let dV = {}; 
+            Object.keys(materialKatalog).forEach(key => { 
+                let verb = Number(daten[key]) || 0; 
+                if(verb > 0) dV[materialKatalog[key].name] = verb; 
+            }); 
+            const aP = { tag: tagesZaehler + " (" + new Date().toLocaleDateString('de-DE') + ")", p: Number(daten.patienten) || 0, v: Number(daten.verletzungen) || 0, cash: Number(daten.ausgaben) || 0, matDetailsObj: dV }; 
+            db.ref("data/archiv").push(aP).then(() => { 
+                tagesZaehler++; 
+                db.ref("data/tagesZaehler").set(tagesZaehler); 
+                let rD = { patienten: 0, verletzungen: 0, ausgaben: 0 }; 
+                Object.keys(materialKatalog).forEach(key => rD[key] = 0); 
+                db.ref("data/daten").set(rD); 
+                db.ref("data/protokoll").remove(); 
+                alert("Schicht erfolgreich archiviert!"); 
+            }); 
+        } 
+    }
+    
     function allesKomplettLoeschen() { if (confirm("🚨 Komplettes System löschen?") && confirm("Wirklich sicher?")) { db.ref("data").remove().then(() => location.reload()); } }
     function uiAktualisieren() { document.getElementById('statPatienten').textContent = daten.patienten || 0; document.getElementById('statVerletzungen').textContent = daten.verletzungen || 0; document.getElementById('statAusgaben').textContent = "$" + (Number(daten.ausgaben) || 0).toLocaleString(); const tbody = document.getElementById('tagesVerbrauchTableBody'); if(!tbody) return; tbody.innerHTML = ""; Object.keys(materialKatalog).forEach(key => { tbody.innerHTML += `<tr><td>${materialKatalog[key].name}</td><td style="font-weight:bold; color:var(--primary);">${daten[key] || 0}</td></tr>`; }); }
     function renderLogsAndArchiv(protokoll, archiv) {
         const logBody = document.getElementById('logTableBody'); const archivBody = document.getElementById('archivTableBody'); if(!logBody) return; const sA = (sessionUser && sessionUser.isAdmin); logBody.innerHTML = "";
-        if(protokoll) { Object.keys(protokoll).reverse().forEach(k => { const i = protokoll[k]; logBody.innerHTML += `<tr><td><b>${i.name}</b> <small style="color:var(--text-muted); display:block;">${i.datum || ''}</small></td><td><span style="color:var(--primary);">${i.szenario}</span></td><td>${i.count}</td><td><span style="color:var(--success);">$${(i.cash || 0).toLocaleString()}</span></td><td><span style="color:var(--warning); font-weight:600;">${i.medicName || 'Unbekannt'}</span><td style="display:${sA?'table-cell':'none'};"><button class="btn-delete-row" onclick="deletePatient('${k}')">🗑️</button></td></tr>`; }); }
+        if(protokoll) { Object.keys(protokoll).reverse().forEach(k => { const i = protokoll[k]; logBody.innerHTML += `<tr><td><b>${i.name}</b> <small style="color:var(--text-muted); display:block;">${i.datum || ''}</small></td><td><span style="color:var(--primary);">${i.szenario}</span></td><td>${i.count}</td><td><span style="color:var(--success);">$${(i.cash || 0).toLocaleString()}</span></td><td><span style="color:var(--warning); font-weight:600;">${i.medicName || 'Unbekannt'}</span></td><td style="display:${sA?'table-cell':'none'};"><button class="btn-delete-row" onclick="deletePatient('${k}')">🗑️</button></td></tr>`; }); }
         archivBody.innerHTML = "";
         if(archiv) { Object.keys(archiv).reverse().forEach(k => { const i = archiv[k]; let mHtml = '<ul class="archiv-details-list">'; if(i.matDetailsObj && typeof i.matDetailsObj === 'object' && Object.keys(i.matDetailsObj).length > 0) { Object.keys(i.matDetailsObj).forEach(m => { mHtml += `<li>${m}: <b>${i.matDetailsObj[m]}</b></li>`; }); } else if(Number(i.cash) > 0) { let vA = Number(i.v) || 1; mHtml += `<li>Schätzwert: Nähset/Verband/Meds x${vA}</li>`; } else { mHtml += `<li>Kein Verbrauch</li>`; } mHtml += '</ul>'; archivBody.innerHTML += `<tr><td><b>Schicht ${i.tag}</b></td><td>${i.p}</td><td>${i.v}</td><td><span style="color:var(--success);">$${(i.cash || 0).toLocaleString()}</span></td><td>${mHtml}</td><td style="display:${sA?'table-cell':'none'};"><button class="btn-delete-row" onclick="deleteArchivSchicht('${k}')">🗑️</button></td></tr>`; }); }
     }
     function deletePatient(key) { db.ref("data/protokoll/" + key).once("value", snapshot => { const p = snapshot.val(); if(p && confirm(`Eintrag von "${p.name}" löschen?`)) { daten.patienten = Math.max(0, (Number(daten.patienten) || 0) - 1); daten.verletzungen = Math.max(0, (Number(daten.verletzungen) || 0) - (Number(p.count) || 0)); daten.ausgaben = Math.max(0, (Number(daten.ausgaben) || 0) - (Number(p.cash) || 0)); if(p.matVerbrauch) { Object.keys(p.matVerbrauch).forEach(k => { if(daten[k] !== undefined) daten[k] = Math.max(0, (Number(daten[k]) || 0) - (Number(p.matVerbrauch[k]) || 0)); }); } db.ref("data/daten").set(daten); db.ref("data/protokoll/" + key).remove(); } }); }
     function deleteArchivSchicht(key) { if(confirm("Schicht unwiderruflich löschen?")) db.ref("data/archiv/" + key).remove(); }
     function setDynamischenPatientenNamen() { const nF = document.getElementById('pName'); if (nF && (!nF.value || nF.value.startsWith("Patient "))) { nF.value = "Patient " + ((Number(daten.patienten) || 0) + 1); } }
-    window.deletePatient = deletePatient; window.deleteArchivSchicht = deleteArchivSchicht; window.toggleThemeCollapse = toggleThemeCollapse; window.deleteDienstLink = deleteDienstLink; window.berechneDienstTage = berechneDienstTage;
+    window.deletePatient = deletePatient; window.deleteArchivSchicht = deleteArchivSchicht; window.toggleThemeCollapse = toggleThemeCollapse; window.deleteDienstLink = deleteDienstLink; window.berechneDienstTage = berechneDienstTage; window.linkHinzufuegen = linkHinzufuegen;
 </script>
 </body>
 </html>
