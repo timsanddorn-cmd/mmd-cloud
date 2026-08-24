@@ -252,6 +252,7 @@
             <button class="tab-btn active" onclick="switchTab('docTab', this)">📝 Dokumentation & Einsatz</button>
             <button class="tab-btn" onclick="switchTab('statsTab', this)">📊 Statistiken & Archiv</button>
             <button class="tab-btn" onclick="switchTab('guideTab', this)">📋 Leitfaden & Funk</button>
+            <button class="tab-btn" onclick="switchTab('commandTab', this)">💻 Commands</button>
             <button class="tab-btn" id="linksTabBtn" onclick="switchTab('linksTab', this)">🔗 Links & Dokumente</button>
             <button class="tab-btn" onclick="switchTab('miscTab', this)">🗂️ Sonstiges & Gehalt</button>
             <button class="tab-btn" id="adminMainTabHeader" onclick="settingsTabClick()">⚙️ Einstellungen</button>
@@ -413,6 +414,49 @@
                                 <tr><td style="font-weight:bold; width: 50%;">Staatliche Fraktionen<br><span style="color:var(--text-muted); font-size:11px;">(SAPD, USMS, DOJ & SAMD)</span></td><td style="color:var(--danger); font-weight:600;">Im Dienst wird keine Rechnung ausgestellt</td></tr>
                                 <tr><td style="font-weight:bold;">Mechaniker<br><span style="color:var(--text-muted); font-size:11px;">(Benny´s, Redfield & Roxwood Tuning)</span></td><td style="color:var(--danger); font-weight:600;">Im Dienst wird keine Rechnung ausgestellt</td></tr>
                                 <tr><td style="font-weight:bold;">Security C77 / Bahamas / Casino / Golden Pub</td><td style="color:var(--danger); font-weight:600;">Im Dienst wird keine Rechnung ausgestellt</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+        </div>
+
+        <!-- REITER: COMMANDS & KÜRZEL -->
+        <div id="commandTab" class="tab-content">
+            <h2>💻 Fraktions-Commands & Kürzel</h2>
+            <div class="guide-split-container">
+                <div class="section" style="padding:0; overflow:hidden;">
+                    <table class="guide-table">
+                        <thead>
+                            <tr><th colspan="2" class="red-head">Psychologie</th></tr>
+                            <tr><th class="sub-head text-center" style="width: 35%;">Command</th><th class="sub-head">Beschreibung</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td style="font-weight:bold; color:var(--primary);">!Psych</td><td>Psych anforderungen</td></tr>
+                            <tr><td style="font-weight:bold; color:var(--primary);">!waffenschein</td><td>Warten für die überprüfung</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="guide-right-stack">
+                    <div class="section" style="padding:0; overflow:hidden;">
+                        <table class="guide-table">
+                            <thead>
+                                <tr><th colspan="2" class="red-head">T - Code</th></tr>
+                                <tr><th class="sub-head text-center" style="width: 35%;">Command</th><th class="sub-head">Beschreibung</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr><td style="font-weight:bold; color:var(--warning);">/editmdthud</td><td>MD HUD ändern</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="section" style="padding:0; overflow:hidden;">
+                        <table class="guide-table">
+                            <thead>
+                                <tr><th colspan="2" class="red-head">Abkürzung Dokumente</th></tr>
+                                <tr><th class="sub-head text-center" style="width: 35%;">Abkürzung</th><th class="sub-head">Bedeutung / Beschreibung</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr><td style="font-weight:bold; color:var(--success);">PSGU Test</td><td>Psychologisches Gutachten</td></tr>
+                                <tr><td style="font-weight:bold; color:var(--success);">CLS</td><td>Combat Life Saver</td></tr>
+                                <tr><td style="font-weight:bold; color:var(--success);">EHK</td><td>Erste Hilfe Kurs</td></tr>
                             </tbody>
                         </table>
                     </div>
