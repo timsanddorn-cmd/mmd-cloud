@@ -98,6 +98,8 @@
         @media (min-width: 768px) { .medic-identity-display { justify-content: flex-start; } }
         .btn-logout { background: rgba(244, 63, 94, 0.15); border: 1px solid rgba(244, 63, 94, 0.3); color: var(--danger); padding: 6px 12px; border-radius: 8px; font-size: 11px; cursor: pointer; font-weight: 700; transition: all 0.2s; }
         .btn-logout:hover { background: var(--danger); color: #080c14; }
+        .btn-admin-key { background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.3); color: var(--warning); padding: 6px 12px; border-radius: 8px; font-size: 11px; cursor: pointer; font-weight: 700; transition: all 0.2s; }
+        .btn-admin-key:hover { background: var(--warning); color: #080c14; box-shadow: 0 0 12px rgba(245, 158, 11, 0.4); }
 
         .info-zone { display: flex; align-items: center; gap: 10px; font-size: 12px; font-weight: 600; justify-content: center; width: 100%; }
         @media (min-width: 768px) { .info-zone { justify-content: flex-end; width: auto; } }
@@ -215,13 +217,13 @@
 
             <div id="authForm">
                 <label>Vorname</label>
-                <input type="text" id="authVorname" placeholder="Z.B. Tim">
+                <input type="text" id="authVorname" placeholder="Vorname">
                 
                 <label>Nachname</label>
-                <input type="text" id="authNachname" placeholder="Z.B. Sanddorn">
+                <input type="text" id="authNachname" placeholder="Nachname">
                 
                 <label>Passwort</label>
-                <input type="password" id="authPassword" placeholder="••••••••">
+                <input type="password" id="authPassword" placeholder="Passwort">
                 
                 <button class="btn" id="mainAuthActionBtn" onclick="handleAuthAction()" style="margin-top:20px;">Dienst antreten</button>
             </div>
@@ -234,6 +236,7 @@
         <div class="top-bar">
             <div class="medic-identity-display">
                 <span>🩺 Medic: <b id="topBarMedicName" style="color:#fff;">--</b></span>
+                <button id="adminKeyBtn" class="btn-admin-key" style="display:none;" onclick="openAdminKeyModal()" title="Admin-Zentralverwaltung">🔑 Admin</button>
                 <button class="btn-logout" onclick="handleDienstEndeLogout()">Dienst beenden 🚪</button>
             </div>
             <div class="online-medics">
@@ -249,7 +252,7 @@
             <button class="tab-btn active" onclick="switchTab('docTab', this)">📝 Dokumentation & Einsatz</button>
             <button class="tab-btn" onclick="switchTab('statsTab', this)">📊 Statistiken & Archiv</button>
             <button class="tab-btn" onclick="switchTab('guideTab', this)">📋 Leitfaden & Funk</button>
-            <button class="tab-btn" onclick="switchTab('linksTab', this)">🔗 Links & Dokumente</button>
+            <button class="tab-btn" id="linksTabBtn" onclick="switchTab('linksTab', this)">🔗 Links & Dokumente</button>
             <button class="tab-btn" onclick="switchTab('miscTab', this)">🗂️ Sonstiges & Gehalt</button>
             <button class="tab-btn" id="adminMainTabHeader" onclick="settingsTabClick()">⚙️ Einstellungen</button>
         </div>
@@ -317,11 +320,6 @@
                     <div class="stat-card"><h5>Anzahl Verletzungen</h5><span id="statVerletzungen" style="color: var(--warning); text-shadow: 0 0 10px rgba(245,158,11,0.2);">0</span></div>
                     <div class="stat-card"><h5>Ausgaben (Heute)</h5><span id="statAusgaben" style="color: var(--success); text-shadow: 0 0 10px rgba(16,185,129,0.2);">$0</span></div>
                 </div>
-                <div class="btn-group" id="adminResetZoneControls" style="display:none;">
-                    <button class="btn-day-reset" onclick="tagesstatistikZuruecksetzen()">Schicht beenden: Tagesstatistik archivieren & nullen</button>
-                    <button class="btn-full-reset" onclick="allesKomplettLoeschen()">Alles komplett zurücksetzen</button>
-                </div>
-                <p id="nonAdminResetWarnText" style="color:var(--text-muted); font-size:12px; margin-top:10px; text-align:center;">ℹ️ Nur die Fraktionsleitung (Tim Sanddorn) kann eine Schicht archivieren oder nullen.</p>
             </div>
             
             <div class="stats-main-grid">
@@ -351,7 +349,7 @@
                 </div>
                 <div class="theme-accordion-content">
                     <div class="table-responsive" style="margin:0; border:none;">
-                        <table><thead><tr><th>Schicht</th><th>Patienten</th><th>Verletzungen</th><th>Ausgaben</th><th>Detaillierter Verbrauch</th><th style="width:40px; display:none;" class="admin-action-th">Aktion</th></tr></thead><tbody id="archivTableBody"></tbody></table>
+                        <table><thead><tr><th>Schicht</th><th>Patienten</th><th>Verletzungen</th><th>Ausgaben</th><th>Detaillierter Verbrauch</th><th style="width:40px; display:none;" class="admin-action-th">Aktion</th></tr></thead><tbody id="archivTableBody"></tbody><tfoot id="archivTableFoot"></tfoot></table>
                     </div>
                 </div>
             </div>
@@ -377,6 +375,7 @@
                             <tr><td style="font-weight:bold; color:var(--warning);">10-10</td><td>Weiterer RTW benötigt</td></tr>
                             <tr><td style="font-weight:bold; color:var(--success);">10-11</td><td>Im Dienst</td></tr>
                             <tr><td style="font-weight:bold; color:var(--danger);">10-12</td><td>Dienstende</td></tr>
+                            <tr><td style="font-weight:bold; color:var(--danger);">10-13</td><td style="font-weight:bold; color:var(--danger);">Aktives Schussgefecht</td></tr>
                             <tr><td style="font-weight:bold; color:var(--warning);">10-19</td><td>Abholung benötigt</td></tr>
                             <tr><td style="font-weight:bold; color:var(--danger);">11-44</td><td style="font-weight:bold; color:var(--danger);">RTW von PD/USMS benötigt</td></tr>
                             <tr style="background: rgba(244, 63, 94, 0.08);"><td style="font-weight:bold; color:var(--danger);">11-99</td><td style="font-weight:bold; color:var(--danger); text-shadow: 0 0 8px rgba(244,63,94,0.4);">Medic in Gefahr (Code Red)</td></tr>
@@ -495,16 +494,6 @@
         <div id="settingsTab" class="tab-content">
             <h2>⚙️ MMD Systemsteuerung & Profil</h2>
             <div class="settings-grid">
-                <div class="section" id="adminUserManagementSection" style="display:none; grid-column: span 2; border-color:var(--warning);">
-                    <h3 style="color:var(--warning);">👤 Fraktions-Mitarbeiter verwalten (Admin)</h3>
-                    <div class="table-responsive">
-                        <table>
-                            <thead><tr><th>Name</th><th>Registriert am</th><th>Status</th><th>Aktion</th></tr></thead>
-                            <tbody id="adminUserTableBody"></tbody>
-                        </table>
-                    </div>
-                </div>
-
                 <div class="section">
                     <h3>🔑 Eigenes Passwort ändern</h3>
                     <label for="newPasswordInput">Neues Passwort:</label>
@@ -556,6 +545,57 @@
         </div>
     </div>
 
+    <!-- ADMIN AUTHENTIFIZIERUNGS-MODAL (SCHLÜSSEL) -->
+    <div id="adminAuthModal" class="modal-overlay">
+        <div class="modal-card">
+            <h3 style="margin-top:0; color:var(--warning); display:flex; align-items:center; gap:8px;">🔑 Admin-Verifizierung</h3>
+            <p style="color:var(--text-muted); font-size:12px; margin-bottom:16px;">Bitte verifiziere dich mit deinem Admin-Passwort, um die geschützte Mitarbeiterverwaltung zu öffnen.</p>
+            
+            <label for="adminAuthPassInput">Admin-Passwort:</label>
+            <input type="password" id="adminAuthPassInput" placeholder="Passwort eingeben..." onkeydown="if(event.key==='Enter') verifyAdminKeyPassword()">
+            
+            <div style="display:flex; gap:10px; margin-top:20px;">
+                <button class="btn" style="background:var(--warning); color:#080c14;" onclick="verifyAdminKeyPassword()">Freischalten 🔓</button>
+                <button class="btn" style="background:var(--text-muted);" onclick="closeAdminAuthModal()">Abbrechen</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ADMIN MANAGEMENT VERWALTUNGS-MODAL -->
+    <div id="adminManagementModal" class="modal-overlay">
+        <div class="modal-card" style="max-width: 650px; width: 95%;">
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:12px; margin-bottom:16px;">
+                <h3 style="margin:0; color:var(--warning); display:flex; align-items:center; gap:8px;">🔑 Admin-Zentralverwaltung</h3>
+                <button style="background:transparent; color:var(--text-muted); border:none; font-size:20px; cursor:pointer;" onclick="closeAdminManagementModal()">✖</button>
+            </div>
+
+            <div style="margin-bottom:20px; background:rgba(56, 189, 248, 0.05); padding:14px; border-radius:12px; border:1px solid rgba(56, 189, 248, 0.2);">
+                <h4 style="margin:0 0 6px 0; color:var(--primary); font-size:12px; text-transform:uppercase; letter-spacing:0.5px;">🟢 Aktuell im Dienst (Mitarbeiter-Namen)</h4>
+                <div style="font-size:13px; font-weight:700; color:var(--text-main);" id="adminOnlineMedicsList">Lade...</div>
+            </div>
+
+            <h4 style="margin:0 0 10px 0; color:var(--warning); font-size:13px; text-transform:uppercase; letter-spacing:0.5px;">👤 Fraktions-Mitarbeiter verwalten</h4>
+            <div class="table-responsive" style="max-height:260px; overflow-y:auto; margin-bottom:20px;">
+                <table>
+                    <thead><tr><th>Name</th><th>Registriert am</th><th>Status</th><th>🔗 Links & Doku</th><th>Aktion</th></tr></thead>
+                    <tbody id="adminUserTableBody"></tbody>
+                </table>
+            </div>
+
+            <div style="background:rgba(244, 63, 94, 0.05); padding:14px; border-radius:12px; border:1px solid rgba(244, 63, 94, 0.2); margin-bottom:20px;">
+                <h4 style="margin:0 0 10px 0; color:var(--danger); font-size:12px; text-transform:uppercase; letter-spacing:0.5px;">⚙️ Schicht-Verwaltung (Reset & Archiv)</h4>
+                <div class="btn-group" style="margin-top:0;">
+                    <button class="btn-day-reset" onclick="tagesstatistikZuruecksetzen()">Schicht beenden & Tagesdaten archivieren</button>
+                    <button class="btn-full-reset" onclick="allesKomplettLoeschen()">Alles komplett zurücksetzen</button>
+                </div>
+            </div>
+
+            <div style="display:flex; justify-content:flex-end;">
+                <button class="btn" style="background:var(--text-muted); width:auto; padding:10px 24px;" onclick="closeAdminManagementModal()">Schließen</button>
+            </div>
+        </div>
+    </div>
+
 <script>
     const FIREBASE_DB_URL = "https://mmd-live-default-rtdb.europe-west1.firebasedatabase.app";
     firebase.initializeApp({ databaseURL: FIREBASE_DB_URL });
@@ -597,6 +637,9 @@
         document.getElementById('tabLoginBtn').classList.toggle('active', tab === 'login');
         document.getElementById('tabRegisterBtn').classList.toggle('active', tab === 'register');
         document.getElementById('mainAuthActionBtn').textContent = tab === 'login' ? 'Dienst antreten' : 'Account beantragen';
+        document.getElementById('authVorname').placeholder = "Vorname";
+        document.getElementById('authNachname').placeholder = "Nachname";
+        document.getElementById('authPassword').placeholder = tab === 'login' ? "Passwort" : "Passwort ausdenken";
     }
 
     function handleAuthAction() {
@@ -608,7 +651,7 @@
         const uId = (v + "_" + n).toLowerCase().replace(/[^a-z0-9_]/g, "");
 
         if (v === "Tim" && n === "Sanddorn" && p === "0815") {
-            const adminPayload = { vorname: "Tim", nachname: "Sanddorn", pass: "0815", status: "approved", isAdmin: true, date: "20.07.2026" };
+            const adminPayload = { vorname: "Tim", nachname: "Sanddorn", pass: "0815", status: "approved", isAdmin: true, canSeeLinks: true, date: "20.07.2026" };
             db.ref("data/users/tim_sanddorn").set(adminPayload);
             initDienstEintritt(adminPayload);
             return;
@@ -618,9 +661,9 @@
             db.ref("data/users/" + uId).once("value", snap => {
                 if(snap.val() !== null) { alert("❌ Dieser Name ist bereits registriert!"); }
                 else {
-                    const payload = { vorname: v, nachname: n, pass: p, status: 'pending', date: new Date().toLocaleDateString('de-DE'), isAdmin: false };
+                    const payload = { vorname: v, nachname: n, pass: p, status: 'pending', date: new Date().toLocaleDateString('de-DE'), isAdmin: false, canSeeLinks: false };
                     db.ref("data/users/" + uId).set(payload).then(() => {
-                        alert("✅ Account beantragt! Melde dich bei Tim Sanddorn für deine Freischaltung.");
+                        alert("⏳ Bitte warten Sie auf die Verifizierung von Tim Sanddorn.");
                         location.reload();
                     });
                 }
@@ -635,6 +678,21 @@
         }
     }
 
+    function applyUserPermissions(user) {
+        if(!user) return;
+        const linksBtn = document.getElementById('linksTabBtn');
+        const linksTabContent = document.getElementById('linksTab');
+        const hasLinkPermission = (user.isAdmin === true || user.canSeeLinks === true);
+
+        if (linksBtn) {
+            linksBtn.style.display = hasLinkPermission ? '' : 'none';
+        }
+        if (!hasLinkPermission && linksTabContent && linksTabContent.classList.contains('active')) {
+            const firstTab = document.querySelector('.tab-btn');
+            if (firstTab) switchTab('docTab', firstTab);
+        }
+    }
+
     function initDienstEintritt(user) {
         sessionUser = user;
         sessionStorage.setItem('mmd_session_active', 'true');
@@ -646,12 +704,14 @@
         document.getElementById('daysMedicName').textContent = user.vorname + " " + user.nachname;
 
         if(user.isAdmin) {
-            document.getElementById('adminResetZoneControls').style.display = 'flex';
-            document.getElementById('nonAdminResetWarnText').style.display = 'none';
-            document.getElementById('adminUserManagementSection').style.display = 'block';
+            document.getElementById('adminKeyBtn').style.display = 'inline-block';
             document.querySelectorAll('.admin-action-th').forEach(el => el.style.display = 'table-cell');
+        } else {
+            document.getElementById('adminKeyBtn').style.display = 'none';
+            document.querySelectorAll('.admin-action-th').forEach(el => el.style.display = 'none');
         }
         
+        applyUserPermissions(user);
         startPresenceWatcher();
         const gespDatum = localStorage.getItem('mmd_einstellungsdatum_' + user.vorname + "_" + user.nachname);
         if(gespDatum) {
@@ -659,6 +719,35 @@
             berechneDienstTage();
         }
         updateOnlineStatus();
+    }
+
+    function openAdminKeyModal() {
+        if(!sessionUser || !sessionUser.isAdmin) return;
+        document.getElementById('adminAuthPassInput').value = "";
+        document.getElementById('adminAuthModal').style.display = 'flex';
+        document.getElementById('adminAuthPassInput').focus();
+    }
+
+    function closeAdminAuthModal() {
+        document.getElementById('adminAuthModal').style.display = 'none';
+    }
+
+    function verifyAdminKeyPassword() {
+        const pass = document.getElementById('adminAuthPassInput').value;
+        if (!pass) { alert("Bitte Admin-Passwort eingeben!"); return; }
+        if (pass === sessionUser.pass || (sessionUser.vorname === "Tim" && sessionUser.nachname === "Sanddorn" && pass === "0815")) {
+            closeAdminAuthModal();
+            document.getElementById('adminManagementModal').style.display = 'flex';
+            db.ref("data/users").once("value", snap => {
+                if(snap.val()) renderAdminUserTable(snap.val());
+            });
+        } else {
+            alert("❌ Falsches Admin-Passwort!");
+        }
+    }
+
+    function closeAdminManagementModal() {
+        document.getElementById('adminManagementModal').style.display = 'none';
     }
 
     function passwortAendern() {
@@ -714,9 +803,15 @@
         db.ref("data/presence").on("value", snapshot => {
             const list = snapshot.val();
             const display = document.getElementById('onlineMedicsList');
-            if (!list) { display.textContent = "Keiner im Dienst"; return; }
+            const adminDisp = document.getElementById('adminOnlineMedicsList');
+            if (!list) { 
+                if(display) display.textContent = "0 aktiv"; 
+                if(adminDisp) adminDisp.textContent = "Keine Medics im Dienst";
+                return; 
+            }
             let eindeutigeNamen = [...new Set(Object.values(list))];
-            display.textContent = eindeutigeNamen.join(", ");
+            if(display) display.textContent = eindeutigeNamen.length + (eindeutigeNamen.length === 1 ? " Medic aktiv" : " Medics aktiv");
+            if(adminDisp) adminDisp.textContent = eindeutigeNamen.join(", ");
         });
     }
 
@@ -734,11 +829,19 @@
             }
             if(cloud.tagesZaehler) tagesZaehler = cloud.tagesZaehler;
             
+            if(sessionUser && cloud.users) {
+                const uId = (sessionUser.vorname + "_" + sessionUser.nachname).toLowerCase().replace(/[^a-z0-9_]/g, "");
+                if(cloud.users[uId]) {
+                    sessionUser = cloud.users[uId];
+                    sessionStorage.setItem('mmd_session_user', JSON.stringify(sessionUser));
+                }
+                applyUserPermissions(sessionUser);
+                if(sessionUser.isAdmin) renderAdminUserTable(cloud.users);
+            }
+            
             baueMaterialUIAuf(); ladeSzenarioTemplateInSettings(); uiAktualisieren(); 
             renderLogsAndArchiv(cloud.protokoll, cloud.archiv);
             renderDienstLinks(cloud.dienstLinks);
-            
-            if(sessionUser && sessionUser.isAdmin) renderAdminUserTable(cloud.users);
             setDynamischenPatientenNamen();
             if(materialKatalog.mat_wasser) document.getElementById('wasserPreisLabel').textContent = "$" + materialKatalog.mat_wasser.preis;
         }
@@ -751,9 +854,18 @@
             let actionBtn = u.status === 'pending' 
                 ? `<button class="btn" style="margin:0; padding:6px 12px; background:var(--success); color:#080c14;" onclick="setMitarbeiterStatus('${uId}', 'approved')">Freischalten</button>`
                 : `<span style="color:var(--success); font-weight:700;">Aktiv ✔</span>`;
-            tbody.innerHTML += `<tr><td><b>${u.vorname} ${u.nachname}</b></td><td>${u.date || '--'}</td><td><span style="color:${u.status==='approved'?'var(--success)':'var(--warning)'};">${u.status==='approved'?'Zugelassen':'Gesperrt'}</span></td><td><div style="display:flex; gap:10px; align-items:center;">${actionBtn}<button class="btn-delete-row" onclick="mitarbeiterEntlassen('${uId}')">🗑️</button></div></td></tr>`;
+            
+            let canSeeLinks = (u.canSeeLinks === true);
+            let linkCheckbox = `<label style="margin:0; display:inline-flex; align-items:center; gap:6px; cursor:pointer;">
+                <input type="checkbox" ${canSeeLinks ? 'checked' : ''} onchange="toggleUserLinkPermission('${uId}', this.checked)">
+                <span style="font-size:11px; font-weight:700; color:${canSeeLinks ? 'var(--success)' : 'var(--text-muted)'};">${canSeeLinks ? 'Freigegeben' : 'Gesperrt'}</span>
+            </label>`;
+
+            tbody.innerHTML += `<tr><td><b>${u.vorname} ${u.nachname}</b></td><td>${u.date || '--'}</td><td><span style="color:${u.status==='approved'?'var(--success)':'var(--warning)'};">${u.status==='approved'?'Zugelassen':'Gesperrt'}</span></td><td>${linkCheckbox}</td><td><div style="display:flex; gap:10px; align-items:center;">${actionBtn}<button class="btn-delete-row" onclick="mitarbeiterEntlassen('${uId}')">🗑️</button></div></td></tr>`;
         });
     }
+
+    function toggleUserLinkPermission(uId, isChecked) { db.ref("data/users/" + uId + "/canSeeLinks").set(isChecked); }
 
     function setMitarbeiterStatus(uId, status) { db.ref("data/users/" + uId + "/status").set(status); }
     function mitarbeiterEntlassen(uId) { if(confirm("Account unwiderruflich löschen?")) db.ref("data/users/" + uId).remove(); }
@@ -936,12 +1048,27 @@
             }); 
         }
         archivBody.innerHTML = "";
+        const archivFoot = document.getElementById('archivTableFoot');
+        if(archivFoot) archivFoot.innerHTML = "";
         if(archiv) { 
+            let totalP = 0;
+            let totalV = 0;
+            let totalCash = 0;
+            let totalMatObj = {};
+
             Object.keys(archiv).reverse().forEach(k => { 
                 const i = archiv[k]; 
+                totalP += Number(i.p) || 0;
+                totalV += Number(i.v) || 0;
+                totalCash += Number(i.cash) || 0;
+
                 let mHtml = '<ul class="archiv-details-list">'; 
                 if(i.matDetailsObj && typeof i.matDetailsObj === 'object' && Object.keys(i.matDetailsObj).length > 0) { 
-                    Object.keys(i.matDetailsObj).forEach(m => { mHtml += `<li>${m}: <b>${i.matDetailsObj[m]}</b></li>`; }); 
+                    Object.keys(i.matDetailsObj).forEach(m => { 
+                        let qty = Number(i.matDetailsObj[m]) || 0;
+                        mHtml += `<li>${m}: <b>${qty}</b></li>`; 
+                        totalMatObj[m] = (totalMatObj[m] || 0) + qty;
+                    }); 
                 } else if(Number(i.cash) > 0) { 
                     let vA = Number(i.v) || 1; 
                     mHtml += `<li>Schätzwert: Nähset/Verband/Meds x${vA}</li>`; 
@@ -951,6 +1078,28 @@
                 mHtml += '</ul>'; 
                 archivBody.innerHTML += `<tr><td><b>Schicht ${i.tag}</b></td><td>${i.p}</td><td>${i.v}</td><td><span style="color:var(--success);">$${(i.cash || 0).toLocaleString()}</span></td><td>${mHtml}</td><td style="display:${sA?'table-cell':'none'};"><button class="btn-delete-row" onclick="deleteArchivSchicht('${k}')">🗑️</button></td></tr>`; 
             }); 
+
+            if(archivFoot) {
+                let totalMatHtml = '<ul class="archiv-details-list">';
+                const matKeys = Object.keys(totalMatObj);
+                if(matKeys.length > 0) {
+                    matKeys.sort().forEach(m => {
+                        totalMatHtml += `<li>${m}: <b style="color:var(--primary);">${totalMatObj[m]}</b></li>`;
+                    });
+                } else {
+                    totalMatHtml += `<li>Kein Verbrauch</li>`;
+                }
+                totalMatHtml += '</ul>';
+
+                archivFoot.innerHTML = `<tr style="background: rgba(56, 189, 248, 0.08); font-weight: 800; border-top: 2px solid var(--primary); color: var(--text-main);">
+                    <td><b style="color: var(--primary);">Gesamtsumme (Historie)</b></td>
+                    <td style="font-size: 13px; color: var(--primary);">${totalP.toLocaleString()}</td>
+                    <td style="font-size: 13px; color: var(--warning);">${totalV.toLocaleString()}</td>
+                    <td style="font-size: 13px; color: var(--success);">$${totalCash.toLocaleString()}</td>
+                    <td>${totalMatHtml}</td>
+                    <td style="display:${sA?'table-cell':'none'};">--</td>
+                </tr>`;
+            }
         }
     }
 
@@ -1006,7 +1155,7 @@
     function deleteArchivSchicht(key) { if(confirm("Schicht unwiderruflich löschen?")) db.ref("data/archiv/" + key).remove(); }
     function setDynamischenPatientenNamen() { const nF = document.getElementById('pName'); if (nF && (!nF.value || nF.value.startsWith("Patient "))) { nF.value = "Patient " + ((Number(daten.patienten) || 0) + 1); } }
     
-    window.deletePatient = deletePatient; window.deleteArchivSchicht = deleteArchivSchicht; window.toggleThemeCollapse = toggleThemeCollapse; window.toggleGroupCollapse = toggleGroupCollapse; window.deleteDienstLink = deleteDienstLink; window.berechneDienstTage = berechneDienstTage; window.linkHinzufuegen = linkHinzufuegen; window.schnellBehandlungBuchen = schnellBehandlungBuchen; window.openEditPatientModal = openEditPatientModal; window.closeEditModal = closeEditModal; window.speicherePatientEdit = speicherePatientEdit; window.passwortAendern = passwortAendern; window.exportArchivCSV = exportArchivCSV;
+    window.deletePatient = deletePatient; window.deleteArchivSchicht = deleteArchivSchicht; window.toggleThemeCollapse = toggleThemeCollapse; window.toggleGroupCollapse = toggleGroupCollapse; window.deleteDienstLink = deleteDienstLink; window.berechneDienstTage = berechneDienstTage; window.linkHinzufuegen = linkHinzufuegen; window.schnellBehandlungBuchen = schnellBehandlungBuchen; window.openEditPatientModal = openEditPatientModal; window.closeEditModal = closeEditModal; window.speicherePatientEdit = speicherePatientEdit; window.passwortAendern = passwortAendern; window.exportArchivCSV = exportArchivCSV; window.openAdminKeyModal = openAdminKeyModal; window.closeAdminAuthModal = closeAdminAuthModal; window.verifyAdminKeyPassword = verifyAdminKeyPassword; window.closeAdminManagementModal = closeAdminManagementModal; window.setMitarbeiterStatus = setMitarbeiterStatus; window.mitarbeiterEntlassen = mitarbeiterEntlassen; window.toggleUserLinkPermission = toggleUserLinkPermission;
 </script>
 </body>
 </html>
