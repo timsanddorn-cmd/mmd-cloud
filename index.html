@@ -574,7 +574,10 @@
                 <div style="font-size:13px; font-weight:700; color:var(--text-main);" id="adminOnlineMedicsList">Lade...</div>
             </div>
 
-            <h4 style="margin:0 0 10px 0; color:var(--warning); font-size:13px; text-transform:uppercase; letter-spacing:0.5px;">👤 Fraktions-Mitarbeiter verwalten</h4>
+            <h4 style="margin:0 0 10px 0; color:var(--warning); font-size:13px; text-transform:uppercase; letter-spacing:0.5px; display:flex; justify-content:space-between; align-items:center;">
+                <span>👤 Fraktions-Mitarbeiter verwalten</span>
+                <button class="btn" style="margin:0; width:auto; padding:6px 14px; background:var(--primary); color:#080c14; font-size:11px;" onclick="aktualisiereAdminVerwaltung()">🔄 Aktualisieren</button>
+            </h4>
             <div class="table-responsive" style="max-height:260px; overflow-y:auto; margin-bottom:20px;">
                 <table>
                     <thead><tr><th>Name</th><th>Registriert am</th><th>Status</th><th>🔗 Links & Doku</th><th>Aktion</th></tr></thead>
@@ -805,13 +808,22 @@
             const display = document.getElementById('onlineMedicsList');
             const adminDisp = document.getElementById('adminOnlineMedicsList');
             if (!list) { 
-                if(display) display.textContent = "0 aktiv"; 
+                if(display) display.textContent = "Keiner im Dienst"; 
                 if(adminDisp) adminDisp.textContent = "Keine Medics im Dienst";
                 return; 
             }
             let eindeutigeNamen = [...new Set(Object.values(list))];
-            if(display) display.textContent = eindeutigeNamen.length + (eindeutigeNamen.length === 1 ? " Medic aktiv" : " Medics aktiv");
+            if(display) display.textContent = eindeutigeNamen.join(", ");
             if(adminDisp) adminDisp.textContent = eindeutigeNamen.join(", ");
+        });
+    }
+
+    function aktualisiereAdminVerwaltung() {
+        db.ref("data/users").once("value", snap => {
+            if(snap.val()) {
+                renderAdminUserTable(snap.val());
+                alert("🔄 Mitarbeiterliste & Berechtigungen erfolgreich aktualisiert!");
+            }
         });
     }
 
@@ -1155,7 +1167,7 @@
     function deleteArchivSchicht(key) { if(confirm("Schicht unwiderruflich löschen?")) db.ref("data/archiv/" + key).remove(); }
     function setDynamischenPatientenNamen() { const nF = document.getElementById('pName'); if (nF && (!nF.value || nF.value.startsWith("Patient "))) { nF.value = "Patient " + ((Number(daten.patienten) || 0) + 1); } }
     
-    window.deletePatient = deletePatient; window.deleteArchivSchicht = deleteArchivSchicht; window.toggleThemeCollapse = toggleThemeCollapse; window.toggleGroupCollapse = toggleGroupCollapse; window.deleteDienstLink = deleteDienstLink; window.berechneDienstTage = berechneDienstTage; window.linkHinzufuegen = linkHinzufuegen; window.schnellBehandlungBuchen = schnellBehandlungBuchen; window.openEditPatientModal = openEditPatientModal; window.closeEditModal = closeEditModal; window.speicherePatientEdit = speicherePatientEdit; window.passwortAendern = passwortAendern; window.exportArchivCSV = exportArchivCSV; window.openAdminKeyModal = openAdminKeyModal; window.closeAdminAuthModal = closeAdminAuthModal; window.verifyAdminKeyPassword = verifyAdminKeyPassword; window.closeAdminManagementModal = closeAdminManagementModal; window.setMitarbeiterStatus = setMitarbeiterStatus; window.mitarbeiterEntlassen = mitarbeiterEntlassen; window.toggleUserLinkPermission = toggleUserLinkPermission;
+    window.deletePatient = deletePatient; window.deleteArchivSchicht = deleteArchivSchicht; window.toggleThemeCollapse = toggleThemeCollapse; window.toggleGroupCollapse = toggleGroupCollapse; window.deleteDienstLink = deleteDienstLink; window.berechneDienstTage = berechneDienstTage; window.linkHinzufuegen = linkHinzufuegen; window.schnellBehandlungBuchen = schnellBehandlungBuchen; window.openEditPatientModal = openEditPatientModal; window.closeEditModal = closeEditModal; window.speicherePatientEdit = speicherePatientEdit; window.passwortAendern = passwortAendern; window.exportArchivCSV = exportArchivCSV; window.openAdminKeyModal = openAdminKeyModal; window.closeAdminAuthModal = closeAdminAuthModal; window.verifyAdminKeyPassword = verifyAdminKeyPassword; window.closeAdminManagementModal = closeAdminManagementModal; window.setMitarbeiterStatus = setMitarbeiterStatus; window.mitarbeiterEntlassen = mitarbeiterEntlassen; window.toggleUserLinkPermission = toggleUserLinkPermission; window.aktualisiereAdminVerwaltung = aktualisiereAdminVerwaltung;
 </script>
 </body>
 </html>
