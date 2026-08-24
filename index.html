@@ -128,6 +128,22 @@
         .table-responsive { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; margin-top: 10px; border-radius: 12px; border: 1px solid var(--border); background: rgba(8, 12, 20, 0.35); }
         
         .guide-split-container { display: grid; grid-template-columns: 1fr; gap: 16px; align-items: start; }
+        
+        /* HIERARCHIE BOARD CARDS */
+        .h-card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-bottom: 20px; }
+        .h-card { background: rgba(15, 23, 42, 0.75); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,0.3); backdrop-filter: blur(10px); }
+        .h-card-header { background: var(--grad-red); color: #fff; font-weight: 800; font-size: 13px; text-align: center; padding: 10px 14px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .h-card-header.header-gray { background: linear-gradient(135deg, #475569, #334155); }
+        .h-card-header.header-psych { background: linear-gradient(135deg, #a855f7, #7e22ce); }
+        .h-card-header.header-perso { background: linear-gradient(135deg, #eab308, #ca8a04); color: #080c14; }
+        .h-card-header.header-ausb { background: linear-gradient(135deg, #6366f1, #4338ca); }
+        .h-card-header.header-luft { background: linear-gradient(135deg, #f43f5e, #be123c); }
+        .h-card-body { padding: 12px 16px; font-size: 12px; }
+        .h-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .h-row:last-child { border-bottom: none; }
+        .h-label { font-weight: 700; color: var(--text-muted); }
+        .h-val { font-weight: 700; color: var(--text-main); text-align: right; }
+        .h-name-badge { color: var(--warning); font-weight: 800; text-shadow: 0 0 8px rgba(245,158,11,0.3); }
         @media (min-width: 900px) { .guide-split-container { grid-template-columns: 1fr 1fr; gap: 20px; } }
         .guide-right-stack { display: flex; flex-direction: column; gap: 16px; }
         
@@ -251,6 +267,7 @@
         <div class="tab-nav">
             <button class="tab-btn active" onclick="switchTab('docTab', this)">📝 Dokumentation & Einsatz</button>
             <button class="tab-btn" onclick="switchTab('statsTab', this)">📊 Statistiken & Archiv</button>
+            <button class="tab-btn" onclick="switchTab('hierarchieTab', this)">🌳 Hierarchie & Stammbaum</button>
             <button class="tab-btn" onclick="switchTab('guideTab', this)">📋 Leitfaden & Funk</button>
             <button class="tab-btn" onclick="switchTab('commandTab', this)">💻 Commands</button>
             <button class="tab-btn" id="linksTabBtn" onclick="switchTab('linksTab', this)">🔗 Links & Dokumente</button>
@@ -350,7 +367,238 @@
                 </div>
                 <div class="theme-accordion-content">
                     <div class="table-responsive" style="margin:0; border:none;">
-                        <table><thead><tr><th>Schicht</th><th>Patienten</th><th>Verletzungen</th><th>Ausgaben</th><th>Detaillierter Verbrauch</th><th style="width:40px; display:none;" class="admin-action-th">Aktion</th></tr></thead><tbody id="archivTableBody"></tbody><tfoot id="archivTableFoot"></tfoot></table>
+        </div>
+
+        <!-- REITER: HIERARCHIE BOARD & STAMMBAUM -->
+        <div id="hierarchieTab" class="tab-content">
+            <h2>🌳 SAMD Hierarchie & Organisationsstruktur</h2>
+            
+            <!-- CHIEFEBENE OF SAMD -->
+            <div style="margin-bottom: 24px;">
+                <div style="background: linear-gradient(135deg, #1e293b, #0f172a); padding: 10px 16px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 14px; text-align: center;">
+                    <h3 style="margin: 0; color: var(--primary); font-size: 15px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">⭐ Chiefebene of SAMD</h3>
+                </div>
+                <div class="h-card-grid">
+                    <div class="h-card">
+                        <div class="h-card-header">Chief of SAMD (01)</div>
+                        <div class="h-card-body">
+                            <div class="h-row"><span class="h-label">Belegt von:</span><span class="h-val h-name-badge" id="disp_h_chief_01">#REF!</span></div>
+                            <div class="h-row"><span class="h-label">Voraussetzung:</span><span class="h-val" style="font-size:11px;">Wird bestimmt durch die Projektleitung</span></div>
+                        </div>
+                    </div>
+                    <div class="h-card">
+                        <div class="h-card-header">Ass. Chief of SAMD (02)</div>
+                        <div class="h-card-body">
+                            <div class="h-row"><span class="h-label">Belegt von:</span><span class="h-val h-name-badge" id="disp_h_chief_02">#REF!</span></div>
+                            <div class="h-row"><span class="h-label">Voraussetzung:</span><span class="h-val" style="font-size:11px;">Wird durch Chief & Projektleitung entschieden</span></div>
+                        </div>
+                    </div>
+                    <div class="h-card">
+                        <div class="h-card-header">Deputy Chief of SAMD (03)</div>
+                        <div class="h-card-body">
+                            <div class="h-row"><span class="h-label">Belegt von:</span><span class="h-val h-name-badge" id="disp_h_chief_03">#REF!</span></div>
+                            <div class="h-row"><span class="h-label">Voraussetzung:</span><span class="h-val" style="font-size:11px;">Wird durch Chief & Projektleitung entschieden</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- HIGH COMMAND OF SAMD -->
+            <div style="margin-bottom: 24px;">
+                <div style="background: linear-gradient(135deg, #1e293b, #0f172a); padding: 10px 16px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 14px; text-align: center;">
+                    <h3 style="margin: 0; color: var(--warning); font-size: 15px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">🎖️ High Command of SAMD</h3>
+                </div>
+                <div class="h-card-grid">
+                    <div class="h-card">
+                        <div class="h-card-header">D.o.M.O of SAMD (04)</div>
+                        <div class="h-card-body">
+                            <div class="h-row"><span class="h-label">Belegt von:</span><span class="h-val h-name-badge" id="disp_h_domo_04">Nick Garcia</span></div>
+                            <div class="h-row"><span class="h-label">Laufbahn:</span><span class="h-val">Doctor</span></div>
+                            <div class="h-row"><span class="h-label">Abteilung:</span><span class="h-val">Personalabteilung Leitung</span></div>
+                            <div class="h-row"><span class="h-label">min. Diensttage:</span><span class="h-val" style="color:var(--warning);">min. 150</span></div>
+                        </div>
+                    </div>
+                    <div class="h-card">
+                        <div class="h-card-header">F.o.D of SAMD (05)</div>
+                        <div class="h-card-body">
+                            <div class="h-row"><span class="h-label">Belegt von:</span><span class="h-val h-name-badge" id="disp_h_fod_05">Mike Gonzalo</span></div>
+                            <div class="h-row"><span class="h-label">Laufbahn:</span><span class="h-val">Paramedic</span></div>
+                            <div class="h-row"><span class="h-label">Abteilung:</span><span class="h-val">Ausbildungsabteilung Leitung</span></div>
+                            <div class="h-row"><span class="h-label">min. Diensttage:</span><span class="h-val" style="color:var(--warning);">min. 150</span></div>
+                        </div>
+                    </div>
+                    <div class="h-card">
+                        <div class="h-card-header">Chief Physician of SAMD (06/07)</div>
+                        <div class="h-card-body">
+                            <div class="h-row"><span class="h-label">06 Belegt von:</span><span class="h-val h-name-badge" id="disp_h_chiefphys_06">Katarina Harper</span></div>
+                            <div class="h-row"><span class="h-label">07 Belegt von:</span><span class="h-val h-name-badge" id="disp_h_chiefphys_07">Tim Sanddorn</span></div>
+                            <div class="h-row"><span class="h-label">Laufbahn:</span><span class="h-val">Doctor</span></div>
+                            <div class="h-row"><span class="h-label">Abteilung:</span><span class="h-val" style="font-size:11px;">06=Psychologie | 07=High Command</span></div>
+                            <div class="h-row"><span class="h-label">min. Diensttage:</span><span class="h-val" style="color:var(--warning);">min. 125</span></div>
+                        </div>
+                    </div>
+                    <div class="h-card">
+                        <div class="h-card-header">Lieutenant of SAMD (08/09)</div>
+                        <div class="h-card-body">
+                            <div class="h-row"><span class="h-label">08 Belegt von:</span><span class="h-val h-name-badge" id="disp_h_lt_08">Unbesetzt</span></div>
+                            <div class="h-row"><span class="h-label">09 Belegt von:</span><span class="h-val h-name-badge" id="disp_h_lt_09">Unbesetzt</span></div>
+                            <div class="h-row"><span class="h-label">Laufbahn:</span><span class="h-val">Paramedic</span></div>
+                            <div class="h-row"><span class="h-label">Abteilung:</span><span class="h-val" style="font-size:11px;">08=High Cmd | 09=High Cmd</span></div>
+                            <div class="h-row"><span class="h-label">min. Diensttage:</span><span class="h-val" style="color:var(--warning);">min. 125</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MID COMMAND OF SAMD -->
+            <div style="margin-bottom: 24px;">
+                <div style="background: linear-gradient(135deg, #1e293b, #0f172a); padding: 10px 16px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 14px; text-align: center;">
+                    <h3 style="margin: 0; color: var(--primary); font-size: 15px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">🩺 Mid Command of SAMD</h3>
+                </div>
+                
+                <div class="guide-split-container">
+                    <!-- DOCTOR LAUFBAHN -->
+                    <div>
+                        <h4 style="color:var(--primary); font-size:13px; text-transform:uppercase; margin-top:0; border-bottom:1px solid var(--border); padding-bottom:6px;">👨‍⚕️ Laufbahn: Doctor (Innendienst)</h4>
+                        <div class="h-card" style="margin-bottom:12px;">
+                            <div class="h-card-header">Attending of SAMD</div>
+                            <div class="h-card-body">
+                                <div class="h-row"><span class="h-label">Anzahl Belegung:</span><span class="h-val" id="disp_h_belegung_attending">0</span></div>
+                                <div class="h-row"><span class="h-label">min. Diensttage:</span><span class="h-val">min. 108</span></div>
+                                <div class="h-row"><span class="h-label">Ausbildung:</span><span class="h-val" style="color:var(--success);">Arzt 3</span></div>
+                            </div>
+                        </div>
+                        <div class="h-card" style="margin-bottom:12px;">
+                            <div class="h-card-header">Physician of SAMD</div>
+                            <div class="h-card-body">
+                                <div class="h-row"><span class="h-label">Anzahl Belegung:</span><span class="h-val" id="disp_h_belegung_physician">1</span></div>
+                                <div class="h-row"><span class="h-label">min. Diensttage:</span><span class="h-val">min. 77</span></div>
+                                <div class="h-row"><span class="h-label">Ausbildung:</span><span class="h-val" style="color:var(--success);">Arzt 2</span></div>
+                            </div>
+                        </div>
+                        <div class="h-card">
+                            <div class="h-card-header">Resident Physician of SAMD</div>
+                            <div class="h-card-body">
+                                <div class="h-row"><span class="h-label">Anzahl Belegung:</span><span class="h-val" id="disp_h_belegung_resphys">0</span></div>
+                                <div class="h-row"><span class="h-label">min. Diensttage:</span><span class="h-val">min. 56</span></div>
+                                <div class="h-row"><span class="h-label">Ausbildung:</span><span class="h-val" style="color:var(--success);">Arzt 1</span></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- PARAMEDIC LAUFBAHN -->
+                    <div>
+                        <h4 style="color:var(--warning); font-size:13px; text-transform:uppercase; margin-top:0; border-bottom:1px solid var(--border); padding-bottom:6px;">🚑 Laufbahn: Paramedic (Außendienst)</h4>
+                        <div class="h-card" style="margin-bottom:12px;">
+                            <div class="h-card-header">Medical Supervisor of SAMD</div>
+                            <div class="h-card-body">
+                                <div class="h-row"><span class="h-label">Anzahl Belegung:</span><span class="h-val" id="disp_h_belegung_supervisor">3</span></div>
+                                <div class="h-row"><span class="h-label">min. Diensttage:</span><span class="h-val">min. 108</span></div>
+                                <div class="h-row"><span class="h-label">Ausbildung:</span><span class="h-val" style="color:var(--success);">Para 3</span></div>
+                            </div>
+                        </div>
+                        <div class="h-card" style="margin-bottom:12px;">
+                            <div class="h-card-header">Senior Paramedic of SAMD</div>
+                            <div class="h-card-body">
+                                <div class="h-row"><span class="h-label">Anzahl Belegung:</span><span class="h-val" id="disp_h_belegung_srpara">0</span></div>
+                                <div class="h-row"><span class="h-label">min. Diensttage:</span><span class="h-val">min. 77</span></div>
+                                <div class="h-row"><span class="h-label">Ausbildung:</span><span class="h-val" style="color:var(--success);">Para 2</span></div>
+                            </div>
+                        </div>
+                        <div class="h-card">
+                            <div class="h-card-header">Paramedic of SAMD</div>
+                            <div class="h-card-body">
+                                <div class="h-row"><span class="h-label">Anzahl Belegung:</span><span class="h-val" id="disp_h_belegung_para">0</span></div>
+                                <div class="h-row"><span class="h-label">min. Diensttage:</span><span class="h-val">min. 56</span></div>
+                                <div class="h-row"><span class="h-label">Ausbildung:</span><span class="h-val" style="color:var(--success);">Para 1</span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <p style="background: rgba(56, 189, 248, 0.05); padding: 12px; border-radius: 10px; border: 1px dashed rgba(56, 189, 248, 0.3); margin-top: 14px; font-size: 11px; text-align: center; color: var(--text-muted);">
+                    ℹ️ <b>Hinweis:</b> Ab dem Mid Command (Physician bzw. Senior Paramedic) besteht die Chance, die Stellvertretende Leitung der jeweiligen Abteilungen zu besetzen.
+                </p>
+            </div>
+
+            <!-- LOW COMMAND & TRAINEE -->
+            <div style="margin-bottom: 24px;">
+                <div style="background: linear-gradient(135deg, #1e293b, #0f172a); padding: 10px 16px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 14px; text-align: center;">
+                    <h3 style="margin: 0; color: var(--success); font-size: 15px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">🚑 Low Command & Trainee of SAMD</h3>
+                </div>
+                
+                <div class="h-card-grid">
+                    <div class="h-card">
+                        <div class="h-card-header">A-EMT of SAMD</div>
+                        <div class="h-card-body">
+                            <div class="h-row"><span class="h-label">Anzahl Belegung:</span><span class="h-val" id="disp_h_belegung_aemt">3</span></div>
+                            <div class="h-row"><span class="h-label">min. Diensttage:</span><span class="h-val">min. 35</span></div>
+                            <div class="h-row"><span class="h-label">Ausbildung:</span><span class="h-val" style="color:var(--success);">GA2 + DV Test</span></div>
+                        </div>
+                    </div>
+                    <div class="h-card">
+                        <div class="h-card-header">EMT of SAMD</div>
+                        <div class="h-card-body">
+                            <div class="h-row"><span class="h-label">Anzahl Belegung:</span><span class="h-val" id="disp_h_belegung_emt">2</span></div>
+                            <div class="h-row"><span class="h-label">min. Diensttage:</span><span class="h-val">min. 21</span></div>
+                            <div class="h-row"><span class="h-label">Ausbildung:</span><span class="h-val" style="color:var(--success); font-size:10px;">Alle Stempel + Personalakte + Vereidigung</span></div>
+                        </div>
+                    </div>
+                    <div class="h-card">
+                        <div class="h-card-header header-gray">Solo Trainee of SAMD</div>
+                        <div class="h-card-body">
+                            <div class="h-row"><span class="h-label">Anzahl Belegung:</span><span class="h-val" id="disp_h_belegung_solotrainee">0</span></div>
+                            <div class="h-row"><span class="h-label">min. Diensttage:</span><span class="h-val">min. 7</span></div>
+                            <div class="h-row"><span class="h-label">Ausbildung:</span><span class="h-val">GA1 + (Fahrtraining)</span></div>
+                        </div>
+                    </div>
+                    <div class="h-card">
+                        <div class="h-card-header header-gray">Trainee of SAMD</div>
+                        <div class="h-card-body">
+                            <div class="h-row"><span class="h-label">Anzahl Belegung:</span><span class="h-val" id="disp_h_belegung_trainee">1</span></div>
+                            <div class="h-row"><span class="h-label">Ausbildung:</span><span class="h-val">Einstellungsrang</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ABTEILUNGEN OF SAMD -->
+            <div style="margin-bottom: 24px;">
+                <div style="background: linear-gradient(135deg, #1e293b, #0f172a); padding: 10px 16px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 14px; text-align: center;">
+                    <h3 style="margin: 0; color: #a855f7; font-size: 15px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">🏢 Abteilungen of SAMD</h3>
+                </div>
+                <div class="h-card-grid">
+                    <div class="h-card">
+                        <div class="h-card-header header-psych">Psychologie of SAMD</div>
+                        <div class="h-card-body">
+                            <div class="h-row"><span class="h-label">Leitung:</span><span class="h-val h-name-badge" id="disp_h_dept_psych_l">Unbesetzt</span></div>
+                            <div class="h-row"><span class="h-label">Stellv. Leitung:</span><span class="h-val h-name-badge" id="disp_h_dept_psych_sl">Unbesetzt</span></div>
+                            <div class="h-row"><span class="h-label">Voraussetzung:</span><span class="h-val">Rang: A EMT (Doctorlaufbahn)</span></div>
+                        </div>
+                    </div>
+                    <div class="h-card">
+                        <div class="h-card-header header-perso">Personalabteilung of SAMD</div>
+                        <div class="h-card-body">
+                            <div class="h-row"><span class="h-label">Leitung:</span><span class="h-val h-name-badge" id="disp_h_dept_perso_l">Unbesetzt</span></div>
+                            <div class="h-row"><span class="h-label">Stellv. Leitung:</span><span class="h-val h-name-badge" id="disp_h_dept_perso_sl">Unbesetzt</span></div>
+                            <div class="h-row"><span class="h-label">Voraussetzung:</span><span class="h-val">Rang: Mid Command</span></div>
+                        </div>
+                    </div>
+                    <div class="h-card">
+                        <div class="h-card-header header-ausb">Ausbildungsabteilung of SAMD</div>
+                        <div class="h-card-body">
+                            <div class="h-row"><span class="h-label">Leitung:</span><span class="h-val h-name-badge" id="disp_h_dept_ausb_l">Unbesetzt</span></div>
+                            <div class="h-row"><span class="h-label">Stellv. Leitung:</span><span class="h-val h-name-badge" id="disp_h_dept_ausb_sl">Unbesetzt</span></div>
+                            <div class="h-row"><span class="h-label">Voraussetzung:</span><span class="h-val">Rang: EMT</span></div>
+                        </div>
+                    </div>
+                    <div class="h-card">
+                        <div class="h-card-header header-luft">Luftrettung of SAMD</div>
+                        <div class="h-card-body">
+                            <div class="h-row"><span class="h-label">Leitung:</span><span class="h-val h-name-badge" id="disp_h_dept_luft_l">Gleich die Ausbildungsleitung</span></div>
+                            <div class="h-row"><span class="h-label">Stellv. Leitung:</span><span class="h-val h-name-badge" id="disp_h_dept_luft_sl">Unbesetzt</span></div>
+                            <div class="h-row"><span class="h-label">Voraussetzung:</span><span class="h-val">Rang: A-EMT</span></div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -417,6 +665,8 @@
                             </tbody>
                         </table>
                     </div>
+                </div>
+            </div>
         </div>
 
         <!-- REITER: COMMANDS & KÜRZEL -->
@@ -629,6 +879,55 @@
                 </table>
             </div>
 
+            <div style="background:rgba(56, 189, 248, 0.04); padding:14px; border-radius:12px; border:1px solid rgba(56, 189, 248, 0.2); margin-bottom:20px; max-height: 300px; overflow-y: auto;">
+                <h4 style="margin:0 0 8px 0; color:var(--primary); font-size:12px; text-transform:uppercase; letter-spacing:0.5px;">🌳 Hierarchie, Besetzungen & Abteilungen bearbeiten</h4>
+                <p style="color:var(--text-muted); font-size:11px; margin-top:0;">Trage hier die Namen und Belegungszahlen ein. Die Daten erscheinen live auf dem <b>Hierarchie-Board</b>.</p>
+                
+                <!-- CHIEFEBENE & HIGH COMMAND -->
+                <label style="color:var(--primary); margin-top:8px;">Chiefebene & High Command Namen</label>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+                    <div><label>Chief (01)</label><input type="text" id="inp_h_chief_01" placeholder="#REF!"></div>
+                    <div><label>Ass. Chief (02)</label><input type="text" id="inp_h_chief_02" placeholder="#REF!"></div>
+                    <div><label>Deputy Chief (03)</label><input type="text" id="inp_h_chief_03" placeholder="#REF!"></div>
+                    <div><label>D.o.M.O (04)</label><input type="text" id="inp_h_domo_04" placeholder="Nick Garcia"></div>
+                    <div><label>F.o.D (05)</label><input type="text" id="inp_h_fod_05" placeholder="Mike Gonzalo"></div>
+                    <div><label>Chief Phys (06)</label><input type="text" id="inp_h_chiefphys_06" placeholder="Katarina Harper"></div>
+                    <div><label>Chief Phys (07)</label><input type="text" id="inp_h_chiefphys_07" placeholder="Tim Sanddorn"></div>
+                    <div><label>Lieutenant (08)</label><input type="text" id="inp_h_lt_08" placeholder="Unbesetzt"></div>
+                    <div><label>Lieutenant (09)</label><input type="text" id="inp_h_lt_09" placeholder="Unbesetzt"></div>
+                </div>
+
+                <!-- MID COMMAND BELEGUNGEN -->
+                <label style="color:var(--warning); margin-top:14px;">Mid & Low Command Belegungszahlen</label>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+                    <div><label>Attending Belegung</label><input type="number" id="inp_h_belegung_attending"></div>
+                    <div><label>Physician Belegung</label><input type="number" id="inp_h_belegung_physician"></div>
+                    <div><label>Res. Physician Belegung</label><input type="number" id="inp_h_belegung_resphys"></div>
+                    <div><label>Supervisor Belegung</label><input type="number" id="inp_h_belegung_supervisor"></div>
+                    <div><label>Senior Para Belegung</label><input type="number" id="inp_h_belegung_srpara"></div>
+                    <div><label>Paramedic Belegung</label><input type="number" id="inp_h_belegung_para"></div>
+                    <div><label>A-EMT Belegung</label><input type="number" id="inp_h_belegung_aemt"></div>
+                    <div><label>EMT Belegung</label><input type="number" id="inp_h_belegung_emt"></div>
+                    <div><label>Solo Trainee Belegung</label><input type="number" id="inp_h_belegung_solotrainee"></div>
+                    <div><label>Trainee Belegung</label><input type="number" id="inp_h_belegung_trainee"></div>
+                </div>
+
+                <!-- ABTEILUNGEN LEITUNG & STELLV -->
+                <label style="color:#a855f7; margin-top:14px;">Abteilungen Leitungen</label>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+                    <div><label>Psychologie Leitung</label><input type="text" id="inp_h_dept_psych_l" placeholder="Unbesetzt"></div>
+                    <div><label>Psychologie Stellv.</label><input type="text" id="inp_h_dept_psych_sl" placeholder="Unbesetzt"></div>
+                    <div><label>Personalabteilung L.</label><input type="text" id="inp_h_dept_perso_l" placeholder="Unbesetzt"></div>
+                    <div><label>Personalabteilung Stellv.</label><input type="text" id="inp_h_dept_perso_sl" placeholder="Unbesetzt"></div>
+                    <div><label>Ausbildung Leitung</label><input type="text" id="inp_h_dept_ausb_l" placeholder="Unbesetzt"></div>
+                    <div><label>Ausbildung Stellv.</label><input type="text" id="inp_h_dept_ausb_sl" placeholder="Unbesetzt"></div>
+                    <div><label>Luftrettung Leitung</label><input type="text" id="inp_h_dept_luft_l" placeholder="Gleich die Ausbildungsleitung"></div>
+                    <div><label>Luftrettung Stellv.</label><input type="text" id="inp_h_dept_luft_sl" placeholder="Unbesetzt"></div>
+                </div>
+
+                <button class="btn" style="background:var(--primary); color:#080c14; margin-top:14px;" onclick="speichereHierarchieDaten()">💾 Hierarchie & Abteilungen speichern</button>
+            </div>
+
             <div style="background:rgba(244, 63, 94, 0.05); padding:14px; border-radius:12px; border:1px solid rgba(244, 63, 94, 0.2); margin-bottom:20px;">
                 <h4 style="margin:0 0 10px 0; color:var(--danger); font-size:12px; text-transform:uppercase; letter-spacing:0.5px;">⚙️ Schicht-Verwaltung (Reset & Archiv)</h4>
                 <div class="btn-group" style="margin-top:0;">
@@ -744,6 +1043,8 @@
         sessionUser = user;
         sessionStorage.setItem('mmd_session_active', 'true');
         sessionStorage.setItem('mmd_session_user', JSON.stringify(user));
+        localStorage.setItem('mmd_session_active', 'true');
+        localStorage.setItem('mmd_session_user', JSON.stringify(user));
 
         document.getElementById('authView').style.display = 'none';
         document.getElementById('mainAppView').style.display = 'block';
@@ -805,6 +1106,7 @@
         db.ref("data/users/" + uId + "/pass").set(newPass).then(() => {
             sessionUser.pass = newPass;
             sessionStorage.setItem('mmd_session_user', JSON.stringify(sessionUser));
+            localStorage.setItem('mmd_session_user', JSON.stringify(sessionUser));
             document.getElementById('newPasswordInput').value = "";
             alert("✅ Passwort erfolgreich geändert!");
         });
@@ -813,6 +1115,8 @@
     function handleDienstEndeLogout() {
         if(mySessionRef) mySessionRef.remove();
         sessionStorage.clear();
+        localStorage.removeItem('mmd_session_active');
+        localStorage.removeItem('mmd_session_user');
         location.reload();
     }
 
@@ -871,6 +1175,62 @@
         });
     }
 
+    let hierarchieDaten = {
+        chief_01: "#REF!",
+        chief_02: "#REF!",
+        chief_03: "#REF!",
+        domo_04: "Nick Garcia",
+        fod_05: "Mike Gonzalo",
+        chiefphys_06: "Katarina Harper",
+        chiefphys_07: "Tim Sanddorn",
+        lt_08: "Unbesetzt",
+        lt_09: "Unbesetzt",
+        belegung_attending: "0",
+        belegung_physician: "1",
+        belegung_resphys: "0",
+        belegung_supervisor: "3",
+        belegung_srpara: "0",
+        belegung_para: "0",
+        belegung_aemt: "3",
+        belegung_emt: "2",
+        belegung_solotrainee: "0",
+        belegung_trainee: "1",
+        dept_psych_l: "Unbesetzt",
+        dept_psych_sl: "Unbesetzt",
+        dept_perso_l: "Unbesetzt",
+        dept_perso_sl: "Unbesetzt",
+        dept_ausb_l: "Unbesetzt",
+        dept_ausb_sl: "Unbesetzt",
+        dept_luft_l: "Gleich die Ausbildungsleitung",
+        dept_luft_sl: "Unbesetzt"
+    };
+
+    function renderHierarchieBoard(hData) {
+        if (!hData) return;
+        hierarchieDaten = Object.assign({}, hierarchieDaten, hData);
+        
+        Object.keys(hierarchieDaten).forEach(key => {
+            const dispEl = document.getElementById('disp_h_' + key);
+            if (dispEl) dispEl.textContent = (hierarchieDaten[key] !== undefined && hierarchieDaten[key] !== "") ? hierarchieDaten[key] : "--";
+            
+            const inpEl = document.getElementById('inp_h_' + key);
+            if (inpEl && document.activeElement !== inpEl) inpEl.value = hierarchieDaten[key] !== undefined ? hierarchieDaten[key] : "";
+        });
+    }
+
+    function speichereHierarchieDaten() {
+        if (!sessionUser || !sessionUser.isAdmin) return;
+        Object.keys(hierarchieDaten).forEach(key => {
+            const inpEl = document.getElementById('inp_h_' + key);
+            if (inpEl) {
+                hierarchieDaten[key] = inpEl.value.trim();
+            }
+        });
+        db.ref("data/hierarchie").set(hierarchieDaten).then(() => {
+            alert("✅ Hierarchie-Besetzungen & Abteilungen erfolgreich gespeichert!");
+        });
+    }
+
     // FIREBASE MAIN DATA SYNC
     db.ref("data").on("value", snapshot => {
         const cloud = snapshot.val();
@@ -885,11 +1245,15 @@
             }
             if(cloud.tagesZaehler) tagesZaehler = cloud.tagesZaehler;
             
+            if(cloud.hierarchie) renderHierarchieBoard(cloud.hierarchie);
+            else renderHierarchieBoard(hierarchieDaten);
+            
             if(sessionUser && cloud.users) {
                 const uId = (sessionUser.vorname + "_" + sessionUser.nachname).toLowerCase().replace(/[^a-z0-9_]/g, "");
                 if(cloud.users[uId]) {
                     sessionUser = cloud.users[uId];
                     sessionStorage.setItem('mmd_session_user', JSON.stringify(sessionUser));
+                    localStorage.setItem('mmd_session_user', JSON.stringify(sessionUser));
                 }
                 applyUserPermissions(sessionUser);
                 if(sessionUser.isAdmin) renderAdminUserTable(cloud.users);
@@ -928,8 +1292,9 @@
 
     window.onload = function() {
         document.getElementById('liveDateDisplay').textContent = new Date().toLocaleDateString('de-DE');
-        const savedSession = sessionStorage.getItem('mmd_session_user');
-        if(savedSession && sessionStorage.getItem('mmd_session_active') === 'true') {
+        const savedSession = localStorage.getItem('mmd_session_user') || sessionStorage.getItem('mmd_session_user');
+        const isActive = (localStorage.getItem('mmd_session_active') === 'true') || (sessionStorage.getItem('mmd_session_active') === 'true');
+        if(savedSession && isActive) {
             initDienstEintritt(JSON.parse(savedSession));
         }
     };
@@ -1211,7 +1576,7 @@
     function deleteArchivSchicht(key) { if(confirm("Schicht unwiderruflich löschen?")) db.ref("data/archiv/" + key).remove(); }
     function setDynamischenPatientenNamen() { const nF = document.getElementById('pName'); if (nF && (!nF.value || nF.value.startsWith("Patient "))) { nF.value = "Patient " + ((Number(daten.patienten) || 0) + 1); } }
     
-    window.deletePatient = deletePatient; window.deleteArchivSchicht = deleteArchivSchicht; window.toggleThemeCollapse = toggleThemeCollapse; window.toggleGroupCollapse = toggleGroupCollapse; window.deleteDienstLink = deleteDienstLink; window.berechneDienstTage = berechneDienstTage; window.linkHinzufuegen = linkHinzufuegen; window.schnellBehandlungBuchen = schnellBehandlungBuchen; window.openEditPatientModal = openEditPatientModal; window.closeEditModal = closeEditModal; window.speicherePatientEdit = speicherePatientEdit; window.passwortAendern = passwortAendern; window.exportArchivCSV = exportArchivCSV; window.openAdminKeyModal = openAdminKeyModal; window.closeAdminAuthModal = closeAdminAuthModal; window.verifyAdminKeyPassword = verifyAdminKeyPassword; window.closeAdminManagementModal = closeAdminManagementModal; window.setMitarbeiterStatus = setMitarbeiterStatus; window.mitarbeiterEntlassen = mitarbeiterEntlassen; window.toggleUserLinkPermission = toggleUserLinkPermission; window.aktualisiereAdminVerwaltung = aktualisiereAdminVerwaltung;
+    window.deletePatient = deletePatient; window.deleteArchivSchicht = deleteArchivSchicht; window.toggleThemeCollapse = toggleThemeCollapse; window.toggleGroupCollapse = toggleGroupCollapse; window.deleteDienstLink = deleteDienstLink; window.berechneDienstTage = berechneDienstTage; window.linkHinzufuegen = linkHinzufuegen; window.schnellBehandlungBuchen = schnellBehandlungBuchen; window.openEditPatientModal = openEditPatientModal; window.closeEditModal = closeEditModal; window.speicherePatientEdit = speicherePatientEdit; window.passwortAendern = passwortAendern; window.exportArchivCSV = exportArchivCSV; window.openAdminKeyModal = openAdminKeyModal; window.closeAdminAuthModal = closeAdminAuthModal; window.verifyAdminKeyPassword = verifyAdminKeyPassword; window.closeAdminManagementModal = closeAdminManagementModal; window.setMitarbeiterStatus = setMitarbeiterStatus; window.mitarbeiterEntlassen = mitarbeiterEntlassen; window.toggleUserLinkPermission = toggleUserLinkPermission; window.aktualisiereAdminVerwaltung = aktualisiereAdminVerwaltung; window.speichereHierarchieDaten = speichereHierarchieDaten;
 </script>
 </body>
 </html>
