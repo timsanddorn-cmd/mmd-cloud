@@ -374,7 +374,7 @@
 
         <!-- REITER: HIERARCHIE BOARD -->
         <div id="hierarchieTab" class="tab-content">
-            <h2>🌳 SAMD Hierarchie</h2>
+            <h2 style="text-align: center; margin-bottom: 24px; color: var(--primary); font-size: 24px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; text-shadow: 0 0 15px rgba(56,189,248,0.2);">San Andreas Medical Department</h2>
             
             <!-- ABTEILUNGEN OF SAMD (NACH GANZ OBEN GEBRACHT) -->
             <div style="margin-bottom: 24px;">
@@ -457,6 +457,7 @@
                         <div class="h-card-header">D.o.M.O of SAMD</div>
                         <div class="h-card-body">
                             <div class="h-row"><span class="h-label">04 Belegt von:</span><span class="h-val h-name-badge" id="disp_h_domo_04">Nick Garcia</span></div>
+                            <div class="h-row"><span class="h-label">Freifeld:</span><span class="h-val h-name-badge" id="disp_h_domo_04_sub">--</span></div>
                             <div class="h-row"><span class="h-label">Laufbahn:</span><span class="h-val">Doctor</span></div>
                             <div class="h-row"><span class="h-label">Abteilung:</span><span class="h-val">Personalabteilung Leitung</span></div>
                             <div class="h-row"><span class="h-label">min. Diensttage:</span><span class="h-val" style="color:var(--warning);">min. 150</span></div>
@@ -466,6 +467,7 @@
                         <div class="h-card-header">F.o.D of SAMD</div>
                         <div class="h-card-body">
                             <div class="h-row"><span class="h-label">05 Belegt von:</span><span class="h-val h-name-badge" id="disp_h_fod_05">Mike Gonzalo</span></div>
+                            <div class="h-row"><span class="h-label">Freifeld:</span><span class="h-val h-name-badge" id="disp_h_fod_05_sub">--</span></div>
                             <div class="h-row"><span class="h-label">Laufbahn:</span><span class="h-val">Paramedic</span></div>
                             <div class="h-row"><span class="h-label">Abteilung:</span><span class="h-val">Ausbildungsabteilung Leitung</span></div>
                             <div class="h-row"><span class="h-label">min. Diensttage:</span><span class="h-val" style="color:var(--warning);">min. 150</span></div>
@@ -503,7 +505,7 @@
                 <div class="guide-split-container">
                     <!-- DOCTOR LAUFBAHN -->
                     <div>
-                        <h4 style="color:var(--primary); font-size:13px; text-transform:uppercase; margin-top:0; border-bottom:1px solid var(--border); padding-bottom:6px;">👨‍⚕️ Laufbahn: Doctor (Innendienst)</h4>
+                        <h4 style="color:var(--primary); font-size:13px; text-transform:uppercase; margin-top:0; border-bottom:1px solid var(--border); padding-bottom:6px; text-align:center;">👨‍⚕️ Laufbahn: Doctor (Innendienst)</h4>
                         <div class="h-card" style="margin-bottom:12px;">
                             <div class="h-card-header">Attending of SAMD</div>
                             <div class="h-card-body">
@@ -529,7 +531,7 @@
 
                     <!-- PARAMEDIC LAUFBAHN -->
                     <div>
-                        <h4 style="color:var(--warning); font-size:13px; text-transform:uppercase; margin-top:0; border-bottom:1px solid var(--border); padding-bottom:6px;">🚑 Laufbahn: Paramedic (Außendienst)</h4>
+                        <h4 style="color:var(--warning); font-size:13px; text-transform:uppercase; margin-top:0; border-bottom:1px solid var(--border); padding-bottom:6px; text-align:center;">🚑 Laufbahn: Paramedic (Außendienst)</h4>
                         <div class="h-card" style="margin-bottom:12px;">
                             <div class="h-card-header">Medical Supervisor of SAMD</div>
                             <div class="h-card-body">
@@ -914,7 +916,9 @@
                     <div><label style="font-size:11px;">02 Ass. Chief</label><input type="text" id="inp_h_chief_02" placeholder="#REF!"></div>
                     <div><label style="font-size:11px;">03 Deputy Chief</label><input type="text" id="inp_h_chief_03" placeholder="#REF!"></div>
                     <div><label style="font-size:11px;">04 D.o.M.O</label><input type="text" id="inp_h_domo_04" placeholder="Nick Garcia"></div>
+                    <div><label style="font-size:11px;">04 D.o.M.O Zusatz</label><input type="text" id="inp_h_domo_04_sub" placeholder="Freifeld / Zusatz"></div>
                     <div><label style="font-size:11px;">05 F.o.D</label><input type="text" id="inp_h_fod_05" placeholder="Mike Gonzalo"></div>
+                    <div><label style="font-size:11px;">05 F.o.D Zusatz</label><input type="text" id="inp_h_fod_05_sub" placeholder="Freifeld / Zusatz"></div>
                     <div><label style="font-size:11px;">06 Chief Phys</label><input type="text" id="inp_h_chiefphys_06" placeholder="Katarina Harper"></div>
                     <div><label style="font-size:11px;">07 Chief Phys</label><input type="text" id="inp_h_chiefphys_07" placeholder="Tim Sanddorn"></div>
                     <div><label style="font-size:11px;">08 Lieutenant</label><input type="text" id="inp_h_lt_08" placeholder="Unbesetzt"></div>
@@ -1217,7 +1221,9 @@
         chief_02: "#REF!",
         chief_03: "#REF!",
         domo_04: "Nick Garcia",
+        domo_04_sub: "",
         fod_05: "Mike Gonzalo",
+        fod_05_sub: "",
         chiefphys_06: "Katarina Harper",
         chiefphys_07: "Tim Sanddorn",
         lt_08: "Unbesetzt",
