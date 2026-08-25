@@ -713,12 +713,11 @@
             </div>
         </div>
 
-        <!-- REITER: COMMANDS & KÜRZEL -->
+        <!-- REITER: COMMANDS -->
         <div id="commandTab" class="tab-content">
-            <h2>💻 Fraktions-Commands & Kürzel</h2>
+            <h2>💻 Commands</h2>
             <div style="background: rgba(15, 23, 42, 0.6); padding: 20px; border-radius: 14px; border: 1px solid var(--border);">
-                <h3 style="margin-top:0; color:var(--warning);">📜 Commands, T-Codes & Abkürzungen</h3>
-                <div id="commandsAccordionContainer" style="margin-top: 10px;"></div>
+                <div id="commandsAccordionContainer"></div>
             </div>
         </div>
 
@@ -1529,7 +1528,7 @@
         const container = document.getElementById('commandsAccordionContainer'); 
         if (!container) return; 
         container.innerHTML = "";
-        const listData = commands || defaultCommands;
+        const listData = Object.assign({}, defaultCommands, commands || {});
         
         let gruppierteCommands = {};
         Object.keys(listData).forEach(key => { 
