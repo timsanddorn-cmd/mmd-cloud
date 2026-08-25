@@ -876,7 +876,7 @@
                 </div>
             </div>
 
-            <!-- SUB-TAB 2: LINKS & COMMANDS HINZUFÜGEN -->
+            <!-- SUB-TAB 2: LINKS & COMMANDS HINZUFÜGEN & BULK-IMPORT -->
             <div id="adminSubTabContent" class="admin-subtab-content">
                 <div style="background:rgba(168, 85, 247, 0.04); padding:20px; border-radius:14px; border:1px solid rgba(168, 85, 247, 0.2); margin-bottom:24px;">
                     <h3 style="margin:0 0 14px 0; color:#a855f7; font-size:15px; text-transform:uppercase; letter-spacing:0.5px;">🔗 Links & 💻 Commands verwalten (Admin)</h3>
@@ -884,32 +884,63 @@
                     <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap:24px;">
                         <!-- NEUEN LINK HINZUFÜGEN -->
                         <div>
-                            <h4 style="margin:0 0 10px 0; color:var(--primary); font-size:13px;">➕ Neuen Link hinzufügen</h4>
+                            <h4 style="margin:0 0 10px 0; color:var(--primary); font-size:13px;">➕ Einzelnen Link hinzufügen</h4>
                             <label for="linkName">Name der Datei / des Links:</label>
                             <input type="text" id="linkName" placeholder="Z.B. EHK Leitfaden PDF">
                             <label for="linkUrl">Internetadresse (URL):</label>
                             <input type="text" id="linkUrl" placeholder="https://example.com/datei">
-                            <label for="linkThema">Thema / Kategorie:</label>
-                            <input type="text" id="linkThema" placeholder="Z.B. EHK, Psychologie, CLS">
+                            <label for="linkThema">Thema / Kategorie (frei eintippen oder wählen):</label>
+                            <input type="text" id="linkThema" list="linkThemaList" placeholder="Z.B. EHK, Psychologie, CLS...">
+                            <datalist id="linkThemaList">
+                                <option value="Allgemein">
+                                <option value="EHK">
+                                <option value="Psychologie">
+                                <option value="CLS">
+                            </datalist>
                             <button class="btn" style="margin-top:10px; font-weight:800;" onclick="linkHinzufuegen()">Link in Cloud speichern</button>
                         </div>
 
-                        <!-- NEUEN COMMAND HINZUFÜGEN -->
+                        <!-- NEUEN SINGLE COMMAND HINZUFÜGEN -->
                         <div>
-                            <h4 style="margin:0 0 10px 0; color:var(--warning); font-size:13px;">➕ Neuen Command / Kürzel hinzufügen</h4>
+                            <h4 style="margin:0 0 10px 0; color:var(--warning); font-size:13px;">➕ Einzelnen Command / Kürzel hinzufügen</h4>
                             <label for="cmdName">Command / Kürzel:</label>
                             <input type="text" id="cmdName" placeholder="Z.B. !Psych oder /editmdthud">
                             <label for="cmdDesc">Beschreibung / Bedeutung:</label>
                             <input type="text" id="cmdDesc" placeholder="Z.B. Psych anforderungen">
-                            <label for="cmdKat">Kategorie:</label>
-                            <select id="cmdKat" style="margin-bottom:10px;">
-                                <option value="Psychologie">Psychologie</option>
-                                <option value="T-Codes">T-Codes</option>
-                                <option value="Abkürzungen & Dokumente">Abkürzungen & Dokumente</option>
-                                <option value="Allgemein">Allgemein</option>
-                            </select>
+                            <label for="cmdKat">Kategorie (frei eintippen oder wählen):</label>
+                            <input type="text" id="cmdKat" list="cmdKatList" placeholder="Z.B. Psychologie, T-Codes, Funkcodes..." style="margin-bottom:10px;">
+                            <datalist id="cmdKatList">
+                                <option value="Psychologie">
+                                <option value="T-Codes">
+                                <option value="Abkürzungen & Dokumente">
+                                <option value="Allgemein">
+                            </datalist>
                             <button class="btn" style="background:var(--primary); color:#080c14; margin-top:10px; font-weight:800;" onclick="commandHinzufuegen()">Command in Cloud speichern</button>
                         </div>
+                    </div>
+
+                    <!-- MASSEN-IMPORT / BULK COMMANDS -->
+                    <div style="margin-top:24px; border-top:1px solid rgba(255,255,255,0.1); padding-top:20px;">
+                        <h4 style="margin:0 0 8px 0; color:var(--success); font-size:14px; display:flex; align-items:center; gap:8px;">
+                            ⚡ Massen-Import: Mehrere Commands auf einmal hinzufügen
+                        </h4>
+                        <p style="color:var(--text-muted); font-size:12px; margin-top:0; margin-bottom:12px;">
+                            Füge hier deine Liste an Commands ein. Jede Zeile wird automatisch als eigener Command verarbeitet!<br>
+                            <b>Format pro Zeile:</b> <code>Command | Beschreibung | Kategorie</code> <i>(Beispiel: <code>!psych | Psychologie anfordern | Psychologie</code>)</i><br>
+                            <i>Oder <code>Command | Beschreibung</code> (wenn du unten eine Standard-Kategorie auswählst/eintippst).</i>
+                        </p>
+                        
+                        <div style="display:grid; grid-template-columns: 1fr; gap:12px; margin-bottom:12px;">
+                            <div>
+                                <label for="bulkCmdCategoryFallback" style="font-size:11px;">Standard-Kategorie (falls in den Zeilen keine angegeben ist):</label>
+                                <input type="text" id="bulkCmdCategoryFallback" list="cmdKatList" placeholder="Z.B. Psychologie, T-Codes, Funkcodes, Allgemein...">
+                            </div>
+                            <div>
+                                <label for="bulkCmdTextarea" style="font-size:11px;">Commands-Liste (1 Command pro Zeile):</label>
+                                <textarea id="bulkCmdTextarea" rows="7" placeholder="!Psych | Psych anforderungen | Psychologie&#10;!waffenschein | Warten für die überprüfung | Psychologie&#10;/editmdthud | MD HUD ändern | T-Codes&#10;CLS | Combat Life Saver | Abkürzungen & Dokumente&#10;10-4 | Verstanden | Funkcodes" style="width:100%; box-sizing:border-box; font-family:monospace; font-size:12px; padding:10px; border-radius:10px; background:rgba(8,12,20,0.6); color:var(--text-main); border:1px solid var(--border);"></textarea>
+                            </div>
+                        </div>
+                        <button class="btn" style="background:var(--success); color:#080c14; font-weight:800; padding:12px 24px;" onclick="bulkCommandsImportieren()">⚡ Alle eingefügten Commands auf einmal speichern</button>
                     </div>
                 </div>
             </div>
@@ -1454,7 +1485,13 @@
         
         const hasDeletePermission = canUserDelete();
 
-        Object.keys(gruppierteLinks).sort().forEach(thema => {
+        const meinaLinkKats = Object.keys(gruppierteLinks).sort();
+        const linkDatalist = document.getElementById('linkThemaList');
+        if (linkDatalist && meinaLinkKats.length > 0) {
+            linkDatalist.innerHTML = meinaLinkKats.map(k => `<option value="${k}">`).join('');
+        }
+
+        meinaLinkKats.forEach(thema => {
             let safeThemaId = "theme-" + thema.replace(/[^a-z0-9]/gi, '-'); let linksListe = gruppierteLinks[thema]; let istEingeklappt = localStorage.getItem('mmd_collapse_' + thema) === 'true';
             let tableRows = linksListe.map(l => {
                 let trashBtn = hasDeletePermission 
@@ -1502,9 +1539,15 @@
             gruppierteCommands[katName].push({ id: key, name: item.name, desc: item.desc }); 
         });
 
+        const meinaCmdKats = Object.keys(gruppierteCommands).sort();
+        const cmdDatalist = document.getElementById('cmdKatList');
+        if (cmdDatalist && meinaCmdKats.length > 0) {
+            cmdDatalist.innerHTML = meinaCmdKats.map(k => `<option value="${k}">`).join('');
+        }
+
         const hasDeletePermission = canUserDelete();
 
-        Object.keys(gruppierteCommands).sort().forEach(kat => {
+        meinaCmdKats.forEach(kat => {
             let safeKatId = "cmd-kat-" + kat.replace(/[^a-z0-9]/gi, '-'); 
             let itemsListe = gruppierteCommands[kat]; 
             let istEingeklappt = localStorage.getItem('mmd_cmd_collapse_' + kat) === 'true';
@@ -1568,6 +1611,62 @@
             document.getElementById('cmdName').value = "";
             document.getElementById('cmdDesc').value = "";
             alert("✅ Command erfolgreich in Cloud gespeichert!");
+        });
+    }
+
+    function bulkCommandsImportieren() {
+        if (!sessionUser || !sessionUser.isAdmin) {
+            alert("❌ Nur Administratoren können Commands hinzufügen!");
+            return;
+        }
+        const rawText = document.getElementById('bulkCmdTextarea').value;
+        const fallbackKat = document.getElementById('bulkCmdCategoryFallback').value.trim() || "Allgemein";
+        
+        if (!rawText.trim()) {
+            alert("Bitte füge mindestens eine Zeile mit Commands ein!");
+            return;
+        }
+
+        const lines = rawText.split('\n');
+        let addedCount = 0;
+        let updates = {};
+
+        lines.forEach(line => {
+            let trimmed = line.trim();
+            if (!trimmed) return;
+
+            let parts = [];
+            if (trimmed.includes('|')) parts = trimmed.split('|');
+            else if (trimmed.includes(';')) parts = trimmed.split(';');
+            else if (trimmed.includes('\t')) parts = trimmed.split('\t');
+            else if (trimmed.includes(' - ')) parts = trimmed.split(' - ');
+            else parts = [trimmed];
+
+            let name = (parts[0] || "").trim();
+            let desc = (parts[1] || "").trim();
+            let kat = (parts[2] || "").trim() || fallbackKat;
+
+            if (name) {
+                let newKey = db.ref("data/dienstCommands").push().key;
+                updates["data/dienstCommands/" + newKey] = {
+                    name: name,
+                    desc: desc || name,
+                    kat: kat
+                };
+                addedCount++;
+            }
+        });
+
+        if (addedCount === 0) {
+            alert("Keine gültigen Commands in den Zeilen gefunden.");
+            return;
+        }
+
+        db.ref().update(updates).then(() => {
+            document.getElementById('bulkCmdTextarea').value = "";
+            alert(`✅ Erfolgreich ${addedCount} Commands gleichzeitig in die Cloud gespeichert!`);
+        }).catch(err => {
+            alert("Fehler beim Speichern: " + err.message);
         });
     }
 
@@ -1811,7 +1910,7 @@
     }
     function setDynamischenPatientenNamen() { const nF = document.getElementById('pName'); if (nF && (!nF.value || nF.value.startsWith("Patient "))) { nF.value = "Patient " + ((Number(daten.patienten) || 0) + 1); } }
     
-    window.deletePatient = deletePatient; window.deleteArchivSchicht = deleteArchivSchicht; window.toggleThemeCollapse = toggleThemeCollapse; window.toggleGroupCollapse = toggleGroupCollapse; window.deleteDienstLink = deleteDienstLink; window.commandHinzufuegen = commandHinzufuegen; window.deleteDienstCommand = deleteDienstCommand; window.toggleCmdCollapse = toggleCmdCollapse; window.toggleUserDeletePermission = toggleUserDeletePermission; window.toggleUserAdminPermission = toggleUserAdminPermission; window.switchAdminTab = switchAdminTab; window.berechneDienstTage = berechneDienstTage; window.linkHinzufuegen = linkHinzufuegen; window.schnellBehandlungBuchen = schnellBehandlungBuchen; window.openEditPatientModal = openEditPatientModal; window.closeEditModal = closeEditModal; window.speicherePatientEdit = speicherePatientEdit; window.passwortAendern = passwortAendern; window.exportArchivCSV = exportArchivCSV; window.openAdminKeyModal = openAdminKeyModal; window.closeAdminAuthModal = closeAdminAuthModal; window.verifyAdminKeyPassword = verifyAdminKeyPassword; window.closeAdminManagementModal = closeAdminManagementModal; window.setMitarbeiterStatus = setMitarbeiterStatus; window.mitarbeiterEntlassen = mitarbeiterEntlassen; window.toggleUserLinkPermission = toggleUserLinkPermission; window.aktualisiereAdminVerwaltung = aktualisiereAdminVerwaltung; window.speichereHierarchieDaten = speichereHierarchieDaten; window.switchTab = switchTab; window.settingsTabClick = settingsTabClick;
+    window.deletePatient = deletePatient; window.deleteArchivSchicht = deleteArchivSchicht; window.toggleThemeCollapse = toggleThemeCollapse; window.toggleGroupCollapse = toggleGroupCollapse; window.deleteDienstLink = deleteDienstLink; window.commandHinzufuegen = commandHinzufuegen; window.bulkCommandsImportieren = bulkCommandsImportieren; window.deleteDienstCommand = deleteDienstCommand; window.toggleCmdCollapse = toggleCmdCollapse; window.toggleUserDeletePermission = toggleUserDeletePermission; window.toggleUserAdminPermission = toggleUserAdminPermission; window.switchAdminTab = switchAdminTab; window.berechneDienstTage = berechneDienstTage; window.linkHinzufuegen = linkHinzufuegen; window.schnellBehandlungBuchen = schnellBehandlungBuchen; window.openEditPatientModal = openEditPatientModal; window.closeEditModal = closeEditModal; window.speicherePatientEdit = speicherePatientEdit; window.passwortAendern = passwortAendern; window.exportArchivCSV = exportArchivCSV; window.openAdminKeyModal = openAdminKeyModal; window.closeAdminAuthModal = closeAdminAuthModal; window.verifyAdminKeyPassword = verifyAdminKeyPassword; window.closeAdminManagementModal = closeAdminManagementModal; window.setMitarbeiterStatus = setMitarbeiterStatus; window.mitarbeiterEntlassen = mitarbeiterEntlassen; window.toggleUserLinkPermission = toggleUserLinkPermission; window.aktualisiereAdminVerwaltung = aktualisiereAdminVerwaltung; window.speichereHierarchieDaten = speichereHierarchieDaten; window.switchTab = switchTab; window.settingsTabClick = settingsTabClick;
 </script>
 </body>
 </html>
