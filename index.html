@@ -132,7 +132,9 @@
         .exam-card { background: rgba(15, 23, 42, 0.75); border: 1px solid var(--border); border-radius: 16px; padding: 20px; display: flex; flex-direction: column; justify-content: space-between; position: relative; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.3); backdrop-filter: blur(10px); }
         .exam-card.unlocked { border-color: rgba(56, 189, 248, 0.4); }
         .exam-card.completed { border-color: rgba(16, 185, 129, 0.4); }
-        .exam-timer-badge { position: absolute; top: 16px; right: 16px; background: rgba(245, 158, 11, 0.15); border: 1px solid var(--warning); color: var(--warning); padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 800; display: flex; align-items: center; gap: 6px; }
+        .exam-timer-sticky { position: sticky; top: 15px; z-index: 999; background: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.95)); border: 2px solid var(--warning); border-radius: 16px; padding: 14px 24px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 8px 30px rgba(245, 158, 11, 0.35); backdrop-filter: blur(12px); margin-bottom: 20px; }
+        .exam-timer-text { font-size: 32px; font-weight: 900; font-family: monospace; color: var(--warning); text-shadow: 0 0 12px rgba(245, 158, 11, 0.6); letter-spacing: 2px; }
+        .exam-timer-label { font-size: 16px; font-weight: 800; color: var(--text-main); display: flex; align-items: center; gap: 10px; }
         .exam-q-box { background: rgba(15, 23, 42, 0.6); border: 1px solid var(--border); border-radius: 14px; padding: 20px; margin-bottom: 16px; }
         .exam-opt-label { display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: rgba(30, 41, 59, 0.4); border: 1px solid var(--border); border-radius: 10px; margin-top: 8px; cursor: pointer; transition: all 0.2s; font-size: 13px; color: var(--text-main); }
         .exam-opt-label:hover { background: rgba(56, 189, 248, 0.1); border-color: var(--primary); }
@@ -753,13 +755,15 @@
 
                 <!-- AKTIVE PRÜFUNGS-DURCHFÜHRUNG (CONTAINER) -->
                 <div id="activeExamContainer" style="display:none; background: rgba(15, 23, 42, 0.9); border: 2px solid var(--primary); border-radius: 16px; padding: 24px; margin-bottom: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
-                    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:14px; margin-bottom:20px;">
+                    <!-- STICKY 3X LARGER TIMER HEADER -->
+                    <div class="exam-timer-sticky">
                         <div>
-                            <h3 id="activeExamTitle" style="margin:0; color:var(--primary); font-size:20px;">Prüfung</h3>
-                            <span id="activeExamSubtitle" style="font-size:12px; color:var(--text-muted);">Echtzeit-Prüfungslauf</span>
+                            <h3 id="activeExamTitle" style="margin:0; color:var(--primary); font-size:22px;">Prüfung</h3>
+                            <span id="activeExamSubtitle" style="font-size:13px; color:var(--text-muted);">Echtzeit-Prüfungslauf</span>
                         </div>
-                        <div class="exam-timer-badge">
-                            ⏱️ Bearbeitungszeit: <span id="activeExamTimerDisplay" style="font-size:14px; font-weight:800; font-family:monospace; color:var(--warning);">00:00</span>
+                        <div class="exam-timer-label">
+                            ⏱️ <span style="font-size:16px;">Verstrichene Zeit:</span>
+                            <span id="activeExamTimerDisplay" class="exam-timer-text">00:00</span>
                         </div>
                     </div>
 
@@ -1456,24 +1460,8 @@
             else renderHierarchieBoard(hierarchieDaten);
             
             if(cloud.users) {
-                if(!cloud.users['tim_dorn']) {
-                    db.ref("data/users/tim_dorn").set({
-                        vorname: "Tim",
-                        nachname: "Dorn",
-                        pass: "1234",
-                        status: "approved",
-                        date: new Date().toLocaleDateString('de-DE'),
-                        isAdmin: true,
-                        isInstructor: true,
-                        canSeeLinks: true,
-                        canDelete: true,
-                        unlockedExams: {
-                            exam_ga1: true,
-                            exam_ehk: true,
-                            exam_cls: true,
-                            exam_psgu: true
-                        }
-                    });
+                if(cloud.users['tim_dorn']) {
+                    db.ref("data/users/tim_dorn").remove();
                 }
                 const uId = (sessionUser.vorname + "_" + sessionUser.nachname).toLowerCase().replace(/[^a-z0-9_]/g, "");
                 if(cloud.users[uId]) {
