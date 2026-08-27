@@ -819,16 +819,63 @@
 
                     <!-- SUB-TAB C: PRÜFUNGEN MANAGEN / ERSTELLEN -->
                     <div id="instrTabManage" class="admin-subtab-content">
-                        <h4 style="margin:0 0 10px 0; color:var(--success);">➕ Neue Prüfung anlegen</h4>
-                        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap:12px; margin-bottom:16px;">
-                            <div><label>Prüfungstitel:</label><input type="text" id="newExamTitle" placeholder="Z.B. Grundlehrgang EHK"></div>
-                            <div><label>Kategorie / Thema:</label><input type="text" id="newExamKat" placeholder="Z.B. Ausbildungsstufe 1"></div>
-                            <div><label>Geschätzte Dauer (Minuten):</label><input type="number" id="newExamTime" value="15" min="1"></div>
-                            <div><label>Mindestprozent zum Bestehen (%):</label><input type="number" id="newExamPassRate" value="80" min="1" max="100"></div>
-                        </div>
-                        <button class="btn" style="background:var(--success); color:#080c14; font-weight:800; width:auto; padding:10px 20px;" onclick="neuePruefungErstellen()">Prüfung anlegen</button>
+                        <div style="background:rgba(15,23,42,0.6); padding:20px; border-radius:14px; border:1px solid var(--border); margin-bottom:20px;">
+                            <h4 id="examBuilderHeading" style="margin:0 0 14px 0; color:var(--success); font-size:16px;">📝 Prüfungs-Editor & Ersteller</h4>
+                            
+                            <input type="hidden" id="editingExamId" value="">
 
-                        <h4 style="margin:20px 0 10px 0; color:var(--primary);">📜 Alle vorhandenen Prüfungen</h4>
+                            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:12px; margin-bottom:16px;">
+                                <div><label>Prüfungstitel:</label><input type="text" id="newExamTitle" placeholder="Z.B. Grundausbildung 2 (GA2)"></div>
+                                <div><label>Kategorie / Thema:</label><input type="text" id="newExamKat" placeholder="Z.B. Grundausbildung"></div>
+                                <div><label>Dauer (Minuten):</label><input type="number" id="newExamTime" value="30" min="1"></div>
+                                <div><label>Mindestquote (%):</label><input type="number" id="newExamPassRate" value="60" min="1" max="100"></div>
+                                <div><label>Mindestpunkte:</label><input type="number" id="newExamPassScore" value="15" min="1"></div>
+                            </div>
+
+                            <div style="margin-bottom:16px;">
+                                <label>Einleitungstext / Begrüßung (optional):</label>
+                                <textarea id="newExamIntroText" rows="3" placeholder="Willkommen bei der Prüfung... Du benötigst mindestens 15 Punkte (60%)..."></textarea>
+                            </div>
+
+                            <!-- MÖGLICHKEIT A: MASSEN-IMPORT VON FRAGEN -->
+                            <div style="background:rgba(56, 189, 248, 0.05); border:1px dashed var(--primary); padding:16px; border-radius:12px; margin-bottom:20px;">
+                                <h5 style="margin:0 0 8px 0; color:var(--primary); font-size:13px; display:flex; align-items:center; gap:8px;">
+                                    <span>⚡ Massen-Import für Fragen (Text-Einfügen)</span>
+                                </h5>
+                                <p style="font-size:11px; color:var(--text-muted); margin-top:0;">
+                                    Füge Fragen & Antworten als Text ein. Markiere richtige Antworten mit einem Sternchen <code>*</code> oder <code>(Richtig)</code>:
+                                </p>
+                                <textarea id="examBulkTextarea" rows="6" placeholder="Frage: Wie viel kostet ein MRT?
+- 10.000 $
+- 7.500 $
+- 5.000 $
+* 2.500 $ (Richtig)
+
+Frage: In welches GPS loggst du dich ein?
+- Kanal 1
+- Kanal 2
+* Kanal 3 (Richtig)
+- Kanal 4"></textarea>
+                                <button class="btn" style="background:var(--primary); color:#080c14; font-weight:800; width:auto; padding:8px 18px; margin-top:8px;" onclick="parseBulkQuestionsText()">⚡ Fragen aus Text importieren</button>
+                            </div>
+
+                            <!-- INTERAKTIVER FRAGEN-EDITOR -->
+                            <div style="margin-bottom:16px;">
+                                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                                    <h5 style="margin:0; color:var(--text-main); font-size:14px;">❓ Fragen-Katalog (<span id="examQuestionsCountDisplay">0</span> Fragen)</h5>
+                                    <button class="btn" style="width:auto; padding:6px 14px; font-size:12px; background:rgba(255,255,255,0.08); color:var(--primary); border:1px solid var(--primary);" onclick="addExamQuestionRow()">➕ Einzelne Frage hinzufügen</button>
+                                </div>
+
+                                <div id="examQuestionsListBuilder" style="display:flex; flex-direction:column; gap:14px; max-height:450px; overflow-y:auto; padding-right:6px;"></div>
+                            </div>
+
+                            <div style="display:flex; gap:12px; border-top:1px solid var(--border); padding-top:16px; margin-top:16px;">
+                                <button class="btn" style="background:var(--success); color:#080c14; font-weight:800; width:auto; padding:12px 30px;" onclick="neuePruefungSpeichern()">💾 Prüfung in Cloud speichern</button>
+                                <button class="btn" style="background:rgba(255,255,255,0.08); color:var(--text-muted); width:auto; padding:12px 20px;" onclick="resetExamBuilderForm()">🔄 Formular zurücksetzen</button>
+                            </div>
+                        </div>
+
+                        <h4 style="margin:20px 0 10px 0; color:var(--primary);">📜 Alle vorhandenen Prüfungen in der Cloud</h4>
                         <div id="instructorExistingExamsList"></div>
                     </div>
                 </div>
@@ -1141,6 +1188,24 @@
         </div>
     </div>
 
+    <!-- PRÜFUNGS-DETAILS MODAL FOR INSTRUCTORS -->
+    <div id="submissionDetailsModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(8,12,20,0.85); z-index:10000; align-items:center; justify-content:center; backdrop-filter:blur(8px);">
+        <div style="background:rgba(15,23,42,0.95); border:2px solid var(--primary); border-radius:20px; width:95%; max-width:750px; max-height:85vh; padding:24px; display:flex; flex-direction:column; box-shadow:0 10px 40px rgba(0,0,0,0.6);">
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:14px; margin-bottom:16px;">
+                <h3 id="subModalTitle" style="margin:0; color:var(--primary); font-size:18px;">📋 Detaillierte Prüfungsauswertung</h3>
+                <button style="background:rgba(255,255,255,0.08); color:var(--text-muted); border:1px solid var(--border); width:32px; height:32px; border-radius:50%; font-size:16px; cursor:pointer; display:flex; align-items:center; justify-content:center;" onclick="closeSubmissionDetailsModal()">✖</button>
+            </div>
+
+            <div id="subModalHeaderInfo" style="background:rgba(30,41,59,0.5); padding:12px 16px; border-radius:12px; margin-bottom:16px; font-size:13px; display:flex; flex-wrap:wrap; gap:16px;"></div>
+
+            <div id="subModalQuestionsBody" style="overflow-y:auto; flex:1; padding-right:8px; display:flex; flex-direction:column; gap:10px;"></div>
+
+            <div style="display:flex; justify-content:flex-end; border-top:1px solid var(--border); padding-top:14px; margin-top:16px;">
+                <button class="btn" style="width:auto; padding:10px 24px; font-weight:800;" onclick="closeSubmissionDetailsModal()">Schließen</button>
+            </div>
+        </div>
+    </div>
+
 <script>
     const FIREBASE_DB_URL = "https://mmd-live-default-rtdb.europe-west1.firebasedatabase.app";
     firebase.initializeApp({ databaseURL: FIREBASE_DB_URL });
@@ -1235,6 +1300,12 @@
         if (!hasLinkPermission && linksTabContent && linksTabContent.classList.contains('active')) {
             const firstTab = document.querySelector('.tab-btn');
             if (firstTab) switchTab('docTab', firstTab);
+        }
+
+        const instructorView = document.getElementById('examInstructorView');
+        if (instructorView) {
+            const hasInstructorPermission = (user.isAdmin === true || user.isInstructor === true);
+            instructorView.style.display = hasInstructorPermission ? 'block' : 'none';
         }
     }
 
@@ -1824,7 +1895,7 @@
                 { id: 3, text: "Wie melde ich, dass mein Dispatch erledigt ist?", options: ["Ich fahre einfach weg und melde es nicht.", "Ich schreibe der Leitstelle eine SMS mit dem Inhalt \"Einsatz beendet\"", "Ich melde das im Funk wie folgt: [Meine Unit] 10-5.", "Ich sende einen Dispatch und schreibe rein \"Einsatz beendet\""], correctAnswers: [2] },
                 { id: 4, text: "Was bedeutet der Funkcode 10-3?", options: ["Unterwegs", "Verstanden, Ende", "Weg ins MD", "Funkstille", "Warte auf Zuteilung"], correctAnswers: [2] },
                 { id: 5, text: "Was bedeutet der Funkcode 10-10?", options: ["Statusbericht / Standort", "Am Einsatzort angekommen", "Unterwegs", "weiterer RTW benötigt", "Im Dienst", "Verstanden, Ende"], correctAnswers: [3] },
-                { id: 6, text: "Streife 2 nimmt einen Einsatz an, der zuvor als abgebrochen (10-20) gemeldet wurde. Trotzdem fährt Streife 2 zu diesem Einsatz. Als sie vor Ort eintrifft, funkt die Leitstelle Streife 2 an und fragt nach 10-8.", options: ["Streife 2 muss den Einsatz abbrechen und zum MD zurückkehren", "Streife 2 muss auf weitere Anweisungen der Leitstelle warten und darf nicht eingreifen", "Streife 2 muss den Status 10-10 ignorieren und macht einfach weiter", "Streife 2 meldet ihren Status", "Streife 2 muss sofort Verstärkung anfordern, da der Einsatz als abgebrochen gemeldet wurde"], correctAnswers: [3] },
+                { id: 6, text: "Streife 2 nimmt einen Einsatz an, der zuvor als abgebrochen (10-13) gemeldet wurde. Trotzdem fährt Streife 2 zu diesem Einsatz. Als sie vor Ort eintrifft, funkt die Leitstelle Streife 2 an und fragt nach 10-8.", options: ["Streife 2 muss den Einsatz abbrechen und zum MD zurückkehren", "Streife 2 muss auf weitere Anweisungen der Leitstelle warten und darf nicht eingreifen", "Streife 2 muss den Status 10-10 ignorieren und macht einfach weiter", "Streife 2 meldet ihren Status", "Streife 2 muss sofort Verstärkung anfordern, da der Einsatz als abgebrochen gemeldet wurde"], correctAnswers: [3] },
                 { id: 7, text: "Wie meldest du dich im Funk an?", options: ["DN, meldet sich Status 10-4", "DN, meldet sich Status 10-5", "DN, meldet sich 10-11", "DN, meldet sich Status 10-3", "DN, meldet sich Code 10-2", "DN, meldet sich 10-1"], correctAnswers: [2] },
                 { id: 8, text: "In welches GPS loggst du dich ein?", options: ["Kanal 1", "Kanal 4", "Kanal 2", "Kanal 3", "Kanal 5"], correctAnswers: [3] },
                 { id: 9, text: "Wo stempelst du dich ein?", options: ["Hinter dem Tresen", "Gar nicht", "In der Mensa", "Bei den Sammelbetten hinter dem Tresen"], correctAnswers: [0] },
@@ -2214,8 +2285,48 @@
     function viewSubmissionDetails(subId) {
         if(!cachedSubmissions || !cachedSubmissions[subId]) return;
         const sub = cachedSubmissions[subId];
-        let detailsHtml = (sub.details || []).map((d, i) => `\nFrage ${i+1}: ${d.questionText}\n- Erhalten: ${d.selectedOptions.join(', ')}\n- Korrekt: ${d.correctOptions.join(', ')}\n- Ergebnis: ${d.isCorrect ? 'RICHTIG' : 'FALSCH'}\n`).join('');
-        alert(`📋 Prüfungsdetails für ${sub.userName} (DN: ${sub.userDN || '--'}, Prüfer DN: ${sub.prueferDN || '--'}):\n\nPrüfung: ${sub.examTitle}\nDatum: ${sub.datum}\nBearbeitungszeit: ${sub.durationFormatted}\nErgebnis: ${sub.percentage}% (${sub.passed ? 'Bestanden' : 'Nicht bestanden'})\n${detailsHtml}`);
+
+        const modal = document.getElementById('submissionDetailsModal');
+        if(!modal) return;
+
+        document.getElementById('subModalTitle').textContent = `📋 Auswertung: ${sub.examTitle || 'Prüfung'}`;
+
+        const statusBadge = sub.passed 
+            ? `<span style="color:var(--success); font-weight:800;">Bestanden ✔ (${sub.percentage}%)</span>`
+            : `<span style="color:var(--danger); font-weight:800;">Nicht bestanden ✖ (${sub.percentage}%)</span>`;
+
+        document.getElementById('subModalHeaderInfo').innerHTML = `
+            <div>👤 Prüfling: <b style="color:var(--text-main);">${sub.userName || '--'}</b> (${sub.userDN || 'Keine DN'})</div>
+            <div>👨‍🏫 Prüfer: <b style="color:var(--warning);">${sub.prueferDN || 'Keine DN'}</b></div>
+            <div>⏱️ Bearbeitungszeit: <b style="color:var(--warning);">${sub.durationFormatted || '--'}</b></div>
+            <div>📊 Status: ${statusBadge}</div>
+            <div>📅 Datum: <b style="color:var(--text-muted);">${sub.datum || '--'}</b></div>
+        `;
+
+        const qBody = document.getElementById('subModalQuestionsBody');
+        qBody.innerHTML = "";
+
+        (sub.details || []).forEach((d, idx) => {
+            const isCorrect = d.isCorrect === true;
+            qBody.innerHTML += `
+            <div style="background:rgba(30,41,59,0.4); border:1px solid ${isCorrect ? 'rgba(16,185,129,0.3)' : 'rgba(244,63,94,0.3)'}; border-radius:12px; padding:14px; text-align:left;">
+                <div style="font-weight:700; font-size:13px; color:${isCorrect ? 'var(--success)' : 'var(--danger)'}; display:flex; gap:8px;">
+                    <span>${isCorrect ? '✔ Richtig' : '✖ Falsch'}</span>
+                    <span>- Frage ${idx + 1}: ${d.questionText}</span>
+                </div>
+                <div style="font-size:12px; color:var(--text-muted); margin-top:6px;">
+                    Gegebene Antwort: <b style="color:var(--text-main);">${(d.selectedOptions || []).join(', ') || 'Keine Antwort'}</b>
+                </div>
+                ${!isCorrect ? `<div style="font-size:12px; color:var(--success); margin-top:4px;">Richtige Lösung: <b>${(d.correctOptions || []).join(', ')}</b></div>` : ''}
+            </div>`;
+        });
+
+        modal.style.display = 'flex';
+    }
+
+    function closeSubmissionDetailsModal() {
+        const modal = document.getElementById('submissionDetailsModal');
+        if(modal) modal.style.display = 'none';
     }
 
     function renderInstructorExistingExams(exams) {
@@ -2228,39 +2339,226 @@
             container.innerHTML += `
             <div style="background:rgba(15,23,42,0.6); border:1px solid var(--border); padding:12px 16px; border-radius:10px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
                 <div>
-                    <b style="color:var(--text-main);">${exam.title}</b> 
-                    <span style="font-size:11px; color:var(--text-muted); margin-left:10px;">(${exam.kat || 'Allgemein'} | ${exam.questions ? exam.questions.length : 0} Fragen | ${exam.timeLimitMinutes} Min)</span>
+                    <b style="color:var(--text-main); font-size:14px;">${exam.title}</b> 
+                    <span style="font-size:11px; color:var(--text-muted); margin-left:10px;">(${exam.kat || 'Allgemein'} | ❓ <b>${exam.questions ? exam.questions.length : 0} Fragen</b> | ⏱️ ${exam.timeLimitMinutes} Min)</span>
                 </div>
-                <button class="btn-delete-row" onclick="deleteExam('${eId}')">🗑️</button>
+                <div style="display:flex; gap:8px; align-items:center;">
+                    <button class="btn" style="width:auto; padding:4px 10px; font-size:11px; background:rgba(56,189,248,0.15); color:var(--primary); border:1px solid var(--primary);" onclick="editExamInBuilder('${eId}')">✏️ Bearbeiten</button>
+                    <button class="btn-delete-row" onclick="deleteExam('${eId}')">🗑️</button>
+                </div>
             </div>`;
         });
     }
 
-    function neuePruefungErstellen() {
+    function addExamQuestionRow(qData = null) {
+        const builder = document.getElementById('examQuestionsListBuilder');
+        if(!builder) return;
+
+        const qIdx = builder.children.length + 1;
+        const qDiv = document.createElement('div');
+        qDiv.className = 'builder-q-card';
+        qDiv.style.cssText = 'background:rgba(30,41,59,0.5); border:1px solid var(--border); border-radius:12px; padding:14px; position:relative;';
+
+        const qText = qData ? qData.text : "";
+        const options = qData ? qData.options : ["", ""];
+        const correctAnswers = qData ? (qData.correctAnswers || [0]) : [0];
+
+        qDiv.innerHTML = `
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                <b style="color:var(--primary); font-size:13px;">Frage #${qIdx}</b>
+                <button class="btn-delete-row" style="padding:2px 6px; font-size:11px;" onclick="this.closest('.builder-q-card').remove(); updateQuestionsCountDisplay();">🗑️ Frage löschen</button>
+            </div>
+            <input type="text" class="builder-q-text" value="${qText.replace(/"/g, '&quot;')}" placeholder="Fragetext eingeben..." style="margin-bottom:10px; font-weight:700;">
+
+            <div style="margin-bottom:6px; font-size:11px; color:var(--text-muted); font-weight:700;">Antwortmöglichkeiten (Häkchen setzen bei korrekten Antworten):</div>
+            <div class="builder-options-list" style="display:flex; flex-direction:column; gap:6px;"></div>
+            <button class="btn" style="width:auto; padding:4px 10px; font-size:11px; margin-top:8px; background:rgba(255,255,255,0.06); color:var(--text-muted);" onclick="addExamOptionRow(this.previousElementSibling)">➕ Antwort hinzufügen</button>
+        `;
+
+        const optsContainer = qDiv.querySelector('.builder-options-list');
+        options.forEach((optText, oIdx) => {
+            const isChecked = correctAnswers.includes(oIdx);
+            addExamOptionRow(optsContainer, optText, isChecked);
+        });
+
+        builder.appendChild(qDiv);
+        updateQuestionsCountDisplay();
+    }
+
+    function addExamOptionRow(container, optText = "", isCorrect = false) {
+        if(!container) return;
+        const optDiv = document.createElement('div');
+        optDiv.style.cssText = 'display:flex; align-items:center; gap:8px;';
+        optDiv.innerHTML = `
+            <label style="margin:0; display:flex; align-items:center; gap:4px; cursor:pointer;" title="Als richtige Antwort markieren">
+                <input type="checkbox" class="builder-opt-correct" ${isCorrect ? 'checked' : ''}>
+                <span style="font-size:11px; color:var(--success); font-weight:700;">Richtig</span>
+            </label>
+            <input type="text" class="builder-opt-text" value="${optText.replace(/"/g, '&quot;')}" placeholder="Antwortmöglichkeit..." style="flex:1; padding:6px; font-size:12px;">
+            <button class="btn-delete-row" style="padding:2px 6px; font-size:11px;" onclick="this.parentElement.remove()">✖</button>
+        `;
+        container.appendChild(optDiv);
+    }
+
+    function updateQuestionsCountDisplay() {
+        const builder = document.getElementById('examQuestionsListBuilder');
+        const display = document.getElementById('examQuestionsCountDisplay');
+        if(builder && display) display.textContent = builder.children.length;
+    }
+
+    function parseBulkQuestionsText() {
+        const raw = document.getElementById('examBulkTextarea').value;
+        if(!raw.trim()) { alert("Bitte füge zuerst Text in das Massen-Import Feld ein!"); return; }
+
+        const lines = raw.split('\n');
+        let currentQ = null;
+        let questions = [];
+
+        lines.forEach(line => {
+            let l = line.trim();
+            if(!l) return;
+
+            if(l.toLowerCase().startsWith('frage') || /^\d+[\.\)]/.test(l)) {
+                if(currentQ && currentQ.options.length > 0) questions.push(currentQ);
+                let text = l.replace(/^frage\s*\d*\s*[:\-\.]?\s*/i, '').replace(/^\d+[\.\)]\s*/, '').trim();
+                currentQ = { text: text || l, options: [], correctAnswers: [] };
+            } else if(currentQ) {
+                let isCorrect = l.startsWith('*') || l.toLowerCase().includes('(richtig)') || l.toLowerCase().includes('[richtig]');
+                let cleanOpt = l.replace(/^[\*\-\•]\s*/, '').replace(/^[A-Z][\.\)]\s*/i, '').replace(/\(richtig\)/gi, '').replace(/\[richtig\]/gi, '').trim();
+                if(cleanOpt) {
+                    currentQ.options.push(cleanOpt);
+                    if(isCorrect) {
+                        currentQ.correctAnswers.push(currentQ.options.length - 1);
+                    }
+                }
+            }
+        });
+        if(currentQ && currentQ.options.length > 0) questions.push(currentQ);
+
+        if(questions.length === 0) {
+            alert("Keine gültigen Fragen im Text erkannt.");
+            return;
+        }
+
+        const builder = document.getElementById('examQuestionsListBuilder');
+        if(builder) builder.innerHTML = "";
+
+        questions.forEach(q => {
+            if(q.correctAnswers.length === 0 && q.options.length > 0) {
+                q.correctAnswers = [0];
+            }
+            addExamQuestionRow(q);
+        });
+
+        document.getElementById('examBulkTextarea').value = "";
+        alert(`✅ Erfolgreich ${questions.length} Fragen aufbereitet! Du kannst sie unten prüfen und anpassen.`);
+    }
+
+    function neuePruefungSpeichern() {
         if(!isUserInstructor()) return;
+
         const title = document.getElementById('newExamTitle').value.trim();
-        const kat = document.getElementById('newExamKat').value.trim() || "Allgemein";
-        const timeLimit = parseInt(document.getElementById('newExamTime').value) || 15;
-        const passRate = parseInt(document.getElementById('newExamPassRate').value) || 80;
+        const kat = document.getElementById('newExamKat').value.trim() || "Grundausbildung";
+        const timeLimit = parseInt(document.getElementById('newExamTime').value) || 30;
+        const passRate = parseInt(document.getElementById('newExamPassRate').value) || 60;
+        const passScore = parseInt(document.getElementById('newExamPassScore').value) || 15;
+        const introText = document.getElementById('newExamIntroText').value.trim();
 
         if(!title) { alert("Bitte einen Prüfungstitel eingeben!"); return; }
 
-        const newId = "exam_" + Date.now();
-        const newExam = {
-            id: newId,
+        const builder = document.getElementById('examQuestionsListBuilder');
+        const qCards = builder ? builder.querySelectorAll('.builder-q-card') : [];
+
+        let questions = [];
+        qCards.forEach((card, qIdx) => {
+            const qText = card.querySelector('.builder-q-text').value.trim();
+            const optRows = card.querySelectorAll('.builder-options-list > div');
+            let options = [];
+            let correctAnswers = [];
+
+            optRows.forEach((optRow, oIdx) => {
+                const optText = optRow.querySelector('.builder-opt-text').value.trim();
+                const isChecked = optRow.querySelector('.builder-opt-correct').checked;
+                if(optText) {
+                    options.push(optText);
+                    if(isChecked) correctAnswers.push(options.length - 1);
+                }
+            });
+
+            if(qText && options.length > 0) {
+                questions.push({
+                    id: qIdx + 1,
+                    text: qText,
+                    options: options,
+                    correctAnswers: correctAnswers.length > 0 ? correctAnswers : [0]
+                });
+            }
+        });
+
+        if(questions.length === 0) {
+            alert("⚠️ Bitte füge mindestens 1 Frage mit Antwortmöglichkeiten zur Prüfung hinzu!");
+            return;
+        }
+
+        let existingId = document.getElementById('editingExamId').value;
+        const examId = existingId || ("exam_" + Date.now());
+
+        const examData = {
+            id: examId,
             title: title,
             kat: kat,
             timeLimitMinutes: timeLimit,
             passPercentage: passRate,
-            questions: [
-                { id: 1, text: "Musterfrage 1: Bitte Musterfrage in der Cloud bearbeiten", options: ["Antwort A (Richtig)", "Antwort B", "Antwort C"], correctAnswers: [0] }
-            ]
+            passScore: passScore,
+            introHeader: title,
+            introText: introText,
+            questions: questions
         };
 
-        db.ref("data/exams/" + newId).set(newExam).then(() => {
-            document.getElementById('newExamTitle').value = "";
-            alert("✅ Neue Prüfung angelegt!");
+        db.ref("data/exams/" + examId).set(examData).then(() => {
+            alert(`✅ Prüfung "${title}" mit ${questions.length} Fragen erfolgreich in der Cloud gespeichert!`);
+            resetExamBuilderForm();
         });
+    }
+
+    function editExamInBuilder(examId) {
+        if(!cachedExams || !cachedExams[examId]) return;
+        const exam = cachedExams[examId];
+
+        document.getElementById('editingExamId').value = exam.id;
+        document.getElementById('newExamTitle').value = exam.title || "";
+        document.getElementById('newExamKat').value = exam.kat || "";
+        document.getElementById('newExamTime').value = exam.timeLimitMinutes || 30;
+        document.getElementById('newExamPassRate').value = exam.passPercentage || 60;
+        document.getElementById('newExamPassScore').value = exam.passScore || 15;
+        document.getElementById('newExamIntroText').value = exam.introText || "";
+
+        const builder = document.getElementById('examQuestionsListBuilder');
+        if(builder) builder.innerHTML = "";
+
+        (exam.questions || []).forEach(q => {
+            addExamQuestionRow(q);
+        });
+
+        document.getElementById('examBuilderHeading').textContent = `✏️ Prüfung bearbeiten: ${exam.title}`;
+        document.getElementById('instrTabManage').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function resetExamBuilderForm() {
+        document.getElementById('editingExamId').value = "";
+        document.getElementById('newExamTitle').value = "";
+        document.getElementById('newExamKat').value = "";
+        document.getElementById('newExamTime').value = "30";
+        document.getElementById('newExamPassRate').value = "60";
+        document.getElementById('newExamPassScore').value = "15";
+        document.getElementById('newExamIntroText').value = "";
+        document.getElementById('examBulkTextarea').value = "";
+
+        const builder = document.getElementById('examQuestionsListBuilder');
+        if(builder) builder.innerHTML = "";
+
+        document.getElementById('examBuilderHeading').textContent = "📝 Prüfungs-Editor & Ersteller";
+        updateQuestionsCountDisplay();
     }
 
     function deleteExam(examId) {
@@ -2502,7 +2800,7 @@
     }
     function setDynamischenPatientenNamen() { const nF = document.getElementById('pName'); if (nF && (!nF.value || nF.value.startsWith("Patient "))) { nF.value = "Patient " + ((Number(daten.patienten) || 0) + 1); } }
     
-    window.deletePatient = deletePatient; window.deleteArchivSchicht = deleteArchivSchicht; window.toggleThemeCollapse = toggleThemeCollapse; window.toggleGroupCollapse = toggleGroupCollapse; window.deleteDienstLink = deleteDienstLink; window.commandHinzufuegen = commandHinzufuegen; window.bulkCommandsImportieren = bulkCommandsImportieren; window.deleteDienstCommand = deleteDienstCommand; window.toggleCmdCollapse = toggleCmdCollapse; window.toggleUserDeletePermission = toggleUserDeletePermission; window.toggleUserAdminPermission = toggleUserAdminPermission; window.toggleUserInstructorPermission = toggleUserInstructorPermission; window.switchInstructorTab = switchInstructorTab; window.startExam = startExam; window.cancelActiveExam = cancelActiveExam; window.submitActiveExam = submitActiveExam; window.toggleExamUnlockForUser = toggleExamUnlockForUser; window.viewSubmissionDetails = viewSubmissionDetails; window.neuePruefungErstellen = neuePruefungErstellen; window.deleteExam = deleteExam; window.switchAdminTab = switchAdminTab; window.berechneDienstTage = berechneDienstTage; window.linkHinzufuegen = linkHinzufuegen; window.schnellBehandlungBuchen = schnellBehandlungBuchen; window.openEditPatientModal = openEditPatientModal; window.closeEditModal = closeEditModal; window.speicherePatientEdit = speicherePatientEdit; window.passwortAendern = passwortAendern; window.exportArchivCSV = exportArchivCSV; window.openAdminKeyModal = openAdminKeyModal; window.closeAdminAuthModal = closeAdminAuthModal; window.verifyAdminKeyPassword = verifyAdminKeyPassword; window.closeAdminManagementModal = closeAdminManagementModal; window.setMitarbeiterStatus = setMitarbeiterStatus; window.mitarbeiterEntlassen = mitarbeiterEntlassen; window.toggleUserLinkPermission = toggleUserLinkPermission; window.aktualisiereAdminVerwaltung = aktualisiereAdminVerwaltung; window.speichereHierarchieDaten = speichereHierarchieDaten; window.switchTab = switchTab; window.settingsTabClick = settingsTabClick;
+    window.deletePatient = deletePatient; window.deleteArchivSchicht = deleteArchivSchicht; window.toggleThemeCollapse = toggleThemeCollapse; window.toggleGroupCollapse = toggleGroupCollapse; window.deleteDienstLink = deleteDienstLink; window.commandHinzufuegen = commandHinzufuegen; window.bulkCommandsImportieren = bulkCommandsImportieren; window.deleteDienstCommand = deleteDienstCommand; window.toggleCmdCollapse = toggleCmdCollapse; window.toggleUserDeletePermission = toggleUserDeletePermission; window.toggleUserAdminPermission = toggleUserAdminPermission; window.toggleUserInstructorPermission = toggleUserInstructorPermission; window.switchInstructorTab = switchInstructorTab; window.startExam = startExam; window.cancelActiveExam = cancelActiveExam; window.submitActiveExam = submitActiveExam; window.toggleExamUnlockForUser = toggleExamUnlockForUser; window.viewSubmissionDetails = viewSubmissionDetails; window.closeSubmissionDetailsModal = closeSubmissionDetailsModal; window.neuePruefungErstellen = neuePruefungSpeichern; window.neuePruefungSpeichern = neuePruefungSpeichern; window.editExamInBuilder = editExamInBuilder; window.resetExamBuilderForm = resetExamBuilderForm; window.addExamQuestionRow = addExamQuestionRow; window.addExamOptionRow = addExamOptionRow; window.parseBulkQuestionsText = parseBulkQuestionsText; window.deleteExam = deleteExam; window.switchAdminTab = switchAdminTab; window.berechneDienstTage = berechneDienstTage; window.linkHinzufuegen = linkHinzufuegen; window.schnellBehandlungBuchen = schnellBehandlungBuchen; window.openEditPatientModal = openEditPatientModal; window.closeEditModal = closeEditModal; window.speicherePatientEdit = speicherePatientEdit; window.passwortAendern = passwortAendern; window.exportArchivCSV = exportArchivCSV; window.openAdminKeyModal = openAdminKeyModal; window.closeAdminAuthModal = closeAdminAuthModal; window.verifyAdminKeyPassword = verifyAdminKeyPassword; window.closeAdminManagementModal = closeAdminManagementModal; window.setMitarbeiterStatus = setMitarbeiterStatus; window.mitarbeiterEntlassen = mitarbeiterEntlassen; window.toggleUserLinkPermission = toggleUserLinkPermission; window.aktualisiereAdminVerwaltung = aktualisiereAdminVerwaltung; window.speichereHierarchieDaten = speichereHierarchieDaten; window.switchTab = switchTab; window.settingsTabClick = settingsTabClick;
 </script>
 </body>
 </html>
