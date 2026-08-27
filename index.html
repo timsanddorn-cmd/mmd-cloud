@@ -807,7 +807,7 @@
                         <h4 style="margin:0 0 10px 0; color:var(--warning);">📊 Ergebnis-Historie & Bearbeitungszeiten</h4>
                         <div class="table-responsive" style="max-height:400px; overflow-y:auto;">
                             <table>
-                                <thead><tr><th>Datum</th><th>Prüfling</th><th>Prüfung</th><th>Bearbeitungszeit</th><th>Ergebnis</th><th>Status</th><th>Aktion</th></tr></thead>
+                                <thead><tr><th>Datum</th><th>Prüfling & DN</th><th>Prüfer DN</th><th>Prüfung</th><th>Bearbeitungszeit</th><th>Ergebnis</th><th>Status</th><th>Aktion</th></tr></thead>
                                 <tbody id="instructorSubmissionsTableBody"></tbody>
                             </table>
                         </div>
@@ -1802,6 +1802,38 @@
 
     // AUSBILDUNGS- & PRÜFUNGSSYSTEM LOGIK
     let defaultExams = {
+        exam_ga1: {
+            id: "exam_ga1",
+            title: "Grundausbildung 1 (GA1)",
+            kat: "Grundausbildung",
+            timeLimitMinutes: 30,
+            passPercentage: 60,
+            passScore: 15,
+            introHeader: "Grundausbildung 1",
+            introText: "Willkommen bei der Grundausbildung.\nIn dieser Prüfung geht es um das Thema: Grundausbildung 1\n\nDu benötigst mindestens 15 Punkte (60%), um die Prüfung zu bestehen.\nWir wünschen dir bei der Beantwortung der Fragen viel Erfolg!",
+            questions: [
+                { id: 1, text: "Wie viel kostet ein MRT?", options: ["10.000 $", "7.500 $", "5.000 $", "2.500 $"], correctAnswers: [3] },
+                { id: 2, text: "Wie viel kostet eine Reanimation? Im Zeitraum von 0 - 6Uhr!", options: ["2.500 $", "5.000 $", "7.500 $", "10.000 $"], correctAnswers: [3] },
+                { id: 3, text: "Wie melde ich, dass mein Dispatch erledigt ist?", options: ["Ich fahre einfach weg und melde es nicht.", "Ich schreibe der Leitstelle eine SMS mit dem Inhalt \"Einsatz beendet\"", "Ich melde das im Funk wie folgt: [Meine Unit] 10-5.", "Ich sende einen Dispatch und schreibe rein \"Einsatz beendet\""], correctAnswers: [2] },
+                { id: 4, text: "Was bedeutet der Funkcode 10-3?", options: ["Unterwegs", "Verstanden, Ende", "Weg ins MD", "Funkstille", "Warte auf Zuteilung"], correctAnswers: [2] },
+                { id: 5, text: "Was bedeutet der Funkcode 10-10?", options: ["Statusbericht / Standort", "Am Einsatzort angekommen", "Unterwegs", "weiterer RTW benötigt", "Im Dienst", "Verstanden, Ende"], correctAnswers: [3] },
+                { id: 6, text: "Streife 2 nimmt einen Einsatz an, der zuvor als abgebrochen (10-20) gemeldet wurde. Trotzdem fährt Streife 2 zu diesem Einsatz. Als sie vor Ort eintrifft, funkt die Leitstelle Streife 2 an und fragt nach 10-8.", options: ["Streife 2 muss den Einsatz abbrechen und zum MD zurückkehren", "Streife 2 muss auf weitere Anweisungen der Leitstelle warten und darf nicht eingreifen", "Streife 2 muss den Status 10-10 ignorieren und macht einfach weiter", "Streife 2 meldet ihren Status", "Streife 2 muss sofort Verstärkung anfordern, da der Einsatz als abgebrochen gemeldet wurde"], correctAnswers: [3] },
+                { id: 7, text: "Wie meldest du dich im Funk an?", options: ["DN, meldet sich Status 10-4", "DN, meldet sich Status 10-5", "DN, meldet sich 10-11", "DN, meldet sich Status 10-3", "DN, meldet sich Code 10-2", "DN, meldet sich 10-1"], correctAnswers: [2] },
+                { id: 8, text: "In welches GPS loggst du dich ein?", options: ["Kanal 1", "Kanal 4", "Kanal 2", "Kanal 3", "Kanal 5"], correctAnswers: [3] },
+                { id: 9, text: "Wo stempelst du dich ein?", options: ["Hinter dem Tresen", "Gar nicht", "In der Mensa", "Bei den Sammelbetten hinter dem Tresen"], correctAnswers: [0] },
+                { id: 10, text: "Was ziehst du bei Dienstantritt an?", options: ["Außendienstkleidung", "Innendienstkleidung", "Leitstellen Outfit", "Ich fordere eine 10-5 an", "Zivilkleidung"], correctAnswers: [3] },
+                { id: 11, text: "Wo trage ich mich ein? (Mehrere Antworten möglich!)", options: ["Ich trage mich in der Ausbildungsliste ein", "Sollte eine Leitstelle bereits eingetragen sein wird diese mich eintragen", "Ich trage mich ins Wöchentlich Besprechungsprotokoll ein", "Ich trage mich selbständig im MDT als Leitstelle und in eine Streife ein. (keine Leitstelle)", "Ich muss mich gar nicht eintragen, wenn ich eingestempelt bin reicht es"], correctAnswers: [1, 3] },
+                { id: 12, text: "Wie meldest du dich aus dem Funk ab?", options: ["DN, meldet sich 10-5", "DN, meldet sich Code 2", "DN, meldet sich 10-12", "DN, meldet sich 10-2", "ich melde mich nicht ab"], correctAnswers: [2] },
+                { id: 13, text: "Was ist bei Dienstaustritt zu beachten? (Mehrere Antworten möglich!)", options: ["Ich lege meine Dienstkleidung ab", "Ich melde mich im Funk ab und verlasse den Funkkanal", "Ich bleibe im Funk und lege meine Medkits ab", "Ich verlasse den Dienst und lasse dabei meine Dienstkleidung an", "Ich lege meine Medkits ab", "Ich lege mein Innendienstequipment zurück."], correctAnswers: [0, 1, 4, 5] },
+                { id: 14, text: "Wie verhältst du dich als Zivilist?", options: ["Ich hantiere mit Illegalen Gegenständen", "Ich verhalte mich wie ein MDler und mache nichts Illegales", "Ich stelle mich ins MD und lenke meine Kollegen ab"], correctAnswers: [1] },
+                { id: 15, text: "Sie sind gerade mit Ihrem Fahrzeug unterwegs, als Sie von einem Beamten des SAPD angehalten werden, weil Sie zu schnell gefahren sind... Wie gehen Sie da jetzt vor?", options: ["Ich fahre weiter um den Problemen mit dem SAPD aus dem Weg zugehen", "Ich zeige keine Gegenwehr und bin Kooperativ", "Da ich meinen Job nicht verlieren möchte, fahre ich weiter, damit ich keine Akteneinträge bekomme"], correctAnswers: [1] },
+                { id: 16, text: "Was ist der Funkcode 10-4?", options: ["10-4 steht für 'Notruf'", "10-4 steht für 'Hilfe benötigt'", "10-4 steht für 'Streife unterwegs'", "10-4 steht für 'Gefahr erkannt'", "10-4 steht für 'Verstanden'"], correctAnswers: [4] },
+                { id: 17, text: "Was ist der Funkcode 10-6?", options: ["10-6 steht für 'In Gefahr'", "10-6 steht für 'Komme sofort'", "10-6 steht für 'Bitte Wiederholen'", "10-6 steht für 'Auf Zuteilung'", "10-6 steht für 'Verbindung verloren'", "10-6 steht für 'Brauche Verstärkung'"], correctAnswers: [3] },
+                { id: 18, text: "Was bedeutet der Statuscode 5?", options: ["Status 5 bedeutet 'Aktive Gefahrenzone'", "Status 5 bedeutet 'Unterwegs zum Einsatz'", "Status 5 bedeutet 'Brauche Unterstützung'", "Status 5 bedeutet 'In Besprechung'", "Status 5 bedeutet 'Einsatz abgeschlossen'"], correctAnswers: [3] },
+                { id: 19, text: "Was bedeutet Status 3 bei Mitarbeitern?", options: ["Arbeitsbereit", "Beschäftigt / Pause", "Ausbildung", "Besprechung"], correctAnswers: [1] },
+                { id: 20, text: "Wer nimmt Die Funksprüche an von DOJ und PD (Sonderstreife im Dienst)?", options: ["Die Leitstelle", "Sonderstreife", "Jeder Mitarbeiter der im Dienst ist"], correctAnswers: [1] }
+            ]
+        },
         exam_ehk: {
             id: "exam_ehk",
             title: "Erste-Hilfe-Kurs (EHK) Grundprüfung",
@@ -1968,7 +2000,36 @@
         document.getElementById('activeExamSubtitle').textContent = `Kategorie: ${exam.kat || 'Allgemein'} | Fragen: ${exam.questions.length}`;
         
         const qContainer = document.getElementById('activeExamQuestionsContainer');
-        qContainer.innerHTML = "";
+        
+        let introHtml = "";
+        if (exam.introText) {
+            introHtml = `
+            <div style="background:rgba(168, 85, 247, 0.08); border:1px solid rgba(168, 85, 247, 0.3); padding:18px 22px; border-radius:14px; margin-bottom:20px;">
+                <h3 style="margin:0 0 10px 0; color:#a855f7; font-size:18px;">${exam.introHeader || exam.title}</h3>
+                <p style="margin:0; font-size:13px; color:var(--text-main); white-space:pre-line; line-height:1.6;">${exam.introText}</p>
+            </div>`;
+        }
+
+        let infoFieldsHtml = `
+        <div style="background:rgba(56, 189, 248, 0.05); border:1px solid rgba(56, 189, 248, 0.2); padding:16px 20px; border-radius:14px; margin-bottom:20px;">
+            <h4 style="margin:0 0 12px 0; color:var(--primary); font-size:14px;">📋 Angaben zum Prüfling & Prüfer</h4>
+            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:12px;">
+                <div>
+                    <label style="font-size:11px; font-weight:700; display:block; margin-bottom:4px;">Vor- & Nachname des Mitarbeiters:</label>
+                    <input type="text" id="activeExamUserFullName" value="${sessionUser ? sessionUser.vorname + ' ' + sessionUser.nachname : ''}" style="padding:8px; font-size:13px;">
+                </div>
+                <div>
+                    <label style="font-size:11px; font-weight:700; display:block; margin-bottom:4px;">Dienstnummer (DN) des Mitarbeiters:</label>
+                    <input type="text" id="activeExamUserDN" placeholder="Z.B. DN 42" style="padding:8px; font-size:13px;">
+                </div>
+                <div>
+                    <label style="font-size:11px; font-weight:700; display:block; margin-bottom:4px;">Dienstnummer (DN) des Prüfers:</label>
+                    <input type="text" id="activeExamPrueferDN" placeholder="Z.B. DN 07" style="padding:8px; font-size:13px;">
+                </div>
+            </div>
+        </div>`;
+
+        let questionsHtml = "";
 
         exam.questions.forEach((q, idx) => {
             const isMulti = q.correctAnswers && q.correctAnswers.length > 1;
@@ -1984,7 +2045,7 @@
                 </label>`;
             });
 
-            qContainer.innerHTML += `
+            questionsHtml += `
             <div class="exam-q-box">
                 <h4 style="margin:0 0 10px 0; color:var(--text-main); font-size:14px; line-height:1.4;">
                     Frage ${idx + 1}: ${q.text}
@@ -1993,6 +2054,8 @@
                 ${optionsHtml}
             </div>`;
         });
+
+        qContainer.innerHTML = introHtml + infoFieldsHtml + questionsHtml;
 
         document.getElementById('activeExamResultContainer').style.display = 'none';
         document.getElementById('activeExamContainer').style.display = 'block';
@@ -2009,6 +2072,16 @@
 
     function submitActiveExam() {
         if(!activeExam || !sessionUser) return;
+
+        const userDN = document.getElementById('activeExamUserDN')?.value.trim();
+        const prueferDN = document.getElementById('activeExamPrueferDN')?.value.trim();
+        const userFullName = document.getElementById('activeExamUserFullName')?.value.trim() || (sessionUser.vorname + " " + sessionUser.nachname);
+
+        if(!userDN || !prueferDN) {
+            alert("⚠️ Bitte trage deine Dienstnummer (DN) und die Dienstnummer deines Prüfers (DN Prüfer) oben ein!");
+            return;
+        }
+
         if(!confirm("Möchtest du deine Antworten jetzt einreichen und die Prüfung beenden?")) return;
 
         if(activeExamTimerInterval) clearInterval(activeExamTimerInterval);
@@ -2042,13 +2115,16 @@
         });
 
         const percentage = Math.round((correctCount / totalQuestions) * 100);
-        const passTarget = activeExam.passPercentage || 80;
-        const passed = percentage >= passTarget;
+        const passTargetPercent = activeExam.passPercentage || 60;
+        const passTargetScore = activeExam.passScore || 15;
+        const passed = (correctCount >= passTargetScore) || (percentage >= passTargetPercent);
 
         const userId = (sessionUser.vorname + "_" + sessionUser.nachname).toLowerCase().replace(/[^a-z0-9_]/g, "");
         const submission = {
             userId: userId,
-            userName: sessionUser.vorname + " " + sessionUser.nachname,
+            userName: userFullName,
+            userDN: userDN,
+            prueferDN: prueferDN,
             examId: activeExam.id,
             examTitle: activeExam.title,
             durationSeconds: durationSec,
@@ -2088,8 +2164,9 @@
                     Ergebnis: <b>${percentage}%</b> (${correctCount} von ${totalQuestions} Fragen richtig)
                 </p>
                 <div style="display:flex; justify-content:center; gap:20px; font-size:13px; color:var(--text-muted); margin-bottom:20px;">
-                    <div>⏱️ Benötigte Zeit: <b style="color:var(--warning);">${durationFormatted}</b></div>
-                    <div>🎯 Mindestquote: <b>${passTarget}%</b></div>
+                    <div>👤 Prüfling DN: <b style="color:var(--primary);">${userDN}</b></div>
+                    <div>👨‍🏫 Prüfer DN: <b style="color:var(--warning);">${prueferDN}</b></div>
+                    <div>⏱️ Zeit: <b style="color:var(--warning);">${durationFormatted}</b></div>
                 </div>
 
                 <h4 style="margin:20px 0 10px 0; text-align:left; color:var(--primary);">Detail-Auswertung aller Fragen:</h4>
@@ -2142,7 +2219,7 @@
         tbody.innerHTML = "";
 
         if(!submissions) {
-            tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:var(--text-muted); padding:20px;">Noch keine Prüfungen absolviert.</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; color:var(--text-muted); padding:20px;">Noch keine Prüfungen absolviert.</td></tr>`;
             return;
         }
 
@@ -2155,7 +2232,8 @@
             tbody.innerHTML += `
             <tr>
                 <td style="font-size:11px;">${sub.datum || '--'}</td>
-                <td><b>${sub.userName || '--'}</b></td>
+                <td><b>${sub.userName || '--'}</b> <br><span style="font-size:11px; color:var(--primary); font-weight:700;">DN: ${sub.userDN || '--'}</span></td>
+                <td><span style="font-size:11px; color:var(--warning); font-weight:700;">DN: ${sub.prueferDN || '--'}</span></td>
                 <td style="font-weight:600; color:var(--primary);">${sub.examTitle || '--'}</td>
                 <td><span style="font-family:monospace; color:var(--warning); font-weight:700;">⏱️ ${sub.durationFormatted || '--'}</span></td>
                 <td><b>${sub.percentage}%</b> (${sub.score}/${sub.totalQuestions})</td>
@@ -2169,7 +2247,7 @@
         if(!cachedSubmissions || !cachedSubmissions[subId]) return;
         const sub = cachedSubmissions[subId];
         let detailsHtml = (sub.details || []).map((d, i) => `\nFrage ${i+1}: ${d.questionText}\n- Erhalten: ${d.selectedOptions.join(', ')}\n- Korrekt: ${d.correctOptions.join(', ')}\n- Ergebnis: ${d.isCorrect ? 'RICHTIG' : 'FALSCH'}\n`).join('');
-        alert(`📋 Prüfungsdetails für ${sub.userName}:\n\nPrüfung: ${sub.examTitle}\nDatum: ${sub.datum}\nBearbeitungszeit: ${sub.durationFormatted}\nErgebnis: ${sub.percentage}% (${sub.passed ? 'Bestanden' : 'Nicht bestanden'})\n${detailsHtml}`);
+        alert(`📋 Prüfungsdetails für ${sub.userName} (DN: ${sub.userDN || '--'}, Prüfer DN: ${sub.prueferDN || '--'}):\n\nPrüfung: ${sub.examTitle}\nDatum: ${sub.datum}\nBearbeitungszeit: ${sub.durationFormatted}\nErgebnis: ${sub.percentage}% (${sub.passed ? 'Bestanden' : 'Nicht bestanden'})\n${detailsHtml}`);
     }
 
     function renderInstructorExistingExams(exams) {
