@@ -1455,7 +1455,26 @@
             if(cloud.hierarchie) renderHierarchieBoard(cloud.hierarchie);
             else renderHierarchieBoard(hierarchieDaten);
             
-            if(sessionUser && cloud.users) {
+            if(cloud.users) {
+                if(!cloud.users['tim_dorn']) {
+                    db.ref("data/users/tim_dorn").set({
+                        vorname: "Tim",
+                        nachname: "Dorn",
+                        pass: "1234",
+                        status: "approved",
+                        date: new Date().toLocaleDateString('de-DE'),
+                        isAdmin: true,
+                        isInstructor: true,
+                        canSeeLinks: true,
+                        canDelete: true,
+                        unlockedExams: {
+                            exam_ga1: true,
+                            exam_ehk: true,
+                            exam_cls: true,
+                            exam_psgu: true
+                        }
+                    });
+                }
                 const uId = (sessionUser.vorname + "_" + sessionUser.nachname).toLowerCase().replace(/[^a-z0-9_]/g, "");
                 if(cloud.users[uId]) {
                     sessionUser = cloud.users[uId];
@@ -1484,7 +1503,7 @@
     function renderAdminUserTable(users) {
         const tbody = document.getElementById('adminUserTableBody'); if(!tbody || !users) return; tbody.innerHTML = "";
         Object.keys(users).forEach(uId => {
-            const u = users[uId]; if(u.vorname === "Tim" && u.nachname === "Sanddorn") return;
+            const u = users[uId];
             let actionBtn = u.status === 'pending' 
                 ? `<button class="btn" style="margin:0; padding:6px 12px; background:var(--success); color:#080c14;" onclick="setMitarbeiterStatus('${uId}', 'approved')">Freischalten</button>`
                 : `<span style="color:var(--success); font-weight:700;">Aktiv ✔</span>`;
@@ -1833,47 +1852,6 @@
                 { id: 19, text: "Was bedeutet Status 3 bei Mitarbeitern?", options: ["Arbeitsbereit", "Beschäftigt / Pause", "Ausbildung", "Besprechung"], correctAnswers: [1] },
                 { id: 20, text: "Wer nimmt Die Funksprüche an von DOJ und PD (Sonderstreife im Dienst)?", options: ["Die Leitstelle", "Sonderstreife", "Jeder Mitarbeiter der im Dienst ist"], correctAnswers: [1] }
             ]
-        },
-        exam_ehk: {
-            id: "exam_ehk",
-            title: "Erste-Hilfe-Kurs (EHK) Grundprüfung",
-            kat: "Ausbildungsstufe 1",
-            timeLimitMinutes: 15,
-            passPercentage: 80,
-            questions: [
-                { id: 1, text: "Welches Vorgehen ist bei einem leblosen Patienten als erstes durchzuführen?", options: ["Sofortige Herzdruckmassage und Notruf absetzen", "Patient aufrichten und Wasser anbieten", "Puls und Atmung prüfen, gefolgt von stabiler Seitenlage oder Reanimation", "Warten bis Notarzt eintriff"], correctAnswers: [0, 2] },
-                { id: 2, text: "Welche Materialien werden zur Wundversorgung einer stark blutenden Schnittwunde benötigt?", options: ["Verbandpäckchen & Druckverband", "Schmerzmittel ohne Wundabdeckung", "Sterile Kompressen", "Nur Wasser trinken lassen"], correctAnswers: [0, 2] },
-                { id: 3, text: "Wie lautet die korrekte Funkdisziplin beim SAMD?", options: ["Klare Angaben zum Standort und Patientenstatus", "Vergewissern, dass die Funkfrequenz frei ist vor dem Senden", "Hektisch rufen ohne Ortsangabe"], correctAnswers: [0, 1] },
-                { id: 4, text: "Was ist bei Verdacht auf eine Wirbelsäulenverletzung zu beachten?", options: ["Patienten nicht unnötig bewegen & Kopf stabilisieren", "Patienten sofort zum Gehen auffordern", "Stanzkrawatte / HWS-Schiene anlegen"], correctAnswers: [0, 2] },
-                { id: 5, text: "Wann darf ein Erste-Hilfe-Kurs erfolgreich zertifiziert werden?", options: ["Nach voller Teilnahme und bestandener Prüfung", "Automatisch nach 5 Minuten Anwesenheit", "Sobald der Ausbilder die Freigabe erteilt hat"], correctAnswers: [0, 2] }
-            ]
-        },
-        exam_cls: {
-            id: "exam_cls",
-            title: "Combat Life Saver (CLS) Zertifizierung",
-            kat: "Ausbildungsstufe 2",
-            timeLimitMinutes: 20,
-            passPercentage: 80,
-            questions: [
-                { id: 1, text: "Was bedeutet die Abkürzung CLS im Sanitätsdienst?", options: ["Combat Life Saver", "Central Life Support", "Clinical Safety Officer"], correctAnswers: [0] },
-                { id: 2, text: "Welche Maßnahmen gehören zum TCCC-Standard?", options: ["Care Under Fire (Versorgung unter Beschuss)", "Tactical Field Care (Versorgung im Feld)", "Abtransport ohne Eigensicherung"], correctAnswers: [0, 1] },
-                { id: 3, text: "Wann wird ein Tourniquet angewendet?", options: ["Bei lebensbedrohlichen Blutungen an Extremitäten", "Bei leichten Schürfwunden", "Wenn ein Druckverband nicht ausreicht"], correctAnswers: [0, 2] },
-                { id: 4, text: "Welche Vitalzeichen müssen beim Traumapatienten überwacht werden?", options: ["Puls & Blutdruck", "Atemfrequenz & Sauerstoffsättigung", "Schuhgröße"], correctAnswers: [0, 1] },
-                { id: 5, text: "Welche Priorität hat die Eigensicherung des Rettungsteams?", options: ["Höchste Priorität (Eigenschutz geht vor Fremdschutz)", "Zweitrangig gegenüber der Patientenrettung", "Keine Bedeutung"], correctAnswers: [0] }
-            ]
-        },
-        exam_psgu: {
-            id: "exam_psgu",
-            title: "Psychologisches Gutachten (PSGU) Fachprüfung",
-            kat: "Abteilung Psychologie",
-            timeLimitMinutes: 15,
-            passPercentage: 75,
-            questions: [
-                { id: 1, text: "Welche Kriterien sind bei einem PSGU für den Waffenschein zu prüfen?", options: ["Geistige Reife & Emotionale Stabilität", "Aggressionspotenzial & Suchtmittelanamnese", "Lieblingsfarbe des Bewerbers"], correctAnswers: [0, 1] },
-                { id: 2, text: "Wie verhält man sich bei einem akut traumatisierten Patienten?", options: ["Ruhe bewahren, Reize reduzieren & empathische Gesprächsführung", "Den Patienten schütteln und anschreien", "Sicheres Umfeld schaffen und professionelle Betreuung einleiten"], correctAnswers: [0, 2] },
-                { id: 3, text: "Wer darf ein offizielles Psychologisches Gutachten im SAMD ausstellen?", options: ["Nur freigeschaltete Mitglieder der Abteilung Psychologie", "Jeder Azubi am ersten Diensttag", "Leitung & Stellvertretung der Psychologie-Abteilung"], correctAnswers: [0, 2] },
-                { id: 4, text: "Welche Dokumentationspflicht besteht nach Durchführung eines PSGU?", options: ["Vollständige Erfassung im System inkl. Datum & Prüfer-Namen", "Keine Dokumentation notwendig", "Archivierung für spätere Überprüfungen"], correctAnswers: [0, 2] }
-            ]
         }
     };
 
@@ -1898,6 +1876,9 @@
 
     function renderExamTab(examsData, usersData, submissionsData) {
         cachedExams = Object.assign({}, defaultExams, examsData || {});
+        delete cachedExams.exam_ehk;
+        delete cachedExams.exam_cls;
+        delete cachedExams.exam_psgu;
         if(usersData) cachedUsers = usersData;
         if(submissionsData) cachedSubmissions = submissionsData;
 
@@ -2187,7 +2168,6 @@
 
         Object.keys(users).forEach(uId => {
             const u = users[uId];
-            if(u.vorname === "Tim" && u.nachname === "Sanddorn") return;
 
             const unlocked = u.unlockedExams || {};
             let examCheckboxes = Object.keys(exams).map(eId => {
