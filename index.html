@@ -403,7 +403,37 @@
         <div id="hierarchieTab" class="tab-content">
             <h2 style="text-align: center; margin-bottom: 24px; color: var(--primary); font-size: 24px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; text-shadow: 0 0 15px rgba(56,189,248,0.2);">San Andreas Medical Department</h2>
             
-            <!-- ABTEILUNGEN OF SAMD (NACH GANZ OBEN GEBRACHT) -->
+            <!-- CHIEFEBENE OF SAMD -->
+            <div style="margin-bottom: 24px;">
+                <div style="background: linear-gradient(135deg, #1e293b, #0f172a); padding: 10px 16px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 14px; text-align: center;">
+                    <h3 style="margin: 0; color: var(--primary); font-size: 15px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">⭐ Chiefebene of SAMD</h3>
+                </div>
+                <div class="h-card-grid">
+                    <div class="h-card">
+                        <div class="h-card-header">Chief of SAMD</div>
+                        <div class="h-card-body">
+                            <div class="h-row"><span class="h-label">01 Belegt von:</span><span class="h-val h-name-badge" id="disp_h_chief_01">#REF!</span></div>
+                            <div class="h-row"><span class="h-label">Voraussetzung:</span><span class="h-val" style="font-size:11px;">Wird bestimmt durch die Projektleitung</span></div>
+                        </div>
+                    </div>
+                    <div class="h-card">
+                        <div class="h-card-header">Ass. Chief of SAMD</div>
+                        <div class="h-card-body">
+                            <div class="h-row"><span class="h-label">02 Belegt von:</span><span class="h-val h-name-badge" id="disp_h_chief_02">#REF!</span></div>
+                            <div class="h-row"><span class="h-label">Voraussetzung:</span><span class="h-val" style="font-size:11px;">Wird durch Chief & Projektleitung entschieden</span></div>
+                        </div>
+                    </div>
+                    <div class="h-card">
+                        <div class="h-card-header">Deputy Chief of SAMD</div>
+                        <div class="h-card-body">
+                            <div class="h-row"><span class="h-label">03 Belegt von:</span><span class="h-val h-name-badge" id="disp_h_chief_03">#REF!</span></div>
+                            <div class="h-row"><span class="h-label">Voraussetzung:</span><span class="h-val" style="font-size:11px;">Wird durch Chief & Projektleitung entschieden</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ABTEILUNGEN OF SAMD -->
             <div style="margin-bottom: 24px;">
                 <div style="background: linear-gradient(135deg, #1e293b, #0f172a); padding: 10px 16px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 14px; text-align: center;">
                     <h3 style="margin: 0; color: #a855f7; font-size: 15px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">🏢 Abteilungen of SAMD</h3>
@@ -439,36 +469,6 @@
                             <div class="h-row"><span class="h-label">Leitung:</span><span class="h-val h-name-badge" id="disp_h_dept_luft_l">Gleich die Ausbildungsleitung</span></div>
                             <div class="h-row"><span class="h-label">Stellv. Leitung:</span><span class="h-val h-name-badge" id="disp_h_dept_luft_sl">Aktuell nicht belegt</span></div>
                             <div class="h-row"><span class="h-label">Voraussetzung:</span><span class="h-val">Rang: A-EMT</span></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- CHIEFEBENE OF SAMD -->
-            <div style="margin-bottom: 24px;">
-                <div style="background: linear-gradient(135deg, #1e293b, #0f172a); padding: 10px 16px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 14px; text-align: center;">
-                    <h3 style="margin: 0; color: var(--primary); font-size: 15px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">⭐ Chiefebene of SAMD</h3>
-                </div>
-                <div class="h-card-grid">
-                    <div class="h-card">
-                        <div class="h-card-header">Chief of SAMD</div>
-                        <div class="h-card-body">
-                            <div class="h-row"><span class="h-label">01 Belegt von:</span><span class="h-val h-name-badge" id="disp_h_chief_01">#REF!</span></div>
-                            <div class="h-row"><span class="h-label">Voraussetzung:</span><span class="h-val" style="font-size:11px;">Wird bestimmt durch die Projektleitung</span></div>
-                        </div>
-                    </div>
-                    <div class="h-card">
-                        <div class="h-card-header">Ass. Chief of SAMD</div>
-                        <div class="h-card-body">
-                            <div class="h-row"><span class="h-label">02 Belegt von:</span><span class="h-val h-name-badge" id="disp_h_chief_02">#REF!</span></div>
-                            <div class="h-row"><span class="h-label">Voraussetzung:</span><span class="h-val" style="font-size:11px;">Wird durch Chief & Projektleitung entschieden</span></div>
-                        </div>
-                    </div>
-                    <div class="h-card">
-                        <div class="h-card-header">Deputy Chief of SAMD</div>
-                        <div class="h-card-body">
-                            <div class="h-row"><span class="h-label">03 Belegt von:</span><span class="h-val h-name-badge" id="disp_h_chief_03">#REF!</span></div>
-                            <div class="h-row"><span class="h-label">Voraussetzung:</span><span class="h-val" style="font-size:11px;">Wird durch Chief & Projektleitung entschieden</span></div>
                         </div>
                     </div>
                 </div>
@@ -1268,6 +1268,10 @@ Frage: In welches GPS loggst du dich ein?
                             <input type="checkbox" id="permIsInstructor">
                             <span style="font-weight:700; color:#a855f7;">🎓 Ausbilder Rechte</span>
                         </label>
+                        <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+                            <input type="checkbox" id="permCanManageInstructors">
+                            <span style="font-weight:700; color:#a855f7;">🎓 Ausbilder-Rechte verwalten darf</span>
+                        </label>
                     </div>
                 </div>
 
@@ -1730,6 +1734,7 @@ Frage: In welches GPS loggst du dich ein?
         document.getElementById('permCanDelete').checked = u.canDelete === true;
         document.getElementById('permIsAdmin').checked = u.isAdmin === true;
         document.getElementById('permIsInstructor').checked = u.isInstructor === true;
+        document.getElementById('permCanManageInstructors').checked = u.canManageInstructors === true;
 
         const linksCont = document.getElementById('permLinksCategoriesContainer');
         linksCont.innerHTML = "";
@@ -1771,6 +1776,7 @@ Frage: In welches GPS loggst du dich ein?
         const canDelete = document.getElementById('permCanDelete').checked;
         const isAdmin = document.getElementById('permIsAdmin').checked;
         const isInstructor = document.getElementById('permIsInstructor').checked;
+        const canManageInstructorsVal = document.getElementById('permCanManageInstructors').checked;
 
         const allowedLinkKats = {};
         document.querySelectorAll('.perm-link-kat-cb').forEach(cb => {
@@ -1788,6 +1794,7 @@ Frage: In welches GPS loggst du dich ein?
             [`data/users/${uId}/canDelete`]: canDelete,
             [`data/users/${uId}/isAdmin`]: isAdmin,
             [`data/users/${uId}/isInstructor`]: isInstructor,
+            [`data/users/${uId}/canManageInstructors`]: canManageInstructorsVal,
             [`data/users/${uId}/allowedLinkKats`]: allowedLinkKats,
             [`data/users/${uId}/allowedCmdKats`]: allowedCmdKats
         };
@@ -2143,8 +2150,13 @@ Frage: In welches GPS loggst du dich ein?
         delete cachedExams.exam_ehk;
         delete cachedExams.exam_cls;
         delete cachedExams.exam_psgu;
-        if(usersData) cachedUsers = usersData;
-        if(submissionsData) cachedSubmissions = submissionsData;
+
+        Object.keys(cachedExams).forEach(eId => {
+            cachedExams[eId] = ensureExamHasDefaultHeaderFields(cachedExams[eId]);
+        });
+
+        cachedUsers = usersData || {};
+        cachedSubmissions = submissionsData || {};
 
         const instructorView = document.getElementById('examInstructorView');
         if (instructorView) {
@@ -2156,9 +2168,9 @@ Frage: In welches GPS loggst du dich ein?
 
                 const allowedExamsBtn = document.getElementById('instrAllowedExamsTabBtn');
                 if (allowedExamsBtn) {
-                    allowedExamsBtn.style.display = sessionUser && sessionUser.isAdmin ? '' : 'none';
+                    allowedExamsBtn.style.display = canManageInstructors(sessionUser) ? '' : 'none';
                 }
-                if (sessionUser && sessionUser.isAdmin) {
+                if (canManageInstructors(sessionUser)) {
                     renderInstructorAllowedExams(cachedUsers, cachedExams);
                 }
             } else {
@@ -2509,7 +2521,8 @@ Frage: In welches GPS loggst du dich ein?
         db.ref("data/examSubmissions").push(submission).then(() => {
             // Qualifikationsbasierte Prüfungsfreigabe (Ausbilder-Logik)
             if (passed && sessionUser && sessionUser.isInstructor) {
-                db.ref(`data/users/${userId}/instructorAllowedExams/${activeExam.id}`).set(true);
+                db.ref(`data/users/${userId}/instructorAllowedSeeExams/${activeExam.id}`).set(true);
+                db.ref(`data/users/${userId}/instructorAllowedManageExams/${activeExam.id}`).set(true);
             }
 
             document.getElementById('activeExamContainer').style.display = 'none';
@@ -2578,12 +2591,136 @@ Frage: In welches GPS loggst du dich ein?
         });
     }
 
-    function isExamAllowedForInstructor(examId) {
+    function canManageInstructors(u) {
+        if (!u) return false;
+        return u.isAdmin === true || u.canManageInstructors === true;
+    }
+
+    function getExamSortScore(exam) {
+        if (!exam) return { group: 99, number: 99, title: "" };
+        const title = (exam.title || "").toLowerCase();
+        
+        let group = 99;
+        let number = 1;
+        
+        if (title.includes("grundausbildung") || title.includes("ga")) {
+            group = 1;
+            const m = title.match(/(?:grundausbildung|ga)\s*(\d+)/i);
+            if (m) number = parseInt(m[1]);
+            else if (title.includes("1")) number = 1;
+            else if (title.includes("2")) number = 2;
+        } else if (title.includes("dienstvorschrift") || title.includes("dv")) {
+            group = 2;
+            const m = title.match(/(?:dienstvorschriften|dv)\s*(\d+)/i);
+            if (m) number = parseInt(m[1]);
+            else if (title.includes("2")) number = 2;
+        } else if (title.includes("para")) {
+            group = 3;
+            const m = title.match(/para\s*(\d+)/i);
+            if (m) number = parseInt(m[1]);
+        } else if (title.includes("arzt")) {
+            group = 4;
+            const m = title.match(/arzt\s*(\d+)/i);
+            if (m) number = parseInt(m[1]);
+        } else {
+            group = 5;
+        }
+        
+        return { group, number, title: title };
+    }
+
+    function sortExamIdsDynamically(eIds, exams) {
+        return [...eIds].sort((a, b) => {
+            const examA = exams[a];
+            const examB = exams[b];
+            const scoreA = getExamSortScore(examA);
+            const scoreB = getExamSortScore(examB);
+            
+            if (scoreA.group !== scoreB.group) {
+                return scoreA.group - scoreB.group;
+            }
+            if (scoreA.number !== scoreB.number) {
+                return scoreA.number - scoreB.number;
+            }
+            return scoreA.title.localeCompare(scoreB.title);
+        });
+    }
+
+    function ensureExamHasDefaultHeaderFields(exam) {
+        if (!exam || !exam.questions) return exam;
+        
+        let hasDN = exam.questions.some(q => q.type === 'info_dn' || (q.text || "").toLowerCase().includes("dienstnummer des mitarbeiters"));
+        let hasPruefer = exam.questions.some(q => q.type === 'info_pruefer' || (q.text || "").toLowerCase().includes("dienstnummer des prüfers"));
+        let hasName = exam.questions.some(q => q.type === 'info_name' || (q.text || "").toLowerCase().includes("vor- und nachname"));
+        
+        let newQuestions = [];
+        if (!hasDN) {
+            newQuestions.push({
+                type: "info_dn",
+                text: "Dienstnummer des Mitarbeiters",
+                options: [],
+                correctAnswers: [],
+                points: []
+            });
+        }
+        if (!hasPruefer) {
+            newQuestions.push({
+                type: "info_pruefer",
+                text: "Dienstnummer des Prüfers",
+                options: [],
+                correctAnswers: [],
+                points: []
+            });
+        }
+        if (!hasName) {
+            newQuestions.push({
+                type: "info_name",
+                text: "Vor- und Nachname des Mitarbeiters",
+                options: [],
+                correctAnswers: [],
+                points: []
+            });
+        }
+        
+        if (newQuestions.length > 0) {
+            exam.questions = [...newQuestions, ...exam.questions];
+        }
+        
+        exam.questions.forEach((q, idx) => {
+            q.id = idx + 1;
+            if (!q.type) q.type = "choice";
+            if (q.type === 'choice' && (!q.correctAnswers || q.correctAnswers.length === 0)) {
+                q.correctAnswers = [0];
+            }
+        });
+        
+        return exam;
+    }
+
+    function isExamAllowedToSee(u, examId) {
+        if (!u) return false;
+        if (u.isAdmin === true) return true;
+        if (u.isInstructor !== true) return false;
+        const allowed = u.instructorAllowedSeeExams || {};
+        return allowed[examId] === true;
+    }
+
+    function isExamAllowedToManage(u, examId) {
+        if (!u) return false;
+        if (u.isAdmin === true) return true;
+        if (u.isInstructor !== true) return false;
+        const allowed = u.instructorAllowedManageExams || {};
+        return allowed[examId] === true;
+    }
+
+    function canInstructorDeleteSubmission() {
         if (!sessionUser) return false;
         if (sessionUser.isAdmin === true) return true;
-        if (sessionUser.isInstructor !== true) return false;
-        const allowed = sessionUser.instructorAllowedExams || {};
-        return allowed[examId] === true;
+        return sessionUser.isInstructor === true && sessionUser.canDeleteSubmissions === true;
+    }
+
+    function isExamAllowedForInstructor(examId) {
+        return isExamAllowedToSee(sessionUser, examId);
     }
 
     function renderInstructorAllowedExams(users, exams) {
@@ -2595,16 +2732,47 @@ Frage: In welches GPS loggst du dich ein?
             const u = users[uId];
             if (!u.isInstructor && !u.isAdmin) return; // Only show instructors and admins
 
-            const allowedExams = u.instructorAllowedExams || {};
-            let checkboxes = Object.keys(exams).map(eId => {
+            const canCreateExams = u.canCreateExams === true;
+            const canDeleteSubmissions = u.canDeleteSubmissions === true;
+
+            const globalCheckboxes = `
+            <div style="display:flex; flex-direction:column; gap:6px;">
+                <label style="display:inline-flex; align-items:center; gap:6px; cursor:pointer; font-size:11px;">
+                    <input type="checkbox" ${canCreateExams ? 'checked' : ''} onchange="toggleInstructorGlobalPermission('${uId}', 'canCreateExams', this.checked)">
+                    <span>Neue Prüfungen anlegen</span>
+                </label>
+                <label style="display:inline-flex; align-items:center; gap:6px; cursor:pointer; font-size:11px;">
+                    <input type="checkbox" ${canDeleteSubmissions ? 'checked' : ''} onchange="toggleInstructorGlobalPermission('${uId}', 'canDeleteSubmissions', this.checked)">
+                    <span style="color:var(--danger);">Ergebnisse löschen</span>
+                </label>
+            </div>`;
+
+            const allowedSee = u.instructorAllowedSeeExams || {};
+            const allowedManage = u.instructorAllowedManageExams || {};
+
+            let examCompetenciesHtml = `<div style="max-height: 200px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; padding: 4px; background: rgba(8,12,20,0.3); border-radius: 8px; border: 1px solid var(--border);">`;
+            
+            // Sort exams dynamically to prevent mixed representation
+            let sortedExamIds = sortExamIdsDynamically(Object.keys(exams), exams);
+            sortedExamIds.forEach(eId => {
                 const exam = exams[eId];
-                const isChecked = allowedExams[eId] === true;
-                return `
-                <label style="display:inline-flex; align-items:center; gap:6px; background:rgba(168,85,247,0.06); padding:4px 10px; border-radius:8px; border:1px solid rgba(168,85,247,0.15); font-size:11px; margin:2px; cursor:pointer;">
-                    <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleInstructorAllowedExam('${uId}', '${eId}', this.checked)">
-                    <span style="color:${isChecked ? '#a855f7' : 'var(--text-muted)'}; font-weight:${isChecked ? '700' : '400'};">${exam.title}</span>
-                </label>`;
-            }).join('');
+                const isSeeChecked = allowedSee[eId] === true;
+                const isManageChecked = allowedManage[eId] === true;
+                examCompetenciesHtml += `
+                <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(30,41,59,0.5); padding: 6px 10px; border-radius: 6px; border: 1px solid var(--border); gap: 12px;">
+                    <span style="font-size:11px; font-weight:700; color:var(--text-main);">${exam.title}</span>
+                    <div style="display: flex; gap: 10px; align-items:center;">
+                        <label style="display: inline-flex; align-items: center; gap: 2px; cursor: pointer; font-size: 11px; margin:0;">
+                            <input type="checkbox" ${isSeeChecked ? 'checked' : ''} onchange="toggleInstructorExamPermission('${uId}', '${eId}', 'see', this.checked)"> 👁️ Sehen
+                        </label>
+                        <label style="display: inline-flex; align-items: center; gap: 2px; cursor: pointer; font-size: 11px; margin:0;">
+                            <input type="checkbox" ${isManageChecked ? 'checked' : ''} onchange="toggleInstructorExamPermission('${uId}', '${eId}', 'manage', this.checked)"> 🛠️ Verwalten
+                        </label>
+                    </div>
+                </div>`;
+            });
+
+            examCompetenciesHtml += `</div>`;
 
             tbody.innerHTML += `
             <tr>
@@ -2612,13 +2780,19 @@ Frage: In welches GPS loggst du dich ein?
                     <b>${u.vorname} ${u.nachname}</b>
                     ${u.isAdmin ? '<br><span style="font-size:10px; color:var(--warning);">[Master-Admin]</span>' : '<br><span style="font-size:10px; color:#a855f7;">[Ausbilder]</span>'}
                 </td>
-                <td>${checkboxes || '<span style="color:var(--text-muted); font-size:11px;">Keine Prüfungen vorhanden</span>'}</td>
+                <td>${globalCheckboxes}</td>
+                <td>${examCompetenciesHtml}</td>
             </tr>`;
         });
     }
 
-    function toggleInstructorAllowedExam(uId, examId, isAllowed) {
-        db.ref(`data/users/${uId}/instructorAllowedExams/${examId}`).set(isAllowed);
+    function toggleInstructorGlobalPermission(uId, field, value) {
+        db.ref(`data/users/${uId}/${field}`).set(value);
+    }
+
+    function toggleInstructorExamPermission(uId, examId, type, value) {
+        const node = type === 'see' ? 'instructorAllowedSeeExams' : 'instructorAllowedManageExams';
+        db.ref(`data/users/${uId}/${node}/${examId}`).set(value);
     }
 
     function makeContainerSortable(containerId, itemSelector, onOrderChange) {
@@ -2664,8 +2838,8 @@ Frage: In welches GPS loggst du dich ein?
     }
 
     function deleteExamSubmission(subId) {
-        if (!canUserDelete()) {
-            alert("❌ Sie besitzen keine Berechtigung zum Löschen!");
+        if (!canInstructorDeleteSubmission()) {
+            alert("❌ Sie besitzen keine Berechtigung zum Löschen von Prüfungsergebnissen!");
             return;
         }
         if (confirm("Möchtest du dieses Prüfungsergebnis wirklich unwiderruflich löschen?")) {
@@ -2684,8 +2858,9 @@ Frage: In welches GPS loggst du dich ein?
             const u = users[uId];
 
             const unlocked = u.unlockedExams || {};
-            let examCheckboxes = Object.keys(exams).map(eId => {
-                if (!isExamAllowedForInstructor(eId)) return '';
+            let sortedExamIds = sortExamIdsDynamically(Object.keys(exams), exams);
+            let examCheckboxes = sortedExamIds.map(eId => {
+                if (!isExamAllowedToManage(sessionUser, eId)) return '';
                 const exam = exams[eId];
                 const isChecked = unlocked[eId] === true;
                 return `
@@ -3063,6 +3238,17 @@ Frage: In welches GPS loggst du dich ein?
         }
 
         let existingId = document.getElementById('editingExamId').value;
+        if (!existingId) {
+            if (sessionUser.isAdmin !== true && sessionUser.canCreateExams !== true) {
+                alert("❌ Sie besitzen keine Berechtigung zum Anlegen neuer Prüfungen!");
+                return;
+            }
+        } else {
+            if (!isExamAllowedToManage(sessionUser, existingId)) {
+                alert("❌ Sie besitzen keine Berechtigung zum Bearbeiten dieser Prüfung!");
+                return;
+            }
+        }
         const examId = existingId || ("exam_" + Date.now());
 
         const examData = {
@@ -3130,6 +3316,10 @@ Frage: In welches GPS loggst du dich ein?
 
     function deleteExam(examId) {
         if(!isUserInstructor()) return;
+        if(!isExamAllowedToManage(sessionUser, examId)) {
+            alert("❌ Sie besitzen keine Berechtigung zum Löschen dieser Prüfung!");
+            return;
+        }
         if(confirm("Prüfung unwiderruflich löschen?")) {
             db.ref("data/exams/" + examId).remove();
         }
