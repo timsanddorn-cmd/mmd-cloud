@@ -112,12 +112,16 @@
         /* TAB MANAGEMENT NAVIGATION */
         .tab-nav { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; background: rgba(8, 12, 20, 0.5); padding: 8px; border-radius: 14px; border: 1px solid var(--border); }
         .tab-nav::-webkit-scrollbar { display: none; }
-        .tab-btn { background: transparent; color: var(--text-muted); border: none; padding: 12px 16px; font-size: 13px; font-weight: 700; border-radius: 10px; cursor: pointer; flex: 1 1 calc(25% - 8px); min-width: 140px; text-align: center; white-space: nowrap; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+        .tab-btn { background: rgba(30, 41, 59, 0.7); color: var(--text-muted); border: 1px solid var(--border); padding: 12px 16px; font-size: 13px; font-weight: 800; border-radius: 12px; cursor: pointer; flex: 1 1 calc(25% - 8px); min-width: 140px; text-align: center; white-space: nowrap; transition: all 0.2s ease; display: flex; align-items: center; justify-content: center; gap: 8px; }
         @media (max-width: 768px) { .tab-btn { flex: 1 1 calc(50% - 8px); font-size: 12px; padding: 10px; } }
-        .tab-btn:hover { color: var(--text-main); background: rgba(255, 255, 255, 0.04); }
-        .tab-btn.active { background-color: var(--text-main); color: #080c14; font-weight: 800; box-shadow: 0 4px 15px rgba(255,255,255,0.2); }
+        .tab-btn:hover { background: rgba(56, 189, 248, 0.15); color: var(--primary); border-color: var(--primary); }
+        .tab-btn.active { background: linear-gradient(135deg, #0284c7, #0369a1); color: #ffffff; border-color: var(--primary); box-shadow: 0 0 14px rgba(56, 189, 248, 0.4); font-weight: 800; }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
+
+        /* DRAG & DROP STYLES */
+        .draggable-item { cursor: grab; user-select: none; }
+        .draggable-item.dragging { opacity: 0.4; border: 2px dashed var(--primary) !important; cursor: grabbing; }
 
         /* ADMIN SUB-TAB NAVIGATION & KACHELN */
         .admin-subtabs { display: flex; gap: 10px; margin-bottom: 22px; flex-wrap: wrap; border-bottom: 1px solid var(--border); padding-bottom: 16px; }
@@ -288,9 +292,9 @@
 
         <div class="tab-nav">
             <button class="tab-btn active" onclick="switchTab('docTab', this)">📝 Dokumentation & Einsatz</button>
-            <button class="tab-btn" onclick="switchTab('statsTab', this)">📊 Statistiken & Archiv</button>
+            <button class="tab-btn" onclick="switchTab('statsTab', this)">📊 Statistik & Archiv</button>
             <button class="tab-btn" onclick="switchTab('hierarchieTab', this)">🌳 Hierarchie</button>
-            <button class="tab-btn" onclick="switchTab('guideTab', this)">📋 Leitfaden & Funk</button>
+            <button class="tab-btn" onclick="switchTab('guideTab', this)">📋 Funk und Codes</button>
             <button class="tab-btn" onclick="switchTab('commandTab', this)">💻 Commands</button>
             <button class="tab-btn" id="examTabNavBtn" onclick="switchTab('examTab', this)">🎓 Ausbildungsbereich</button>
             <button class="tab-btn" id="linksTabBtn" onclick="switchTab('linksTab', this)">🔗 Links & Dokumente</button>
@@ -353,7 +357,7 @@
 
         <!-- REITER 2: STATISTIKEN -->
         <div id="statsTab" class="tab-content">
-            <h2>📊 Live-Auswertung (Gesamtübersicht)</h2>
+            <h2>📊 Statistik & Archiv</h2>
             <div class="section" style="background: rgba(56, 189, 248, 0.02); border-color: rgba(56, 189, 248, 0.3);">
                 <div class="stats-grid">
                     <div class="stat-card"><h5>Behandelte Patienten</h5><span id="statPatienten">0</span></div>
@@ -665,7 +669,7 @@
 
         <!-- REITER 3: LEITFADEN & FUNK -->
         <div id="guideTab" class="tab-content">
-            <h2>📋 Fraktions-Leitfaden & Dienst-Referenz</h2>
+            <h2>📋 Funk und Codes</h2>
             <div class="guide-split-container">
                 <div class="section">
                     <table class="guide-table">
@@ -792,6 +796,7 @@
                         <button class="admin-tab-btn active" onclick="switchInstructorTab('instrTabUnlocks', this)">🔓 Prüfungen freischalten</button>
                         <button class="admin-tab-btn" onclick="switchInstructorTab('instrTabResults', this)">📊 Absolvierte Prüfungen & Zeiten</button>
                         <button class="admin-tab-btn" onclick="switchInstructorTab('instrTabManage', this)">📝 Prüfungen verwalten / anlegen</button>
+                        <button class="admin-tab-btn" id="instrAllowedExamsTabBtn" onclick="switchInstructorTab('instrTabInstructorAllowedExams', this)">🎓 Ausbilder-Rechte</button>
                     </div>
 
                     <!-- SUB-TAB A: FREISCHALTUNGEN -->
@@ -877,6 +882,25 @@ Frage: In welches GPS loggst du dich ein?
 
                         <h4 style="margin:20px 0 10px 0; color:var(--primary);">📜 Alle vorhandenen Prüfungen in der Cloud</h4>
                         <div id="instructorExistingExamsList"></div>
+                    </div>
+
+                    <!-- SUB-TAB D: AUSBILDER RECHTE (VISIBLE ONLY TO ADMIN) -->
+                    <div id="instrTabInstructorAllowedExams" class="admin-subtab-content">
+                        <h4 style="margin:0 0 10px 0; color:#a855f7;">🎓 Ausbilder Prüfungs-Berechtigungen (Master-Admin)</h4>
+                        <p style="color:var(--text-muted); font-size:12px; margin-top:0;">
+                            Bestimme hier, welcher Ausbilder welche Prüfungen sehen, verwalten, anlegen und abgeben/abnehmen darf.
+                        </p>
+                        <div class="table-responsive" style="max-height:400px; overflow-y:auto;">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Ausbilder</th>
+                                        <th>Prüfungskompetenzen (Erlaubte Prüfungen)</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="instructorAllowedExamsTableBody"></tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1029,7 +1053,7 @@ Frage: In welches GPS loggst du dich ein?
                     </h3>
                     <div class="table-responsive" style="max-height:400px; overflow-y:auto;">
                         <table>
-                            <thead><tr><th>Name</th><th>🔑 Passwort</th><th>Registriert am</th><th>Status</th><th>🔗 Links Rechte</th><th>🗑️ Mülleimer Rechte</th><th>👑 Admin Rechte</th><th>🎓 Ausbilder Rechte</th><th>Aktion</th></tr></thead>
+                            <thead><tr><th>Name</th><th>🔑 Passwort</th><th>Registriert</th><th>Status</th><th>🔗 Links</th><th>💻 Commands</th><th>🗑️ Mülleimer</th><th>👑 Admin</th><th>🎓 Ausbilder</th><th>Aktion</th></tr></thead>
                             <tbody id="adminUserTableBody"></tbody>
                         </table>
                     </div>
@@ -1206,6 +1230,69 @@ Frage: In welches GPS loggst du dich ein?
         </div>
     </div>
 
+    <!-- GRANULARE RECHTE-VERWALTUNG MODAL FOR MASTER ADMIN -->
+    <div id="userPermissionsModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(8,12,20,0.85); z-index:10000; align-items:center; justify-content:center; backdrop-filter:blur(8px);">
+        <div style="background:rgba(15,23,42,0.95); border:2px solid var(--primary); border-radius:20px; width:95%; max-width:650px; max-height:85vh; padding:24px; display:flex; flex-direction:column; box-shadow:0 10px 40px rgba(0,0,0,0.6);">
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:14px; margin-bottom:16px;">
+                <h3 style="margin:0; color:var(--primary); font-size:18px;">⚙️ Berechtigungen & Kategorien konfigurieren</h3>
+                <button style="background:rgba(255,255,255,0.08); color:var(--text-muted); border:1px solid var(--border); width:32px; height:32px; border-radius:50%; font-size:16px; cursor:pointer; display:flex; align-items:center; justify-content:center;" onclick="closeUserPermissionsModal()">✖</button>
+            </div>
+
+            <div style="overflow-y:auto; flex:1; padding-right:8px; display:flex; flex-direction:column; gap:16px; text-align:left;">
+                <input type="hidden" id="permModalUserId" value="">
+                <div>
+                    👤 Mitarbeiter: <b id="permModalUserName" style="color:var(--text-main); font-size:15px;">--</b>
+                </div>
+
+                <!-- GLOBALE TABS BERECHTIGUNGEN -->
+                <div style="background:rgba(30,41,59,0.4); border:1px solid var(--border); border-radius:12px; padding:14px;">
+                    <h4 style="margin:0 0 10px 0; color:var(--primary); font-size:13px;">🌐 Globale Bereiche</h4>
+                    <div style="display:flex; flex-direction:column; gap:8px;">
+                        <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+                            <input type="checkbox" id="permCanSeeLinks">
+                            <span style="font-weight:700;">🔗 Links & Dokumente ansehen darf</span>
+                        </label>
+                        <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+                            <input type="checkbox" id="permCanSeeCommands">
+                            <span style="font-weight:700;">💻 Commands ansehen darf</span>
+                        </label>
+                        <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+                            <input type="checkbox" id="permCanDelete">
+                            <span style="font-weight:700; color:var(--danger);">🗑️ Einträge löschen darf (Mülleimer)</span>
+                        </label>
+                        <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+                            <input type="checkbox" id="permIsAdmin">
+                            <span style="font-weight:700; color:var(--warning);">👑 Master-Admin Rechte</span>
+                        </label>
+                        <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+                            <input type="checkbox" id="permIsInstructor">
+                            <span style="font-weight:700; color:#a855f7;">🎓 Ausbilder Rechte</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- LINKS KATEGORIEN BERECHTIGUNGEN -->
+                <div style="background:rgba(30,41,59,0.4); border:1px solid var(--border); border-radius:12px; padding:14px;">
+                    <h4 style="margin:0 0 10px 0; color:var(--primary); font-size:13px;">🔗 Erlaubte Links-Kategorien</h4>
+                    <p style="font-size:11px; color:var(--text-muted); margin-top:0;">Wähle die Kategorien aus, die der Benutzer im Tab „Links & Dokumente“ sehen darf.</p>
+                    <div id="permLinksCategoriesContainer" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap:8px;"></div>
+                </div>
+
+                <!-- COMMANDS KATEGORIEN BERECHTIGUNGEN -->
+                <div style="background:rgba(30,41,59,0.4); border:1px solid var(--border); border-radius:12px; padding:14px;">
+                    <h4 style="margin:0 0 10px 0; color:var(--warning); font-size:13px;">💻 Erlaubte Commands-Kategorien</h4>
+                    <p style="font-size:11px; color:var(--text-muted); margin-top:0;">Wähle die Kategorien aus, die der Benutzer im Tab „Commands“ sehen darf.</p>
+                    <div id="permCmdsCategoriesContainer" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap:8px;"></div>
+                </div>
+            </div>
+
+            <div style="display:flex; justify-content:flex-end; gap:12px; border-top:1px solid var(--border); padding-top:14px; margin-top:16px;">
+                <button class="btn" style="background:var(--text-muted); width:auto; padding:10px 24px;" onclick="closeUserPermissionsModal()">Abbrechen</button>
+                <button class="btn" style="background:var(--success); color:#080c14; font-weight:800; width:auto; padding:10px 30px;" onclick="saveUserPermissions()">💾 Rechte speichern</button>
+            </div>
+        </div>
+    </div>
+
 <script>
     const FIREBASE_DB_URL = "https://mmd-live-default-rtdb.europe-west1.firebasedatabase.app";
     firebase.initializeApp({ databaseURL: FIREBASE_DB_URL });
@@ -1292,12 +1379,24 @@ Frage: In welches GPS loggst du dich ein?
         if(!user) return;
         const linksBtn = document.getElementById('linksTabBtn');
         const linksTabContent = document.getElementById('linksTab');
-        const hasLinkPermission = (user.isAdmin === true || user.canSeeLinks === true);
+        const hasLinkPermission = (user.isAdmin === true || user.canSeeLinks !== false); // default to true
 
         if (linksBtn) {
             linksBtn.style.display = hasLinkPermission ? '' : 'none';
         }
         if (!hasLinkPermission && linksTabContent && linksTabContent.classList.contains('active')) {
+            const firstTab = document.querySelector('.tab-btn');
+            if (firstTab) switchTab('docTab', firstTab);
+        }
+
+        const cmdBtn = document.querySelector('.tab-nav button[onclick*="commandTab"]');
+        const cmdTabContent = document.getElementById('commandTab');
+        const hasCmdPermission = (user.isAdmin === true || user.canSeeCommands !== false); // default to true
+
+        if (cmdBtn) {
+            cmdBtn.style.display = hasCmdPermission ? '' : 'none';
+        }
+        if (!hasCmdPermission && cmdTabContent && cmdTabContent.classList.contains('active')) {
             const firstTab = document.querySelector('.tab-btn');
             if (firstTab) switchTab('docTab', firstTab);
         }
@@ -1526,6 +1625,7 @@ Frage: In welches GPS loggst du dich ein?
                 Object.keys(materialKatalog).forEach(key => { daten[key] = Number(cloud.daten[key]) || 0; });
             }
             if(cloud.tagesZaehler) tagesZaehler = cloud.tagesZaehler;
+            cachedExamOrder = cloud.examOrder || [];
             
             if(cloud.hierarchie) renderHierarchieBoard(cloud.hierarchie);
             else renderHierarchieBoard(hierarchieDaten);
@@ -1568,36 +1668,38 @@ Frage: In welches GPS loggst du dich ein?
                 : `<span style="color:var(--success); font-weight:700;">Aktiv ✔</span>`;
             
             let canSeeLinks = (u.canSeeLinks === true);
-            let linkCheckbox = `<label style="margin:0; display:inline-flex; align-items:center; gap:6px; cursor:pointer;">
-                <input type="checkbox" ${canSeeLinks ? 'checked' : ''} onchange="toggleUserLinkPermission('${uId}', this.checked)">
-                <span style="font-size:11px; font-weight:700; color:${canSeeLinks ? 'var(--success)' : 'var(--text-muted)'};">${canSeeLinks ? 'Freigegeben' : 'Gesperrt'}</span>
-            </label>`;
+            let linkBadge = `<span style="font-size:11px; font-weight:700; color:${canSeeLinks ? 'var(--success)' : 'var(--text-muted)'};">${canSeeLinks ? 'Ja' : 'Nein'}</span>`;
+
+            let canSeeCmds = (u.canSeeCommands === true);
+            let cmdBadge = `<span style="font-size:11px; font-weight:700; color:${canSeeCmds ? 'var(--success)' : 'var(--text-muted)'};">${canSeeCmds ? 'Ja' : 'Nein'}</span>`;
 
             let canDelete = (u.canDelete === true);
-            let deleteCheckbox = `<label style="margin:0; display:inline-flex; align-items:center; gap:6px; cursor:pointer;">
-                <input type="checkbox" ${canDelete ? 'checked' : ''} onchange="toggleUserDeletePermission('${uId}', this.checked)">
-                <span style="font-size:11px; font-weight:700; color:${canDelete ? 'var(--danger)' : 'var(--text-muted)'};">${canDelete ? 'Erlaubt' : 'Gesperrt'}</span>
-            </label>`;
+            let deleteBadge = `<span style="font-size:11px; font-weight:700; color:${canDelete ? 'var(--danger)' : 'var(--text-muted)'};">${canDelete ? 'Ja' : 'Nein'}</span>`;
 
             let isAdminUser = (u.isAdmin === true);
-            let adminCheckbox = `<label style="margin:0; display:inline-flex; align-items:center; gap:6px; cursor:pointer;">
-                <input type="checkbox" ${isAdminUser ? 'checked' : ''} onchange="toggleUserAdminPermission('${uId}', this.checked)">
-                <span style="font-size:11px; font-weight:700; color:${isAdminUser ? 'var(--warning)' : 'var(--text-muted)'};">${isAdminUser ? 'Admin ✔' : 'Nein'}</span>
-            </label>`;
+            let adminBadge = `<span style="font-size:11px; font-weight:700; color:${isAdminUser ? 'var(--warning)' : 'var(--text-muted)'};">${isAdminUser ? 'Admin' : 'Nein'}</span>`;
 
             let isInstructorUser = (u.isInstructor === true);
-            let instructorCheckbox = `<label style="margin:0; display:inline-flex; align-items:center; gap:6px; cursor:pointer;">
-                <input type="checkbox" ${isInstructorUser ? 'checked' : ''} onchange="toggleUserInstructorPermission('${uId}', this.checked)">
-                <span style="font-size:11px; font-weight:700; color:${isInstructorUser ? '#a855f7' : 'var(--text-muted)'};">${isInstructorUser ? 'Ausbilder ✔' : 'Nein'}</span>
-            </label>`;
+            let instructorBadge = `<span style="font-size:11px; font-weight:700; color:${isInstructorUser ? '#a855f7' : 'var(--text-muted)'};">${isInstructorUser ? 'Ausbilder' : 'Nein'}</span>`;
 
-            tbody.innerHTML += `<tr><td><b>${u.vorname} ${u.nachname}</b></td><td><span style="font-family:monospace; background:rgba(245, 158, 11, 0.15); color:var(--warning); padding:3px 8px; border-radius:6px; font-weight:700; font-size:12px;">${u.pass || '---'}</span></td><td>${u.date || '--'}</td><td><span style="color:${u.status==='approved'?'var(--success)':'var(--warning)'};">${u.status==='approved'?'Zugelassen':'Gesperrt'}</span></td><td>${linkCheckbox}</td><td>${deleteCheckbox}</td><td>${adminCheckbox}</td><td>${instructorCheckbox}</td><td><div style="display:flex; gap:10px; align-items:center;">${actionBtn}<button class="btn-delete-row" onclick="mitarbeiterEntlassen('${uId}')">🗑️</button></div></td></tr>`;
-        });
-    }
-
-    function toggleUserInstructorPermission(uId, isChecked) {
-        db.ref("data/users/" + uId + "/isInstructor").set(isChecked).then(() => {
-            alert("🎓 Ausbilder-Rechte erfolgreich aktualisiert!");
+            tbody.innerHTML += `<tr>
+                <td><b>${u.vorname} ${u.nachname}</b></td>
+                <td><span style="font-family:monospace; background:rgba(245, 158, 11, 0.15); color:var(--warning); padding:3px 8px; border-radius:6px; font-weight:700; font-size:12px;">${u.pass || '---'}</span></td>
+                <td>${u.date || '--'}</td>
+                <td><span style="color:${u.status==='approved'?'var(--success)':'var(--warning)'};">${u.status==='approved'?'Zugelassen':'Gesperrt'}</span></td>
+                <td>${linkBadge}</td>
+                <td>${cmdBadge}</td>
+                <td>${deleteBadge}</td>
+                <td>${adminBadge}</td>
+                <td>${instructorBadge}</td>
+                <td>
+                    <div style="display:flex; gap:10px; align-items:center;">
+                        ${actionBtn}
+                        <button class="btn" style="margin:0; padding:6px 12px; font-size:11px; background:var(--primary); color:#080c14; font-weight:800;" onclick="openUserPermissionsModal('${uId}')">⚙️ Rechte</button>
+                        <button class="btn-delete-row" onclick="mitarbeiterEntlassen('${uId}')">🗑️</button>
+                    </div>
+                </td>
+            </tr>`;
         });
     }
 
@@ -1610,16 +1712,93 @@ Frage: In welches GPS loggst du dich ein?
         if(btnEl) btnEl.classList.add('active');
     }
 
-    function toggleUserLinkPermission(uId, isChecked) { db.ref("data/users/" + uId + "/canSeeLinks").set(isChecked); }
-    function toggleUserDeletePermission(uId, isChecked) { db.ref("data/users/" + uId + "/canDelete").set(isChecked); }
-    function toggleUserAdminPermission(uId, isChecked) {
-        db.ref("data/users/" + uId + "/isAdmin").set(isChecked).then(() => {
-            alert("🔄 Admin-Rechte erfolgreich aktualisiert!");
-        });
-    }
-
     function setMitarbeiterStatus(uId, status) { db.ref("data/users/" + uId + "/status").set(status); }
     function mitarbeiterEntlassen(uId) { if(confirm("Account unwiderruflich löschen?")) db.ref("data/users/" + uId).remove(); }
+
+    let allLinkCategories = [];
+    let allCmdCategories = [];
+
+    function openUserPermissionsModal(uId) {
+        if(!cachedUsers || !cachedUsers[uId]) return;
+        const u = cachedUsers[uId];
+
+        document.getElementById('permModalUserId').value = uId;
+        document.getElementById('permModalUserName').textContent = `${u.vorname} ${u.nachname}`;
+
+        document.getElementById('permCanSeeLinks').checked = u.canSeeLinks !== false; // default to true
+        document.getElementById('permCanSeeCommands').checked = u.canSeeCommands !== false; // default to true
+        document.getElementById('permCanDelete').checked = u.canDelete === true;
+        document.getElementById('permIsAdmin').checked = u.isAdmin === true;
+        document.getElementById('permIsInstructor').checked = u.isInstructor === true;
+
+        const linksCont = document.getElementById('permLinksCategoriesContainer');
+        linksCont.innerHTML = "";
+        const allowedLinkKats = u.allowedLinkKats || {};
+        allLinkCategories.forEach(kat => {
+            const isChecked = allowedLinkKats[kat] !== false; // Default to true
+            linksCont.innerHTML += `
+            <label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-size:12px;">
+                <input type="checkbox" class="perm-link-kat-cb" value="${kat}" ${isChecked ? 'checked' : ''}>
+                <span>${kat}</span>
+            </label>`;
+        });
+
+        const cmdsCont = document.getElementById('permCmdsCategoriesContainer');
+        cmdsCont.innerHTML = "";
+        const allowedCmdKats = u.allowedCmdKats || {};
+        allCmdCategories.forEach(kat => {
+            const isChecked = allowedCmdKats[kat] !== false; // Default to true
+            cmdsCont.innerHTML += `
+            <label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-size:12px;">
+                <input type="checkbox" class="perm-cmd-kat-cb" value="${kat}" ${isChecked ? 'checked' : ''}>
+                <span>${kat}</span>
+            </label>`;
+        });
+
+        document.getElementById('userPermissionsModal').style.display = 'flex';
+    }
+
+    function closeUserPermissionsModal() {
+        document.getElementById('userPermissionsModal').style.display = 'none';
+    }
+
+    function saveUserPermissions() {
+        const uId = document.getElementById('permModalUserId').value;
+        if(!uId) return;
+
+        const canSeeLinks = document.getElementById('permCanSeeLinks').checked;
+        const canSeeCommands = document.getElementById('permCanSeeCommands').checked;
+        const canDelete = document.getElementById('permCanDelete').checked;
+        const isAdmin = document.getElementById('permIsAdmin').checked;
+        const isInstructor = document.getElementById('permIsInstructor').checked;
+
+        const allowedLinkKats = {};
+        document.querySelectorAll('.perm-link-kat-cb').forEach(cb => {
+            allowedLinkKats[cb.value] = cb.checked;
+        });
+
+        const allowedCmdKats = {};
+        document.querySelectorAll('.perm-cmd-kat-cb').forEach(cb => {
+            allowedCmdKats[cb.value] = cb.checked;
+        });
+
+        const updates = {
+            [`data/users/${uId}/canSeeLinks`]: canSeeLinks,
+            [`data/users/${uId}/canSeeCommands`]: canSeeCommands,
+            [`data/users/${uId}/canDelete`]: canDelete,
+            [`data/users/${uId}/isAdmin`]: isAdmin,
+            [`data/users/${uId}/isInstructor`]: isInstructor,
+            [`data/users/${uId}/allowedLinkKats`]: allowedLinkKats,
+            [`data/users/${uId}/allowedCmdKats`]: allowedCmdKats
+        };
+
+        db.ref().update(updates).then(() => {
+            alert("✅ Berechtigungen erfolgreich gespeichert!");
+            closeUserPermissionsModal();
+        }).catch(err => {
+            alert("Fehler beim Speichern: " + err.message);
+        });
+    }
 
     window.onload = function() {
         document.getElementById('liveDateDisplay').textContent = new Date().toLocaleDateString('de-DE');
@@ -1628,6 +1807,7 @@ Frage: In welches GPS loggst du dich ein?
         if(savedSession && isActive) {
             initDienstEintritt(JSON.parse(savedSession));
         }
+        resetExamBuilderForm();
     };
 
     function baueMaterialUIAuf() {
@@ -1685,10 +1865,22 @@ Frage: In welches GPS loggst du dich ein?
         
         const hasDeletePermission = canUserDelete();
 
-        const meinaLinkKats = Object.keys(gruppierteLinks).sort();
+        let meinaLinkKats = Object.keys(gruppierteLinks).sort();
+        allLinkCategories = meinaLinkKats; // Update dynamic cache
+
+        if (sessionUser && !sessionUser.isAdmin) {
+            const allowed = sessionUser.allowedLinkKats || {};
+            meinaLinkKats = meinaLinkKats.filter(kat => allowed[kat] !== false);
+        }
+
         const linkDatalist = document.getElementById('linkThemaList');
         if (linkDatalist && meinaLinkKats.length > 0) {
             linkDatalist.innerHTML = meinaLinkKats.map(k => `<option value="${k}">`).join('');
+        }
+
+        if (meinaLinkKats.length === 0) {
+            container.innerHTML = `<p style="color:var(--text-muted); text-align:center; padding: 20px;">Keine freigegebenen Dokumente für dich vorhanden.</p>`;
+            return;
         }
 
         meinaLinkKats.forEach(thema => {
@@ -1739,10 +1931,22 @@ Frage: In welches GPS loggst du dich ein?
             gruppierteCommands[katName].push({ id: key, name: item.name, desc: item.desc }); 
         });
 
-        const meinaCmdKats = Object.keys(gruppierteCommands).sort();
+        let meinaCmdKats = Object.keys(gruppierteCommands).sort();
+        allCmdCategories = meinaCmdKats; // Update dynamic cache
+
+        if (sessionUser && !sessionUser.isAdmin) {
+            const allowed = sessionUser.allowedCmdKats || {};
+            meinaCmdKats = meinaCmdKats.filter(kat => allowed[kat] !== false);
+        }
+
         const cmdDatalist = document.getElementById('cmdKatList');
         if (cmdDatalist && meinaCmdKats.length > 0) {
             cmdDatalist.innerHTML = meinaCmdKats.map(k => `<option value="${k}">`).join('');
+        }
+
+        if (meinaCmdKats.length === 0) {
+            container.innerHTML = `<p style="color:var(--text-muted); text-align:center; padding: 20px;">Keine freigegebenen Commands für dich vorhanden.</p>`;
+            return;
         }
 
         const hasDeletePermission = canUserDelete();
@@ -1920,6 +2124,7 @@ Frage: In welches GPS loggst du dich ein?
     let cachedExams = {};
     let cachedUsers = {};
     let cachedSubmissions = {};
+    let cachedExamOrder = [];
 
     function isUserInstructor() {
         return sessionUser && (sessionUser.isAdmin === true || sessionUser.isInstructor === true);
@@ -1948,6 +2153,14 @@ Frage: In welches GPS loggst du dich ein?
                 renderInstructorUnlocks(cachedUsers, cachedExams);
                 renderInstructorSubmissions(cachedSubmissions);
                 renderInstructorExistingExams(cachedExams);
+
+                const allowedExamsBtn = document.getElementById('instrAllowedExamsTabBtn');
+                if (allowedExamsBtn) {
+                    allowedExamsBtn.style.display = sessionUser && sessionUser.isAdmin ? '' : 'none';
+                }
+                if (sessionUser && sessionUser.isAdmin) {
+                    renderInstructorAllowedExams(cachedUsers, cachedExams);
+                }
             } else {
                 instructorView.style.display = 'none';
             }
@@ -1966,7 +2179,16 @@ Frage: In welches GPS loggst du dich ein?
         }
 
         const unlockedObj = sessionUser.unlockedExams || {};
-        const unlockedKeys = Object.keys(unlockedObj).filter(k => unlockedObj[k] === true);
+        let unlockedKeys = Object.keys(unlockedObj).filter(k => unlockedObj[k] === true);
+
+        // Sort based on cachedExamOrder
+        unlockedKeys.sort((a, b) => {
+            let idxA = cachedExamOrder.indexOf(a);
+            let idxB = cachedExamOrder.indexOf(b);
+            if (idxA === -1) idxA = 9999;
+            if (idxB === -1) idxB = 9999;
+            return idxA - idxB;
+        });
 
         if(unlockedKeys.length === 0) {
             container.innerHTML = `
@@ -2002,7 +2224,7 @@ Frage: In welches GPS loggst du dich ein?
             let actionBtn = `<button class="btn" style="background:${isCompleted ? 'rgba(255,255,255,0.08)' : 'var(--primary)'}; color:${isCompleted ? 'var(--text-muted)' : '#080c14'}; font-weight:800; margin-top:14px;" onclick="startExam('${examId}')">${isCompleted ? '🔄 Prüfung erneut ablegen' : '🚀 Prüfung jetzt starten'}</button>`;
 
             container.innerHTML += `
-            <div class="exam-card ${isCompleted ? 'completed' : 'unlocked'}">
+            <div class="exam-card ${isCompleted ? 'completed' : 'unlocked'}" data-id="${examId}">
                 <div>
                     <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px;">
                         <span style="font-size:11px; color:var(--text-muted); font-weight:700; text-transform:uppercase;">${exam.kat || 'Prüfung'}</span>
@@ -2016,6 +2238,9 @@ Frage: In welches GPS loggst du dich ein?
                 ${actionBtn}
             </div>`;
         });
+
+        // Initialize drag and drop reordering
+        makeContainerSortable('studentUnlockedExamsContainer', '.exam-card', saveExamOrder);
     }
 
     function startExam(examId) {
@@ -2050,52 +2275,81 @@ Frage: In welches GPS loggst du dich ein?
             </div>`;
         }
 
-        let infoFieldsHtml = `
-        <div style="background:rgba(56, 189, 248, 0.05); border:1px solid rgba(56, 189, 248, 0.2); padding:16px 20px; border-radius:14px; margin-bottom:20px;">
-            <h4 style="margin:0 0 12px 0; color:var(--primary); font-size:14px;">📋 Angaben zum Prüfling & Prüfer</h4>
-            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:12px;">
-                <div>
-                    <label style="font-size:11px; font-weight:700; display:block; margin-bottom:4px;">Vor- & Nachname des Mitarbeiters:</label>
-                    <input type="text" id="activeExamUserFullName" value="${sessionUser ? sessionUser.vorname + ' ' + sessionUser.nachname : ''}" style="padding:8px; font-size:13px;">
-                </div>
-                <div>
-                    <label style="font-size:11px; font-weight:700; display:block; margin-bottom:4px;">Dienstnummer (DN) des Mitarbeiters:</label>
-                    <input type="text" id="activeExamUserDN" placeholder="Z.B. DN 42" style="padding:8px; font-size:13px;">
-                </div>
-                <div>
-                    <label style="font-size:11px; font-weight:700; display:block; margin-bottom:4px;">Dienstnummer (DN) des Prüfers:</label>
-                    <input type="text" id="activeExamPrueferDN" placeholder="Z.B. DN 07" style="padding:8px; font-size:13px;">
-                </div>
-            </div>
-        </div>`;
-
         let questionsHtml = "";
 
         exam.questions.forEach((q, idx) => {
-            const isMulti = q.correctAnswers && q.correctAnswers.length > 1;
-            let optionsHtml = "";
+            const qType = q.type || 'choice';
+            let itemHtml = "";
 
-            q.options.forEach((opt, oIdx) => {
-                const inputType = isMulti ? 'checkbox' : 'radio';
-                const inputName = `q_ans_${q.id}`;
-                optionsHtml += `
-                <label class="exam-opt-label">
-                    <input type="${inputType}" name="${inputName}" value="${oIdx}">
-                    <span>${opt}</span>
-                </label>`;
-            });
+            if (['info_dn', 'info_pruefer', 'info_name'].includes(qType)) {
+                let placeholder = "Bitte ausfüllen...";
+                let defVal = "";
+                if (qType === 'info_dn') placeholder = "z.B. DN 42";
+                else if (qType === 'info_pruefer') placeholder = "z.B. DN 07";
+                else if (qType === 'info_name') {
+                    placeholder = "z.B. Tim Sanddorn";
+                    defVal = sessionUser ? `${sessionUser.vorname} ${sessionUser.nachname}` : "";
+                }
 
-            questionsHtml += `
-            <div class="exam-q-box">
-                <h4 style="margin:0 0 10px 0; color:var(--text-main); font-size:14px; line-height:1.4;">
-                    Frage ${idx + 1}: ${q.text}
-                    ${isMulti ? '<span style="font-size:11px; color:var(--warning); margin-left:8px;">(Mehrere Antworten richtig!)</span>' : ''}
-                </h4>
-                ${optionsHtml}
-            </div>`;
+                itemHtml = `
+                <div class="exam-q-box info-field-box" style="background:rgba(56, 189, 248, 0.05); border:1px solid rgba(56, 189, 248, 0.2); padding:16px 20px; border-radius:14px; margin-bottom:20px;">
+                    <h4 style="margin:0 0 10px 0; color:var(--primary); font-size:14px; line-height:1.4;">${q.text}</h4>
+                    <input type="text" name="q_ans_${q.id}" data-type="${qType}" value="${defVal}" placeholder="${placeholder}" style="width:100%; max-width:400px; padding:10px; border-radius:8px; border:1px solid var(--border); background:rgba(30,41,59,0.6); color:var(--text-main); font-size:13px;">
+                </div>`;
+            } else if (qType === 'text') {
+                itemHtml = `
+                <div class="exam-q-box text-field-box">
+                    <h4 style="margin:0 0 10px 0; color:var(--text-main); font-size:14px; line-height:1.4;">
+                        Frage ${idx + 1}: ${q.text} <span style="font-size:11px; color:var(--text-muted); margin-left:8px;">(Freitext-Antwort)</span>
+                    </h4>
+                    <textarea name="q_ans_${q.id}" data-type="text" rows="3" placeholder="Deine Antwort hier eingeben..." style="width:100%; padding:10px; border-radius:8px; border:1px solid var(--border); background:rgba(30,41,59,0.6); color:var(--text-main); font-size:13px;"></textarea>
+                </div>`;
+            } else if (qType === 'checkbox_weighted') {
+                let optionsHtml = "";
+                q.options.forEach((opt, oIdx) => {
+                    const pts = q.points ? q.points[oIdx] || 0 : 0;
+                    optionsHtml += `
+                    <label class="exam-opt-label">
+                        <input type="checkbox" name="q_ans_${q.id}" data-type="checkbox_weighted" value="${oIdx}">
+                        <span>${opt} <span style="font-size:10px; color:var(--text-muted);">(${pts >= 0 ? '+' : ''}${pts} Pkt)</span></span>
+                    </label>`;
+                });
+
+                itemHtml = `
+                <div class="exam-q-box weighted-choice-box">
+                    <h4 style="margin:0 0 10px 0; color:var(--text-main); font-size:14px; line-height:1.4;">
+                        Frage ${idx + 1}: ${q.text} <span style="font-size:11px; color:var(--warning); margin-left:8px;">(Mehrfachauswahl mit Punktewertung)</span>
+                    </h4>
+                    ${optionsHtml}
+                </div>`;
+            } else {
+                const isMulti = q.correctAnswers && q.correctAnswers.length > 1;
+                let optionsHtml = "";
+
+                q.options.forEach((opt, oIdx) => {
+                    const inputType = isMulti ? 'checkbox' : 'radio';
+                    const inputName = `q_ans_${q.id}`;
+                    optionsHtml += `
+                    <label class="exam-opt-label">
+                        <input type="${inputType}" name="${inputName}" data-type="choice" value="${oIdx}">
+                        <span>${opt}</span>
+                    </label>`;
+                });
+
+                itemHtml = `
+                <div class="exam-q-box choice-box">
+                    <h4 style="margin:0 0 10px 0; color:var(--text-main); font-size:14px; line-height:1.4;">
+                        Frage ${idx + 1}: ${q.text}
+                        ${isMulti ? '<span style="font-size:11px; color:var(--warning); margin-left:8px;">(Mehrere Antworten richtig!)</span>' : ''}
+                    </h4>
+                    ${optionsHtml}
+                </div>`;
+            }
+
+            questionsHtml += itemHtml;
         });
 
-        qContainer.innerHTML = introHtml + infoFieldsHtml + questionsHtml;
+        qContainer.innerHTML = introHtml + questionsHtml;
 
         document.getElementById('activeExamResultContainer').style.display = 'none';
         document.getElementById('activeExamContainer').style.display = 'block';
@@ -2113,12 +2367,25 @@ Frage: In welches GPS loggst du dich ein?
     function submitActiveExam() {
         if(!activeExam || !sessionUser) return;
 
-        const userDN = document.getElementById('activeExamUserDN')?.value.trim();
-        const prueferDN = document.getElementById('activeExamPrueferDN')?.value.trim();
-        const userFullName = document.getElementById('activeExamUserFullName')?.value.trim() || (sessionUser.vorname + " " + sessionUser.nachname);
+        let userDN = "";
+        let prueferDN = "";
+        let userFullName = "";
+
+        activeExam.questions.forEach(q => {
+            const qType = q.type || 'choice';
+            if (['info_dn', 'info_pruefer', 'info_name'].includes(qType)) {
+                const el = document.querySelector(`input[name="q_ans_${q.id}"]`);
+                const val = el ? el.value.trim() : "";
+                if (qType === 'info_dn') userDN = val;
+                else if (qType === 'info_pruefer') prueferDN = val;
+                else if (qType === 'info_name') userFullName = val;
+            }
+        });
+
+        if (!userFullName) userFullName = sessionUser ? `${sessionUser.vorname} ${sessionUser.nachname}` : "Mitarbeiter";
 
         if(!userDN || !prueferDN) {
-            alert("⚠️ Bitte trage deine Dienstnummer (DN) und die Dienstnummer deines Prüfers (DN Prüfer) oben ein!");
+            alert("⚠️ Bitte trage deine Dienstnummer (DN) und die Dienstnummer deines Prüfers (DN Prüfer) in den dafür vorgesehenen Feldern ein!");
             return;
         }
 
@@ -2131,12 +2398,72 @@ Frage: In welches GPS loggst du dich ein?
         const seconds = durationSec % 60;
         const durationFormatted = `${minutes}m ${seconds}s`;
 
-        let totalQuestions = activeExam.questions.length;
-        let correctCount = 0;
+        let totalPossibleScore = 0;
+        let earnedScore = 0;
         let details = [];
 
         activeExam.questions.forEach((q, idx) => {
+            const qType = q.type || 'choice';
             const inputName = `q_ans_${q.id}`;
+
+            if (['info_dn', 'info_pruefer', 'info_name'].includes(qType)) {
+                const el = document.querySelector(`input[name="${inputName}"]`);
+                const val = el ? el.value.trim() : "";
+                details.push({
+                    questionText: q.text,
+                    selectedOptions: [val || 'Keine Angabe'],
+                    correctOptions: [],
+                    isCorrect: true,
+                    isInfo: true
+                });
+                return;
+            }
+
+            if (qType === 'text') {
+                const el = document.querySelector(`textarea[name="${inputName}"]`);
+                const val = el ? el.value.trim() : "";
+                details.push({
+                    questionText: q.text,
+                    selectedOptions: [val || 'Keine Antwort'],
+                    correctOptions: [],
+                    isCorrect: true,
+                    isFreeText: true
+                });
+                return;
+            }
+
+            if (qType === 'checkbox_weighted') {
+                const selectedNodes = document.querySelectorAll(`input[name="${inputName}"]:checked`);
+                const selectedIndices = Array.from(selectedNodes).map(node => parseInt(node.value));
+                
+                let qMaxPoints = 0;
+                let qEarnedPoints = 0;
+                
+                (q.points || []).forEach(p => {
+                    if (p > 0) qMaxPoints += p;
+                });
+                if (qMaxPoints === 0) qMaxPoints = 1; // Fallback
+
+                selectedIndices.forEach(idx => {
+                    const pts = q.points ? q.points[idx] || 0 : 0;
+                    qEarnedPoints += pts;
+                });
+
+                totalPossibleScore += qMaxPoints;
+                earnedScore += qEarnedPoints;
+
+                details.push({
+                    questionText: q.text,
+                    selectedOptions: selectedIndices.map(i => `${q.options[i]} (${q.points[i]} Pkt)`),
+                    correctOptions: (q.points || []).map((p, i) => p > 0 ? `${q.options[i]} (${p} Pkt)` : null).filter(Boolean),
+                    isCorrect: qEarnedPoints >= qMaxPoints,
+                    earnedPoints: qEarnedPoints,
+                    maxPoints: qMaxPoints
+                });
+                return;
+            }
+
+            // Default Choice
             const selectedNodes = document.querySelectorAll(`input[name="${inputName}"]:checked`);
             const selectedIndices = Array.from(selectedNodes).map(node => parseInt(node.value));
             const expectedIndices = q.correctAnswers || [];
@@ -2144,7 +2471,8 @@ Frage: In welches GPS loggst du dich ein?
             let isCorrect = selectedIndices.length === expectedIndices.length &&
                 selectedIndices.every(val => expectedIndices.includes(val));
 
-            if(isCorrect) correctCount++;
+            totalPossibleScore += 1;
+            if(isCorrect) earnedScore += 1;
 
             details.push({
                 questionText: q.text,
@@ -2154,10 +2482,11 @@ Frage: In welches GPS loggst du dich ein?
             });
         });
 
-        const percentage = Math.round((correctCount / totalQuestions) * 100);
+        if (totalPossibleScore === 0) totalPossibleScore = 1; // Avoid division by zero
+        const percentage = Math.round((earnedScore / totalPossibleScore) * 100);
         const passTargetPercent = activeExam.passPercentage || 60;
         const passTargetScore = activeExam.passScore || 15;
-        const passed = (correctCount >= passTargetScore) || (percentage >= passTargetPercent);
+        const passed = (earnedScore >= passTargetScore) || (percentage >= passTargetPercent);
 
         const userId = (sessionUser.vorname + "_" + sessionUser.nachname).toLowerCase().replace(/[^a-z0-9_]/g, "");
         const submission = {
@@ -2169,8 +2498,8 @@ Frage: In welches GPS loggst du dich ein?
             examTitle: activeExam.title,
             durationSeconds: durationSec,
             durationFormatted: durationFormatted,
-            score: correctCount,
-            totalQuestions: totalQuestions,
+            score: earnedScore,
+            totalQuestions: totalPossibleScore,
             percentage: percentage,
             passed: passed,
             details: details,
@@ -2178,21 +2507,50 @@ Frage: In welches GPS loggst du dich ein?
         };
 
         db.ref("data/examSubmissions").push(submission).then(() => {
+            // Qualifikationsbasierte Prüfungsfreigabe (Ausbilder-Logik)
+            if (passed && sessionUser && sessionUser.isInstructor) {
+                db.ref(`data/users/${userId}/instructorAllowedExams/${activeExam.id}`).set(true);
+            }
+
             document.getElementById('activeExamContainer').style.display = 'none';
             const resContainer = document.getElementById('activeExamResultContainer');
             resContainer.style.display = 'block';
 
-            let breakdownHtml = details.map((d, i) => `
+            let breakdownHtml = details.map((d, i) => {
+                if (d.isInfo) {
+                    return `
+                    <div style="background:rgba(30,41,59,0.4); border:1px solid rgba(56,189,248,0.3); border-radius:10px; padding:12px; margin-top:8px; text-align:left;">
+                        <div style="font-weight:700; font-size:13px; color:var(--primary);">
+                            ℹ️ ${d.questionText}
+                        </div>
+                        <div style="font-size:12px; color:var(--text-main); margin-top:4px;">
+                            Eingabe: <b>${d.selectedOptions[0]}</b>
+                        </div>
+                    </div>`;
+                }
+                if (d.isFreeText) {
+                    return `
+                    <div style="background:rgba(30,41,59,0.4); border:1px solid rgba(168,85,247,0.3); border-radius:10px; padding:12px; margin-top:8px; text-align:left;">
+                        <div style="font-weight:700; font-size:13px; color:#a855f7;">
+                            📝 Freitext: ${d.questionText}
+                        </div>
+                        <div style="font-size:12px; color:var(--text-main); margin-top:4px; white-space:pre-wrap;">
+                            Antwort: <i>${d.selectedOptions[0]}</i>
+                        </div>
+                    </div>`;
+                }
+                const ptsLabel = d.earnedPoints !== undefined ? ` (${d.earnedPoints}/${d.maxPoints} Pkt)` : '';
+                return `
                 <div style="background:rgba(30,41,59,0.4); border:1px solid ${d.isCorrect ? 'rgba(16,185,129,0.3)' : 'rgba(244,63,94,0.3)'}; border-radius:10px; padding:12px; margin-top:8px; text-align:left;">
                     <div style="font-weight:700; font-size:13px; color:${d.isCorrect ? 'var(--success)' : 'var(--danger)'};">
-                        ${d.isCorrect ? '✔ Richtig' : '✖ Falsch'} - Frage ${i+1}: ${d.questionText}
+                        ${d.isCorrect ? '✔ Richtig' : '✖ Falsch'} - Frage ${i+1}: ${d.questionText}${ptsLabel}
                     </div>
                     <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">
                         Deine Antwort: <b style="color:var(--text-main);">${d.selectedOptions.join(', ') || 'Keine'}</b>
                     </div>
-                    ${!d.isCorrect ? `<div style="font-size:12px; color:var(--success); margin-top:2px;">Richtige Lösung: <b>${d.correctOptions.join(', ')}</b></div>` : ''}
-                </div>
-            `).join('');
+                    ${(!d.isCorrect && d.correctOptions && d.correctOptions.length > 0) ? `<div style="font-size:12px; color:var(--success); margin-top:2px;">Richtige Lösung: <b>${d.correctOptions.join(', ')}</b></div>` : ''}
+                </div>`;
+            }).join('');
 
             resContainer.innerHTML = `
             <div class="exam-score-card">
@@ -2201,7 +2559,7 @@ Frage: In welches GPS loggst du dich ein?
                     ${passed ? 'Prüfung Bestanden!' : 'Leider Nicht Bestanden'}
                 </h3>
                 <p style="color:var(--text-main); font-size:16px; margin:0 0 16px 0;">
-                    Ergebnis: <b>${percentage}%</b> (${correctCount} von ${totalQuestions} Fragen richtig)
+                    Ergebnis: <b>${percentage}%</b> (${earnedScore} von ${totalPossibleScore} Punkten)
                 </p>
                 <div style="display:flex; justify-content:center; gap:20px; font-size:13px; color:var(--text-muted); margin-bottom:20px;">
                     <div>👤 Prüfling DN: <b style="color:var(--primary);">${userDN}</b></div>
@@ -2220,6 +2578,103 @@ Frage: In welches GPS loggst du dich ein?
         });
     }
 
+    function isExamAllowedForInstructor(examId) {
+        if (!sessionUser) return false;
+        if (sessionUser.isAdmin === true) return true;
+        if (sessionUser.isInstructor !== true) return false;
+        const allowed = sessionUser.instructorAllowedExams || {};
+        return allowed[examId] === true;
+    }
+
+    function renderInstructorAllowedExams(users, exams) {
+        const tbody = document.getElementById('instructorAllowedExamsTableBody');
+        if(!tbody || !users) return;
+        tbody.innerHTML = "";
+
+        Object.keys(users).forEach(uId => {
+            const u = users[uId];
+            if (!u.isInstructor && !u.isAdmin) return; // Only show instructors and admins
+
+            const allowedExams = u.instructorAllowedExams || {};
+            let checkboxes = Object.keys(exams).map(eId => {
+                const exam = exams[eId];
+                const isChecked = allowedExams[eId] === true;
+                return `
+                <label style="display:inline-flex; align-items:center; gap:6px; background:rgba(168,85,247,0.06); padding:4px 10px; border-radius:8px; border:1px solid rgba(168,85,247,0.15); font-size:11px; margin:2px; cursor:pointer;">
+                    <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleInstructorAllowedExam('${uId}', '${eId}', this.checked)">
+                    <span style="color:${isChecked ? '#a855f7' : 'var(--text-muted)'}; font-weight:${isChecked ? '700' : '400'};">${exam.title}</span>
+                </label>`;
+            }).join('');
+
+            tbody.innerHTML += `
+            <tr>
+                <td>
+                    <b>${u.vorname} ${u.nachname}</b>
+                    ${u.isAdmin ? '<br><span style="font-size:10px; color:var(--warning);">[Master-Admin]</span>' : '<br><span style="font-size:10px; color:#a855f7;">[Ausbilder]</span>'}
+                </td>
+                <td>${checkboxes || '<span style="color:var(--text-muted); font-size:11px;">Keine Prüfungen vorhanden</span>'}</td>
+            </tr>`;
+        });
+    }
+
+    function toggleInstructorAllowedExam(uId, examId, isAllowed) {
+        db.ref(`data/users/${uId}/instructorAllowedExams/${examId}`).set(isAllowed);
+    }
+
+    function makeContainerSortable(containerId, itemSelector, onOrderChange) {
+        if (!isUserInstructor()) return; // Restricted to instructors/admins
+        const container = document.getElementById(containerId);
+        if (!container) return;
+
+        container.querySelectorAll(itemSelector).forEach(item => {
+            item.setAttribute('draggable', 'true');
+            item.classList.add('draggable-item');
+
+            item.addEventListener('dragstart', (e) => {
+                item.classList.add('dragging');
+                e.dataTransfer.setData('text/plain', item.getAttribute('data-id'));
+            });
+
+            item.addEventListener('dragend', () => {
+                item.classList.remove('dragging');
+                const items = Array.from(container.querySelectorAll(itemSelector));
+                const newOrder = items.map(el => el.getAttribute('data-id'));
+                onOrderChange(newOrder);
+            });
+
+            item.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                const draggingItem = container.querySelector('.dragging');
+                if (!draggingItem) return;
+                const siblings = Array.from(container.querySelectorAll(`${itemSelector}:not(.dragging)`));
+                const nextSibling = siblings.find(sibling => {
+                    const box = sibling.getBoundingClientRect();
+                    const offset = e.clientY - box.top - box.height / 2;
+                    return offset < 0;
+                });
+                container.insertBefore(draggingItem, nextSibling);
+            });
+        });
+    }
+
+    function saveExamOrder(newOrder) {
+        db.ref("data/examOrder").set(newOrder).then(() => {
+            console.log("Exam order updated:", newOrder);
+        });
+    }
+
+    function deleteExamSubmission(subId) {
+        if (!canUserDelete()) {
+            alert("❌ Sie besitzen keine Berechtigung zum Löschen!");
+            return;
+        }
+        if (confirm("Möchtest du dieses Prüfungsergebnis wirklich unwiderruflich löschen?")) {
+            db.ref(`data/examSubmissions/${subId}`).remove().then(() => {
+                alert("✅ Prüfungsergebnis erfolgreich gelöscht!");
+            });
+        }
+    }
+
     function renderInstructorUnlocks(users, exams) {
         const tbody = document.getElementById('instructorUserUnlocksTableBody');
         if(!tbody || !users) return;
@@ -2230,6 +2685,7 @@ Frage: In welches GPS loggst du dich ein?
 
             const unlocked = u.unlockedExams || {};
             let examCheckboxes = Object.keys(exams).map(eId => {
+                if (!isExamAllowedForInstructor(eId)) return '';
                 const exam = exams[eId];
                 const isChecked = unlocked[eId] === true;
                 return `
@@ -2264,6 +2720,7 @@ Frage: In welches GPS loggst du dich ein?
 
         Object.keys(submissions).reverse().forEach(subId => {
             const sub = submissions[subId];
+            if (!isExamAllowedForInstructor(sub.examId)) return; // Skip unauthorized exams
             let statusBadge = sub.passed
                 ? `<span style="color:var(--success); font-weight:800;">Bestanden ✔</span>`
                 : `<span style="color:var(--danger); font-weight:800;">Nicht bestanden ✖</span>`;
@@ -2277,7 +2734,12 @@ Frage: In welches GPS loggst du dich ein?
                 <td><span style="font-family:monospace; color:var(--warning); font-weight:700;">⏱️ ${sub.durationFormatted || '--'}</span></td>
                 <td><b>${sub.percentage}%</b> (${sub.score}/${sub.totalQuestions})</td>
                 <td>${statusBadge}</td>
-                <td><button class="btn" style="margin:0; padding:4px 10px; font-size:11px;" onclick="viewSubmissionDetails('${subId}')">🔎 Details</button></td>
+                <td>
+                    <div style="display:flex; gap:6px; align-items:center;">
+                        <button class="btn" style="margin:0; padding:4px 10px; font-size:11px;" onclick="viewSubmissionDetails('${subId}')">🔎 Details</button>
+                        <button class="btn-delete-row" onclick="deleteExamSubmission('${subId}')">🗑️</button>
+                    </div>
+                </td>
             </tr>`;
         });
     }
@@ -2307,17 +2769,43 @@ Frage: In welches GPS loggst du dich ein?
         qBody.innerHTML = "";
 
         (sub.details || []).forEach((d, idx) => {
+            if (d.isInfo) {
+                qBody.innerHTML += `
+                <div style="background:rgba(30,41,59,0.4); border:1px solid rgba(56,189,248,0.3); border-radius:12px; padding:14px; text-align:left;">
+                    <div style="font-weight:700; font-size:13px; color:var(--primary);">
+                        ℹ️ ${d.questionText}
+                    </div>
+                    <div style="font-size:12px; color:var(--text-main); margin-top:6px;">
+                        Eingabe: <b>${(d.selectedOptions || []).join(', ') || 'Keine Angabe'}</b>
+                    </div>
+                </div>`;
+                return;
+            }
+            if (d.isFreeText) {
+                qBody.innerHTML += `
+                <div style="background:rgba(30,41,59,0.4); border:1px solid rgba(168,85,247,0.3); border-radius:12px; padding:14px; text-align:left;">
+                    <div style="font-weight:700; font-size:13px; color:#a855f7;">
+                        📝 Freitext: ${d.questionText}
+                    </div>
+                    <div style="font-size:12px; color:var(--text-main); margin-top:6px; white-space:pre-wrap;">
+                        Antwort: <i>${(d.selectedOptions || []).join('\n') || 'Keine Antwort'}</i>
+                    </div>
+                </div>`;
+                return;
+            }
+
             const isCorrect = d.isCorrect === true;
+            const ptsLabel = d.earnedPoints !== undefined ? ` (${d.earnedPoints}/${d.maxPoints} Pkt)` : '';
             qBody.innerHTML += `
             <div style="background:rgba(30,41,59,0.4); border:1px solid ${isCorrect ? 'rgba(16,185,129,0.3)' : 'rgba(244,63,94,0.3)'}; border-radius:12px; padding:14px; text-align:left;">
                 <div style="font-weight:700; font-size:13px; color:${isCorrect ? 'var(--success)' : 'var(--danger)'}; display:flex; gap:8px;">
                     <span>${isCorrect ? '✔ Richtig' : '✖ Falsch'}</span>
-                    <span>- Frage ${idx + 1}: ${d.questionText}</span>
+                    <span>- Frage ${idx + 1}: ${d.questionText}${ptsLabel}</span>
                 </div>
                 <div style="font-size:12px; color:var(--text-muted); margin-top:6px;">
                     Gegebene Antwort: <b style="color:var(--text-main);">${(d.selectedOptions || []).join(', ') || 'Keine Antwort'}</b>
                 </div>
-                ${!isCorrect ? `<div style="font-size:12px; color:var(--success); margin-top:4px;">Richtige Lösung: <b>${(d.correctOptions || []).join(', ')}</b></div>` : ''}
+                ${(!isCorrect && d.correctOptions && d.correctOptions.length > 0) ? `<div style="font-size:12px; color:var(--success); margin-top:4px;">Richtige Lösung: <b>${(d.correctOptions || []).join(', ')}</b></div>` : ''}
             </div>`;
         });
 
@@ -2334,11 +2822,23 @@ Frage: In welches GPS loggst du dich ein?
         if(!container) return;
         container.innerHTML = "";
 
-        Object.keys(exams).forEach(eId => {
+        let eIds = Object.keys(exams).filter(eId => isExamAllowedForInstructor(eId));
+
+        // Sort based on cachedExamOrder
+        eIds.sort((a, b) => {
+            let idxA = cachedExamOrder.indexOf(a);
+            let idxB = cachedExamOrder.indexOf(b);
+            if (idxA === -1) idxA = 9999;
+            if (idxB === -1) idxB = 9999;
+            return idxA - idxB;
+        });
+
+        eIds.forEach(eId => {
             const exam = exams[eId];
             container.innerHTML += `
-            <div style="background:rgba(15,23,42,0.6); border:1px solid var(--border); padding:12px 16px; border-radius:10px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
+            <div class="draggable-item" data-id="${eId}" style="background:rgba(15,23,42,0.6); border:1px solid var(--border); padding:12px 16px; border-radius:10px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
                 <div>
+                    <span style="font-size:12px; color:var(--text-muted); margin-right:8px; cursor:grab;">☰</span>
                     <b style="color:var(--text-main); font-size:14px;">${exam.title}</b> 
                     <span style="font-size:11px; color:var(--text-muted); margin-left:10px;">(${exam.kat || 'Allgemein'} | ❓ <b>${exam.questions ? exam.questions.length : 0} Fragen</b> | ⏱️ ${exam.timeLimitMinutes} Min)</span>
                 </div>
@@ -2348,6 +2848,35 @@ Frage: In welches GPS loggst du dich ein?
                 </div>
             </div>`;
         });
+
+        // Initialize drag and drop reordering
+        makeContainerSortable('instructorExistingExamsList', '.draggable-item', saveExamOrder);
+    }
+
+    function onQuestionTypeChange(selectEl) {
+        const card = selectEl.closest('.builder-q-card');
+        const qType = selectEl.value;
+        const optionsSection = card.querySelector('.builder-options-section');
+        const optionsList = card.querySelector('.builder-options-list');
+        
+        if (['choice', 'checkbox_weighted'].includes(qType)) {
+            optionsSection.style.display = 'block';
+            if (optionsList.children.length === 0) {
+                addExamOptionRow(optionsList, "", true, 0, qType);
+                addExamOptionRow(optionsList, "", false, 0, qType);
+            } else {
+                optionsList.querySelectorAll('.builder-opt-row').forEach(row => {
+                    const cbCont = row.querySelector('.builder-opt-correct-container');
+                    const ptsCont = row.querySelector('.builder-opt-points-container');
+                    if (cbCont && ptsCont) {
+                        cbCont.style.display = qType === 'choice' ? 'block' : 'none';
+                        ptsCont.style.display = qType === 'checkbox_weighted' ? 'block' : 'none';
+                    }
+                });
+            }
+        } else {
+            optionsSection.style.display = 'none';
+        }
     }
 
     function addExamQuestionRow(qData = null) {
@@ -2357,45 +2886,73 @@ Frage: In welches GPS loggst du dich ein?
         const qIdx = builder.children.length + 1;
         const qDiv = document.createElement('div');
         qDiv.className = 'builder-q-card';
-        qDiv.style.cssText = 'background:rgba(30,41,59,0.5); border:1px solid var(--border); border-radius:12px; padding:14px; position:relative;';
+        qDiv.style.cssText = 'background:rgba(30,41,59,0.5); border:1px solid var(--border); border-radius:12px; padding:14px; position:relative; margin-bottom: 12px;';
 
         const qText = qData ? qData.text : "";
-        const options = qData ? qData.options : ["", ""];
-        const correctAnswers = qData ? (qData.correctAnswers || [0]) : [0];
+        const qType = qData ? (qData.type || "choice") : "choice";
+        const options = qData ? (qData.options || []) : (['choice', 'checkbox_weighted'].includes(qType) ? ["", ""] : []);
+        const correctAnswers = qData ? (qData.correctAnswers || []) : [0];
+        const points = qData ? (qData.points || []) : [];
 
         qDiv.innerHTML = `
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
                 <b style="color:var(--primary); font-size:13px;">Frage #${qIdx}</b>
                 <button class="btn-delete-row" style="padding:2px 6px; font-size:11px;" onclick="this.closest('.builder-q-card').remove(); updateQuestionsCountDisplay();">🗑️ Frage löschen</button>
             </div>
-            <input type="text" class="builder-q-text" value="${qText.replace(/"/g, '&quot;')}" placeholder="Fragetext eingeben..." style="margin-bottom:10px; font-weight:700;">
+            
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:10px;">
+                <div>
+                    <label style="font-size:11px; margin-bottom:4px; display:block;">Label / Fragetext:</label>
+                    <input type="text" class="builder-q-text" value="${qText.replace(/"/g, '&quot;')}" placeholder="Fragetext..." style="font-weight:700;">
+                </div>
+                <div>
+                    <label style="font-size:11px; margin-bottom:4px; display:block;">Fragentyp:</label>
+                    <select class="builder-q-type" onchange="onQuestionTypeChange(this)" style="padding:6px; font-size:12px; border-radius:8px; border:1px solid var(--border); background:rgba(15,23,42,0.8); color:var(--text-main); width:100%;">
+                        <option value="choice" ${qType === 'choice' ? 'selected' : ''}>Einfach-/Mehrfachauswahl</option>
+                        <option value="text" ${qType === 'text' ? 'selected' : ''}>Freitext (ohne Bewertung)</option>
+                        <option value="checkbox_weighted" ${qType === 'checkbox_weighted' ? 'selected' : ''}>Ankreuzen mit Punktegewichtung</option>
+                        <option value="info_dn" ${qType === 'info_dn' ? 'selected' : ''}>Dienstnummer (Standardfeld)</option>
+                        <option value="info_pruefer" ${qType === 'info_pruefer' ? 'selected' : ''}>Dienstnummer des Prüfers (Standardfeld)</option>
+                        <option value="info_name" ${qType === 'info_name' ? 'selected' : ''}>Vor- und Nachname (Standardfeld)</option>
+                    </select>
+                </div>
+            </div>
 
-            <div style="margin-bottom:6px; font-size:11px; color:var(--text-muted); font-weight:700;">Antwortmöglichkeiten (Häkchen setzen bei korrekten Antworten):</div>
-            <div class="builder-options-list" style="display:flex; flex-direction:column; gap:6px;"></div>
-            <button class="btn" style="width:auto; padding:4px 10px; font-size:11px; margin-top:8px; background:rgba(255,255,255,0.06); color:var(--text-muted);" onclick="addExamOptionRow(this.previousElementSibling)">➕ Antwort hinzufügen</button>
+            <div class="builder-options-section" style="display:${['choice', 'checkbox_weighted'].includes(qType) ? 'block' : 'none'};">
+                <div style="margin-bottom:6px; font-size:11px; color:var(--text-muted); font-weight:700;">Antwortmöglichkeiten:</div>
+                <div class="builder-options-list" style="display:flex; flex-direction:column; gap:6px;"></div>
+                <button class="btn" style="width:auto; padding:4px 10px; font-size:11px; margin-top:8px; background:rgba(255,255,255,0.06); color:var(--text-muted);" onclick="addExamOptionRow(this.previousElementSibling, '', false, 0, this.closest('.builder-q-card').querySelector('.builder-q-type').value)">➕ Antwort hinzufügen</button>
+            </div>
         `;
 
         const optsContainer = qDiv.querySelector('.builder-options-list');
         options.forEach((optText, oIdx) => {
             const isChecked = correctAnswers.includes(oIdx);
-            addExamOptionRow(optsContainer, optText, isChecked);
+            const pts = points[oIdx] || 0;
+            addExamOptionRow(optsContainer, optText, isChecked, pts, qType);
         });
 
         builder.appendChild(qDiv);
         updateQuestionsCountDisplay();
     }
 
-    function addExamOptionRow(container, optText = "", isCorrect = false) {
+    function addExamOptionRow(container, optText = "", isCorrect = false, pts = 0, qType = "choice") {
         if(!container) return;
         const optDiv = document.createElement('div');
-        optDiv.style.cssText = 'display:flex; align-items:center; gap:8px;';
+        optDiv.className = 'builder-opt-row';
+        optDiv.style.cssText = 'display:flex; align-items:center; gap:8px; margin-top:4px;';
         optDiv.innerHTML = `
-            <label style="margin:0; display:flex; align-items:center; gap:4px; cursor:pointer;" title="Als richtige Antwort markieren">
-                <input type="checkbox" class="builder-opt-correct" ${isCorrect ? 'checked' : ''}>
-                <span style="font-size:11px; color:var(--success); font-weight:700;">Richtig</span>
-            </label>
+            <div class="builder-opt-correct-container" style="display:${qType === 'choice' ? 'block' : 'none'};">
+                <label style="margin:0; display:flex; align-items:center; gap:4px; cursor:pointer;" title="Als richtige Antwort markieren">
+                    <input type="checkbox" class="builder-opt-correct" ${isCorrect ? 'checked' : ''} style="margin:0;">
+                    <span style="font-size:11px; color:var(--success); font-weight:700;">Richtig</span>
+                </label>
+            </div>
+            <div class="builder-opt-points-container" style="display:${qType === 'checkbox_weighted' ? 'block' : 'none'};">
+                <input type="number" class="builder-opt-points" value="${pts}" style="width:70px; padding:6px; font-size:11px; border-radius:6px; border:1px solid var(--border); background:rgba(15,23,42,0.8); color:var(--text-main);" placeholder="Punkte">
+            </div>
             <input type="text" class="builder-opt-text" value="${optText.replace(/"/g, '&quot;')}" placeholder="Antwortmöglichkeit..." style="flex:1; padding:6px; font-size:12px;">
-            <button class="btn-delete-row" style="padding:2px 6px; font-size:11px;" onclick="this.parentElement.remove()">✖</button>
+            <button class="btn-delete-row" style="padding:4px 8px;" onclick="this.closest('.builder-opt-row').remove()">🗑️</button>
         `;
         container.appendChild(optDiv);
     }
@@ -2412,7 +2969,11 @@ Frage: In welches GPS loggst du dich ein?
 
         const lines = raw.split('\n');
         let currentQ = null;
-        let questions = [];
+        let questions = [
+            { type: 'info_dn', text: 'Dienstnummer des Mitarbeiters', options: [], correctAnswers: [] },
+            { type: 'info_pruefer', text: 'Dienstnummer des Prüfers', options: [], correctAnswers: [] },
+            { type: 'info_name', text: 'Vor- und Nachname des Mitarbeiters', options: [], correctAnswers: [] }
+        ];
 
         lines.forEach(line => {
             let l = line.trim();
@@ -2421,7 +2982,7 @@ Frage: In welches GPS loggst du dich ein?
             if(l.toLowerCase().startsWith('frage') || /^\d+[\.\)]/.test(l)) {
                 if(currentQ && currentQ.options.length > 0) questions.push(currentQ);
                 let text = l.replace(/^frage\s*\d*\s*[:\-\.]?\s*/i, '').replace(/^\d+[\.\)]\s*/, '').trim();
-                currentQ = { text: text || l, options: [], correctAnswers: [] };
+                currentQ = { type: 'choice', text: text || l, options: [], correctAnswers: [] };
             } else if(currentQ) {
                 let isCorrect = l.startsWith('*') || l.toLowerCase().includes('(richtig)') || l.toLowerCase().includes('[richtig]');
                 let cleanOpt = l.replace(/^[\*\-\•]\s*/, '').replace(/^[A-Z][\.\)]\s*/i, '').replace(/\(richtig\)/gi, '').replace(/\[richtig\]/gi, '').trim();
@@ -2435,23 +2996,18 @@ Frage: In welches GPS loggst du dich ein?
         });
         if(currentQ && currentQ.options.length > 0) questions.push(currentQ);
 
-        if(questions.length === 0) {
-            alert("Keine gültigen Fragen im Text erkannt.");
-            return;
-        }
-
         const builder = document.getElementById('examQuestionsListBuilder');
         if(builder) builder.innerHTML = "";
 
         questions.forEach(q => {
-            if(q.correctAnswers.length === 0 && q.options.length > 0) {
+            if(q.type === 'choice' && q.correctAnswers.length === 0 && q.options.length > 0) {
                 q.correctAnswers = [0];
             }
             addExamQuestionRow(q);
         });
 
         document.getElementById('examBulkTextarea').value = "";
-        alert(`✅ Erfolgreich ${questions.length} Fragen aufbereitet! Du kannst sie unten prüfen und anpassen.`);
+        alert(`✅ Erfolgreich ${questions.length - 3} Fragen aufbereitet! Standard-Felder wurden automatisch vorangestellt.`);
     }
 
     function neuePruefungSpeichern() {
@@ -2472,31 +3028,37 @@ Frage: In welches GPS loggst du dich ein?
         let questions = [];
         qCards.forEach((card, qIdx) => {
             const qText = card.querySelector('.builder-q-text').value.trim();
-            const optRows = card.querySelectorAll('.builder-options-list > div');
+            const qType = card.querySelector('.builder-q-type').value;
+            const optRows = card.querySelectorAll('.builder-options-list > .builder-opt-row');
             let options = [];
             let correctAnswers = [];
+            let points = [];
 
             optRows.forEach((optRow, oIdx) => {
                 const optText = optRow.querySelector('.builder-opt-text').value.trim();
                 const isChecked = optRow.querySelector('.builder-opt-correct').checked;
-                if(optText) {
-                    options.push(optText);
+                const pts = parseInt(optRow.querySelector('.builder-opt-points').value) || 0;
+                if(optText || ['choice', 'checkbox_weighted'].indexOf(qType) === -1) {
+                    options.push(optText || "");
                     if(isChecked) correctAnswers.push(options.length - 1);
+                    points.push(pts);
                 }
             });
 
-            if(qText && options.length > 0) {
+            if(qText) {
                 questions.push({
                     id: qIdx + 1,
                     text: qText,
+                    type: qType,
                     options: options,
-                    correctAnswers: correctAnswers.length > 0 ? correctAnswers : [0]
+                    correctAnswers: correctAnswers,
+                    points: points
                 });
             }
         });
 
         if(questions.length === 0) {
-            alert("⚠️ Bitte füge mindestens 1 Frage mit Antwortmöglichkeiten zur Prüfung hinzu!");
+            alert("⚠️ Bitte füge mindestens 1 Frage zur Prüfung hinzu!");
             return;
         }
 
@@ -2547,7 +3109,7 @@ Frage: In welches GPS loggst du dich ein?
     function resetExamBuilderForm() {
         document.getElementById('editingExamId').value = "";
         document.getElementById('newExamTitle').value = "";
-        document.getElementById('newExamKat').value = "";
+        document.getElementById('newExamKat').value = "Grundausbildung";
         document.getElementById('newExamTime').value = "30";
         document.getElementById('newExamPassRate').value = "60";
         document.getElementById('newExamPassScore').value = "15";
@@ -2555,7 +3117,12 @@ Frage: In welches GPS loggst du dich ein?
         document.getElementById('examBulkTextarea').value = "";
 
         const builder = document.getElementById('examQuestionsListBuilder');
-        if(builder) builder.innerHTML = "";
+        if(builder) {
+            builder.innerHTML = "";
+            addExamQuestionRow({ type: 'info_dn', text: 'Dienstnummer des Mitarbeiters' });
+            addExamQuestionRow({ type: 'info_pruefer', text: 'Dienstnummer des Prüfers' });
+            addExamQuestionRow({ type: 'info_name', text: 'Vor- und Nachname des Mitarbeiters' });
+        }
 
         document.getElementById('examBuilderHeading').textContent = "📝 Prüfungs-Editor & Ersteller";
         updateQuestionsCountDisplay();
@@ -2800,7 +3367,7 @@ Frage: In welches GPS loggst du dich ein?
     }
     function setDynamischenPatientenNamen() { const nF = document.getElementById('pName'); if (nF && (!nF.value || nF.value.startsWith("Patient "))) { nF.value = "Patient " + ((Number(daten.patienten) || 0) + 1); } }
     
-    window.deletePatient = deletePatient; window.deleteArchivSchicht = deleteArchivSchicht; window.toggleThemeCollapse = toggleThemeCollapse; window.toggleGroupCollapse = toggleGroupCollapse; window.deleteDienstLink = deleteDienstLink; window.commandHinzufuegen = commandHinzufuegen; window.bulkCommandsImportieren = bulkCommandsImportieren; window.deleteDienstCommand = deleteDienstCommand; window.toggleCmdCollapse = toggleCmdCollapse; window.toggleUserDeletePermission = toggleUserDeletePermission; window.toggleUserAdminPermission = toggleUserAdminPermission; window.toggleUserInstructorPermission = toggleUserInstructorPermission; window.switchInstructorTab = switchInstructorTab; window.startExam = startExam; window.cancelActiveExam = cancelActiveExam; window.submitActiveExam = submitActiveExam; window.toggleExamUnlockForUser = toggleExamUnlockForUser; window.viewSubmissionDetails = viewSubmissionDetails; window.closeSubmissionDetailsModal = closeSubmissionDetailsModal; window.neuePruefungErstellen = neuePruefungSpeichern; window.neuePruefungSpeichern = neuePruefungSpeichern; window.editExamInBuilder = editExamInBuilder; window.resetExamBuilderForm = resetExamBuilderForm; window.addExamQuestionRow = addExamQuestionRow; window.addExamOptionRow = addExamOptionRow; window.parseBulkQuestionsText = parseBulkQuestionsText; window.deleteExam = deleteExam; window.switchAdminTab = switchAdminTab; window.berechneDienstTage = berechneDienstTage; window.linkHinzufuegen = linkHinzufuegen; window.schnellBehandlungBuchen = schnellBehandlungBuchen; window.openEditPatientModal = openEditPatientModal; window.closeEditModal = closeEditModal; window.speicherePatientEdit = speicherePatientEdit; window.passwortAendern = passwortAendern; window.exportArchivCSV = exportArchivCSV; window.openAdminKeyModal = openAdminKeyModal; window.closeAdminAuthModal = closeAdminAuthModal; window.verifyAdminKeyPassword = verifyAdminKeyPassword; window.closeAdminManagementModal = closeAdminManagementModal; window.setMitarbeiterStatus = setMitarbeiterStatus; window.mitarbeiterEntlassen = mitarbeiterEntlassen; window.toggleUserLinkPermission = toggleUserLinkPermission; window.aktualisiereAdminVerwaltung = aktualisiereAdminVerwaltung; window.speichereHierarchieDaten = speichereHierarchieDaten; window.switchTab = switchTab; window.settingsTabClick = settingsTabClick;
+    window.deletePatient = deletePatient; window.deleteArchivSchicht = deleteArchivSchicht; window.toggleThemeCollapse = toggleThemeCollapse; window.toggleGroupCollapse = toggleGroupCollapse; window.deleteDienstLink = deleteDienstLink; window.commandHinzufuegen = commandHinzufuegen; window.bulkCommandsImportieren = bulkCommandsImportieren; window.deleteDienstCommand = deleteDienstCommand; window.toggleCmdCollapse = toggleCmdCollapse; window.openUserPermissionsModal = openUserPermissionsModal; window.closeUserPermissionsModal = closeUserPermissionsModal; window.saveUserPermissions = saveUserPermissions; window.switchInstructorTab = switchInstructorTab; window.startExam = startExam; window.cancelActiveExam = cancelActiveExam; window.submitActiveExam = submitActiveExam; window.toggleExamUnlockForUser = toggleExamUnlockForUser; window.viewSubmissionDetails = viewSubmissionDetails; window.closeSubmissionDetailsModal = closeSubmissionDetailsModal; window.neuePruefungErstellen = neuePruefungSpeichern; window.neuePruefungSpeichern = neuePruefungSpeichern; window.editExamInBuilder = editExamInBuilder; window.resetExamBuilderForm = resetExamBuilderForm; window.addExamQuestionRow = addExamQuestionRow; window.addExamOptionRow = addExamOptionRow; window.parseBulkQuestionsText = parseBulkQuestionsText; window.deleteExam = deleteExam; window.deleteExamSubmission = deleteExamSubmission; window.switchAdminTab = switchAdminTab; window.berechneDienstTage = berechneDienstTage; window.linkHinzufuegen = linkHinzufuegen; window.schnellBehandlungBuchen = schnellBehandlungBuchen; window.openEditPatientModal = openEditPatientModal; window.closeEditModal = closeEditModal; window.speicherePatientEdit = speicherePatientEdit; window.passwortAendern = passwortAendern; window.exportArchivCSV = exportArchivCSV; window.openAdminKeyModal = openAdminKeyModal; window.closeAdminAuthModal = closeAdminAuthModal; window.verifyAdminKeyPassword = verifyAdminKeyPassword; window.closeAdminManagementModal = closeAdminManagementModal; window.setMitarbeiterStatus = setMitarbeiterStatus; window.mitarbeiterEntlassen = mitarbeiterEntlassen; window.aktualisiereAdminVerwaltung = aktualisiereAdminVerwaltung; window.speichereHierarchieDaten = speichereHierarchieDaten; window.switchTab = switchTab; window.settingsTabClick = settingsTabClick;
 </script>
 </body>
 </html>
