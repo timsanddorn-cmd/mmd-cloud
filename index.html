@@ -267,6 +267,11 @@
                 <label>Passwort</label>
                 <input type="password" id="authPassword" placeholder="Passwort">
                 
+                <div id="authDNContainer" style="display:none;">
+                    <label>Dienstnummer (DN)</label>
+                    <input type="text" id="authDN" placeholder="z.B. DN 42">
+                </div>
+                
                 <button class="btn" id="mainAuthActionBtn" onclick="handleAuthAction()" style="margin-top:20px;">Dienst antreten</button>
             </div>
         </div>
@@ -754,7 +759,18 @@
                         Hier findest du alle Prüfungen, die von der <b>Ausbildungsabteilung</b> für deinen aktuellen Dienstgrad freigeschaltet wurden.
                     </p>
                     
+                    <!-- DN SEARCH CARD FOR PRACTICAL EXAMS -->
+                    <div style="background:rgba(30,41,59,0.4); border:1px solid var(--border); padding:16px; border-radius:12px; margin-bottom:20px;">
+                        <h4 style="margin:0; color:var(--primary); font-size:13px; font-weight:700;">🔎 Praktische Prüfungsergebnisse & Feedback abrufen</h4>
+                        <p style="margin:4px 0 10px 0; font-size:11px; color:var(--text-muted);">Trage deine Dienstnummer (DN) ein, um die von Ausbildern eingetragenen Feedbacks (z.B. Para 3, Arzt 3) abzurufen.</p>
+                        <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+                            <input type="text" id="studentDNInput" placeholder="Z.B. DN 42" style="max-width:200px; padding:8px; font-size:12px; margin:0; border-radius:8px; border:1px solid var(--border); background:rgba(15,23,42,0.8); color:var(--text-main);" onchange="saveStudentDNPreference(this.value)">
+                            <button class="btn" style="width:auto; padding:8px 16px; margin:0; font-size:12px; font-weight:800; background:var(--primary); color:#080c14;" onclick="renderStudentUnlockedExams()">🔍 Ergebnisse laden</button>
+                        </div>
+                    </div>
+                    
                     <div id="studentUnlockedExamsContainer" class="exam-grid"></div>
+                    <div id="practicalExamsFeedbackContainer"></div>
                 </div>
 
                 <!-- AKTIVE PRÜFUNGS-DURCHFÜHRUNG (CONTAINER) -->
@@ -795,6 +811,7 @@
                     <div class="admin-subtabs" style="margin-bottom:16px;">
                         <button class="admin-tab-btn active" onclick="switchInstructorTab('instrTabUnlocks', this)">🔓 Prüfungen freischalten</button>
                         <button class="admin-tab-btn" onclick="switchInstructorTab('instrTabResults', this)">📊 Absolvierte Prüfungen & Zeiten</button>
+                        <button class="admin-tab-btn" onclick="switchInstructorTab('instrTabDocs', this)">📁 Ausbilder Dokumente</button>
                         <button class="admin-tab-btn" onclick="switchInstructorTab('instrTabManage', this)">📝 Prüfungen verwalten / anlegen</button>
                         <button class="admin-tab-btn" id="instrAllowedExamsTabBtn" onclick="switchInstructorTab('instrTabInstructorAllowedExams', this)">🎓 Ausbilder-Rechte</button>
                     </div>
@@ -819,6 +836,15 @@
                                 <thead><tr><th>Datum</th><th>Prüfling & DN</th><th>Prüfer DN</th><th>Prüfung</th><th>Bearbeitungszeit</th><th>Ergebnis</th><th>Status</th><th>Aktion</th></tr></thead>
                                 <tbody id="instructorSubmissionsTableBody"></tbody>
                             </table>
+                        </div>
+                    </div>
+
+                    <!-- SUB-TAB: AUSBILDER DOKUMENTE -->
+                    <div id="instrTabDocs" class="admin-subtab-content">
+                        <h4 style="margin:0 0 10px 0; color:var(--primary);">📁 Ausbilder Dokumente & Praktische Prüfungen</h4>
+                        <p style="color:var(--text-muted); font-size:12px; margin-top:0;">Wähle eine praktische Prüfung aus, um diese bei einem Prüfling abzunehmen.</p>
+                        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:16px; margin-top:10px;" id="instructorDocsExamsList">
+                            <!-- Dynamic practical exams list will be populated here -->
                         </div>
                     </div>
 
@@ -1053,7 +1079,7 @@ Frage: In welches GPS loggst du dich ein?
                     </h3>
                     <div class="table-responsive" style="max-height:400px; overflow-y:auto;">
                         <table>
-                            <thead><tr><th>Name</th><th>🔑 Passwort</th><th>Registriert</th><th>Status</th><th>🔗 Links</th><th>💻 Commands</th><th>🗑️ Mülleimer</th><th>👑 Admin</th><th>🎓 Ausbilder</th><th>Aktion</th></tr></thead>
+                            <thead><tr><th>Mitarbeiter Name</th><th>Rolle & Status</th><th>Registriert</th><th style="width:200px;">Aktion</th></tr></thead>
                             <tbody id="adminUserTableBody"></tbody>
                         </table>
                     </div>
@@ -1244,6 +1270,28 @@ Frage: In welches GPS loggst du dich ein?
                     👤 Mitarbeiter: <b id="permModalUserName" style="color:var(--text-main); font-size:15px;">--</b>
                 </div>
 
+                <!-- PASSWORT & STATUS -->
+                <div style="background:rgba(30,41,59,0.4); border:1px solid var(--border); border-radius:12px; padding:14px;">
+                    <h4 style="margin:0 0 10px 0; color:var(--warning); font-size:13px;">🔑 Account-Status, Passwort & Dienstnummer</h4>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:12px;">
+                        <div>
+                            <label style="font-size:11px; display:block; margin-bottom:4px;">Status:</label>
+                            <select id="permStatus" style="width:100%; padding:6px; font-size:12px; border-radius:8px; border:1px solid var(--border); background:rgba(15,23,42,0.8); color:var(--text-main);">
+                                <option value="approved">Zugelassen (Aktiv)</option>
+                                <option value="pending">Gesperrt (Inaktiv)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="font-size:11px; display:block; margin-bottom:4px;">Passwort ändern:</label>
+                            <input type="text" id="permPassword" style="width:100%; padding:6px; font-size:12px; border-radius:8px; border:1px solid var(--border); background:rgba(15,23,42,0.8); color:var(--text-main);">
+                        </div>
+                        <div>
+                            <label style="font-size:11px; display:block; margin-bottom:4px;">Dienstnummer (DN):</label>
+                            <input type="text" id="permDN" placeholder="z.B. DN 42" style="width:100%; padding:6px; font-size:12px; border-radius:8px; border:1px solid var(--border); background:rgba(15,23,42,0.8); color:var(--text-main);">
+                        </div>
+                    </div>
+                </div>
+
                 <!-- GLOBALE TABS BERECHTIGUNGEN -->
                 <div style="background:rgba(30,41,59,0.4); border:1px solid var(--border); border-radius:12px; padding:14px;">
                     <h4 style="margin:0 0 10px 0; color:var(--primary); font-size:13px;">🌐 Globale Bereiche</h4>
@@ -1341,6 +1389,7 @@ Frage: In welches GPS loggst du dich ein?
         document.getElementById('authVorname').placeholder = "Vorname";
         document.getElementById('authNachname').placeholder = "Nachname";
         document.getElementById('authPassword').placeholder = tab === 'login' ? "Passwort" : "Passwort ausdenken";
+        document.getElementById('authDNContainer').style.display = tab === 'login' ? 'none' : 'block';
     }
 
     function handleAuthAction() {
@@ -1358,11 +1407,20 @@ Frage: In welches GPS loggst du dich ein?
             return;
         }
 
+        let dn = "";
+        if (currentAuthTab === 'register') {
+            dn = document.getElementById('authDN').value.trim();
+            if (!dn) {
+                alert("⚠️ Bitte trage deine Dienstnummer (DN) ein!");
+                return;
+            }
+        }
+
         if (currentAuthTab === 'register') {
             db.ref("data/users/" + uId).once("value", snap => {
                 if(snap.val() !== null) { alert("❌ Dieser Name ist bereits registriert!"); }
                 else {
-                    const payload = { vorname: v, nachname: n, pass: p, status: 'pending', date: new Date().toLocaleDateString('de-DE'), isAdmin: false, canSeeLinks: false };
+                    const payload = { vorname: v, nachname: n, pass: p, dn: dn, status: 'pending', date: new Date().toLocaleDateString('de-DE'), isAdmin: false, canSeeLinks: false };
                     db.ref("data/users/" + uId).set(payload).then(() => {
                         alert("⏳ Bitte warten Sie auf die Verifizierung von Tim Sanddorn.");
                         location.reload();
@@ -1667,40 +1725,44 @@ Frage: In welches GPS loggst du dich ein?
         const tbody = document.getElementById('adminUserTableBody'); if(!tbody || !users) return; tbody.innerHTML = "";
         Object.keys(users).forEach(uId => {
             const u = users[uId];
+            
+            let roles = [];
+            if (u.isAdmin) {
+                roles.push('<span style="font-size:10px; font-weight:700; color:var(--warning); background:rgba(245,158,11,0.15); padding:2px 6px; border-radius:4px; margin-right:4px;">Admin</span>');
+            }
+            if (u.isInstructor) {
+                if (u.canManageInstructors) {
+                    roles.push('<span style="font-size:10px; font-weight:700; color:#c084fc; background:rgba(168,85,247,0.15); padding:2px 6px; border-radius:4px; margin-right:4px;">Admin-Ausbilder</span>');
+                } else {
+                    roles.push('<span style="font-size:10px; font-weight:700; color:#a855f7; background:rgba(168,85,247,0.15); padding:2px 6px; border-radius:4px; margin-right:4px;">Ausbilder</span>');
+                }
+            }
+            if (roles.length === 0) {
+                roles.push('<span style="font-size:10px; font-weight:700; color:var(--text-muted); background:rgba(255,255,255,0.06); padding:2px 6px; border-radius:4px;">Mitarbeiter</span>');
+            }
+
+            let statusLabel = u.status === 'approved' 
+                ? `<span style="font-size:11px; font-weight:700; color:var(--success); margin-left:6px;">[Aktiv]</span>` 
+                : `<span style="font-size:11px; font-weight:700; color:var(--warning); margin-left:6px;">[Gesperrt]</span>`;
+
             let actionBtn = u.status === 'pending' 
                 ? `<button class="btn" style="margin:0; padding:6px 12px; background:var(--success); color:#080c14;" onclick="setMitarbeiterStatus('${uId}', 'approved')">Freischalten</button>`
-                : `<span style="color:var(--success); font-weight:700;">Aktiv ✔</span>`;
-            
-            let canSeeLinks = (u.canSeeLinks === true);
-            let linkBadge = `<span style="font-size:11px; font-weight:700; color:${canSeeLinks ? 'var(--success)' : 'var(--text-muted)'};">${canSeeLinks ? 'Ja' : 'Nein'}</span>`;
-
-            let canSeeCmds = (u.canSeeCommands === true);
-            let cmdBadge = `<span style="font-size:11px; font-weight:700; color:${canSeeCmds ? 'var(--success)' : 'var(--text-muted)'};">${canSeeCmds ? 'Ja' : 'Nein'}</span>`;
-
-            let canDelete = (u.canDelete === true);
-            let deleteBadge = `<span style="font-size:11px; font-weight:700; color:${canDelete ? 'var(--danger)' : 'var(--text-muted)'};">${canDelete ? 'Ja' : 'Nein'}</span>`;
-
-            let isAdminUser = (u.isAdmin === true);
-            let adminBadge = `<span style="font-size:11px; font-weight:700; color:${isAdminUser ? 'var(--warning)' : 'var(--text-muted)'};">${isAdminUser ? 'Admin' : 'Nein'}</span>`;
-
-            let isInstructorUser = (u.isInstructor === true);
-            let instructorBadge = `<span style="font-size:11px; font-weight:700; color:${isInstructorUser ? '#a855f7' : 'var(--text-muted)'};">${isInstructorUser ? 'Ausbilder' : 'Nein'}</span>`;
+                : ``;
 
             tbody.innerHTML += `<tr>
                 <td><b>${u.vorname} ${u.nachname}</b></td>
-                <td><span style="font-family:monospace; background:rgba(245, 158, 11, 0.15); color:var(--warning); padding:3px 8px; border-radius:6px; font-weight:700; font-size:12px;">${u.pass || '---'}</span></td>
+                <td>
+                    <div style="display:flex; flex-direction:column; gap:4px; align-items:flex-start;">
+                        <div>${roles.join('')}</div>
+                        <div style="font-size:11px;">Status: ${statusLabel}</div>
+                    </div>
+                </td>
                 <td>${u.date || '--'}</td>
-                <td><span style="color:${u.status==='approved'?'var(--success)':'var(--warning)'};">${u.status==='approved'?'Zugelassen':'Gesperrt'}</span></td>
-                <td>${linkBadge}</td>
-                <td>${cmdBadge}</td>
-                <td>${deleteBadge}</td>
-                <td>${adminBadge}</td>
-                <td>${instructorBadge}</td>
                 <td>
                     <div style="display:flex; gap:10px; align-items:center;">
                         ${actionBtn}
-                        <button class="btn" style="margin:0; padding:6px 12px; font-size:11px; background:var(--primary); color:#080c14; font-weight:800;" onclick="openUserPermissionsModal('${uId}')">⚙️ Rechte</button>
-                        <button class="btn-delete-row" onclick="mitarbeiterEntlassen('${uId}')">🗑️</button>
+                        <button class="btn" style="margin:0; padding:6px 12px; font-size:11px; background:var(--primary); color:#080c14; font-weight:800;" onclick="openUserPermissionsModal('${uId}')">⚙️ Berechtigungen</button>
+                        <button class="btn-delete-row" style="padding:6px 12px; font-size:11px;" onclick="mitarbeiterEntlassen('${uId}')">🗑️ Entlassen</button>
                     </div>
                 </td>
             </tr>`;
@@ -1728,6 +1790,10 @@ Frage: In welches GPS loggst du dich ein?
 
         document.getElementById('permModalUserId').value = uId;
         document.getElementById('permModalUserName').textContent = `${u.vorname} ${u.nachname}`;
+
+        document.getElementById('permStatus').value = u.status || 'approved';
+        document.getElementById('permPassword').value = u.pass || '';
+        document.getElementById('permDN').value = u.dn || '';
 
         document.getElementById('permCanSeeLinks').checked = u.canSeeLinks !== false; // default to true
         document.getElementById('permCanSeeCommands').checked = u.canSeeCommands !== false; // default to true
@@ -1778,6 +1844,10 @@ Frage: In welches GPS loggst du dich ein?
         const isInstructor = document.getElementById('permIsInstructor').checked;
         const canManageInstructorsVal = document.getElementById('permCanManageInstructors').checked;
 
+        const statusVal = document.getElementById('permStatus').value;
+        const passwordVal = document.getElementById('permPassword').value.trim();
+        const dnVal = document.getElementById('permDN').value.trim();
+
         const allowedLinkKats = {};
         document.querySelectorAll('.perm-link-kat-cb').forEach(cb => {
             allowedLinkKats[cb.value] = cb.checked;
@@ -1796,7 +1866,10 @@ Frage: In welches GPS loggst du dich ein?
             [`data/users/${uId}/isInstructor`]: isInstructor,
             [`data/users/${uId}/canManageInstructors`]: canManageInstructorsVal,
             [`data/users/${uId}/allowedLinkKats`]: allowedLinkKats,
-            [`data/users/${uId}/allowedCmdKats`]: allowedCmdKats
+            [`data/users/${uId}/allowedCmdKats`]: allowedCmdKats,
+            [`data/users/${uId}/status`]: statusVal,
+            [`data/users/${uId}/pass`]: passwordVal || '1234',
+            [`data/users/${uId}/dn`]: dnVal
         };
 
         db.ref().update(updates).then(() => {
@@ -2122,6 +2195,74 @@ Frage: In welches GPS loggst du dich ein?
                 { id: 19, text: "Was bedeutet Status 3 bei Mitarbeitern?", options: ["Arbeitsbereit", "Beschäftigt / Pause", "Ausbildung", "Besprechung"], correctAnswers: [1] },
                 { id: 20, text: "Wer nimmt Die Funksprüche an von DOJ und PD (Sonderstreife im Dienst)?", options: ["Die Leitstelle", "Sonderstreife", "Jeder Mitarbeiter der im Dienst ist"], correctAnswers: [1] }
             ]
+        },
+        exam_para3: {
+            id: "exam_para3",
+            title: "Paramedic 3 Prüfung (Para 3)",
+            kat: "Paramedic",
+            timeLimitMinutes: 30,
+            passPercentage: 75,
+            passScore: 8,
+            isPractical: true,
+            introHeader: "Paramedic 3 Prüfung (Para 3)",
+            introText: "Diese Prüfung ist eine praktische Prüfung und wird vom Ausbilder für den Prüfling ausgefüllt.",
+            questions: [
+                { id: 1, type: "info_pruefer", text: "Dienstnummer des Prüfenden" },
+                { id: 2, type: "info_dn", text: "Dienstnummer des Prüflings" },
+                { id: 3, type: "info_name", text: "Name und Vorname des Prüflings" },
+                { id: 4, type: "choice", text: "Zeit zur Anfahrt max. (3 Minuten)?", options: ["01:30-02:30 min", "02:30-03:00 min", "03:00-05:00 min"], correctAnswers: [2] },
+                { id: 5, type: "choice", text: "Vitalwerte Geprüft ?", options: ["Ja", "Nein", "Nicht Ordnungsgemäß"], correctAnswers: [0] },
+                { id: 6, type: "choice", text: "Blutung Gestoppt ?", options: ["Ja", "Nein", "Nicht Ordnungsgemäß"], correctAnswers: [0] },
+                { id: 7, type: "choice", text: "Zugang Gelegt ?", options: ["Ja", "Nein"], correctAnswers: [0] },
+                { id: 8, type: "choice", text: "Bein Stabilisiert ?", options: ["Ja", "Nein"], correctAnswers: [0] },
+                { id: 9, type: "choice", text: "Allergien ?", options: ["Ja", "Nein", "Nicht nachgefragt"], correctAnswers: [0, 1] },
+                { id: 10, type: "text", text: "Wenn Ja welche?" },
+                { id: 11, type: "choice", text: "Antiallergikum bei allergischen Schock ?", options: ["Cetirizin", "Cortison", "Adrenalin"], correctAnswers: [2] },
+                { id: 12, type: "choice", text: "Schmerzmittel Verabreicht ?", options: ["Ja", "Nein"], correctAnswers: [0] },
+                { id: 13, type: "choice", text: "Wenn ja welche?", options: ["Aspirin, Ibuprofen, Paracetamol, Dolormin, Novalgin", "Morphium", "Fentanyl"], correctAnswers: [1] },
+                { id: 14, type: "choice", text: "Patient an die Geräte angeschlossen ?", options: ["Ja", "Nein"], correctAnswers: [0] },
+                { id: 15, type: "choice", text: "Komplikation 1/3 Notwendig", options: ["Bewusstlosigkeit", "Atemstillstand", "Allergische Reaktion"], correctAnswers: [0, 1, 2] },
+                { id: 16, type: "text", text: "Verhalten während der Komplikation ? Bitte so Detailreich wie es geht reinschreiben." },
+                { id: 17, type: "choice", text: "Folge Arzt aufgeklärt ?", options: ["Ja", "Nein"], correctAnswers: [0] },
+                { id: 18, type: "choice", text: "Komplikationen ?", options: ["Ja", "Nein"], correctAnswers: [0] },
+                { id: 19, type: "choice", text: "Wenn Ja welche?", options: ["Bewusstlosigkeit, Atemstillstand, Allergische Reaktion", "Keine Angabe"], correctAnswers: [0] },
+                { id: 20, type: "choice", text: "Zeit Gesamt (20-25min)", options: ["Bestanden", "Nicht Bestanden"], correctAnswers: [0] },
+                { id: 21, type: "text", isFeedbackField: true, text: "Ausbilder-Feedback für den Prüfling (Vorausgefüllt mit den eingetragenen Antworten/Bewertungen)" }
+            ]
+        },
+        exam_arzt3: {
+            id: "exam_arzt3",
+            title: "Arzt 3 Prüfung",
+            kat: "Arzt",
+            timeLimitMinutes: 30,
+            passPercentage: 75,
+            passScore: 8,
+            isPractical: true,
+            introHeader: "Arzt 3 Prüfung",
+            introText: "Diese Prüfung ist eine praktische Prüfung und wird vom Ausbilder für den Prüfling ausgefüllt.",
+            questions: [
+                { id: 1, type: "info_pruefer", text: "Dienstnummer des Prüfenden" },
+                { id: 2, type: "info_dn", text: "Dienstnummer des Prüflings" },
+                { id: 3, type: "info_name", text: "Name und Vorname des Prüflings" },
+                { id: 4, type: "choice", text: "Zeit zur Anfahrt max. (3 Minuten)?", options: ["01:30-02:30 min", "02:30-03:00 min", "03:00-05:00 min"], correctAnswers: [2] },
+                { id: 5, type: "choice", text: "Vitalwerte Geprüft ?", options: ["Ja", "Nein", "Nicht Ordnungsgemäß"], correctAnswers: [0] },
+                { id: 6, type: "choice", text: "Blutung Gestoppt ?", options: ["Ja", "Nein", "Nicht Ordnungsgemäß"], correctAnswers: [0] },
+                { id: 7, type: "choice", text: "Zugang Gelegt ?", options: ["Ja", "Nein"], correctAnswers: [0] },
+                { id: 8, type: "choice", text: "Bein Stabilisiert ?", options: ["Ja", "Nein"], correctAnswers: [0] },
+                { id: 9, type: "choice", text: "Allergien ?", options: ["Ja", "Nein", "Nicht nachgefragt"], correctAnswers: [0, 1] },
+                { id: 10, type: "text", text: "Wenn Ja welche?" },
+                { id: 11, type: "choice", text: "Antiallergikum bei allergischen Schock ?", options: ["Cetirizin", "Cortison", "Adrenalin"], correctAnswers: [2] },
+                { id: 12, type: "choice", text: "Schmerzmittel Verabreicht ?", options: ["Ja", "Nein"], correctAnswers: [0] },
+                { id: 13, type: "choice", text: "Wenn ja welche?", options: ["Aspirin, Ibuprofen, Paracetamol, Dolormin, Novalgin", "Morphium", "Fentanyl"], correctAnswers: [1] },
+                { id: 14, type: "choice", text: "Patient an die Geräte angeschlossen ?", options: ["Ja", "Nein"], correctAnswers: [0] },
+                { id: 15, type: "choice", text: "Komplikation 1/3 Notwendig", options: ["Bewusstlosigkeit", "Atemstillstand", "Allergische Reaktion"], correctAnswers: [0, 1, 2] },
+                { id: 16, type: "text", text: "Verhalten während der Komplikation ? Bitte so Detailreich wie es geht reinschreiben." },
+                { id: 17, type: "choice", text: "Folge Arzt aufgeklärt ?", options: ["Ja", "Nein"], correctAnswers: [0] },
+                { id: 18, type: "choice", text: "Komplikationen ?", options: ["Ja", "Nein"], correctAnswers: [0] },
+                { id: 19, type: "choice", text: "Wenn Ja welche?", options: ["Bewusstlosigkeit, Atemstillstand, Allergische Reaktion", "Keine Angabe"], correctAnswers: [0] },
+                { id: 20, type: "choice", text: "Zeit Gesamt (20-25min)", options: ["Bestanden", "Nicht Bestanden"], correctAnswers: [0] },
+                { id: 21, type: "text", isFeedbackField: true, text: "Ausbilder-Feedback für den Prüfling (Vorausgefüllt mit den eingetragenen Antworten/Bewertungen)" }
+            ]
         }
     };
 
@@ -2165,6 +2306,7 @@ Frage: In welches GPS loggst du dich ein?
                 renderInstructorUnlocks(cachedUsers, cachedExams);
                 renderInstructorSubmissions(cachedSubmissions);
                 renderInstructorExistingExams(cachedExams);
+                renderInstructorDocsTab(cachedExams);
 
                 const allowedExamsBtn = document.getElementById('instrAllowedExamsTabBtn');
                 if (allowedExamsBtn) {
@@ -2191,16 +2333,10 @@ Frage: In welches GPS loggst du dich ein?
         }
 
         const unlockedObj = sessionUser.unlockedExams || {};
-        let unlockedKeys = Object.keys(unlockedObj).filter(k => unlockedObj[k] === true);
+        let unlockedKeys = Object.keys(unlockedObj).filter(k => unlockedObj[k] === true && (!cachedExams[k] || !cachedExams[k].isPractical));
 
-        // Sort based on cachedExamOrder
-        unlockedKeys.sort((a, b) => {
-            let idxA = cachedExamOrder.indexOf(a);
-            let idxB = cachedExamOrder.indexOf(b);
-            if (idxA === -1) idxA = 9999;
-            if (idxB === -1) idxB = 9999;
-            return idxA - idxB;
-        });
+        // Sort based on dynamic official hierarchy order (GA1 -> GA2 -> DV -> Para 1 -> Arzt 1, etc.)
+        unlockedKeys = sortExamIdsDynamically(unlockedKeys, cachedExams);
 
         if(unlockedKeys.length === 0) {
             container.innerHTML = `
@@ -2253,6 +2389,67 @@ Frage: In welches GPS loggst du dich ein?
 
         // Initialize drag and drop reordering
         makeContainerSortable('studentUnlockedExamsContainer', '.exam-card', saveExamOrder);
+
+        // Render practical exam feedbacks based on student DN
+        const feedbackContainer = document.getElementById('practicalExamsFeedbackContainer');
+        if (feedbackContainer) {
+            feedbackContainer.innerHTML = "";
+            const studentDN = document.getElementById('studentDNInput')?.value.trim() || localStorage.getItem('mmd_student_dn') || (sessionUser ? sessionUser.dn || '' : '') || '';
+            const dnInput = document.getElementById('studentDNInput');
+            if (dnInput && dnInput.value !== studentDN) {
+                dnInput.value = studentDN;
+            }
+
+            if (studentDN) {
+                const cleanDN = studentDN.toLowerCase().replace(/[^a-z0-9]/g, "");
+                const matchedSubs = Object.values(cachedSubmissions).filter(sub => {
+                    if (!sub.isPractical) return false;
+                    const subDN = (sub.userDN || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+                    return subDN === cleanDN;
+                });
+
+                if (matchedSubs.length > 0) {
+                    let feedbackHtml = `
+                    <div style="margin-top: 24px; border-top: 1px solid var(--border); padding-top: 20px;">
+                        <h3 style="color:var(--primary); margin:0 0 14px 0; font-size:16px; display:flex; align-items:center; gap:8px;">
+                            <span>📁 Deine absolvierten praktischen Prüfungen & Feedback</span>
+                        </h3>
+                        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap:16px;">
+                    `;
+
+                    matchedSubs.forEach(sub => {
+                        const statusBadge = sub.passed 
+                            ? `<span style="background:rgba(16,185,129,0.15); color:var(--success); border:1px solid var(--success); padding:3px 10px; border-radius:20px; font-size:11px; font-weight:800;">Bestanden ✔</span>` 
+                            : `<span style="background:rgba(239,68,68,0.15); color:var(--danger); border:1px solid var(--danger); padding:3px 10px; border-radius:20px; font-size:11px; font-weight:800;">Nicht bestanden ✖</span>`;
+
+                        feedbackHtml += `
+                        <div class="exam-card completed" style="border: 1px solid rgba(168,85,247,0.3); background: rgba(168,85,247,0.02); display:flex; flex-direction:column; justify-content:space-between;">
+                            <div>
+                                <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px;">
+                                    <span style="font-size:11px; color:#a855f7; font-weight:700; text-transform:uppercase;">Praktische Prüfung</span>
+                                    ${statusBadge}
+                                </div>
+                                <h4 style="margin:0 0 8px 0; color:var(--text-main); font-size:16px;">${sub.examTitle}</h4>
+                                <p style="color:var(--text-muted); font-size:12px; margin:0 0 12px 0; line-height:1.4;">
+                                    ⏱️ Datum: <b>${sub.datum || '--'}</b><br>
+                                    📊 Ergebnis: <b>${sub.score}/${sub.totalQuestions} Pkt</b> (${sub.percentage}%)<br>
+                                    👨‍🏫 Prüfer: <b>${sub.prueferDN || 'Keine DN'}</b>
+                                </p>
+                                <div style="background:rgba(15,23,42,0.6); padding:12px; border-radius:8px; border:1px solid var(--border); font-size:12px; text-align:left; color:var(--text-main); max-height:200px; overflow-y:auto; white-space:pre-wrap; font-family:monospace; line-height:1.4;"><b>Feedback des Ausbilders:</b>\n${sub.feedback || 'Kein Feedback eingetragen.'}</div>
+                            </div>
+                        </div>`;
+                    });
+
+                    feedbackHtml += `</div></div>`;
+                    feedbackContainer.innerHTML = feedbackHtml;
+                } else {
+                    feedbackContainer.innerHTML = `
+                    <div style="margin-top: 24px; border-top: 1px solid var(--border); padding-top: 20px; text-align:center;">
+                        <span style="color:var(--text-muted); font-size:12px;">Keine praktischen Prüfungsergebnisse für Dienstnummer "<b>${studentDN}</b>" gefunden.</span>
+                    </div>`;
+                }
+            }
+        }
     }
 
     function startExam(examId) {
@@ -2309,13 +2506,24 @@ Frage: In welches GPS loggst du dich ein?
                     <input type="text" name="q_ans_${q.id}" data-type="${qType}" value="${defVal}" placeholder="${placeholder}" style="width:100%; max-width:400px; padding:10px; border-radius:8px; border:1px solid var(--border); background:rgba(30,41,59,0.6); color:var(--text-main); font-size:13px;">
                 </div>`;
             } else if (qType === 'text') {
-                itemHtml = `
-                <div class="exam-q-box text-field-box">
-                    <h4 style="margin:0 0 10px 0; color:var(--text-main); font-size:14px; line-height:1.4;">
-                        Frage ${idx + 1}: ${q.text} <span style="font-size:11px; color:var(--text-muted); margin-left:8px;">(Freitext-Antwort)</span>
-                    </h4>
-                    <textarea name="q_ans_${q.id}" data-type="text" rows="3" placeholder="Deine Antwort hier eingeben..." style="width:100%; padding:10px; border-radius:8px; border:1px solid var(--border); background:rgba(30,41,59,0.6); color:var(--text-main); font-size:13px;"></textarea>
-                </div>`;
+                if (q.isFeedbackField) {
+                    itemHtml = `
+                    <div class="exam-q-box text-field-box" style="border:1px solid #a855f7; background:rgba(168,85,247,0.02); padding:16px 20px; border-radius:14px;">
+                        <h4 style="margin:0 0 10px 0; color:#a855f7; font-size:14px; line-height:1.4;">
+                            ${q.text}
+                        </h4>
+                        <textarea name="q_ans_${q.id}" data-type="text" class="feedback-textarea" rows="6" placeholder="Ausbilder-Feedback hier eingeben oder automatisch generieren..." style="width:100%; padding:10px; border-radius:8px; border:1px solid var(--border); background:rgba(30,41,59,0.6); color:var(--text-main); font-size:13px;"></textarea>
+                        <button type="button" class="btn" style="margin-top:8px; background:rgba(168,85,247,0.15); color:#a855f7; border:1px solid #a855f7; width:auto; padding:6px 14px; font-size:11px;" onclick="generateExamFeedbackAuto(this)">📝 Feedback automatisch generieren</button>
+                    </div>`;
+                } else {
+                    itemHtml = `
+                    <div class="exam-q-box text-field-box">
+                        <h4 style="margin:0 0 10px 0; color:var(--text-main); font-size:14px; line-height:1.4;">
+                            Frage ${idx + 1}: ${q.text} <span style="font-size:11px; color:var(--text-muted); margin-left:8px;">(Freitext-Antwort)</span>
+                        </h4>
+                        <textarea name="q_ans_${q.id}" data-type="text" rows="3" placeholder="Deine Antwort hier eingeben..." style="width:100%; padding:10px; border-radius:8px; border:1px solid var(--border); background:rgba(30,41,59,0.6); color:var(--text-main); font-size:13px;"></textarea>
+                    </div>`;
+                }
             } else if (qType === 'checkbox_weighted') {
                 let optionsHtml = "";
                 q.options.forEach((opt, oIdx) => {
@@ -2501,6 +2709,15 @@ Frage: In welches GPS loggst du dich ein?
         const passed = (earnedScore >= passTargetScore) || (percentage >= passTargetPercent);
 
         const userId = (sessionUser.vorname + "_" + sessionUser.nachname).toLowerCase().replace(/[^a-z0-9_]/g, "");
+
+        let feedbackVal = "";
+        activeExam.questions.forEach(q => {
+            if (q.isFeedbackField) {
+                const el = document.querySelector(`textarea[name="q_ans_${q.id}"]`);
+                if (el) feedbackVal = el.value.trim();
+            }
+        });
+
         const submission = {
             userId: userId,
             userName: userFullName,
@@ -2515,7 +2732,9 @@ Frage: In welches GPS loggst du dich ein?
             percentage: percentage,
             passed: passed,
             details: details,
-            datum: new Date().toLocaleDateString('de-DE') + " " + new Date().toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit'})
+            datum: new Date().toLocaleDateString('de-DE') + " " + new Date().toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit'}),
+            feedback: feedbackVal,
+            isPractical: activeExam.isPractical === true
         };
 
         db.ref("data/examSubmissions").push(submission).then(() => {
@@ -2793,6 +3012,80 @@ Frage: In welches GPS loggst du dich ein?
     function toggleInstructorExamPermission(uId, examId, type, value) {
         const node = type === 'see' ? 'instructorAllowedSeeExams' : 'instructorAllowedManageExams';
         db.ref(`data/users/${uId}/${node}/${examId}`).set(value);
+    }
+
+    function renderInstructorDocsTab(exams) {
+        const container = document.getElementById('instructorDocsExamsList');
+        if(!container) return;
+        container.innerHTML = "";
+
+        const practicalExams = Object.values(exams).filter(exam => exam.isPractical === true);
+        
+        if (practicalExams.length === 0) {
+            container.innerHTML = `<p style="color:var(--text-muted); font-size:12px; grid-column: 1/-1;">Keine praktischen Prüfungen definiert.</p>`;
+            return;
+        }
+
+        practicalExams.forEach(exam => {
+            container.innerHTML += `
+            <div style="background:rgba(15,23,42,0.6); border:1px solid var(--border); padding:16px 20px; border-radius:12px; display:flex; justify-content:space-between; align-items:center; box-shadow:0 4px 10px rgba(0,0,0,0.2);">
+                <div>
+                    <h5 style="margin:0 0 4px 0; color:var(--text-main); font-size:15px;">${exam.title}</h5>
+                    <span style="font-size:11px; color:var(--text-muted);">⏱️ Zeitlimit: ${exam.timeLimitMinutes} Min &nbsp;|&nbsp; 🎯 Bestehensgrenze: ${exam.passScore} Pkt (${exam.passPercentage}%)</span>
+                </div>
+                <button class="btn" style="width:auto; margin:0; padding:8px 18px; background:var(--primary); color:#080c14; font-weight:800;" onclick="startExam('${exam.id}')">🚀 Prüfung abnehmen</button>
+            </div>`;
+        });
+    }
+
+    function generateExamFeedbackAuto(btnEl) {
+        const activeContainer = document.getElementById('activeExamQuestionsContainer');
+        if (!activeContainer || !activeExam) return;
+        
+        const targetTextarea = btnEl.previousElementSibling;
+        if (!targetTextarea || targetTextarea.tagName !== 'TEXTAREA') return;
+
+        let summary = "📋 --- PRÜFUNGS-AUSWERTUNG & DOKUMENTATION ---\n";
+        
+        activeExam.questions.forEach((q, idx) => {
+            if (q.isFeedbackField) return;
+
+            const qType = q.type || 'choice';
+            const inputName = `q_ans_${q.id}`;
+            
+            if (['info_dn', 'info_pruefer', 'info_name'].includes(qType)) {
+                const el = activeContainer.querySelector(`input[name="${inputName}"]`);
+                const val = el ? el.value.trim() : "";
+                summary += `• ${q.text}: ${val || 'Keine Angabe'}\n`;
+            } else if (qType === 'text') {
+                const el = activeContainer.querySelector(`textarea[name="${inputName}"]`);
+                const val = el ? el.value.trim() : "";
+                summary += `• ${q.text}: ${val || 'Keine Antwort'}\n`;
+            } else if (qType === 'choice' || qType === 'checkbox_weighted') {
+                const selectedNodes = activeContainer.querySelectorAll(`input[name="${inputName}"]:checked`);
+                const selectedTexts = Array.from(selectedNodes).map(node => {
+                    const oIdx = parseInt(node.value);
+                    return q.options[oIdx];
+                });
+                
+                const selectedIndices = Array.from(selectedNodes).map(node => parseInt(node.value));
+                const expectedIndices = q.correctAnswers || [];
+                let isCorrect = selectedIndices.length === expectedIndices.length &&
+                    selectedIndices.every(val => expectedIndices.includes(val));
+                
+                let correctMarker = isCorrect ? " [Richtig ✔]" : " [Falsch ✖]";
+                if (qType === 'checkbox_weighted') correctMarker = "";
+                
+                summary += `• ${q.text}: ${selectedTexts.join(', ') || 'Keine Auswahl'}${correctMarker}\n`;
+            }
+        });
+        
+        summary += "-----------------------------------------------\n\nZusätzliche Anmerkungen des Ausbilders:\n- ";
+        targetTextarea.value = summary;
+    }
+
+    function saveStudentDNPreference(val) {
+        localStorage.setItem('mmd_student_dn', val);
     }
 
     function makeContainerSortable(containerId, itemSelector, onOrderChange) {
@@ -3557,6 +3850,8 @@ Frage: In welches GPS loggst du dich ein?
     }
     function setDynamischenPatientenNamen() { const nF = document.getElementById('pName'); if (nF && (!nF.value || nF.value.startsWith("Patient "))) { nF.value = "Patient " + ((Number(daten.patienten) || 0) + 1); } }
     
+    window.generateExamFeedbackAuto = generateExamFeedbackAuto;
+    window.saveStudentDNPreference = saveStudentDNPreference;
     window.deletePatient = deletePatient; window.deleteArchivSchicht = deleteArchivSchicht; window.toggleThemeCollapse = toggleThemeCollapse; window.toggleGroupCollapse = toggleGroupCollapse; window.deleteDienstLink = deleteDienstLink; window.commandHinzufuegen = commandHinzufuegen; window.bulkCommandsImportieren = bulkCommandsImportieren; window.deleteDienstCommand = deleteDienstCommand; window.toggleCmdCollapse = toggleCmdCollapse; window.openUserPermissionsModal = openUserPermissionsModal; window.closeUserPermissionsModal = closeUserPermissionsModal; window.saveUserPermissions = saveUserPermissions; window.switchInstructorTab = switchInstructorTab; window.startExam = startExam; window.cancelActiveExam = cancelActiveExam; window.submitActiveExam = submitActiveExam; window.toggleExamUnlockForUser = toggleExamUnlockForUser; window.viewSubmissionDetails = viewSubmissionDetails; window.closeSubmissionDetailsModal = closeSubmissionDetailsModal; window.neuePruefungErstellen = neuePruefungSpeichern; window.neuePruefungSpeichern = neuePruefungSpeichern; window.editExamInBuilder = editExamInBuilder; window.resetExamBuilderForm = resetExamBuilderForm; window.addExamQuestionRow = addExamQuestionRow; window.addExamOptionRow = addExamOptionRow; window.parseBulkQuestionsText = parseBulkQuestionsText; window.deleteExam = deleteExam; window.deleteExamSubmission = deleteExamSubmission; window.switchAdminTab = switchAdminTab; window.berechneDienstTage = berechneDienstTage; window.linkHinzufuegen = linkHinzufuegen; window.schnellBehandlungBuchen = schnellBehandlungBuchen; window.openEditPatientModal = openEditPatientModal; window.closeEditModal = closeEditModal; window.speicherePatientEdit = speicherePatientEdit; window.passwortAendern = passwortAendern; window.exportArchivCSV = exportArchivCSV; window.openAdminKeyModal = openAdminKeyModal; window.closeAdminAuthModal = closeAdminAuthModal; window.verifyAdminKeyPassword = verifyAdminKeyPassword; window.closeAdminManagementModal = closeAdminManagementModal; window.setMitarbeiterStatus = setMitarbeiterStatus; window.mitarbeiterEntlassen = mitarbeiterEntlassen; window.aktualisiereAdminVerwaltung = aktualisiereAdminVerwaltung; window.speichereHierarchieDaten = speichereHierarchieDaten; window.switchTab = switchTab; window.settingsTabClick = settingsTabClick;
 </script>
 </body>
