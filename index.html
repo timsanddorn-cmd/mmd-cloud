@@ -1744,28 +1744,21 @@ Frage: In welches GPS loggst du dich ein?
         const para3Passed = checkPassed('exam_para3');
 
         // solo trainee verification
-        const soloTraineeDaysMet = days >= 7;
-        const soloTraineeMet = soloTraineeDaysMet && ga1Passed;
+        const soloTraineeMet = (days >= 7) && ga1Passed;
 
         // a-emt verification
-        const aEmtDaysMet = days >= 21;
-        const aEmtMet = aEmtDaysMet && soloTraineeMet;
+        const aEmtMet = (days >= 21);
 
         // emt verification
-        const emtDaysMet = days >= 35;
-        const emtMet = emtDaysMet && aEmtMet && ga2Passed && dvPassed;
+        const emtMet = (days >= 35) && ga2Passed && dvPassed;
 
         // doctor path verifications
-        const physicianDaysMet = days >= 77;
-        const physicianMet = physicianDaysMet && emtMet && arzt2Passed;
-        const doctorAttendingDaysMet = days >= 108;
-        const doctorAttendingMet = doctorAttendingDaysMet && physicianMet && arzt3Passed;
+        const physicianMet = (days >= 77) && arzt2Passed;
+        const doctorAttendingMet = (days >= 108) && arzt3Passed;
 
         // paramedic path verifications
-        const paramedicDaysMet = days >= 77;
-        const paramedicMet = paramedicDaysMet && emtMet && para2Passed;
-        const paramedicAttendingDaysMet = days >= 108;
-        const paramedicAttendingMet = paramedicAttendingDaysMet && paramedicMet && para3Passed;
+        const paramedicMet = (days >= 77) && para2Passed;
+        const paramedicAttendingMet = (days >= 108) && para3Passed;
 
         let html = "";
 
@@ -2083,7 +2076,26 @@ Frage: In welches GPS loggst du dich ein?
         if(btnEl) btnEl.classList.add('active');
     }
 
-    function setMitarbeiterStatus(uId, status) { db.ref("data/users/" + uId + "/status").set(status); }
+    function updateUserStatusAndPermissions(uId, newStatus) {
+        const updates = {
+            [`data/users/${uId}/status`]: newStatus
+        };
+        if (newStatus === 'approved') {
+            updates[`data/users/${uId}/canSeeLinks`] = true;
+            updates[`data/users/${uId}/canSeeCommands`] = true;
+            updates[`data/users/${uId}/canDelete`] = false;
+            updates[`data/users/${uId}/isAdmin`] = false;
+            updates[`data/users/${uId}/isInstructor`] = false;
+            updates[`data/users/${uId}/canManageInstructors`] = false;
+            updates[`data/users/${uId}/allowedLinkKats`] = { "MD Intern": true };
+            updates[`data/users/${uId}/allowedCmdKats`] = { "T-Codes": true };
+        }
+        return db.ref().update(updates);
+    }
+
+    function setMitarbeiterStatus(uId, status) { 
+        updateUserStatusAndPermissions(uId, status); 
+    }
     function mitarbeiterEntlassen(uId) { if(confirm("Account unwiderruflich löschen?")) db.ref("data/users/" + uId).remove(); }
 
     let allLinkCategories = [];
@@ -2654,6 +2666,10 @@ Frage: In welches GPS loggst du dich ein?
             return;
         }
 
+        let activeExamsHtml = "";
+        let completedExamsHtml = "";
+        let completedCount = 0;
+
         unlockedKeys.forEach(examId => {
             const exam = cachedExams[examId];
             if(!exam) return;
@@ -2679,7 +2695,7 @@ Frage: In welches GPS loggst du dich ein?
 
             let actionBtn = `<button class="btn" style="background:${isCompleted ? 'rgba(255,255,255,0.08)' : 'var(--primary)'}; color:${isCompleted ? 'var(--text-muted)' : '#080c14'}; font-weight:800; margin-top:14px;" onclick="startExam('${examId}')">${isCompleted ? '🔄 Prüfung erneut ablegen' : '🚀 Prüfung jetzt starten'}</button>`;
 
-            container.innerHTML += `
+            const cardHtml = `
             <div class="exam-card ${isCompleted ? 'completed' : 'unlocked'}" data-id="${examId}">
                 <div>
                     <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px;">
@@ -2693,10 +2709,38 @@ Frage: In welches GPS loggst du dich ein?
                 </div>
                 ${actionBtn}
             </div>`;
+
+            if (isCompleted) {
+                completedExamsHtml += cardHtml;
+                completedCount++;
+            } else {
+                activeExamsHtml += cardHtml;
+            }
         });
 
-        // Initialize drag and drop reordering
-        makeContainerSortable('studentUnlockedExamsContainer', '.exam-card', saveExamOrder);
+        let finalHtml = `
+        <div id="studentActiveExamsContainer" class="exam-grid">
+            ${activeExamsHtml || '<p style="color:var(--text-muted); text-align:center; padding:10px; grid-column: 1/-1;">Keine ausstehenden Prüfungen zu erledigen.</p>'}
+        </div>`;
+
+        if (completedCount > 0) {
+            let isCollapsed = localStorage.getItem('mmd_student_completed_collapsed') === 'true';
+            finalHtml += `
+            <div style="margin-top:24px; border:1px solid var(--border); border-radius:12px; background:rgba(30,41,59,0.2); overflow:hidden;">
+                <div id="studentCompletedExamsHeader" style="padding:14px 20px; background:rgba(16,185,129,0.05); cursor:pointer; display:flex; justify-content:space-between; align-items:center; font-weight:800; font-size:13px; color:var(--success); border-bottom: ${isCollapsed ? 'none' : '1px solid var(--border)'};" onclick="toggleStudentCompletedExamsCollapse()">
+                    <span>✅ Bereits bestandene Prüfungen (${completedCount})</span>
+                    <span id="studentCompletedExamsCollapseArrow" style="font-size:12px;">${isCollapsed ? '▶ Anzeigen' : '▼ Ausblenden'}</span>
+                </div>
+                <div id="studentCompletedExamsContainer" style="display:${isCollapsed ? 'none' : 'grid'}; padding:20px;" class="exam-grid">
+                    ${completedExamsHtml}
+                </div>
+            </div>`;
+        }
+
+        container.innerHTML = finalHtml;
+
+        // Initialize drag and drop reordering inside active exams grid
+        makeContainerSortable('studentActiveExamsContainer', '.exam-card', saveExamOrder);
 
         // Render practical exam feedbacks based on student DN
         const feedbackContainer = document.getElementById('practicalExamsFeedbackContainer');
@@ -3377,7 +3421,7 @@ Frage: In welches GPS loggst du dich ein?
     }
 
     function toggleInstructorUserStatus(uId, newStatus) {
-        db.ref(`data/users/${uId}/status`).set(newStatus).then(() => {
+        updateUserStatusAndPermissions(uId, newStatus).then(() => {
             alert(`✅ Status für ${uId.replace('_', ' ')} wurde auf '${newStatus === 'approved' ? 'Zugelassen' : 'Gesperrt'}' geändert.`);
         });
     }
@@ -3454,6 +3498,26 @@ Frage: In welches GPS loggst du dich ein?
 
     function saveStudentDNPreference(val) {
         localStorage.setItem('mmd_student_dn', val);
+    }
+
+    function toggleStudentCompletedExamsCollapse() {
+        const body = document.getElementById('studentCompletedExamsContainer');
+        const header = document.getElementById('studentCompletedExamsHeader');
+        const arrow = document.getElementById('studentCompletedExamsCollapseArrow');
+        if(!body || !arrow || !header) return;
+
+        const isCollapsed = body.style.display === 'none';
+        if(isCollapsed) {
+            body.style.display = 'grid';
+            arrow.textContent = '▼ Ausblenden';
+            header.style.borderBottom = '1px solid var(--border)';
+            localStorage.setItem('mmd_student_completed_collapsed', 'false');
+        } else {
+            body.style.display = 'none';
+            arrow.textContent = '▶ Anzeigen';
+            header.style.borderBottom = 'none';
+            localStorage.setItem('mmd_student_completed_collapsed', 'true');
+        }
     }
 
     function makeContainerSortable(containerId, itemSelector, onOrderChange) {
@@ -4264,7 +4328,8 @@ Frage: In welches GPS loggst du dich ein?
     window.generateExamFeedbackAuto = generateExamFeedbackAuto;
     window.saveStudentDNPreference = saveStudentDNPreference;
     window.toggleInstructorUserStatus = toggleInstructorUserStatus;
-    window.deletePatient = deletePatient; window.deleteArchivSchicht = deleteArchivSchicht; window.toggleThemeCollapse = toggleThemeCollapse; window.toggleGroupCollapse = toggleGroupCollapse; window.deleteDienstLink = deleteDienstLink; window.commandHinzufuegen = commandHinzufuegen; window.bulkCommandsImportieren = bulkCommandsImportieren; window.deleteDienstCommand = deleteDienstCommand; window.toggleCmdCollapse = toggleCmdCollapse; window.openUserPermissionsModal = openUserPermissionsModal; window.closeUserPermissionsModal = closeUserPermissionsModal; window.saveUserPermissions = saveUserPermissions; window.switchInstructorTab = switchInstructorTab; window.startExam = startExam; window.cancelActiveExam = cancelActiveExam; window.submitActiveExam = submitActiveExam; window.toggleExamUnlockForUser = toggleExamUnlockForUser;
+    window.deletePatient = deletePatient; window.deleteArchivSchicht = deleteArchivSchicht; window.toggleThemeCollapse = toggleThemeCollapse; window.toggleGroupCollapse = toggleGroupCollapse; window.deleteDienstLink = deleteDienstLink; window.commandHinzufuegen = commandHinzufuegen; window.bulkCommandsImportieren = bulkCommandsImportieren; window.deleteDienstCommand = deleteDienstCommand; window.toggleCmdCollapse = toggleCmdCollapse; window.openUserPermissionsModal = openUserPermissionsModal; window.closeUserPermissionsModal = closeUserPermissionsModal; window.saveUserPermissions = saveUserPermissions; window.switchInstructorTab = switchInstructorTab; window.startExam = startExam; window.cancelActiveExam = cancelActiveExam; window.submitActiveExam = submitActiveExam;    window.toggleExamUnlockForUser = toggleExamUnlockForUser;
+    window.toggleStudentCompletedExamsCollapse = toggleStudentCompletedExamsCollapse;
     window.toggleExamPassedForUser = toggleExamPassedForUser; window.openRoadmapModal = openRoadmapModal; window.closeRoadmapModal = closeRoadmapModal; window.viewSubmissionDetails = viewSubmissionDetails; window.closeSubmissionDetailsModal = closeSubmissionDetailsModal; window.neuePruefungErstellen = neuePruefungSpeichern; window.neuePruefungSpeichern = neuePruefungSpeichern; window.editExamInBuilder = editExamInBuilder; window.resetExamBuilderForm = resetExamBuilderForm; window.addExamQuestionRow = addExamQuestionRow; window.addExamOptionRow = addExamOptionRow; window.parseBulkQuestionsText = parseBulkQuestionsText; window.deleteExam = deleteExam; window.deleteExamSubmission = deleteExamSubmission; window.switchAdminTab = switchAdminTab; window.berechneDienstTage = berechneDienstTage; window.linkHinzufuegen = linkHinzufuegen; window.schnellBehandlungBuchen = schnellBehandlungBuchen; window.openEditPatientModal = openEditPatientModal; window.closeEditModal = closeEditModal; window.speicherePatientEdit = speicherePatientEdit; window.passwortAendern = passwortAendern; window.exportArchivCSV = exportArchivCSV; window.openAdminKeyModal = openAdminKeyModal; window.closeAdminAuthModal = closeAdminAuthModal; window.verifyAdminKeyPassword = verifyAdminKeyPassword; window.closeAdminManagementModal = closeAdminManagementModal; window.setMitarbeiterStatus = setMitarbeiterStatus; window.mitarbeiterEntlassen = mitarbeiterEntlassen; window.aktualisiereAdminVerwaltung = aktualisiereAdminVerwaltung; window.speichereHierarchieDaten = speichereHierarchieDaten; window.switchTab = switchTab; window.settingsTabClick = settingsTabClick;
 </script>
 </body>
