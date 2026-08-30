@@ -766,6 +766,7 @@
                         <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
                             <input type="text" id="studentDNInput" placeholder="Z.B. DN 42" style="max-width:200px; padding:8px; font-size:12px; margin:0; border-radius:8px; border:1px solid var(--border); background:rgba(15,23,42,0.8); color:var(--text-main);" onchange="saveStudentDNPreference(this.value)">
                             <button class="btn" style="width:auto; padding:8px 16px; margin:0; font-size:12px; font-weight:800; background:var(--primary); color:#080c14;" onclick="renderStudentUnlockedExams()">🔍 Ergebnisse laden</button>
+                            <button class="btn" style="width:auto; padding:8px 16px; margin:0; font-size:12px; font-weight:800; background:linear-gradient(135deg, #a855f7, #6366f1); color:#fff; border:none;" onclick="openRoadmapModal()">🗺️ Ausbildungspfad & Fortschritt</button>
                         </div>
                     </div>
                     
@@ -813,7 +814,7 @@
                         <button class="admin-tab-btn" onclick="switchInstructorTab('instrTabResults', this)">📊 Absolvierte Prüfungen & Zeiten</button>
                         <button class="admin-tab-btn" onclick="switchInstructorTab('instrTabDocs', this)">📁 Ausbilder Dokumente</button>
                         <button class="admin-tab-btn" onclick="switchInstructorTab('instrTabManage', this)">📝 Prüfungen verwalten / anlegen</button>
-                        <button class="admin-tab-btn" id="instrAllowedExamsTabBtn" onclick="switchInstructorTab('instrTabInstructorAllowedExams', this)">🎓 Ausbilder-Rechte</button>
+                        <button class="admin-tab-btn" id="instrAllowedExamsTabBtn" onclick="switchInstructorTab('instrTabInstructorAllowedExams', this)">🎓 Ausbildungsleitung</button>
                     </div>
 
                     <!-- SUB-TAB A: FREISCHALTUNGEN -->
@@ -910,22 +911,46 @@ Frage: In welches GPS loggst du dich ein?
                         <div id="instructorExistingExamsList"></div>
                     </div>
 
-                    <!-- SUB-TAB D: AUSBILDER RECHTE (VISIBLE ONLY TO ADMIN) -->
+                    <!-- SUB-TAB D: AUSBILDUNGSLEITUNG -->
                     <div id="instrTabInstructorAllowedExams" class="admin-subtab-content">
-                        <h4 style="margin:0 0 10px 0; color:#a855f7;">🎓 Ausbilder Prüfungs-Berechtigungen (Master-Admin)</h4>
+                        <h4 style="margin:0 0 10px 0; color:#a855f7;">🎓 Ausbildungsleitung: Berechtigungen & Status-Freigaben</h4>
                         <p style="color:var(--text-muted); font-size:12px; margin-top:0;">
-                            Bestimme hier, welcher Ausbilder welche Prüfungen sehen, verwalten, anlegen und abgeben/abnehmen darf.
+                            Bestimme hier, welcher Ausbilder welche Prüfungen sehen, verwalten, anlegen und abgeben/abnehmen darf. Zudem kannst du als Ausbildungsleitung neue Registrierungen freischalten oder sperren.
                         </p>
-                        <div class="table-responsive" style="max-height:400px; overflow-y:auto;">
-                            <table>
-                                <thead>
-                                    <tr>
-                                        <th>Ausbilder</th>
-                                        <th>Prüfungskompetenzen (Erlaubte Prüfungen)</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="instructorAllowedExamsTableBody"></tbody>
-                            </table>
+                        
+                        <div style="margin-bottom: 24px; background:rgba(30,41,59,0.2); padding:16px; border-radius:12px; border:1px solid var(--border);">
+                            <h5 style="color:var(--primary); margin:0 0 10px 0; font-size:13px; text-transform:uppercase; font-weight:700;">👥 Fraktions-Mitglieder freischalten & sperren</h5>
+                            <div class="table-responsive" style="max-height:300px; overflow-y:auto;">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Mitarbeiter Name</th>
+                                            <th>Dienstnummer (DN)</th>
+                                            <th>Rolle</th>
+                                            <th>Status</th>
+                                            <th>Aktion</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="instructorMembersApprovalTableBody">
+                                        <tr><td colspan="5" style="text-align:center; color:var(--text-muted);">Lade Mitglieder...</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div style="background:rgba(168,85,247,0.03); padding:16px; border-radius:12px; border:1px solid rgba(168,85,247,0.2);">
+                            <h5 style="color:#a855f7; margin:0 0 10px 0; font-size:13px; text-transform:uppercase; font-weight:700;">🎓 Ausbilder Prüfungs-Berechtigungen</h5>
+                            <div class="table-responsive" style="max-height:400px; overflow-y:auto;">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Ausbilder</th>
+                                            <th>Prüfungskompetenzen (Erlaubte Prüfungen)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="instructorAllowedExamsTableBody"></tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1063,6 +1088,7 @@ Frage: In welches GPS loggst du dich ein?
                 <button class="admin-tab-btn" onclick="switchAdminTab('adminSubTabHierarchy', this)">🌳 Hierarchie & Abteilungen</button>
                 <button class="admin-tab-btn" onclick="switchAdminTab('adminSubTabPrices', this)">💰 Preise & Szenarien</button>
                 <button class="admin-tab-btn" onclick="switchAdminTab('adminSubTabSystem', this)">⚙️ Schicht & System-Reset</button>
+                <button class="admin-tab-btn" onclick="switchAdminTab('adminSubTabExams', this)">🎓 Ausbildungsleitung</button>
             </div>
 
             <!-- SUB-TAB 1: MITARBEITER & RECHTE -->
@@ -1232,6 +1258,49 @@ Frage: In welches GPS loggst du dich ein?
                 </div>
             </div>
 
+            <!-- SUB-TAB 6: AUSBILDUNGSLEITUNG -->
+            <div id="adminSubTabExams" class="admin-subtab-content">
+                <div style="background:rgba(168, 85, 247, 0.03); padding:20px; border-radius:14px; border:1px solid rgba(168, 85, 247, 0.2); margin-bottom:24px;">
+                    <h3 style="margin:0 0 14px 0; color:#a855f7; font-size:15px; text-transform:uppercase; letter-spacing:0.5px;">🎓 Ausbildungsleitung & Ausbilder-Rechte</h3>
+                    <p style="color:var(--text-muted); font-size:12px; margin-top:0;">Hier kannst du als Super-Admin die Ausbilder-Rechte verwalten, Kompetenzen zuteilen und Registrierungen bearbeiten.</p>
+                    
+                    <div style="margin-bottom: 24px; background:rgba(30,41,59,0.2); padding:16px; border-radius:12px; border:1px solid var(--border);">
+                        <h5 style="color:var(--primary); margin:0 0 10px 0; font-size:13px; text-transform:uppercase; font-weight:700;">👥 Fraktions-Mitglieder freischalten & sperren</h5>
+                        <div class="table-responsive" style="max-height:300px; overflow-y:auto;">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Mitarbeiter Name</th>
+                                        <th>Dienstnummer (DN)</th>
+                                        <th>Rolle</th>
+                                        <th>Status</th>
+                                        <th>Aktion</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="adminMembersApprovalTableBody">
+                                    <tr><td colspan="5" style="text-align:center; color:var(--text-muted);">Lade Mitglieder...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div style="background:rgba(168,85,247,0.03); padding:16px; border-radius:12px; border:1px solid rgba(168,85,247,0.2);">
+                        <h5 style="color:#a855f7; margin:0 0 10px 0; font-size:13px; text-transform:uppercase; font-weight:700;">🎓 Ausbilder Prüfungs-Berechtigungen</h5>
+                        <div class="table-responsive" style="max-height:400px; overflow-y:auto;">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Ausbilder</th>
+                                        <th>Prüfungskompetenzen (Erlaubte Prüfungen)</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="adminAllowedExamsTableBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div style="display:flex; justify-content:flex-end;">
                 <button class="btn" style="background:var(--text-muted); width:auto; padding:12px 32px; font-weight:700;" onclick="closeAdminManagementModal()">Schließen</button>
             </div>
@@ -1252,6 +1321,31 @@ Frage: In welches GPS loggst du dich ein?
 
             <div style="display:flex; justify-content:flex-end; border-top:1px solid var(--border); padding-top:14px; margin-top:16px;">
                 <button class="btn" style="width:auto; padding:10px 24px; font-weight:800;" onclick="closeSubmissionDetailsModal()">Schließen</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ROADMAP / TIMELINE MODAL FOR STUDENTS -->
+    <div id="roadmapModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(8,12,20,0.85); z-index:10000; align-items:center; justify-content:center; backdrop-filter:blur(8px);">
+        <div style="background:rgba(15,23,42,0.95); border:2px solid var(--primary); border-radius:20px; width:95%; max-width:650px; max-height:85vh; padding:24px; display:flex; flex-direction:column; box-shadow:0 10px 40px rgba(0,0,0,0.6); text-align:left;">
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:14px; margin-bottom:16px;">
+                <h3 style="margin:0; color:var(--primary); font-size:18px; display:flex; align-items:center; gap:8px;">
+                    <span>🗺️ Ausbildungspfad & Fortschrittspfad</span>
+                </h3>
+                <button style="background:rgba(255,255,255,0.08); color:var(--text-muted); border:1px solid var(--border); width:32px; height:32px; border-radius:50%; font-size:16px; cursor:pointer; display:flex; align-items:center; justify-content:center;" onclick="closeRoadmapModal()">✖</button>
+            </div>
+            
+            <div style="background:rgba(56,189,248,0.05); padding:10px 14px; border-radius:10px; border:1px solid rgba(56,189,248,0.2); font-size:12px; color:var(--text-main); margin-bottom:16px; display:flex; justify-content:space-between; align-items:center;">
+                <div>👤 Mitarbeiter: <b id="roadmapUserName">--</b></div>
+                <div>⏱️ Dienstzeit: <b id="roadmapUserDays" style="color:var(--primary);">--</b></div>
+            </div>
+
+            <div id="roadmapTimelineContent" style="overflow-y:auto; flex:1; padding-right:8px; display:flex; flex-direction:column; gap:16px;">
+                <!-- Timeline items will be generated dynamically here -->
+            </div>
+
+            <div style="display:flex; justify-content:flex-end; border-top:1px solid var(--border); padding-top:14px; margin-top:16px;">
+                <button class="btn" style="width:auto; padding:10px 24px; font-weight:800;" onclick="closeRoadmapModal()">Schließen</button>
             </div>
         </div>
     </div>
@@ -1318,7 +1412,7 @@ Frage: In welches GPS loggst du dich ein?
                         </label>
                         <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
                             <input type="checkbox" id="permCanManageInstructors">
-                            <span style="font-weight:700; color:#a855f7;">🎓 Ausbilder-Rechte verwalten darf</span>
+                            <span style="font-weight:700; color:#a855f7;">🎓 Ausbilder-Rechte verwalten</span>
                         </label>
                     </div>
                 </div>
@@ -1571,6 +1665,217 @@ Frage: In welches GPS loggst du dich ein?
         if (tage < 0) tage = 0;
         
         document.getElementById('val_dienstTage').textContent = tage;
+    }
+
+    function getSessionUserDiensttage() {
+        if (!sessionUser) return 0;
+        const storedVal = localStorage.getItem('mmd_einstellungsdatum_' + sessionUser.vorname + "_" + sessionUser.nachname);
+        if (!storedVal) return 0;
+        const einstellungsDatum = new Date(storedVal);
+        einstellungsDatum.setHours(0,0,0,0);
+        const heute = new Date();
+        heute.setHours(0,0,0,0);
+        const zeitDifferenz = heute.getTime() - einstellungsDatum.getTime();
+        let tage = Math.floor(zeitDifferenz / (1000 * 60 * 60 * 24)) + 1;
+        return tage < 0 ? 0 : tage;
+    }
+
+    function openRoadmapModal() {
+        if (!sessionUser) {
+            alert("Bitte melde dich an, um deinen Fortschrittspfad anzuzeigen.");
+            return;
+        }
+
+        document.getElementById('roadmapUserName').textContent = `${sessionUser.vorname} ${sessionUser.nachname}`;
+        
+        const days = getSessionUserDiensttage();
+        document.getElementById('roadmapUserDays').textContent = days + " Diensttag" + (days === 1 ? "" : "e");
+
+        const modal = document.getElementById('roadmapModal');
+        const timeline = document.getElementById('roadmapTimelineContent');
+        if (!modal || !timeline) return;
+
+        // Helper to check if exam is passed
+        const checkPassed = (examId) => {
+            if (sessionUser.passedExams && sessionUser.passedExams[examId] === true) return true;
+            let found = false;
+            if (cachedSubmissions) {
+                const myUserId = (sessionUser.vorname + "_" + sessionUser.nachname).toLowerCase().replace(/[^a-z0-9_]/g, "");
+                Object.values(cachedSubmissions).forEach(sub => {
+                    if (sub.userId === myUserId && sub.examId === examId && sub.passed === true) {
+                        found = true;
+                    }
+                });
+            }
+            return found;
+        };
+
+        const renderTimelineItem = (title, reqDays, requirements, isMet, detailsHtml = "") => {
+            const statusIcon = isMet 
+                ? '<div style="width:24px; height:24px; border-radius:50%; background:var(--success); color:#080c14; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:12px;">✔</div>' 
+                : '<div style="width:24px; height:24px; border-radius:50%; background:rgba(255,255,255,0.08); border:1px solid var(--border); color:var(--text-muted); display:flex; align-items:center; justify-content:center; font-weight:800; font-size:12px;">🔒</div>';
+            
+            return `
+            <div style="display:flex; gap:16px; align-items:flex-start;">
+                <div style="display:flex; flex-direction:column; align-items:center;">
+                    ${statusIcon}
+                    <div style="width:2px; flex:1; min-height:30px; background:var(--border); margin-top:4px;"></div>
+                </div>
+                <div style="flex:1; background:rgba(30,41,59,0.3); border:1px solid ${isMet ? 'rgba(16,185,129,0.3)' : 'var(--border)'}; border-radius:12px; padding:12px 16px; margin-bottom:4px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+                        <h4 style="margin:0; font-size:14px; color:${isMet ? 'var(--success)' : 'var(--text-main)'};">${title}</h4>
+                        <span style="font-size:11px; background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:10px; color:var(--text-muted);">⏱️ ab ${reqDays} Tage</span>
+                    </div>
+                    <div style="font-size:11px; color:var(--text-muted); margin-top:6px;">
+                        ${requirements}
+                    </div>
+                    ${detailsHtml ? `<div style="margin-top:8px;">${detailsHtml}</div>` : ""}
+                </div>
+            </div>`;
+        };
+
+        const ga1Passed = checkPassed('exam_ga1');
+        const fahrPassed = checkPassed('exam_fahrtraining') || (sessionUser.passedExams && sessionUser.passedExams.exam_fahrtraining === true);
+        const ga2Passed = checkPassed('exam_ga2');
+        const dvPassed = checkPassed('exam_dv');
+        const arzt2Passed = checkPassed('exam_arzt2');
+        const arzt3Passed = checkPassed('exam_arzt3');
+        const para2Passed = checkPassed('exam_para2');
+        const para3Passed = checkPassed('exam_para3');
+
+        // solo trainee verification
+        const soloTraineeDaysMet = days >= 7;
+        const soloTraineeMet = soloTraineeDaysMet && ga1Passed;
+
+        // a-emt verification
+        const aEmtDaysMet = days >= 21;
+        const aEmtMet = aEmtDaysMet && soloTraineeMet;
+
+        // emt verification
+        const emtDaysMet = days >= 35;
+        const emtMet = emtDaysMet && aEmtMet && ga2Passed && dvPassed;
+
+        // doctor path verifications
+        const physicianDaysMet = days >= 77;
+        const physicianMet = physicianDaysMet && emtMet && arzt2Passed;
+        const doctorAttendingDaysMet = days >= 108;
+        const doctorAttendingMet = doctorAttendingDaysMet && physicianMet && arzt3Passed;
+
+        // paramedic path verifications
+        const paramedicDaysMet = days >= 77;
+        const paramedicMet = paramedicDaysMet && emtMet && para2Passed;
+        const paramedicAttendingDaysMet = days >= 108;
+        const paramedicAttendingMet = paramedicAttendingDaysMet && paramedicMet && para3Passed;
+
+        let html = "";
+
+        // 1. Trainee
+        html += renderTimelineItem("Trainee of SAMD", 0, "Dein Einstieg im Medical Department. Es sind keine theoretischen Vorkenntnisse erforderlich.", true);
+
+        // 2. Solo Trainee
+        let soloDetails = `
+        <div style="display:flex; flex-direction:column; gap:4px; font-size:10px;">
+            <div style="color:${days >= 7 ? 'var(--success)' : 'var(--danger)'};">${days >= 7 ? '✔' : '❌'} Mind. 7 Diensttage (${days}/7 Tage)</div>
+            <div style="color:${ga1Passed ? 'var(--success)' : 'var(--danger)'};">${ga1Passed ? '✔' : '❌'} Grundausbildung 1 (GA1) bestanden</div>
+            <div style="color:${fahrPassed ? 'var(--success)' : 'var(--text-muted)'};">${fahrPassed ? '✔' : 'ℹ️'} Fahrtraining absolviert (optionaler Haken)</div>
+        </div>`;
+        html += renderTimelineItem("Solo Trainee of SAMD", 7, "Erlaubnis zum selbstständigen Fahren im Außendienst nach erfolgreicher GA1.", soloTraineeMet, soloDetails);
+
+        // 3. A-EMT
+        let aEmtDetails = `
+        <div style="display:flex; flex-direction:column; gap:4px; font-size:10px;">
+            <div style="color:${days >= 21 ? 'var(--success)' : 'var(--danger)'};">${days >= 21 ? '✔' : '❌'} Mind. 21 Diensttage (${days}/21 Tage)</div>
+            <div style="color:var(--text-muted);">ℹ️ Erfordert zusätzlich: Alle Stempel im Dienstausweis, makellose Personalakte und Vereidigung</div>
+        </div>`;
+        html += renderTimelineItem("A-EMT of SAMD", 21, "Advanced Emergency Medical Technician. Mittlere Dienstebene.", aEmtMet, aEmtDetails);
+
+        // 4. EMT
+        let emtDetails = `
+        <div style="display:flex; flex-direction:column; gap:4px; font-size:10px;">
+            <div style="color:${days >= 35 ? 'var(--success)' : 'var(--danger)'};">${days >= 35 ? '✔' : '❌'} Mind. 35 Diensttage (${days}/35 Tage)</div>
+            <div style="color:${ga2Passed ? 'var(--success)' : 'var(--danger)'};">${ga2Passed ? '✔' : '❌'} Grundausbildung 2 (GA2) bestanden</div>
+            <div style="color:${dvPassed ? 'var(--success)' : 'var(--danger)'};">${dvPassed ? '✔' : '❌'} Dienstvorschriften-Test (DV) bestanden</div>
+        </div>`;
+        html += renderTimelineItem("EMT of SAMD", 35, "Emergency Medical Technician. Vollwertiger Rettungsdienst-Mitarbeiter.", emtMet, emtDetails);
+
+        // 5. Branching section header
+        html += `
+        <div style="margin: 10px 0; text-align:center;">
+            <span style="background:rgba(168,85,247,0.15); color:#a855f7; border:1px solid rgba(168,85,247,0.3); font-size:11px; padding:4px 14px; border-radius:20px; font-weight:800;">🔀 Wahl der Laufbahn (Doktor vs. Paramedic)</span>
+        </div>`;
+
+        // 6. Branch paths side-by-side or stacked in styled boxes
+        let doctorPathHtml = `
+        <div style="background:rgba(56,189,248,0.03); border:1px solid rgba(56,189,248,0.15); border-radius:12px; padding:12px; flex:1; min-width:250px;">
+            <h5 style="color:var(--primary); margin:0 0 10px 0; font-size:12px; text-transform:uppercase; font-weight:800;">🩺 Laufbahn Doctor (Innendienst)</h5>
+            
+            <!-- Physician -->
+            <div style="padding:8px; border-radius:8px; background:rgba(30,41,59,0.3); margin-bottom:8px; border: 1px solid ${physicianMet ? 'rgba(16,185,129,0.3)' : 'var(--border)'};">
+                <div style="display:flex; justify-content:space-between; font-weight:700; font-size:11px; color:${physicianMet ? 'var(--success)' : 'var(--text-main)'};">
+                    <span>Physician</span>
+                    <span>ab 77 Tage</span>
+                </div>
+                <div style="display:flex; flex-direction:column; gap:2px; font-size:9px; color:var(--text-muted); margin-top:4px;">
+                    <div style="color:${days >= 77 ? 'var(--success)' : 'var(--danger)'};">${days >= 77 ? '✔' : '❌'} Mind. 77 Tage (${days}/77)</div>
+                    <div style="color:${arzt2Passed ? 'var(--success)' : 'var(--danger)'};">${arzt2Passed ? '✔' : '❌'} Arzt 2 Prüfung bestanden</div>
+                </div>
+            </div>
+
+            <!-- Attending -->
+            <div style="padding:8px; border-radius:8px; background:rgba(30,41,59,0.3); border: 1px solid ${doctorAttendingMet ? 'rgba(16,185,129,0.3)' : 'var(--border)'};">
+                <div style="display:flex; justify-content:space-between; font-weight:700; font-size:11px; color:${doctorAttendingMet ? 'var(--success)' : 'var(--text-main)'};">
+                    <span>Attending Physician</span>
+                    <span>ab 108 Tage</span>
+                </div>
+                <div style="display:flex; flex-direction:column; gap:2px; font-size:9px; color:var(--text-muted); margin-top:4px;">
+                    <div style="color:${days >= 108 ? 'var(--success)' : 'var(--danger)'};">${days >= 108 ? '✔' : '❌'} Mind. 108 Tage (${days}/108)</div>
+                    <div style="color:${arzt3Passed ? 'var(--success)' : 'var(--danger)'};">${arzt3Passed ? '✔' : '❌'} Arzt 3 Prüfung bestanden</div>
+                </div>
+            </div>
+        </div>`;
+
+        let paramedicPathHtml = `
+        <div style="background:rgba(168,85,247,0.03); border:1px solid rgba(168,85,247,0.15); border-radius:12px; padding:12px; flex:1; min-width:250px;">
+            <h5 style="color:#a855f7; margin:0 0 10px 0; font-size:12px; text-transform:uppercase; font-weight:800;">🚑 Laufbahn Paramedic (Außendienst)</h5>
+            
+            <!-- Paramedic -->
+            <div style="padding:8px; border-radius:8px; background:rgba(30,41,59,0.3); margin-bottom:8px; border: 1px solid ${paramedicMet ? 'rgba(16,185,129,0.3)' : 'var(--border)'};">
+                <div style="display:flex; justify-content:space-between; font-weight:700; font-size:11px; color:${paramedicMet ? 'var(--success)' : 'var(--text-main)'};">
+                    <span>Paramedic</span>
+                    <span>ab 77 Tage</span>
+                </div>
+                <div style="display:flex; flex-direction:column; gap:2px; font-size:9px; color:var(--text-muted); margin-top:4px;">
+                    <div style="color:${days >= 77 ? 'var(--success)' : 'var(--danger)'};">${days >= 77 ? '✔' : '❌'} Mind. 77 Tage (${days}/77)</div>
+                    <div style="color:${para2Passed ? 'var(--success)' : 'var(--danger)'};">${para2Passed ? '✔' : '❌'} Para 2 Prüfung bestanden</div>
+                </div>
+            </div>
+
+            <!-- Attending Paramedic -->
+            <div style="padding:8px; border-radius:8px; background:rgba(30,41,59,0.3); border: 1px solid ${paramedicAttendingMet ? 'rgba(16,185,129,0.3)' : 'var(--border)'};">
+                <div style="display:flex; justify-content:space-between; font-weight:700; font-size:11px; color:${paramedicAttendingMet ? 'var(--success)' : 'var(--text-main)'};">
+                    <span>Attending Paramedic</span>
+                    <span>ab 108 Tage</span>
+                </div>
+                <div style="display:flex; flex-direction:column; gap:2px; font-size:9px; color:var(--text-muted); margin-top:4px;">
+                    <div style="color:${days >= 108 ? 'var(--success)' : 'var(--danger)'};">${days >= 108 ? '✔' : '❌'} Mind. 108 Tage (${days}/108)</div>
+                    <div style="color:${para3Passed ? 'var(--success)' : 'var(--danger)'};">${para3Passed ? '✔' : '❌'} Para 3 Prüfung bestanden</div>
+                </div>
+            </div>
+        </div>`;
+
+        html += `
+        <div style="display:flex; gap:16px; flex-wrap:wrap; margin-bottom:12px;">
+            ${doctorPathHtml}
+            ${paramedicPathHtml}
+        </div>`;
+
+        timeline.innerHTML = html;
+        modal.style.display = 'flex';
+    }
+
+    function closeRoadmapModal() {
+        const modal = document.getElementById('roadmapModal');
+        if (modal) modal.style.display = 'none';
     }
 
     function updateOnlineStatus() {
@@ -2355,6 +2660,9 @@ Frage: In welches GPS loggst du dich ein?
 
             let isCompleted = false;
             let lastSub = null;
+            if (sessionUser && sessionUser.passedExams && sessionUser.passedExams[examId] === true) {
+                isCompleted = true;
+            }
             if(cachedSubmissions) {
                 const myUserId = (sessionUser.vorname + "_" + sessionUser.nachname).toLowerCase().replace(/[^a-z0-9_]/g, "");
                 Object.values(cachedSubmissions).forEach(sub => {
@@ -2366,7 +2674,7 @@ Frage: In welches GPS loggst du dich ein?
             }
 
             let statusBadge = isCompleted 
-                ? `<span style="background:rgba(16,185,129,0.15); color:var(--success); border:1px solid var(--success); padding:3px 10px; border-radius:20px; font-size:11px; font-weight:800;">✅ Absolviert (${lastSub ? lastSub.percentage + '%' : ''})</span>`
+                ? `<span style="background:rgba(16,185,129,0.15); color:var(--success); border:1px solid var(--success); padding:3px 10px; border-radius:20px; font-size:11px; font-weight:800;">✅ Bestanden ${lastSub ? `(${lastSub.percentage}%)` : '(Altsystem)'}</span>`
                 : `<span style="background:rgba(56,189,248,0.15); color:var(--primary); border:1px solid var(--primary); padding:3px 10px; border-radius:20px; font-size:11px; font-weight:800;">🔓 Bereit zur Prüfung</span>`;
 
             let actionBtn = `<button class="btn" style="background:${isCompleted ? 'rgba(255,255,255,0.08)' : 'var(--primary)'}; color:${isCompleted ? 'var(--text-muted)' : '#080c14'}; font-weight:800; margin-top:14px;" onclick="startExam('${examId}')">${isCompleted ? '🔄 Prüfung erneut ablegen' : '🚀 Prüfung jetzt starten'}</button>`;
@@ -2943,66 +3251,120 @@ Frage: In welches GPS loggst du dich ein?
     }
 
     function renderInstructorAllowedExams(users, exams) {
-        const tbody = document.getElementById('instructorAllowedExamsTableBody');
-        if(!tbody || !users) return;
-        tbody.innerHTML = "";
+        // 1. Render Member Approvals Table (for Ausbildungsleitung and Admin)
+        const approvalTbody = document.getElementById('instructorMembersApprovalTableBody');
+        const adminApprovalTbody = document.getElementById('adminMembersApprovalTableBody');
+        
+        const renderApprovals = (tbody) => {
+            if (!tbody) return;
+            tbody.innerHTML = "";
+            Object.keys(users).forEach(uId => {
+                const u = users[uId];
+                
+                let roles = [];
+                if (u.isAdmin) {
+                    roles.push('<span style="font-size:9px; font-weight:700; color:var(--warning); background:rgba(245,158,11,0.15); padding:1px 4px; border-radius:3px; margin-right:2px;">Admin</span>');
+                }
+                if (u.isInstructor) {
+                    if (u.canManageInstructors) {
+                        roles.push('<span style="font-size:9px; font-weight:700; color:#c084fc; background:rgba(168,85,247,0.15); padding:1px 4px; border-radius:3px; margin-right:2px;">Admin-Ausbilder</span>');
+                    } else {
+                        roles.push('<span style="font-size:9px; font-weight:700; color:#a855f7; background:rgba(168,85,247,0.15); padding:1px 4px; border-radius:3px; margin-right:2px;">Ausbilder</span>');
+                    }
+                }
+                if (roles.length === 0) {
+                    roles.push('<span style="font-size:9px; font-weight:700; color:var(--text-muted); background:rgba(255,255,255,0.06); padding:1px 4px; border-radius:3px;">Mitarbeiter</span>');
+                }
 
-        Object.keys(users).forEach(uId => {
-            const u = users[uId];
-            if (!u.isInstructor && !u.isAdmin) return; // Only show instructors and admins
+                const isApproved = u.status === 'approved';
+                const statusBadge = isApproved 
+                    ? `<span style="background:rgba(16,185,129,0.15); color:var(--success); border:1px solid var(--success); padding:2px 8px; border-radius:12px; font-size:10px; font-weight:800;">Zugelassen</span>`
+                    : `<span style="background:rgba(245,158,11,0.15); color:var(--warning); border:1px solid var(--warning); padding:2px 8px; border-radius:12px; font-size:10px; font-weight:800;">Gesperrt / Beantragt</span>`;
 
-            const canCreateExams = u.canCreateExams === true;
-            const canDeleteSubmissions = u.canDeleteSubmissions === true;
+                const actionButton = isApproved
+                    ? `<button class="btn" style="margin:0; width:auto; padding:4px 8px; font-size:10px; background:rgba(244,63,94,0.15); color:var(--danger); border:1px solid var(--danger); font-weight:800;" onclick="toggleInstructorUserStatus('${uId}', 'pending')">Sperren</button>`
+                    : `<button class="btn" style="margin:0; width:auto; padding:4px 8px; font-size:10px; background:rgba(16,185,129,0.15); color:var(--success); border:1px solid var(--success); font-weight:800;" onclick="toggleInstructorUserStatus('${uId}', 'approved')">Zulassen</button>`;
 
-            const globalCheckboxes = `
-            <div style="display:flex; flex-direction:column; gap:6px;">
-                <label style="display:inline-flex; align-items:center; gap:6px; cursor:pointer; font-size:11px;">
-                    <input type="checkbox" ${canCreateExams ? 'checked' : ''} onchange="toggleInstructorGlobalPermission('${uId}', 'canCreateExams', this.checked)">
-                    <span>Neue Prüfungen anlegen</span>
-                </label>
-                <label style="display:inline-flex; align-items:center; gap:6px; cursor:pointer; font-size:11px;">
-                    <input type="checkbox" ${canDeleteSubmissions ? 'checked' : ''} onchange="toggleInstructorGlobalPermission('${uId}', 'canDeleteSubmissions', this.checked)">
-                    <span style="color:var(--danger);">Ergebnisse löschen</span>
-                </label>
-            </div>`;
-
-            const allowedSee = u.instructorAllowedSeeExams || {};
-            const allowedManage = u.instructorAllowedManageExams || {};
-
-            let examCompetenciesHtml = `<div style="max-height: 200px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; padding: 4px; background: rgba(8,12,20,0.3); border-radius: 8px; border: 1px solid var(--border);">`;
-            
-            // Sort exams dynamically to prevent mixed representation
-            let sortedExamIds = sortExamIdsDynamically(Object.keys(exams), exams);
-            sortedExamIds.forEach(eId => {
-                const exam = exams[eId];
-                const isSeeChecked = allowedSee[eId] === true;
-                const isManageChecked = allowedManage[eId] === true;
-                examCompetenciesHtml += `
-                <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(30,41,59,0.5); padding: 6px 10px; border-radius: 6px; border: 1px solid var(--border); gap: 12px;">
-                    <span style="font-size:11px; font-weight:700; color:var(--text-main);">${exam.title}</span>
-                    <div style="display: flex; gap: 10px; align-items:center;">
-                        <label style="display: inline-flex; align-items: center; gap: 2px; cursor: pointer; font-size: 11px; margin:0;">
-                            <input type="checkbox" ${isSeeChecked ? 'checked' : ''} onchange="toggleInstructorExamPermission('${uId}', '${eId}', 'see', this.checked)"> 👁️ Sehen
-                        </label>
-                        <label style="display: inline-flex; align-items: center; gap: 2px; cursor: pointer; font-size: 11px; margin:0;">
-                            <input type="checkbox" ${isManageChecked ? 'checked' : ''} onchange="toggleInstructorExamPermission('${uId}', '${eId}', 'manage', this.checked)"> 🛠️ Verwalten
-                        </label>
-                    </div>
-                </div>`;
+                tbody.innerHTML += `
+                <tr>
+                    <td><b>${u.vorname} ${u.nachname}</b></td>
+                    <td><span style="font-family:monospace; font-size:11px;">${u.dn || 'Keine DN'}</span></td>
+                    <td>${roles.join('')}</td>
+                    <td>${statusBadge}</td>
+                    <td>${actionButton}</td>
+                </tr>`;
             });
+        };
+        renderApprovals(approvalTbody);
+        renderApprovals(adminApprovalTbody);
 
-            examCompetenciesHtml += `</div>`;
+        // 2. Render Allowed Exams Table (for Ausbildungsleitung and Admin)
+        const tbody = document.getElementById('instructorAllowedExamsTableBody');
+        const adminTbody = document.getElementById('adminAllowedExamsTableBody');
+        
+        const renderExamsComp = (targetBody) => {
+            if (!targetBody || !users) return;
+            targetBody.innerHTML = "";
 
-            tbody.innerHTML += `
-            <tr>
-                <td>
-                    <b>${u.vorname} ${u.nachname}</b>
-                    ${u.isAdmin ? '<br><span style="font-size:10px; color:var(--warning);">[Master-Admin]</span>' : '<br><span style="font-size:10px; color:#a855f7;">[Ausbilder]</span>'}
-                </td>
-                <td>${globalCheckboxes}</td>
-                <td>${examCompetenciesHtml}</td>
-            </tr>`;
-        });
+            Object.keys(users).forEach(uId => {
+                const u = users[uId];
+                if (!u.isInstructor && !u.isAdmin) return; // Only show instructors and admins
+
+                const canCreateExams = u.canCreateExams === true;
+                const canDeleteSubmissions = u.canDeleteSubmissions === true;
+
+                const globalCheckboxes = `
+                <div style="display:flex; flex-direction:column; gap:6px;">
+                    <label style="display:inline-flex; align-items:center; gap:6px; cursor:pointer; font-size:11px;">
+                        <input type="checkbox" ${canCreateExams ? 'checked' : ''} onchange="toggleInstructorGlobalPermission('${uId}', 'canCreateExams', this.checked)">
+                        <span>Neue Prüfungen anlegen</span>
+                    </label>
+                    <label style="display:inline-flex; align-items:center; gap:6px; cursor:pointer; font-size:11px;">
+                        <input type="checkbox" ${canDeleteSubmissions ? 'checked' : ''} onchange="toggleInstructorGlobalPermission('${uId}', 'canDeleteSubmissions', this.checked)">
+                        <span style="color:var(--danger);">Ergebnisse löschen</span>
+                    </label>
+                </div>`;
+
+                const allowedSee = u.instructorAllowedSeeExams || {};
+                const allowedManage = u.instructorAllowedManageExams || {};
+
+                let examCompetenciesHtml = `<div style="max-height: 200px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; padding: 4px; background: rgba(8,12,20,0.3); border-radius: 8px; border: 1px solid var(--border);">`;
+                
+                // Sort exams dynamically to prevent mixed representation
+                let sortedExamIds = sortExamIdsDynamically(Object.keys(exams), exams);
+                sortedExamIds.forEach(eId => {
+                    const exam = exams[eId];
+                    const isSeeChecked = allowedSee[eId] === true;
+                    const isManageChecked = allowedManage[eId] === true;
+                    examCompetenciesHtml += `
+                    <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(30,41,59,0.5); padding: 6px 10px; border-radius: 6px; border: 1px solid var(--border); gap: 12px;">
+                        <span style="font-size:11px; font-weight:700; color:var(--text-main);">${exam.title}</span>
+                        <div style="display: flex; gap: 10px; align-items:center;">
+                            <label style="display: inline-flex; align-items: center; gap: 2px; cursor: pointer; font-size: 11px; margin:0;">
+                                <input type="checkbox" ${isSeeChecked ? 'checked' : ''} onchange="toggleInstructorExamPermission('${uId}', '${eId}', 'see', this.checked)"> 👁️ Sehen
+                            </label>
+                            <label style="display: inline-flex; align-items: center; gap: 2px; cursor: pointer; font-size: 11px; margin:0;">
+                                <input type="checkbox" ${isManageChecked ? 'checked' : ''} onchange="toggleInstructorExamPermission('${uId}', '${eId}', 'manage', this.checked)"> 🛠️ Verwalten
+                            </label>
+                        </div>
+                    </div>`;
+                });
+
+                examCompetenciesHtml += `</div>`;
+
+                targetBody.innerHTML += `
+                <tr>
+                    <td>
+                        <b>${u.vorname} ${u.nachname}</b>
+                        ${u.isAdmin ? '<br><span style="font-size:10px; color:var(--warning);">[Master-Admin]</span>' : '<br><span style="font-size:10px; color:#a855f7;">[Ausbilder]</span>'}
+                    </td>
+                    <td>${globalCheckboxes}</td>
+                    <td>${examCompetenciesHtml}</td>
+                </tr>`;
+            });
+        };
+        renderExamsComp(tbody);
+        renderExamsComp(adminTbody);
     }
 
     function toggleInstructorGlobalPermission(uId, field, value) {
@@ -3012,6 +3374,12 @@ Frage: In welches GPS loggst du dich ein?
     function toggleInstructorExamPermission(uId, examId, type, value) {
         const node = type === 'see' ? 'instructorAllowedSeeExams' : 'instructorAllowedManageExams';
         db.ref(`data/users/${uId}/${node}/${examId}`).set(value);
+    }
+
+    function toggleInstructorUserStatus(uId, newStatus) {
+        db.ref(`data/users/${uId}/status`).set(newStatus).then(() => {
+            alert(`✅ Status für ${uId.replace('_', ' ')} wurde auf '${newStatus === 'approved' ? 'Zugelassen' : 'Gesperrt'}' geändert.`);
+        });
     }
 
     function renderInstructorDocsTab(exams) {
@@ -3151,29 +3519,72 @@ Frage: In welches GPS loggst du dich ein?
             const u = users[uId];
 
             const unlocked = u.unlockedExams || {};
+            const passedMap = u.passedExams || {};
             let sortedExamIds = sortExamIdsDynamically(Object.keys(exams), exams);
             let examCheckboxes = sortedExamIds.map(eId => {
                 if (!isExamAllowedToManage(sessionUser, eId)) return '';
                 const exam = exams[eId];
                 const isChecked = unlocked[eId] === true;
+                const isPassed = passedMap[eId] === true;
                 return `
-                <label style="display:inline-flex; align-items:center; gap:6px; background:rgba(30,41,59,0.5); padding:4px 10px; border-radius:8px; border:1px solid var(--border); font-size:11px; margin:2px; cursor:pointer;">
-                    <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleExamUnlockForUser('${uId}', '${eId}', this.checked)">
-                    <span style="color:${isChecked ? 'var(--primary)' : 'var(--text-muted)'}; font-weight:${isChecked ? '700' : '400'};">${exam.title}</span>
-                </label>`;
-            }).join('');
+                <div style="display:flex; flex-direction:column; gap:4px; padding:8px 12px; background:rgba(30,41,59,0.5); border:1px solid var(--border); border-radius:10px; margin:2px; min-width:200px; text-align:left;">
+                    <div style="font-weight:700; font-size:11px; color:var(--text-main); line-height:1.2; margin-bottom:4px;">${exam.title}</div>
+                    <div style="display:flex; gap:12px; align-items:center; margin-top:2px;">
+                        <label style="display:inline-flex; align-items:center; gap:4px; font-size:10px; margin:0; cursor:pointer;" title="Prüfung für Mitarbeiter freischalten">
+                            <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleExamUnlockForUser('${uId}', '${eId}', this.checked)" style="margin:0; transform:scale(0.95);">
+                            <span>🔓 Freigegeben</span>
+                        </label>
+                        <label style="display:inline-flex; align-items:center; gap:4px; font-size:10px; margin:0; cursor:pointer;" title="Als bestanden markieren (Altsystem)">
+                            <input type="checkbox" ${isPassed ? 'checked' : ''} onchange="toggleExamPassedForUser('${uId}', '${eId}', this.checked)" style="margin:0; transform:scale(0.95);">
+                            <span style="color:var(--success); font-weight:700;">🏆 Bestanden</span>
+                        </label>
+                    </div>
+                </div>`;
+            }).filter(h => h !== '').join('');
 
             tbody.innerHTML += `
             <tr>
                 <td><b>${u.vorname} ${u.nachname}</b></td>
                 <td>${u.date || '--'}</td>
-                <td>${examCheckboxes || '<span style="color:var(--text-muted); font-size:11px;">Keine Prüfungen definiert</span>'}</td>
+                <td>
+                    <div style="display:flex; flex-wrap:wrap; gap:6px;">
+                        ${examCheckboxes || '<span style="color:var(--text-muted); font-size:11px;">Keine Prüfungen definiert</span>'}
+                    </div>
+                </td>
             </tr>`;
         });
     }
 
     function toggleExamUnlockForUser(uId, examId, isUnlocked) {
         db.ref(`data/users/${uId}/unlockedExams/${examId}`).set(isUnlocked);
+     }
+
+    function toggleExamPassedForUser(uId, examId, isPassed) {
+        const updates = {
+            [`data/users/${uId}/passedExams/${examId}`]: isPassed
+        };
+        
+        // Auto-grant instructor permissions if they are marked passed
+        if (isPassed && cachedUsers[uId] && cachedUsers[uId].isInstructor) {
+            updates[`data/users/${uId}/instructorAllowedSeeExams/${examId}`] = true;
+            updates[`data/users/${uId}/instructorAllowedManageExams/${examId}`] = true;
+        }
+
+        db.ref().update(updates).then(() => {
+            const cleanId = (sessionUser.vorname + "_" + sessionUser.nachname).toLowerCase().replace(/[^a-z0-9_]/g, "");
+            if (uId === cleanId) {
+                if (!sessionUser.passedExams) sessionUser.passedExams = {};
+                sessionUser.passedExams[examId] = isPassed;
+                if (isPassed && sessionUser.isInstructor) {
+                    if (!sessionUser.instructorAllowedSeeExams) sessionUser.instructorAllowedSeeExams = {};
+                    if (!sessionUser.instructorAllowedManageExams) sessionUser.instructorAllowedManageExams = {};
+                    sessionUser.instructorAllowedSeeExams[examId] = true;
+                    sessionUser.instructorAllowedManageExams[examId] = true;
+                }
+                sessionStorage.setItem('mmd_session_user', JSON.stringify(sessionUser));
+                localStorage.setItem('mmd_session_user', JSON.stringify(sessionUser));
+            }
+        });
     }
 
     function renderInstructorSubmissions(submissions) {
@@ -3852,7 +4263,9 @@ Frage: In welches GPS loggst du dich ein?
     
     window.generateExamFeedbackAuto = generateExamFeedbackAuto;
     window.saveStudentDNPreference = saveStudentDNPreference;
-    window.deletePatient = deletePatient; window.deleteArchivSchicht = deleteArchivSchicht; window.toggleThemeCollapse = toggleThemeCollapse; window.toggleGroupCollapse = toggleGroupCollapse; window.deleteDienstLink = deleteDienstLink; window.commandHinzufuegen = commandHinzufuegen; window.bulkCommandsImportieren = bulkCommandsImportieren; window.deleteDienstCommand = deleteDienstCommand; window.toggleCmdCollapse = toggleCmdCollapse; window.openUserPermissionsModal = openUserPermissionsModal; window.closeUserPermissionsModal = closeUserPermissionsModal; window.saveUserPermissions = saveUserPermissions; window.switchInstructorTab = switchInstructorTab; window.startExam = startExam; window.cancelActiveExam = cancelActiveExam; window.submitActiveExam = submitActiveExam; window.toggleExamUnlockForUser = toggleExamUnlockForUser; window.viewSubmissionDetails = viewSubmissionDetails; window.closeSubmissionDetailsModal = closeSubmissionDetailsModal; window.neuePruefungErstellen = neuePruefungSpeichern; window.neuePruefungSpeichern = neuePruefungSpeichern; window.editExamInBuilder = editExamInBuilder; window.resetExamBuilderForm = resetExamBuilderForm; window.addExamQuestionRow = addExamQuestionRow; window.addExamOptionRow = addExamOptionRow; window.parseBulkQuestionsText = parseBulkQuestionsText; window.deleteExam = deleteExam; window.deleteExamSubmission = deleteExamSubmission; window.switchAdminTab = switchAdminTab; window.berechneDienstTage = berechneDienstTage; window.linkHinzufuegen = linkHinzufuegen; window.schnellBehandlungBuchen = schnellBehandlungBuchen; window.openEditPatientModal = openEditPatientModal; window.closeEditModal = closeEditModal; window.speicherePatientEdit = speicherePatientEdit; window.passwortAendern = passwortAendern; window.exportArchivCSV = exportArchivCSV; window.openAdminKeyModal = openAdminKeyModal; window.closeAdminAuthModal = closeAdminAuthModal; window.verifyAdminKeyPassword = verifyAdminKeyPassword; window.closeAdminManagementModal = closeAdminManagementModal; window.setMitarbeiterStatus = setMitarbeiterStatus; window.mitarbeiterEntlassen = mitarbeiterEntlassen; window.aktualisiereAdminVerwaltung = aktualisiereAdminVerwaltung; window.speichereHierarchieDaten = speichereHierarchieDaten; window.switchTab = switchTab; window.settingsTabClick = settingsTabClick;
+    window.toggleInstructorUserStatus = toggleInstructorUserStatus;
+    window.deletePatient = deletePatient; window.deleteArchivSchicht = deleteArchivSchicht; window.toggleThemeCollapse = toggleThemeCollapse; window.toggleGroupCollapse = toggleGroupCollapse; window.deleteDienstLink = deleteDienstLink; window.commandHinzufuegen = commandHinzufuegen; window.bulkCommandsImportieren = bulkCommandsImportieren; window.deleteDienstCommand = deleteDienstCommand; window.toggleCmdCollapse = toggleCmdCollapse; window.openUserPermissionsModal = openUserPermissionsModal; window.closeUserPermissionsModal = closeUserPermissionsModal; window.saveUserPermissions = saveUserPermissions; window.switchInstructorTab = switchInstructorTab; window.startExam = startExam; window.cancelActiveExam = cancelActiveExam; window.submitActiveExam = submitActiveExam; window.toggleExamUnlockForUser = toggleExamUnlockForUser;
+    window.toggleExamPassedForUser = toggleExamPassedForUser; window.openRoadmapModal = openRoadmapModal; window.closeRoadmapModal = closeRoadmapModal; window.viewSubmissionDetails = viewSubmissionDetails; window.closeSubmissionDetailsModal = closeSubmissionDetailsModal; window.neuePruefungErstellen = neuePruefungSpeichern; window.neuePruefungSpeichern = neuePruefungSpeichern; window.editExamInBuilder = editExamInBuilder; window.resetExamBuilderForm = resetExamBuilderForm; window.addExamQuestionRow = addExamQuestionRow; window.addExamOptionRow = addExamOptionRow; window.parseBulkQuestionsText = parseBulkQuestionsText; window.deleteExam = deleteExam; window.deleteExamSubmission = deleteExamSubmission; window.switchAdminTab = switchAdminTab; window.berechneDienstTage = berechneDienstTage; window.linkHinzufuegen = linkHinzufuegen; window.schnellBehandlungBuchen = schnellBehandlungBuchen; window.openEditPatientModal = openEditPatientModal; window.closeEditModal = closeEditModal; window.speicherePatientEdit = speicherePatientEdit; window.passwortAendern = passwortAendern; window.exportArchivCSV = exportArchivCSV; window.openAdminKeyModal = openAdminKeyModal; window.closeAdminAuthModal = closeAdminAuthModal; window.verifyAdminKeyPassword = verifyAdminKeyPassword; window.closeAdminManagementModal = closeAdminManagementModal; window.setMitarbeiterStatus = setMitarbeiterStatus; window.mitarbeiterEntlassen = mitarbeiterEntlassen; window.aktualisiereAdminVerwaltung = aktualisiereAdminVerwaltung; window.speichereHierarchieDaten = speichereHierarchieDaten; window.switchTab = switchTab; window.settingsTabClick = settingsTabClick;
 </script>
 </body>
 </html>
