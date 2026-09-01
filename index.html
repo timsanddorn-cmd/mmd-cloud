@@ -1654,13 +1654,13 @@ Frage: In welches GPS loggst du dich ein?
     let defaultRoles = {
         masteradmin: { id: 'masteradmin', name: 'Master-Admin', color: '#eab308', icon: '👑', isSystem: true, isAdmin: true, isMasterAdmin: true, canDelete: true, isInstructor: true, canManageInstructors: true, canPostNews: true, allowedLinkKats: {}, allowedCmdKats: {} },
         admin: { id: 'admin', name: 'Admin', color: '#f59e0b', icon: '🛡️', isSystem: true, isAdmin: true, isMasterAdmin: false, canDelete: true, isInstructor: true, canManageInstructors: true, canPostNews: true, allowedLinkKats: {}, allowedCmdKats: {} },
-        ausbildungsleitung: { id: 'ausbildungsleitung', name: 'Ausbildungsleitung', color: '#c084fc', icon: '⚙️', isSystem: true, isAdmin: false, isMasterAdmin: false, canDelete: false, isInstructor: true, canManageInstructors: true, canPostNews: true, allowedLinkKats: { 'Ausbildung': true, 'MD Intern': true, 'Allgemein': true }, allowedCmdKats: { 'Ausbildung': true, 'T-Codes': true, 'Allgemein': true } },
-        ausbilder: { id: 'ausbilder', name: 'Ausbilder', color: '#8b5cf6', icon: '🎓', isSystem: true, isAdmin: false, isMasterAdmin: false, canDelete: false, isInstructor: true, canManageInstructors: false, canPostNews: false, allowedLinkKats: { 'Ausbildung': true, 'MD Intern': true, 'Allgemein': true }, allowedCmdKats: { 'Ausbildung': true, 'T-Codes': true, 'Allgemein': true } },
-        ehk: { id: 'ehk', name: 'EHK-Ausbilder', color: '#10b981', icon: '🩺', isSystem: true, isAdmin: false, isMasterAdmin: false, canDelete: false, isInstructor: true, canManageInstructors: false, canPostNews: false, allowedLinkKats: { 'EHK': true, 'MD Intern': true, 'Allgemein': true }, allowedCmdKats: { 'T-Codes': true, 'Allgemein': true } },
-        cls: { id: 'cls', name: 'CLS-Ausbilder', color: '#06b6d4', icon: '💉', isSystem: true, isAdmin: false, isMasterAdmin: false, canDelete: false, isInstructor: true, canManageInstructors: false, canPostNews: false, allowedLinkKats: { 'CLS': true, 'MD Intern': true, 'Allgemein': true }, allowedCmdKats: { 'T-Codes': true, 'Allgemein': true } },
-        personal: { id: 'personal', name: 'Personalabteilung', color: '#3b82f6', icon: '📋', isSystem: true, isAdmin: false, isMasterAdmin: false, canDelete: false, isInstructor: false, canManageInstructors: false, canPostNews: false, allowedLinkKats: { 'Personalabteilung': true, 'MD Intern': true, 'Allgemein': true }, allowedCmdKats: { 'T-Codes': true, 'Allgemein': true } },
-        psychologie: { id: 'psychologie', name: 'Psychologie', color: '#ec4899', icon: '🧠', isSystem: true, isAdmin: false, isMasterAdmin: false, canDelete: false, isInstructor: false, canManageInstructors: false, canPostNews: false, allowedLinkKats: { 'Psychologie': true, 'MD Intern': true, 'Allgemein': true }, allowedCmdKats: { 'Psychologie': true, 'T-Codes': true, 'Allgemein': true } },
-        luftrettung: { id: 'luftrettung', name: 'Luftrettung', color: '#0284c7', icon: '🚁', isSystem: true, isAdmin: false, isMasterAdmin: false, canDelete: false, isInstructor: false, canManageInstructors: false, canPostNews: false, allowedLinkKats: { 'Luftrettung': true, 'MD Intern': true, 'Allgemein': true }, allowedCmdKats: { 'T-Codes': true, 'Allgemein': true } }
+        ausbildungsleitung: { id: 'ausbildungsleitung', name: 'Ausbildungsleitung', color: '#c084fc', icon: '⚙️', isSystem: true, isAdmin: false, isMasterAdmin: false, canDelete: false, isInstructor: true, canManageInstructors: true, canPostNews: true, allowedLinkKats: { 'Ausbildung': true, 'Luftrettung': true, 'MD Intern': true, 'Allgemein': true }, allowedCmdKats: { 'Ausbildung': true, 'Luftrettung': true, 'T-Codes': true, 'Funkcodes': true, 'Abkürzungen & Dokumente': true, 'Allgemein': true } },
+        ausbilder: { id: 'ausbilder', name: 'Ausbilder', color: '#8b5cf6', icon: '🎓', isSystem: true, isAdmin: false, isMasterAdmin: false, canDelete: false, isInstructor: true, canManageInstructors: false, canPostNews: false, allowedLinkKats: { 'Ausbildung': true, 'MD Intern': true, 'Allgemein': true }, allowedCmdKats: { 'Ausbildung': true, 'T-Codes': true, 'Funkcodes': true, 'Abkürzungen & Dokumente': true, 'Allgemein': true } },
+        ehk: { id: 'ehk', name: 'EHK-Ausbilder', color: '#10b981', icon: '🩺', isSystem: true, isAdmin: false, isMasterAdmin: false, canDelete: false, isInstructor: true, canManageInstructors: false, canPostNews: false, allowedLinkKats: { 'EHK': true, 'MD Intern': true, 'Allgemein': true }, allowedCmdKats: { 'EHK': true, 'T-Codes': true, 'Funkcodes': true, 'Abkürzungen & Dokumente': true, 'Allgemein': true } },
+        cls: { id: 'cls', name: 'CLS-Ausbilder', color: '#06b6d4', icon: '💉', isSystem: true, isAdmin: false, isMasterAdmin: false, canDelete: false, isInstructor: true, canManageInstructors: false, canPostNews: false, allowedLinkKats: { 'CLS': true, 'MD Intern': true, 'Allgemein': true }, allowedCmdKats: { 'CLS': true, 'T-Codes': true, 'Funkcodes': true, 'Abkürzungen & Dokumente': true, 'Allgemein': true } },
+        personal: { id: 'personal', name: 'Personalabteilung', color: '#3b82f6', icon: '📋', isSystem: true, isAdmin: false, isMasterAdmin: false, canDelete: false, isInstructor: false, canManageInstructors: false, canPostNews: false, allowedLinkKats: { 'Personalabteilung': true, 'MD Intern': true, 'Allgemein': true }, allowedCmdKats: { 'Personalabteilung': true, 'T-Codes': true, 'Funkcodes': true, 'Abkürzungen & Dokumente': true, 'Allgemein': true } },
+        psychologie: { id: 'psychologie', name: 'Psychologie', color: '#ec4899', icon: '🧠', isSystem: true, isAdmin: false, isMasterAdmin: false, canDelete: false, isInstructor: false, canManageInstructors: false, canPostNews: false, allowedLinkKats: { 'Psychologie': true, 'MD Intern': true, 'Allgemein': true }, allowedCmdKats: { 'Psychologie': true, 'T-Codes': true, 'Funkcodes': true, 'Abkürzungen & Dokumente': true, 'Allgemein': true } },
+        luftrettung: { id: 'luftrettung', name: 'Luftrettung', color: '#0284c7', icon: '🚁', isSystem: true, isAdmin: false, isMasterAdmin: false, canDelete: false, isInstructor: false, canManageInstructors: false, canPostNews: false, allowedLinkKats: { 'Luftrettung': true, 'MD Intern': true, 'Allgemein': true }, allowedCmdKats: { 'Luftrettung': true, 'T-Codes': true, 'Funkcodes': true, 'Abkürzungen & Dokumente': true, 'Allgemein': true } }
     };
     let cachedRoles = Object.assign({}, defaultRoles);
 
@@ -1782,13 +1782,37 @@ Frage: In welches GPS loggst du dich ein?
         const eff = getUserEffectivePermissions(user);
         if (eff.isAdmin || eff.isMasterAdmin) return allCategories;
 
+        const userRoleIds = getUserRolesList(user);
+        const roleAllowedSet = new Set();
+
+        userRoleIds.forEach(rId => {
+            const role = cachedRoles[rId] || defaultRoles[rId];
+            if (role && role.allowedLinkKats) {
+                Object.keys(role.allowedLinkKats).forEach(k => {
+                    if (role.allowedLinkKats[k] === true) roleAllowedSet.add(k.trim().toLowerCase());
+                });
+            }
+        });
+
         return allCategories.filter(kat => {
+            const katLower = kat.trim().toLowerCase();
+
             // Explicit block for user
             if (user.allowedLinkKats && user.allowedLinkKats[kat] === false) return false;
+            // Explicit allow for user
             if (user.allowedLinkKats && user.allowedLinkKats[kat] === true) return true;
 
-            // Visible by default
-            return true;
+            // Granted by any of user's assigned roles
+            if (roleAllowedSet.has(katLower)) return true;
+
+            // Matching role name / ID (e.g. role 'luftrettung' matches category 'Luftrettung')
+            if (userRoleIds.some(rId => rId.toLowerCase() === katLower || (cachedRoles[rId]?.name || '').toLowerCase() === katLower)) return true;
+
+            // Standard general categories open to all active personnel
+            if (katLower === 'md intern' || katLower === 'allgemein') return true;
+
+            // Specialized category (Luftrettung, Psychologie, Ausbildung, Personal, etc.) requires role
+            return false;
         });
     }
 
@@ -1797,13 +1821,37 @@ Frage: In welches GPS loggst du dich ein?
         const eff = getUserEffectivePermissions(user);
         if (eff.isAdmin || eff.isMasterAdmin) return allCategories;
 
+        const userRoleIds = getUserRolesList(user);
+        const roleAllowedCmdSet = new Set();
+
+        userRoleIds.forEach(rId => {
+            const role = cachedRoles[rId] || defaultRoles[rId];
+            if (role && role.allowedCmdKats) {
+                Object.keys(role.allowedCmdKats).forEach(k => {
+                    if (role.allowedCmdKats[k] === true) roleAllowedCmdSet.add(k.trim().toLowerCase());
+                });
+            }
+        });
+
         return allCategories.filter(kat => {
+            const katLower = kat.trim().toLowerCase();
+
             // Explicit block for user
             if (user.allowedCmdKats && user.allowedCmdKats[kat] === false) return false;
+            // Explicit allow for user
             if (user.allowedCmdKats && user.allowedCmdKats[kat] === true) return true;
 
-            // Visible by default
-            return true;
+            // Granted by any of user's assigned roles
+            if (roleAllowedCmdSet.has(katLower)) return true;
+
+            // Matching role name / ID
+            if (userRoleIds.some(rId => rId.toLowerCase() === katLower || (cachedRoles[rId]?.name || '').toLowerCase() === katLower)) return true;
+
+            // Standard general command categories visible to everyone
+            if (katLower === 't-codes' || katLower === 'funkcodes' || katLower === 'abkürzungen & dokumente' || katLower === 'allgemein') return true;
+
+            // Specialized category (Luftrettung, Psychologie, Ausbildung, etc.) requires role
+            return false;
         });
     }
 
@@ -1864,7 +1912,10 @@ Frage: In welches GPS loggst du dich ein?
         cmd_28: { name: "!pruefung", desc: "Prüfungsanmeldung", kat: "Ausbildung" },
         cmd_29: { name: "/medic", desc: "Notruf annehmen", kat: "Allgemein" },
         cmd_30: { name: "/revive", desc: "Patient wiederbeleben", kat: "Allgemein" },
-        cmd_31: { name: "/heal", desc: "Patient heilen / behandeln", kat: "Allgemein" }
+        cmd_31: { name: "/heal", desc: "Patient heilen / behandeln", kat: "Allgemein" },
+        cmd_lr1: { name: "!luftrettung", desc: "Luftrettung / Helikopter anfordern", kat: "Luftrettung" },
+        cmd_lr2: { name: "!heli", desc: "Helikopter Landeplatz absichern", kat: "Luftrettung" },
+        cmd_lr3: { name: "!wind", desc: "Windenrettung / Seilwinde aktivieren", kat: "Luftrettung" }
     };
 
     function toggleAuthTab(tab) {
@@ -2542,10 +2593,12 @@ dispEl.textContent = (hierarchieDaten[key] !== undefined && hierarchieDaten[key]
         if (linksCont) {
             linksCont.innerHTML = "";
             const allowedLinks = role.allowedLinkKats || {};
-            allLinkCategories.forEach(kat => {
-                const isChecked = allowedLinks[kat] === true;
+            const standardLinkKats = ['MD Intern', 'Allgemein', 'Ausbildung', 'Luftrettung', 'Psychologie', 'Personalabteilung', 'EHK', 'CLS'];
+            const allAvailableLinks = Array.from(new Set([...standardLinkKats, ...allLinkCategories])).sort();
+            allAvailableLinks.forEach(kat => {
+                const isChecked = allowedLinks[kat] === true || (role.isMasterAdmin || role.isAdmin);
                 linksCont.innerHTML += `
-                <label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-size:11px;">
+                <label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-size:12px; padding:3px 6px; border-radius:6px; background:rgba(255,255,255,0.03);">
                     <input type="checkbox" class="role-link-kat-cb" value="${kat}" ${isChecked ? 'checked' : ''}>
                     <span>${kat}</span>
                 </label>`;
@@ -2557,10 +2610,12 @@ dispEl.textContent = (hierarchieDaten[key] !== undefined && hierarchieDaten[key]
         if (cmdsCont) {
             cmdsCont.innerHTML = "";
             const allowedCmds = role.allowedCmdKats || {};
-            allCmdCategories.forEach(kat => {
-                const isChecked = allowedCmds[kat] === true;
+            const standardCmdKats = ['T-Codes', 'Funkcodes', 'Abkürzungen & Dokumente', 'Allgemein', 'Ausbildung', 'Luftrettung', 'Psychologie', 'Personalabteilung', 'EHK', 'CLS'];
+            const allAvailableCmds = Array.from(new Set([...standardCmdKats, ...allCmdCategories])).sort();
+            allAvailableCmds.forEach(kat => {
+                const isChecked = allowedCmds[kat] === true || (role.isMasterAdmin || role.isAdmin);
                 cmdsCont.innerHTML += `
-                <label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-size:11px;">
+                <label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-size:12px; padding:3px 6px; border-radius:6px; background:rgba(255,255,255,0.03);">
                     <input type="checkbox" class="role-cmd-kat-cb" value="${kat}" ${isChecked ? 'checked' : ''}>
                     <span>${kat}</span>
                 </label>`;
@@ -3508,42 +3563,40 @@ Die Medics haben die alleinige Entscheidung zu treffen, welche Personen nach ein
             passPercentage: 60,
             passScore: 12,
             introHeader: "Grundausbildung 2",
-            introText: "Willkommen zur Grundausbildung 2.\nVertiefung von Dienstabläufen, Behandlungsstandards und Funkdisziplin.",
+            introText: "Willkommen zur Grundausbildung 2.\nVertiefung von Behandlungsabläufen, Materialkunde und Notfallversorgung.",
             questions: [
                 { id: 1, text: "Welche Medikamentendosis wird bei einer Schusswunde standardmäßig verabreicht?", options: ["5mg Schmerzmittel", "10mg Schmerzmittel", "15mg Schmerzmittel", "20mg Schmerzmittel"], correctAnswers: [3] },
                 { id: 2, text: "Welche Materialien werden für eine Schnittwunde benötigt?", options: ["Wundreiniger, Nähset, Verband, 15mg Schmerzmittel", "Schiene, Kühlpack, 5mg Schmerzmittel", "Kugelzange, 20mg Schmerzmittel", "Nur Verband"], correctAnswers: [0] },
-                { id: 3, text: "Was ist der erste Schritt bei jeder Patientenbehandlung?", options: ["Rechnung stellen / Vitalwerte prüfen", "Sofort operieren", "Medikamente spritzen", "Patient wegschicken"], correctAnswers: [0] },
-                { id: 4, text: "Darf ein Notfallpatient abgewiesen werden, wenn er keine Behandlung bezahlen kann?", options: ["Ja, sofort", "Nein, Notfallversorgung hat stets Vorrang", "Nur wenn kein Arzt da ist", "Nur mit Erlaubnis der Polizei"], correctAnswers: [1] },
-                { id: 5, text: "Wie verhält man sich bei einer aktiven Schießerei am Einsatzort?", options: ["Sofort mitten rein rennen", "Außerhalb der Gefahrenzone auf Freigabe (Code 4) der Exekutive warten", "Den Schützen ansprechen", "Den RTW als Deckung vorfahren"], correctAnswers: [1] }
+                { id: 3, text: "Was ist der erste Schritt bei jeder Patientenbehandlung?", options: ["Vitalwerte prüfen / Anamnese durchführen", "Sofort operieren", "Medikamente spritzen", "Patient wegschicken"], correctAnswers: [0] },
+                { id: 4, text: "Welche Materialien werden zur Behandlung einer Fraktur (Knochenbruch) benötigt?", options: ["Schiene, Kühlpack, Verband, 10mg Schmerzmittel", "Kugelzange und Nähset", "Nur Schmerzmittel", "Defibrillator"], correctAnswers: [0] },
+                { id: 5, text: "Welche Materialien werden zur Behandlung einer Schusswunde benötigt?", options: ["Wundreiniger, Kugelzange, Nähset, Verband, 20mg Schmerzmittel", "Nur Verband", "Kühlpack und Schiene", "Magenpumpe"], correctAnswers: [0] },
+                { id: 6, text: "Welche Materialien werden bei Verbrennungen benötigt?", options: ["Brandsalbe, steriler Verband, 10mg Schmerzmittel", "Nähset und Kugelzange", "Nur Kühlpack", "Schiene"], correctAnswers: [0] },
+                { id: 7, text: "Darf ein Notfallpatient abgewiesen werden, wenn er keine Behandlung bezahlen kann?", options: ["Nein, Notfallversorgung hat stets Vorrang", "Ja, sofort", "Nur wenn kein Arzt da ist", "Nur mit Erlaubnis der Polizei"], correctAnswers: [0] },
+                { id: 8, text: "Wie verhält man sich bei einer aktiven Schießerei am Einsatzort?", options: ["Außerhalb der Gefahrenzone auf Freigabe (Code 4) der Exekutive warten", "Sofort mitten rein rennen", "Den Schützen ansprechen", "Den RTW als Deckung vorfahren"], correctAnswers: [0] },
+                { id: 9, text: "In welcher Reihenfolge erfolgt die Dokumentation eines Einsatzes?", options: ["Einsatz annehmen (10-1), Ankunft melden (10-2), Behandlung durchführen & buchen, Einsatz beenden (10-5)", "Einsatz beenden bevor man ankommt", "Gar nichts funken", "Nur Rechnung stellen"], correctAnswers: [0] },
+                { id: 10, text: "Wie wird eine Reanimation im Außendienst ordnungsgemäß abgewickelt?", options: ["Reanimations-Set/Defibrillator anwenden, Herzdruckmassage, Vitalwerte stabilisieren, Verlegung ins MD (10-3)", "Patient liegen lassen", "Nur Schmerzmittel geben", "Direkt ins Auto setzen ohne Behandlung"], correctAnswers: [0] }
             ]
         },
-        exam_dv1: {
-            id: "exam_dv1",
-            title: "Dienstvorschrift 1 (DV1)",
+        exam_dv: {
+            id: "exam_dv",
+            title: "Dienstvorschriften (DV)",
             kat: "Dienstvorschriften",
-            timeLimitMinutes: 25,
+            timeLimitMinutes: 30,
             passPercentage: 70,
-            passScore: 10,
-            introHeader: "Dienstvorschriften 1",
-            introText: "Überprüfung der allgemeinen Dienstvorschriften und Verhaltensregeln.",
+            passScore: 14,
+            introHeader: "Dienstvorschriften (DV)",
+            introText: "Offizielle Überprüfung der Dienstvorschriften, Verhaltensrichtlinien, Funkordnung und Sonderregeln des SAMD.",
             questions: [
-                { id: 1, text: "Wer ist weisungsberechtigt gegenüber den Mitarbeitern im Dienst?", options: ["Jeder Bürger", "Die anwesende Schichtleitung & Führungsebene", "Nur der Chief", "Niemand"], correctAnswers: [1] },
-                { id: 2, text: "Wann darf das Sondersignal (Blaulicht & Sirene) eingesetzt werden?", options: ["Immer wenn man schnell fahren will", "Nur bei dringenden Notfalleinsätzen oder Einsatzfahrten", "Zum Spaß", "Nur auf dem Highway"], correctAnswers: [1] },
-                { id: 3, text: "Wie ist die Schweigepflicht gegenüber Dritten geregelt?", options: ["Patientendaten sind streng vertraulich und dürfen nicht an Unbefugte weitergegeben werden", "Man darf alles auf Social Media posten", "Gilt nur für Chefs", "Gibt keine Schweigepflicht"], correctAnswers: [0] }
-            ]
-        },
-        exam_dv2: {
-            id: "exam_dv2",
-            title: "Dienstvorschrift 2 (DV2)",
-            kat: "Dienstvorschriften",
-            timeLimitMinutes: 25,
-            passPercentage: 70,
-            passScore: 10,
-            introHeader: "Dienstvorschriften 2",
-            introText: "Vertiefung der Dienstvorschriften für Fortgeschrittene.",
-            questions: [
-                { id: 1, text: "Welche Pflicht besteht bezüglich der Dokumentation von Behandlungen?", options: ["Keine Dokumentation nötig", "Jede Behandlung und jeder Materialverbrauch muss ordnungsgemäß im System protokolliert werden", "Nur wenn der Patient stirbt", "Nur am Wochenende"], correctAnswers: [1] },
-                { id: 2, text: "Wie ist bei Dienstabtritt mit Ausrüstung und Dienstfahrzeugen zu verfahren?", options: ["Fahrzeug irgendwo abstellen und Schlüssel stecken lassen", "Fahrzeug einparken/reparieren und Ausrüstung ordnungsgemäß zurücklegen", "Ausrüstung mit nach Hause nehmen", "Fahrzeug verkaufen"], correctAnswers: [1] }
+                { id: 1, text: "Wer ist weisungsberechtigt gegenüber den Mitarbeitern im Dienst?", options: ["Die anwesende Schichtleitung & Führungsebene (High & Mid Command)", "Jeder Bürger", "Nur der Chief", "Niemand"], correctAnswers: [0] },
+                { id: 2, text: "Wann darf das Sondersignal (Blaulicht & Sirene, Code 3) eingesetzt werden?", options: ["Ausschließlich bei dringenden Notfalleinsätzen, akuter Lebensgefahr oder autorisierten Einsatzfahrten", "Immer wenn man schnell fahren will", "Zum Spaß", "Nur auf dem Highway"], correctAnswers: [0] },
+                { id: 3, text: "Wie ist die ärztliche Schweigepflicht gegenüber Dritten geregelt?", options: ["Patientendaten und Diagnosen sind streng vertraulich und dürfen nicht an Unbefugte oder Zivilisten weitergegeben werden", "Man darf alles auf Social Media posten", "Gilt nur für Chefärzte", "Gibt keine Schweigepflicht"], correctAnswers: [0] },
+                { id: 4, text: "Welche Pflicht besteht bezüglich der Dokumentation von Behandlungen und Materialverbrauch?", options: ["Jede Behandlung, Patient und jeder Materialverbrauch muss ordnungsgemäß und zeitnah im MD-System live protokolliert werden", "Keine Dokumentation nötig", "Nur wenn der Patient stirbt", "Nur am Wochenende"], correctAnswers: [0] },
+                { id: 5, text: "Wie ist bei Dienstabtritt (10-12) mit Dienstkleidung, Ausrüstung und Dienstfahrzeugen zu verfahren?", options: ["Fahrzeug reparieren & einparken, Dienstkleidung ablegen, Medkits & Equipment vollständig im Spind verstauen und Funk verlassen", "Fahrzeug irgendwo abstellen und Schlüssel stecken lassen", "Ausrüstung mit nach Hause nehmen", "Fahrzeug verkaufen"], correctAnswers: [0] },
+                { id: 6, text: "§13.1 & §13.2: Wann dürfen Medics Personen an einem Schusswechsel hochholen / wiederbeleben?", options: ["Erst wenn von einer Seite alle beteiligten Personen bewusstlos sind, die Schießerei beendet ist und kein Schusswechsel mehr stattfindet", "Mitten im Schusswechsel hineinrennen", "Sofort nach dem ersten Schuss", "Nur mit Erlaubnis der Gangs"], correctAnswers: [0] },
+                { id: 7, text: "§13.3: Was gilt bezüglich Personen, die Medics an ihrer Arbeit hindern oder bedrohen?", options: ["Einen Medic von der Arbeit abzuhalten ist verboten; bei Bedrohung ist die Eigensicherung vorrangig und Unterstützung (PD/11-99) anzufordern", "Sich auf eine Schlägerei einlassen", "Sofort nach Hause gehen", "Waffen ziehen"], correctAnswers: [0] },
+                { id: 8, text: "Wie verhält sich ein Mitarbeiter bezüglich Korruption, Diebstahl von Medikamenten oder illegalen Gegenständen?", options: ["Medics sind absolut gesetzestreu, Bestechung und Weitergabe von Dienstmaterial an Unbefugte führt zur sofortigen Entlassung (Blacklist)", "Ist erlaubt wenn man Geld braucht", "Medikamente dürfen an Freunde verschenkt werden", "Nur mit Erlaubnis der Schichtleitung"], correctAnswers: [0] },
+                { id: 9, text: "Welche Funksprüche haben im Funkverkehr absolute Priorität?", options: ["11-99 (Medic in Gefahr), 10-20 (Schussgefecht) und akute Notrufe der Leitstelle", "Smalltalk und Begrüßungen", "Pausenanfragen", "Fahrzeugwünsche"], correctAnswers: [0] },
+                { id: 10, text: "Wie ist das Verhalten bei Verkehrskontrollen durch die Polizei (SAPD) geregelt?", options: ["Medics bleiben ruhig, kooperativ, leisten keine Gegenwehr und folgen den Anweisungen der Exekutive", "Sofort flüchten", "Diskutieren und die Sirene anmachen", "Den Dienstausweis verweigern"], correctAnswers: [0] }
             ]
         },
         exam_para1: {
@@ -3560,46 +3613,55 @@ Die Medics haben die alleinige Entscheidung zu treffen, welche Personen nach ein
                 { id: 2, text: "Welche Maßnahme wird bei einem schweren Spannungspneumothorax eingeleitet?", options: ["Entlastungspunktion / Thoraxdrainage", "Nur Schmerzmittel", "Patient hinsetzen und warten", "Arm schienen"], correctAnswers: [0] }
             ]
         },
-        exam_ehk: {
-            id: "exam_ehk",
-            title: "Erste-Hilfe-Kurs (EHK)",
-            kat: "Erste Hilfe",
-            timeLimitMinutes: 20,
-            passPercentage: 60,
-            passScore: 10,
-            introHeader: "Erste-Hilfe-Kurs Prüfung",
-            introText: "Grundlagen der lebensrettenden Sofortmaßnahmen und Notfallversorgung.",
-            questions: [
-                { id: 1, text: "Welche Schritte umfasst die Rettungskette?", options: ["Absichern, Notruf, Erste Hilfe, Rettungsdienst, Krankenhaus", "Direkt ins Krankenhaus fahren", "Nur Notruf wählen", "Zuschauen und filmen"], correctAnswers: [0] },
-                { id: 2, text: "In welchem Rhythmus wird die Herzdruckmassage bei einer Reanimation durchgeführt?", options: ["30 Herzdruckmassagen zu 2 Beatmungen", "10 zu 10", "100 Beatmungen ohne Massage", "50 zu 50"], correctAnswers: [0] }
-            ]
-        },
-        exam_cls: {
-            id: "exam_cls",
-            title: "Combat Life Saver (CLS)",
-            kat: "Sonderausbildung",
-            timeLimitMinutes: 25,
+        exam_para2: {
+            id: "exam_para2",
+            title: "Paramedic 2 (Erweiterte Notfallmedizin)",
+            kat: "Paramedic",
+            timeLimitMinutes: 30,
             passPercentage: 75,
             passScore: 15,
-            introHeader: "Combat Life Saver (CLS)",
-            introText: "Taktische Notfallmedizin und Versorgung unter erschwerten Bedingungen.",
+            introHeader: "Paramedic Stufe 2",
+            introText: "Vertiefung der erweiterten Notfallversorgung, Reanimation nach ACLS-Leitlinien und schwierige Atemwegs-Sicherung.",
             questions: [
-                { id: 1, text: "Was steht an erster Stelle bei 'Care Under Fire'?", options: ["Feuererwiderung / Gefahrenbereich verlassen", "Sofortige Wundversorgung vor Ort", "Puls messen", "Formulare ausfüllen"], correctAnswers: [0] },
-                { id: 2, text: "Wann wird ein Tourniquet angelegt?", options: ["Bei lebensbedrohlichen arteriellen Blutungen an Extremitäten", "Bei leichten Schürfwunden", "Bei Kopfschmerzen", "Als Armbinde"], correctAnswers: [0] }
+                { id: 1, text: "Welche Medikamente werden bei einer Reanimation (Asystolie / PEA) nach ACLS-Standard verabreicht?", options: ["1mg Adrenalin alle 3-5 Minuten", "100mg Morphin sofort", "Nur Kochsalzlösung", "Aspirin 500mg"], correctAnswers: [0] },
+                { id: 2, text: "Wie ist das Vorgehen bei einem Spannungspneumothorax im Außeneinsatz?", options: ["Sofortige Nadeldekompression im 2. ICR Medioklavikularlinie oder 4./5. ICR vordere Axillarlinie", "Nur Sauerstoffgabe über Maske", "Den Patienten flach hinlegen und abwarten", "Sofortige Intubation ohne Entlastung"], correctAnswers: [0] },
+                { id: 3, text: "Welches Verfahren wird angewendet, wenn eine konventionelle Intubation fehlgeschlagen ist (Cannot intubate, cannot oxygenate)?", options: ["Koniotomie / Not-Krikothyreoidotomie", "Patient aufgeben", "Einfach weiter Mund-zu-Mund beatmen", "Reanimation abbrechen"], correctAnswers: [0] },
+                { id: 4, text: "Welche Dosierung von Amiodaron wird bei refraktärem Kammerflimmern nach der 3. Defibrillation verabreicht?", options: ["300 mg i.v. Bolus", "50 mg i.v.", "1000 mg i.v.", "10 mg subkutan"], correctAnswers: [0] },
+                { id: 5, text: "Was bedeutet das 'cABCDE'-Schema in der präklinischen Traumabehandlung?", options: ["critical bleeding, Airway, Breathing, Circulation, Disability, Exposure", "control, Ambulance, Blood, Care, Doctor, Emergency", "cardiac, Asthma, Brain, Defibrillation, ECG", "clinical, Airway, Bone, Circulation, Drugs, Evacuation"], correctAnswers: [0] }
             ]
         },
-        exam_psgu: {
-            id: "exam_psgu",
-            title: "Psychologische Grundausbildung (PSGU)",
-            kat: "Psychologie",
-            timeLimitMinutes: 25,
-            passPercentage: 70,
-            passScore: 12,
-            introHeader: "Psychologische Grundausbildung",
-            introText: "Grundlagen der Krisenintervention und psychologischen Betreuung.",
+        exam_arzt1: {
+            id: "exam_arzt1",
+            title: "Arzt 1 (Allgemeinmedizin & Notfallversorgung)",
+            kat: "Doctor",
+            timeLimitMinutes: 35,
+            passPercentage: 80,
+            passScore: 16,
+            introHeader: "Fachprüfung Arzt 1",
+            introText: "Überprüfung des klinischen Basiswissens, Differentialdiagnostik und Stationsorganisation.",
             questions: [
-                { id: 1, text: "Wie geht man mit einer traumatisierten Person nach einem schweren Einsatz um?", options: ["Ruhig ansprechen, Sicherheit vermitteln, abschirmen und betreuen", "Anschreien", "Allein lassen", "Sofort entlassen"], correctAnswers: [0] },
-                { id: 2, text: "Wann ist ein psychologisches Gutachten (z.B. für Waffenschein) ungültig?", options: ["Bei akuter Eigen- oder Fremdgefährdung oder Täuschung", "Wenn der Patient müde ist", "Wenn es regnet", "Nie"], correctAnswers: [0] }
+                { id: 1, text: "Welche Diagnostik ist bei Verdacht auf akutes Koronarsyndrom (STEMI) unverzüglich durchzuführen?", options: ["12-Kanal-EKG, Troponin-Labor und Vitalparameter-Monitoring", "Nur Blutdruck messen", "MRT des Schädels", "Patient nach Hause schicken"], correctAnswers: [0] },
+                { id: 2, text: "Welche Erstmaßnahme erfolgt bei einem anaphylaktischen Schock (Grad III/IV)?", options: ["Adrenalin i.m. (0,5 mg), Sauerstoff, Volumengabe, H1/H2-Blocker & Glukokortikoide", "Nur ein Glas Wasser geben", "Vollnarkose ohne Monitoring", "Aspirin 1000mg"], correctAnswers: [0] },
+                { id: 3, text: "Wie wird eine hypertensive Entgleisung / Notfall mit Organbeteiligung therapiert?", options: ["Kontrollierte Blutdrucksenkung (z.B. Urapidil / Nitro), Zielsenkung ca. 20% in der ersten Stunde", "Sofortiger Blutdruckabfall auf 80/50 mmHg", "Keine Medikamente geben", "Koffeingabe"], correctAnswers: [0] },
+                { id: 4, text: "Welche Kriterien umfasst der qSOFA-Score zur Schnellerkennung einer Sepsis?", options: ["Atemfrequenz >= 22/min, veränderter mentaler Status (GCS < 15), systolischer Blutdruck <= 100 mmHg", "Körpergröße, Gewicht, Blutgruppe", "Nur Fieber über 38.5°C", "Puls unter 50/min"], correctAnswers: [0] },
+                { id: 5, text: "Welche Nahttechnik wird bei einer tiefen Platzwunde im Gesicht zur Minimierung der Narbenbildung bevorzugt?", options: ["Subkutane Fadenadaption und feine atraumatische Einzelknopfnähte (5-0 / 6-0)", "Grobe Klammernaht", "Klebeband ohne Desinfektion", "Gar keine Naht"], correctAnswers: [0] }
+            ]
+        },
+        exam_arzt2: {
+            id: "exam_arzt2",
+            title: "Arzt 2 (Notfallchirurgie & Chefarzt-Qualifikation)",
+            kat: "Doctor",
+            timeLimitMinutes: 40,
+            passPercentage: 85,
+            passScore: 18,
+            introHeader: "Prüfung Arzt 2 (Chefarzt-Qualifikation)",
+            introText: "Fortgeschrittene klinische Notfallchirurgie, Intensivmedizin und Führungskompetenz.",
+            questions: [
+                { id: 1, text: "Welche Indikation besteht für eine sofortige Notfall-Laparotomie im Schockraum?", options: ["Akutes Hämoperitoneum mit hämodynamischer Instabilität (z.B. Milz-/Leberruptur)", "Leichte Bauchschmerzen seit 3 Wochen", "Stabile Vitalwerte ohne freie Flüssigkeit im FAST-Ultraschall", "Chronische Gastritis"], correctAnswers: [0] },
+                { id: 2, text: "Welche Parameter sind bei einem schweren Schädel-Hirn-Trauma (SHT III) zur Vermeidung von Sekundärschäden zwingend einzuhalten?", options: ["Normoventilation (paCO2 35-40 mmHg), CPP > 60-70 mmHg, Vermeidung von Hypotonie & Hypoxie", "Tiefe Hyperventilation unter 20 mmHg", "Blutdruck unter 80 mmHg halten", "Keine Beatmung durchführen"], correctAnswers: [0] },
+                { id: 3, text: "Was ist das Prinzip des 'Damage Control Surgery' beim Polytrauma?", options: ["Schnelle Blutungskontrolle und Dekontamination, Stabilisierung auf Intensivstation vor definitiver Rekonstruktion", "Vollständige 10-stündige OP aller Frakturen sofort", "Nur Wundverband anlegen", "Verlegung ohne Stabilisierung"], correctAnswers: [0] },
+                { id: 4, text: "Welche Pflichten hat der diensthabende Chefarzt bei einem Massenanfall von Verletzten (MANV)?", options: ["Aktivierung des Notfallplans, Zuteilung der OP-Kapazitäten, Koordination mit der Einsatzleitung & Triage-Supervision", "Allein im OP operieren und Funk ausschalten", "Das Krankenhaus verlassen", "Nur Rezepte ausstellen"], correctAnswers: [0] },
+                { id: 5, text: "Welche Blutprodukte werden bei einer Massentransfusion nach Trauma-Protokoll standardmäßig verabreicht?", options: ["Ausgewogenes Verhältnis von Erythrozytenkonzentraten (EK), Fresh Frozen Plasma (FFP) und Thrombozyten (z.B. 1:1:1)", "Ausschließlich Kochsalzlösung", "Nur Glukose-Infusionen", "Reines Eigenblut ohne Testung"], correctAnswers: [0] }
             ]
         }
     };
@@ -3627,7 +3689,13 @@ Die Medics haben die alleinige Entscheidung zu treffen, welche Personen nach ein
     }
 
     function renderExamTab(examsData, usersData, submissionsData) {
-        cachedExams = Object.assign({}, defaultExams, examsData || {});
+        let rawExams = Object.assign({}, defaultExams, examsData || {});
+        delete rawExams.exam_ehk;
+        delete rawExams.exam_cls;
+        delete rawExams.exam_psgu;
+        delete rawExams.exam_dv1;
+        delete rawExams.exam_dv2;
+        cachedExams = rawExams;
 
         Object.keys(cachedExams).forEach(eId => {
             cachedExams[eId] = ensureExamHasDefaultHeaderFields(cachedExams[eId]);
@@ -4188,26 +4256,13 @@ Die Medics haben die alleinige Entscheidung zu treffen, welche Personen nach ein
             group = 3;
             const m = title.match(/(?:paramedic|para)\s*(\d+)/i);
             if (m) number = parseInt(m[1]);
+            else if (title.includes("2")) number = 2;
             else number = 1;
-        } else if (title.includes("erste hilfe") || title.includes("erste-hilfe") || title.includes("ehk") || kat.includes("erste hilfe")) {
+        } else if (title.includes("arzt") || title.includes("doctor") || kat.includes("doctor") || kat.includes("arzt")) {
             group = 4;
-            const m = title.match(/(?:ehk|erste hilfe)\s*(\d+)/i);
+            const m = title.match(/(?:notarzt|arzt|doctor)\s*(\d+)/i);
             if (m) number = parseInt(m[1]);
-            else number = 1;
-        } else if (title.includes("cls") || title.includes("combat") || kat.includes("sonderausbildung")) {
-            group = 5;
-            const m = title.match(/cls\s*(\d+)/i);
-            if (m) number = parseInt(m[1]);
-            else number = 1;
-        } else if (title.includes("psycholog") || title.includes("psgu") || kat.includes("psychologie")) {
-            group = 6;
-            const m = title.match(/(?:psgu|psycholog)\s*(\d+)/i);
-            if (m) number = parseInt(m[1]);
-            else number = 1;
-        } else if (title.includes("notarzt") || title.includes("arzt") || kat.includes("arzt")) {
-            group = 7;
-            const m = title.match(/(?:notarzt|arzt)\s*(\d+)/i);
-            if (m) number = parseInt(m[1]);
+            else if (title.includes("2")) number = 2;
             else number = 1;
         } else {
             group = 10;
@@ -4896,15 +4951,25 @@ Die Medics haben die alleinige Entscheidung zu treffen, welche Personen nach ein
             return;
         }
 
-        if (confirm("Möchtest du den offiziellen Standard-Prüfungskatalog (GA1, GA2, DV1, DV2, Paramedic, EHK, CLS, PSGU) aktualisieren und in die richtige Standard-Reihenfolge bringen?")) {
+        if (confirm("Möchtest du den offiziellen Standard-Prüfungskatalog (GA1, GA2, DV1, DV2, Paramedic 1 & 2, Arzt 1 & 2) aktualisieren und in die richtige Standard-Reihenfolge bringen?")) {
             const updates = {};
             Object.keys(defaultExams).forEach(eId => {
                 updates[`data/exams/${eId}`] = defaultExams[eId];
             });
+            updates['data/exams/exam_ehk'] = null;
+            updates['data/exams/exam_cls'] = null;
+            updates['data/exams/exam_psgu'] = null;
+            updates['data/exams/exam_dv1'] = null;
+            updates['data/exams/exam_dv2'] = null;
             updates['data/examOrder'] = null;
 
             db.ref().update(updates).then(() => {
                 alert("✅ Der offizielle Prüfungskatalog wurde erfolgreich aktualisiert und geordnet!");
+                delete cachedExams.exam_ehk;
+                delete cachedExams.exam_cls;
+                delete cachedExams.exam_psgu;
+                delete cachedExams.exam_dv1;
+                delete cachedExams.exam_dv2;
                 cachedExams = Object.assign({}, defaultExams, cachedExams);
                 cachedExamOrder = [];
                 renderExamTab(cachedExams, cachedUsers, cachedSubmissions);
