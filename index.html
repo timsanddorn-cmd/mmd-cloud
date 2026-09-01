@@ -3695,6 +3695,8 @@ Die Medics haben die alleinige Entscheidung zu treffen, welche Personen nach ein
         delete rawExams.exam_psgu;
         delete rawExams.exam_dv1;
         delete rawExams.exam_dv2;
+        delete rawExams.exam_para3;
+        delete rawExams.exam_arzt3;
         cachedExams = rawExams;
 
         Object.keys(cachedExams).forEach(eId => {
@@ -4961,6 +4963,8 @@ Die Medics haben die alleinige Entscheidung zu treffen, welche Personen nach ein
             updates['data/exams/exam_psgu'] = null;
             updates['data/exams/exam_dv1'] = null;
             updates['data/exams/exam_dv2'] = null;
+            updates['data/exams/exam_para3'] = null;
+            updates['data/exams/exam_arzt3'] = null;
             updates['data/examOrder'] = null;
 
             db.ref().update(updates).then(() => {
@@ -4970,6 +4974,8 @@ Die Medics haben die alleinige Entscheidung zu treffen, welche Personen nach ein
                 delete cachedExams.exam_psgu;
                 delete cachedExams.exam_dv1;
                 delete cachedExams.exam_dv2;
+                delete cachedExams.exam_para3;
+                delete cachedExams.exam_arzt3;
                 cachedExams = Object.assign({}, defaultExams, cachedExams);
                 cachedExamOrder = [];
                 renderExamTab(cachedExams, cachedUsers, cachedSubmissions);
