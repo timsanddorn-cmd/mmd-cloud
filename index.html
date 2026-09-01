@@ -79,34 +79,44 @@
 
         /* TOP BAR */
         .top-bar { 
-            display: grid; 
-            grid-template-columns: 1fr; 
-            gap: 12px; 
+            display: flex; 
+            flex-wrap: wrap; 
+            justify-content: space-between; 
             align-items: center; 
-            text-align: center;
+            gap: 12px 18px; 
             background: var(--grad-dark); 
-            padding: 14px 18px; 
+            padding: 12px 20px; 
             border-radius: 16px; 
             border: 1px solid var(--border); 
-            margin-bottom: 16px;
+            margin-bottom: 20px;
             box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
         }
-        @media (min-width: 768px) { .top-bar { grid-template-columns: auto 1fr auto; text-align: left; margin-bottom: 20px; } }
-        .top-bar h1 { font-size: 1.4rem; font-weight: 800; background: var(--grad-primary); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin: 0; }
-        
-        .medic-identity-display { font-size: 15px; font-weight: 700; color: var(--primary); display: flex; align-items: center; gap: 12px; justify-content: center; }
-        @media (min-width: 768px) { .medic-identity-display { justify-content: flex-start; } }
+        .medic-identity-display { 
+            font-size: 14px; 
+            font-weight: 700; 
+            color: var(--primary); 
+            display: flex; 
+            align-items: center; 
+            gap: 8px; 
+            flex-wrap: wrap;
+            max-width: 100%;
+        }
+        .top-bar-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-left: auto;
+        }
         .btn-logout { background: rgba(244, 63, 94, 0.15); border: 1px solid rgba(244, 63, 94, 0.3); color: var(--danger); padding: 7px 14px; border-radius: 8px; font-size: 12px; cursor: pointer; font-weight: 700; transition: all 0.2s; }
         .btn-logout:hover { background: var(--danger); color: #080c14; }
         .btn-admin-key { background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.3); color: var(--warning); padding: 7px 14px; border-radius: 8px; font-size: 12px; cursor: pointer; font-weight: 700; transition: all 0.2s; }
         .btn-admin-key:hover { background: var(--warning); color: #080c14; box-shadow: 0 0 12px rgba(245, 158, 11, 0.4); }
 
-        .info-zone { display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 600; justify-content: center; width: 100%; }
-        @media (min-width: 768px) { .info-zone { justify-content: flex-end; width: auto; } }
+        .info-zone { display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 600; }
         .date-display { color: var(--warning); background: rgba(251, 191, 36, 0.08); padding: 7px 15px; border-radius: 10px; border: 1px solid rgba(251, 191, 36, 0.2); }
         
-        .online-medics { background: rgba(56, 189, 248, 0.06); border: 1px solid rgba(56, 189, 248, 0.2); padding: 7px 15px; border-radius: 10px; display: flex; align-items: center; gap: 8px; justify-content: center; width: 100%; font-size: 13px; }
-        @media (min-width: 768px) { .online-medics { width: auto; } }
+        .online-medics { background: rgba(56, 189, 248, 0.06); border: 1px solid rgba(56, 189, 248, 0.2); padding: 7px 15px; border-radius: 10px; display: flex; align-items: center; gap: 8px; font-size: 13px; }
         .online-dot { width: 9px; height: 9px; background: var(--success); border-radius: 50%; display: inline-block; box-shadow: 0 0 10px var(--success); }
 
         /* TAB MANAGEMENT NAVIGATION */
@@ -282,16 +292,17 @@
         <!-- TOP BAR -->
         <div class="top-bar">
             <div class="medic-identity-display">
-                <span>🩺 Medic: <b id="topBarMedicName" style="color:#fff;">--</b></span>
+                <span>🩺 Medic:</span>
+                <span id="topBarMedicName" style="color:#fff; display:inline-flex; align-items:center; gap:6px; flex-wrap:wrap;">--</span>
+            </div>
+            <div class="top-bar-actions">
+                <div class="online-medics">
+                    <span class="online-dot"></span>
+                    <span>Im Dienst: <span id="onlineMedicsList" style="color:var(--primary); font-weight:700;">Verbinde...</span></span>
+                </div>
+                <div class="date-display">📅 <span id="liveDateDisplay">--.--.----</span></div>
                 <button id="adminKeyBtn" class="btn-admin-key" style="display:none;" onclick="openAdminKeyModal()" title="Admin-Zentralverwaltung">🔑 Admin</button>
                 <button class="btn-logout" onclick="handleDienstEndeLogout()">Dienst beenden 🚪</button>
-            </div>
-            <div class="online-medics">
-                <span class="online-dot"></span>
-                <span>Im Dienst: <span id="onlineMedicsList" style="color:var(--primary);">Verbinde...</span></span>
-            </div>
-            <div class="info-zone">
-                <div class="date-display">📅 <span id="liveDateDisplay">--.--.----</span></div>
             </div>
         </div>
 
@@ -1804,6 +1815,40 @@ Frage: In welches GPS loggst du dich ein?
         "Undefinierbar": ["Rechnung stellen", "Vitalwerte prüfen", "Wundreinigung durchführen", "Wunde nähen", "Verband anlegen", "Schmerzmittel verabreichen (10 mg)"]
     };
 
+    let defaultCommands = {
+        cmd_1: { name: "!Psych", desc: "Psychologie anfordern", kat: "Psychologie" },
+        cmd_2: { name: "!waffenschein", desc: "Warten für die Überprüfung", kat: "Psychologie" },
+        cmd_3: { name: "!gutachten", desc: "Psychologisches Gutachten ausstellen", kat: "Psychologie" },
+        cmd_4: { name: "!mpe", desc: "Medizinisch-Psychologische Untersuchung", kat: "Psychologie" },
+        cmd_5: { name: "/editmdthud", desc: "MD HUD anpassen", kat: "T-Codes" },
+        cmd_6: { name: "/t1", desc: "Status 1: Einsatzbereit auf Wache", kat: "T-Codes" },
+        cmd_7: { name: "/t2", desc: "Status 2: Einsatzbereit auf Funk", kat: "T-Codes" },
+        cmd_8: { name: "/t3", desc: "Status 3: Anfahrt zum Einsatzort", kat: "T-Codes" },
+        cmd_9: { name: "/t4", desc: "Status 4: Am Einsatzort eingetroffen", kat: "T-Codes" },
+        cmd_10: { name: "/t5", desc: "Status 5: Sprechwunsch", kat: "T-Codes" },
+        cmd_11: { name: "/t6", desc: "Status 6: Nicht einsatzbereit / Pause", kat: "T-Codes" },
+        cmd_12: { name: "/t7", desc: "Status 7: Patient aufgenommen / Transport", kat: "T-Codes" },
+        cmd_13: { name: "/t8", desc: "Status 8: Am Krankenhaus eingetroffen", kat: "T-Codes" },
+        cmd_14: { name: "10-4", desc: "Verstanden / Bestätigt", kat: "Funkcodes" },
+        cmd_15: { name: "10-7", desc: "Außer Dienst", kat: "Funkcodes" },
+        cmd_16: { name: "10-8", desc: "Im Dienst", kat: "Funkcodes" },
+        cmd_17: { name: "10-14", desc: "Begleitperson / Patiententransport", kat: "Funkcodes" },
+        cmd_18: { name: "10-20", desc: "Standort / Position durchgeben", kat: "Funkcodes" },
+        cmd_19: { name: "10-99", desc: "Notfall / Dringende Unterstützung", kat: "Funkcodes" },
+        cmd_20: { name: "Code 0", desc: "Dringender Notfall / Alle Einheiten", kat: "Funkcodes" },
+        cmd_21: { name: "Code 4", desc: "Lage unter Kontrolle", kat: "Funkcodes" },
+        cmd_22: { name: "CLS", desc: "Combat Life Saver", kat: "Abkürzungen & Dokumente" },
+        cmd_23: { name: "EHK", desc: "Erste-Hilfe-Kurs", kat: "Abkürzungen & Dokumente" },
+        cmd_24: { name: "PSGU", desc: "Psychologische Grundausbildung", kat: "Abkürzungen & Dokumente" },
+        cmd_25: { name: "GA", desc: "Grundausbildung", kat: "Abkürzungen & Dokumente" },
+        cmd_26: { name: "DV", desc: "Dienstvorschrift", kat: "Abkürzungen & Dokumente" },
+        cmd_27: { name: "!ausbildung", desc: "Ausbildungsanfrage stellen", kat: "Ausbildung" },
+        cmd_28: { name: "!pruefung", desc: "Prüfungsanmeldung", kat: "Ausbildung" },
+        cmd_29: { name: "/medic", desc: "Notruf annehmen", kat: "Allgemein" },
+        cmd_30: { name: "/revive", desc: "Patient wiederbeleben", kat: "Allgemein" },
+        cmd_31: { name: "/heal", desc: "Patient heilen / behandeln", kat: "Allgemein" }
+    };
+
     function toggleAuthTab(tab) {
         currentAuthTab = tab;
         document.getElementById('tabLoginBtn').classList.toggle('active', tab === 'login');
@@ -2910,6 +2955,25 @@ dispEl.textContent = (hierarchieDaten[key] !== undefined && hierarchieDaten[key]
         }
     }
 
+    function linkHinzufuegen() {
+        if (!sessionUser) return;
+        const eff = getUserEffectivePermissions(sessionUser);
+        if (!eff.isAdmin && !eff.isMasterAdmin) {
+            alert("❌ Nur Administratoren können neue Links hinzufügen!");
+            return;
+        }
+        const name = document.getElementById('linkName').value.trim();
+        const url = document.getElementById('linkUrl').value.trim();
+        const thema = document.getElementById('linkThema').value.trim();
+        if(!name || !url) { alert("Bitte Name und Internetadresse ausfüllen!"); return; }
+        db.ref("data/dienstLinks").push({ name: name, url: url, thema: thema || "Allgemein" }).then(() => {
+            document.getElementById('linkName').value = "";
+            document.getElementById('linkUrl').value = "";
+            document.getElementById('linkThema').value = "";
+            alert("✅ Link erfolgreich gespeichert!");
+        });
+    }
+
     function renderDienstLinks(links) {
         const container = document.getElementById('linksAccordionContainer'); if (!container) return; container.innerHTML = "";
         if (!links) { container.innerHTML = `<p style="color:var(--text-muted); text-align:center; padding: 20px;">Keine Links hinterlegt.</p>`; return; }
@@ -3032,7 +3096,9 @@ dispEl.textContent = (hierarchieDaten[key] !== undefined && hierarchieDaten[key]
     }
 
     function commandHinzufuegen() {
-        if (!sessionUser || !sessionUser.isAdmin) {
+        if (!sessionUser) return;
+        const eff = getUserEffectivePermissions(sessionUser);
+        if (!eff.isAdmin && !eff.isMasterAdmin) {
             alert("❌ Nur Administratoren können neue Commands hinzufügen!");
             return;
         }
@@ -3048,7 +3114,9 @@ dispEl.textContent = (hierarchieDaten[key] !== undefined && hierarchieDaten[key]
     }
 
     function bulkCommandsImportieren() {
-        if (!sessionUser || !sessionUser.isAdmin) {
+        if (!sessionUser) return;
+        const eff = getUserEffectivePermissions(sessionUser);
+        if (!eff.isAdmin && !eff.isMasterAdmin) {
             alert("❌ Nur Administratoren können Commands hinzufügen!");
             return;
         }
@@ -3370,6 +3438,108 @@ Die Medics haben die alleinige Entscheidung zu treffen, welche Personen nach ein
                 { id: 19, text: "Was bedeutet Status 3 bei Mitarbeitern?", options: ["Arbeitsbereit", "Beschäftigt / Pause", "Ausbildung", "Besprechung"], correctAnswers: [1] },
                 { id: 20, text: "Wer nimmt Die Funksprüche an von DOJ und PD (Sonderstreife im Dienst)?", options: ["Die Leitstelle", "Sonderstreife", "Jeder Mitarbeiter der im Dienst ist"], correctAnswers: [1] }
             ]
+        },
+        exam_ga2: {
+            id: "exam_ga2",
+            title: "Grundausbildung 2 (GA2)",
+            kat: "Grundausbildung",
+            timeLimitMinutes: 30,
+            passPercentage: 60,
+            passScore: 12,
+            introHeader: "Grundausbildung 2",
+            introText: "Willkommen zur Grundausbildung 2.\nVertiefung von Dienstabläufen, Behandlungsstandards und Funkdisziplin.",
+            questions: [
+                { id: 1, text: "Welche Medikamentendosis wird bei einer Schusswunde standardmäßig verabreicht?", options: ["5mg Schmerzmittel", "10mg Schmerzmittel", "15mg Schmerzmittel", "20mg Schmerzmittel"], correctAnswers: [3] },
+                { id: 2, text: "Welche Materialien werden für eine Schnittwunde benötigt?", options: ["Wundreiniger, Nähset, Verband, 15mg Schmerzmittel", "Schiene, Kühlpack, 5mg Schmerzmittel", "Kugelzange, 20mg Schmerzmittel", "Nur Verband"], correctAnswers: [0] },
+                { id: 3, text: "Was ist der erste Schritt bei jeder Patientenbehandlung?", options: ["Rechnung stellen / Vitalwerte prüfen", "Sofort operieren", "Medikamente spritzen", "Patient wegschicken"], correctAnswers: [0] },
+                { id: 4, text: "Darf ein Notfallpatient abgewiesen werden, wenn er keine Behandlung bezahlen kann?", options: ["Ja, sofort", "Nein, Notfallversorgung hat stets Vorrang", "Nur wenn kein Arzt da ist", "Nur mit Erlaubnis der Polizei"], correctAnswers: [1] },
+                { id: 5, text: "Wie verhält man sich bei einer aktiven Schießerei am Einsatzort?", options: ["Sofort mitten rein rennen", "Außerhalb der Gefahrenzone auf Freigabe (Code 4) der Exekutive warten", "Den Schützen ansprechen", "Den RTW als Deckung vorfahren"], correctAnswers: [1] }
+            ]
+        },
+        exam_dv1: {
+            id: "exam_dv1",
+            title: "Dienstvorschrift 1 (DV1)",
+            kat: "Dienstvorschriften",
+            timeLimitMinutes: 25,
+            passPercentage: 70,
+            passScore: 10,
+            introHeader: "Dienstvorschriften 1",
+            introText: "Überprüfung der allgemeinen Dienstvorschriften und Verhaltensregeln.",
+            questions: [
+                { id: 1, text: "Wer ist weisungsberechtigt gegenüber den Mitarbeitern im Dienst?", options: ["Jeder Bürger", "Die anwesende Schichtleitung & Führungsebene", "Nur der Chief", "Niemand"], correctAnswers: [1] },
+                { id: 2, text: "Wann darf das Sondersignal (Blaulicht & Sirene) eingesetzt werden?", options: ["Immer wenn man schnell fahren will", "Nur bei dringenden Notfalleinsätzen oder Einsatzfahrten", "Zum Spaß", "Nur auf dem Highway"], correctAnswers: [1] },
+                { id: 3, text: "Wie ist die Schweigepflicht gegenüber Dritten geregelt?", options: ["Patientendaten sind streng vertraulich und dürfen nicht an Unbefugte weitergegeben werden", "Man darf alles auf Social Media posten", "Gilt nur für Chefs", "Gibt keine Schweigepflicht"], correctAnswers: [0] }
+            ]
+        },
+        exam_dv2: {
+            id: "exam_dv2",
+            title: "Dienstvorschrift 2 (DV2)",
+            kat: "Dienstvorschriften",
+            timeLimitMinutes: 25,
+            passPercentage: 70,
+            passScore: 10,
+            introHeader: "Dienstvorschriften 2",
+            introText: "Vertiefung der Dienstvorschriften für Fortgeschrittene.",
+            questions: [
+                { id: 1, text: "Welche Pflicht besteht bezüglich der Dokumentation von Behandlungen?", options: ["Keine Dokumentation nötig", "Jede Behandlung und jeder Materialverbrauch muss ordnungsgemäß im System protokolliert werden", "Nur wenn der Patient stirbt", "Nur am Wochenende"], correctAnswers: [1] },
+                { id: 2, text: "Wie ist bei Dienstabtritt mit Ausrüstung und Dienstfahrzeugen zu verfahren?", options: ["Fahrzeug irgendwo abstellen und Schlüssel stecken lassen", "Fahrzeug einparken/reparieren und Ausrüstung ordnungsgemäß zurücklegen", "Ausrüstung mit nach Hause nehmen", "Fahrzeug verkaufen"], correctAnswers: [1] }
+            ]
+        },
+        exam_para1: {
+            id: "exam_para1",
+            title: "Paramedic 1 (Praxis & Theorie)",
+            kat: "Paramedic",
+            timeLimitMinutes: 30,
+            passPercentage: 75,
+            passScore: 15,
+            introHeader: "Paramedic Stufe 1",
+            introText: "Erweiterte Notfallmedizin und Rettungsdienstpraxis.",
+            questions: [
+                { id: 1, text: "Was bedeutet Triage bei einem Massenanfall von Verletzten (MANV)?", options: ["Priorisierung der Patienten nach Schwere der Verletzung", "Wer zuerst kommt, wird zuerst behandelt", "Alle gleichzeitig behandeln", "Nur Privatversicherte behandeln"], correctAnswers: [0] },
+                { id: 2, text: "Welche Maßnahme wird bei einem schweren Spannungspneumothorax eingeleitet?", options: ["Entlastungspunktion / Thoraxdrainage", "Nur Schmerzmittel", "Patient hinsetzen und warten", "Arm schienen"], correctAnswers: [0] }
+            ]
+        },
+        exam_ehk: {
+            id: "exam_ehk",
+            title: "Erste-Hilfe-Kurs (EHK)",
+            kat: "Erste Hilfe",
+            timeLimitMinutes: 20,
+            passPercentage: 60,
+            passScore: 10,
+            introHeader: "Erste-Hilfe-Kurs Prüfung",
+            introText: "Grundlagen der lebensrettenden Sofortmaßnahmen und Notfallversorgung.",
+            questions: [
+                { id: 1, text: "Welche Schritte umfasst die Rettungskette?", options: ["Absichern, Notruf, Erste Hilfe, Rettungsdienst, Krankenhaus", "Direkt ins Krankenhaus fahren", "Nur Notruf wählen", "Zuschauen und filmen"], correctAnswers: [0] },
+                { id: 2, text: "In welchem Rhythmus wird die Herzdruckmassage bei einer Reanimation durchgeführt?", options: ["30 Herzdruckmassagen zu 2 Beatmungen", "10 zu 10", "100 Beatmungen ohne Massage", "50 zu 50"], correctAnswers: [0] }
+            ]
+        },
+        exam_cls: {
+            id: "exam_cls",
+            title: "Combat Life Saver (CLS)",
+            kat: "Sonderausbildung",
+            timeLimitMinutes: 25,
+            passPercentage: 75,
+            passScore: 15,
+            introHeader: "Combat Life Saver (CLS)",
+            introText: "Taktische Notfallmedizin und Versorgung unter erschwerten Bedingungen.",
+            questions: [
+                { id: 1, text: "Was steht an erster Stelle bei 'Care Under Fire'?", options: ["Feuererwiderung / Gefahrenbereich verlassen", "Sofortige Wundversorgung vor Ort", "Puls messen", "Formulare ausfüllen"], correctAnswers: [0] },
+                { id: 2, text: "Wann wird ein Tourniquet angelegt?", options: ["Bei lebensbedrohlichen arteriellen Blutungen an Extremitäten", "Bei leichten Schürfwunden", "Bei Kopfschmerzen", "Als Armbinde"], correctAnswers: [0] }
+            ]
+        },
+        exam_psgu: {
+            id: "exam_psgu",
+            title: "Psychologische Grundausbildung (PSGU)",
+            kat: "Psychologie",
+            timeLimitMinutes: 25,
+            passPercentage: 70,
+            passScore: 12,
+            introHeader: "Psychologische Grundausbildung",
+            introText: "Grundlagen der Krisenintervention und psychologischen Betreuung.",
+            questions: [
+                { id: 1, text: "Wie geht man mit einer traumatisierten Person nach einem schweren Einsatz um?", options: ["Ruhig ansprechen, Sicherheit vermitteln, abschirmen und betreuen", "Anschreien", "Allein lassen", "Sofort entlassen"], correctAnswers: [0] },
+                { id: 2, text: "Wann ist ein psychologisches Gutachten (z.B. für Waffenschein) ungültig?", options: ["Bei akuter Eigen- oder Fremdgefährdung oder Täuschung", "Wenn der Patient müde ist", "Wenn es regnet", "Nie"], correctAnswers: [0] }
+            ]
         }
     };
 
@@ -3382,7 +3552,9 @@ Die Medics haben die alleinige Entscheidung zu treffen, welche Personen nach ein
     let cachedExamOrder = [];
 
     function isUserInstructor() {
-        return sessionUser && (sessionUser.isAdmin === true || sessionUser.isInstructor === true);
+        if (!sessionUser) return false;
+        const eff = getUserEffectivePermissions(sessionUser);
+        return eff.isAdmin || eff.isMasterAdmin || eff.isInstructor || eff.canManageInstructors;
     }
 
     function switchInstructorTab(tabId, btnEl) {
@@ -3395,9 +3567,6 @@ Die Medics haben die alleinige Entscheidung zu treffen, welche Personen nach ein
 
     function renderExamTab(examsData, usersData, submissionsData) {
         cachedExams = Object.assign({}, defaultExams, examsData || {});
-        delete cachedExams.exam_ehk;
-        delete cachedExams.exam_cls;
-        delete cachedExams.exam_psgu;
 
         Object.keys(cachedExams).forEach(eId => {
             cachedExams[eId] = ensureExamHasDefaultHeaderFields(cachedExams[eId]);
@@ -3926,7 +4095,8 @@ Die Medics haben die alleinige Entscheidung zu treffen, welche Personen nach ein
 
     function canManageInstructors(u) {
         if (!u) return false;
-        return u.isAdmin === true || u.canManageInstructors === true;
+        const eff = getUserEffectivePermissions(u);
+        return eff.isAdmin || eff.isMasterAdmin || eff.canManageInstructors;
     }
 
     function getExamSortScore(exam) {
@@ -4032,24 +4202,33 @@ Die Medics haben die alleinige Entscheidung zu treffen, welche Personen nach ein
 
     function isExamAllowedToSee(u, examId) {
         if (!u) return false;
-        if (u.isAdmin === true) return true;
-        if (u.isInstructor !== true) return false;
-        const allowed = u.instructorAllowedSeeExams || {};
-        return allowed[examId] === true;
+        const eff = getUserEffectivePermissions(u);
+        if (eff.isAdmin || eff.isMasterAdmin || eff.canManageInstructors) return true;
+        if (!eff.isInstructor) return false;
+        const allowed = u.instructorAllowedSeeExams;
+        if (allowed && Object.keys(allowed).length > 0) {
+            return allowed[examId] === true;
+        }
+        return true;
     }
 
     function isExamAllowedToManage(u, examId) {
         if (!u) return false;
-        if (u.isAdmin === true) return true;
-        if (u.isInstructor !== true) return false;
-        const allowed = u.instructorAllowedManageExams || {};
-        return allowed[examId] === true;
+        const eff = getUserEffectivePermissions(u);
+        if (eff.isAdmin || eff.isMasterAdmin || eff.canManageInstructors) return true;
+        if (!eff.isInstructor) return false;
+        const allowed = u.instructorAllowedManageExams;
+        if (allowed && Object.keys(allowed).length > 0) {
+            return allowed[examId] === true;
+        }
+        return true;
     }
 
     function canInstructorDeleteSubmission() {
         if (!sessionUser) return false;
-        if (sessionUser.isAdmin === true) return true;
-        return sessionUser.isInstructor === true && sessionUser.canDeleteSubmissions === true;
+        const eff = getUserEffectivePermissions(sessionUser);
+        if (eff.isAdmin || eff.isMasterAdmin || eff.canDelete) return true;
+        return eff.isInstructor && (sessionUser.canDeleteSubmissions === true);
     }
 
     function isExamAllowedForInstructor(examId) {
@@ -4818,8 +4997,9 @@ Die Medics haben die alleinige Entscheidung zu treffen, welche Personen nach ein
         }
 
         let existingId = document.getElementById('editingExamId').value;
+        const eff = getUserEffectivePermissions(sessionUser);
         if (!existingId) {
-            if (sessionUser.isAdmin !== true && sessionUser.canCreateExams !== true) {
+            if (!eff.isAdmin && !eff.isMasterAdmin && !eff.canManageInstructors && sessionUser.canCreateExams !== true) {
                 alert("❌ Sie besitzen keine Berechtigung zum Anlegen neuer Prüfungen!");
                 return;
             }
