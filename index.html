@@ -900,7 +900,10 @@ Frage: In welches GPS loggst du dich ein?
                             </div>
                         </div>
 
-                        <h4 style="margin:20px 0 10px 0; color:var(--primary);">📜 Alle vorhandenen Prüfungen in der Cloud</h4>
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin:20px 0 10px 0; flex-wrap:wrap; gap:10px;">
+                            <h4 style="margin:0; color:var(--primary);">📜 Alle vorhandenen Prüfungen in der Cloud</h4>
+                            <button class="btn" style="width:auto; margin:0; padding:6px 14px; font-size:12px; background:rgba(56, 189, 248, 0.15); color:var(--primary); border:1px solid var(--primary); font-weight:800;" onclick="standardPruefungenWiederherstellen()">🔄 Standard-Prüfungskatalog aktualisieren & sortieren</button>
+                        </div>
                         <div id="instructorExistingExamsList"></div>
                     </div>
 
@@ -1484,6 +1487,21 @@ Frage: In welches GPS loggst du dich ein?
             <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid var(--border); padding-top:14px; margin-top:16px; flex-wrap:wrap; gap:10px;">
                 <div id="subModalActions"></div>
                 <button class="btn" style="width:auto; padding:10px 24px; font-weight:800;" onclick="closeSubmissionDetailsModal()">Schließen</button>
+            </div>
+    <!-- PRÜFUNGS-VORSCHAU / EINSEHEN MODAL FOR INSTRUCTORS & ADMINS -->
+    <div id="examPreviewModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(8,12,20,0.85); z-index:10000; align-items:center; justify-content:center; backdrop-filter:blur(8px);">
+        <div style="background:rgba(15,23,42,0.95); border:2px solid #a855f7; border-radius:20px; width:95%; max-width:800px; max-height:85vh; padding:24px; display:flex; flex-direction:column; box-shadow:0 10px 40px rgba(0,0,0,0.6);">
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:14px; margin-bottom:16px;">
+                <h3 id="examPreviewModalTitle" style="margin:0; color:#a855f7; font-size:18px;">👁️ Prüfung Einsehen</h3>
+                <button style="background:rgba(255,255,255,0.08); color:var(--text-muted); border:1px solid var(--border); width:32px; height:32px; border-radius:50%; font-size:16px; cursor:pointer; display:flex; align-items:center; justify-content:center;" onclick="closeExamPreviewModal()">✖</button>
+            </div>
+
+            <div id="examPreviewModalHeaderInfo" style="background:rgba(30,41,59,0.5); padding:12px 16px; border-radius:12px; margin-bottom:16px; font-size:13px; display:flex; flex-wrap:wrap; gap:16px;"></div>
+
+            <div id="examPreviewModalQuestionsBody" style="overflow-y:auto; flex:1; padding-right:8px; display:flex; flex-direction:column; gap:10px;"></div>
+
+            <div style="display:flex; justify-content:flex-end; margin-top:16px; padding-top:12px; border-top:1px solid var(--border);">
+                <button class="btn" style="background:rgba(255,255,255,0.1); color:var(--text-main); width:auto; padding:10px 24px; font-weight:800; font-size:13px; border:1px solid var(--border); border-radius:10px;" onclick="closeExamPreviewModal()">Schließen</button>
             </div>
         </div>
     </div>
@@ -3232,13 +3250,33 @@ Die Medics haben die alleinige Entscheidung zu treffen, welche Personen nach ein
 
     function isNewsRead(newsId) {
         const uId = getNewsUserKey();
+        const item = cachedNews[newsId];
+        if (item && item.readBy && item.readBy[uId]) return true;
         return localStorage.getItem(`mmd_news_read_${uId}_${newsId}`) === 'true';
     }
 
     function toggleNewsRead(newsId) {
         const uId = getNewsUserKey();
         const current = isNewsRead(newsId);
-        localStorage.setItem(`mmd_news_read_${uId}_${newsId}`, !current ? 'true' : 'false');
+        const item = cachedNews[newsId] || {};
+        
+        if (!current) {
+            // Mark as read
+            const readerInfo = {
+                name: sessionUser ? `${sessionUser.vorname} ${sessionUser.nachname}` : uId,
+                dn: sessionUser?.dn || '',
+                time: new Date().toLocaleDateString('de-DE') + ', ' + new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }) + ' Uhr'
+            };
+            localStorage.setItem(`mmd_news_read_${uId}_${newsId}`, 'true');
+            if (!item.readBy) item.readBy = {};
+            item.readBy[uId] = readerInfo;
+            db.ref(`data/news/${newsId}/readBy/${uId}`).set(readerInfo);
+        } else {
+            // Mark as unread
+            localStorage.setItem(`mmd_news_read_${uId}_${newsId}`, 'false');
+            if (item.readBy) delete item.readBy[uId];
+            db.ref(`data/news/${newsId}/readBy/${uId}`).remove();
+        }
         renderNewsFeed();
     }
 
@@ -3308,7 +3346,8 @@ Die Medics haben die alleinige Entscheidung zu treffen, welche Personen nach ein
             time: timeStr,
             timestamp: timestamp,
             pinned: false,
-            content: content
+            content: content,
+            readBy: {}
         };
 
         db.ref(`data/news/${newsId}`).set(newsData).then(() => {
@@ -3340,15 +3379,17 @@ Die Medics haben die alleinige Entscheidung zu treffen, welche Personen nach ein
         if (!container) return;
         container.innerHTML = "";
 
-        const eff = sessionUser ? getUserEffectivePermissions(sessionUser) : { isAdmin: false, isMasterAdmin: false, canDelete: false, canPostNews: false };
+        const eff = sessionUser ? getUserEffectivePermissions(sessionUser) : { isAdmin: false, isMasterAdmin: false, canDelete: false, canPostNews: false, canManageInstructors: false };
         const postBtn = document.getElementById('btnOpenPostNews');
         if (postBtn) {
             postBtn.style.display = (eff.canPostNews || eff.isAdmin || eff.isMasterAdmin) ? 'inline-block' : 'none';
         }
 
+        const canSeeReaders = eff.isMasterAdmin || eff.isAdmin || eff.canManageInstructors;
+
         const newsKeys = Object.keys(cachedNews).filter(k => !cachedNews[k].deleted);
         if (newsKeys.length === 0) {
-            container.innerHTML = `<div style="text-align:center; color:var(--text-muted); padding:40px; background:rgba(15,23,42,0.4); border-radius:12px; border:1px solid var(--border);">Noch keine Ankündigungen vorhanden.</div>`;
+            container.innerHTML = `<div style="text-align:center; color:var(--text-muted); padding:40px; background:rgba(15,23,42,0.4); border-radius:12px; border:1px solid var(--border); font-size:14px;">Noch keine Ankündigungen vorhanden.</div>`;
             return;
         }
 
@@ -3364,39 +3405,59 @@ Die Medics haben die alleinige Entscheidung zu treffen, welche Personen nach ein
             else if (item.category === 'Ankündigung') { tagColor = '#a855f7'; tagBg = 'rgba(168, 85, 247, 0.15)'; }
 
             const readBadge = isRead 
-                ? `<span style="font-size:11px; font-weight:800; color:var(--success); background:rgba(16,185,129,0.15); border:1px solid var(--success); padding:2px 8px; border-radius:12px;">✅ Gelesen</span>`
-                : `<span style="font-size:11px; font-weight:800; color:var(--danger); background:rgba(244,63,94,0.15); border:1px solid var(--danger); padding:2px 8px; border-radius:12px;">🔴 Neu / Ungelesen</span>`;
+                ? `<span style="font-size:12px; font-weight:800; color:var(--success); background:rgba(16,185,129,0.15); border:1px solid var(--success); padding:3px 10px; border-radius:12px; display:inline-flex; align-items:center; gap:4px;">✅ Gelesen</span>`
+                : `<span style="font-size:12px; font-weight:800; color:var(--danger); background:rgba(244,63,94,0.15); border:1px solid var(--danger); padding:3px 10px; border-radius:12px; display:inline-flex; align-items:center; gap:4px;">🔴 Neu / Ungelesen</span>`;
 
             const canDeleteThis = eff.canDelete || eff.isMasterAdmin || eff.isAdmin;
             const deleteBtn = canDeleteThis 
-                ? `<button class="btn-delete-row" style="margin:0; padding:4px 10px; font-size:11px; border-radius:8px; display:inline-flex; align-items:center; gap:4px;" onclick="event.stopPropagation(); deleteNews('${nId}')" title="News-Thread löschen">🗑️ Löschen</button>` 
+                ? `<button class="btn-delete-row" style="margin:0; padding:5px 12px; font-size:12px; border-radius:8px; display:inline-flex; align-items:center; gap:4px;" onclick="event.stopPropagation(); deleteNews('${nId}')" title="News-Thread löschen">🗑️ Löschen</button>` 
                 : '';
 
             const timeDisplay = item.timestamp || (item.date + (item.time ? ', ' + item.time : ''));
 
+            let readersHtml = '';
+            if (canSeeReaders) {
+                const readersObj = item.readBy || {};
+                const readersList = Object.keys(readersObj).map(k => readersObj[k]);
+                readersHtml = `
+                <div style="margin-top:16px; padding:12px 16px; background:rgba(30,41,59,0.5); border:1px solid rgba(56,189,248,0.25); border-radius:10px;">
+                    <div style="font-size:13px; font-weight:800; color:var(--primary); margin-bottom:8px; display:flex; align-items:center; gap:6px;">
+                        <span>👁️ Gelesen von (${readersList.length} Mitarbeiter${readersList.length === 1 ? '' : 'n'}):</span>
+                    </div>
+                    <div style="display:flex; flex-wrap:wrap; gap:6px;">
+                        ${readersList.length > 0
+                            ? readersList.map(r => `<span style="font-size:12px; font-weight:700; color:var(--text-main); background:rgba(15,23,42,0.8); border:1px solid var(--border); padding:4px 10px; border-radius:6px; display:inline-flex; align-items:center; gap:4px;">👤 <b>${r.name}</b> ${r.dn ? `<span style="color:var(--primary); font-size:11px;">(${r.dn})</span>` : ''} <span style="color:var(--text-muted); font-size:11px; margin-left:2px;">🕒 ${r.time}</span></span>`).join('')
+                            : '<span style="font-size:12px; color:var(--text-muted); font-style:italic;">Noch von keinem Mitarbeiter als gelesen markiert.</span>'
+                        }
+                    </div>
+                </div>`;
+            }
+
             container.innerHTML += `
-            <div class="news-thread-card" style="background:rgba(15, 23, 42, 0.6); border:1px solid ${isRead ? 'var(--border)' : 'rgba(56, 189, 248, 0.4)'}; border-left: 4px solid ${isRead ? 'var(--success)' : tagColor}; border-radius:14px; overflow:hidden; transition:all 0.2s; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+            <div class="news-thread-card" style="background:rgba(15, 23, 42, 0.65); border:1px solid ${isRead ? 'var(--border)' : 'rgba(56, 189, 248, 0.4)'}; border-left: 5px solid ${isRead ? 'var(--success)' : tagColor}; border-radius:14px; overflow:hidden; transition:all 0.2s; box-shadow: 0 4px 18px rgba(0,0,0,0.25); margin-bottom:14px;">
                 <!-- HEADER / KLICKBAR -->
-                <div style="padding:16px 20px; cursor:pointer; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; background:${isRead ? 'transparent' : 'rgba(56, 189, 248, 0.03)'};" onclick="toggleNewsCollapse('${nId}')">
+                <div style="padding:16px 22px; cursor:pointer; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; background:${isRead ? 'transparent' : 'rgba(56, 189, 248, 0.04)'};" onclick="toggleNewsCollapse('${nId}')">
                     <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
-                        <span style="font-size:11px; font-weight:800; color:${tagColor}; background:${tagBg}; padding:3px 10px; border-radius:6px; text-transform:uppercase;">${item.category || 'Allgemein'}</span>
-                        <h3 style="margin:0; font-size:16px; color:var(--text-main); font-weight:800;">${item.title}</h3>
+                        <span style="font-size:12px; font-weight:800; color:${tagColor}; background:${tagBg}; padding:4px 10px; border-radius:6px; text-transform:uppercase; letter-spacing:0.5px;">${item.category || 'Allgemein'}</span>
+                        <h3 style="margin:0; font-size:18px; color:var(--text-main); font-weight:800; letter-spacing:-0.2px;">${item.title}</h3>
                         ${readBadge}
                     </div>
                     <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
-                        <span style="font-size:12px; color:var(--text-muted);">🕒 ${timeDisplay} (${item.author || 'Leitung'})</span>
-                        <span id="news-arrow-${nId}" style="font-size:12px; font-weight:700; color:var(--primary);">${isCollapsed ? '▼ Ausklappen' : '▲ Zuklappen'}</span>
+                        <span style="font-size:13px; color:var(--text-muted); font-weight:500;">🕒 ${timeDisplay} (${item.author || 'Leitung'})</span>
+                        <span id="news-arrow-${nId}" style="font-size:13px; font-weight:700; color:var(--primary);">${isCollapsed ? '▼ Ausklappen' : '▲ Zuklappen'}</span>
                         ${deleteBtn}
                     </div>
                 </div>
 
                 <!-- CONTENT / THREAD BODY -->
-                <div id="news-body-${nId}" style="display:${isCollapsed ? 'none' : 'block'}; padding:0 20px 20px 20px; border-top:1px solid var(--border); margin-top:4px;">
-                    <div style="font-size:13px; color:var(--text-main); line-height:1.7; white-space:pre-wrap; padding-top:16px;">${item.content}</div>
+                <div id="news-body-${nId}" style="display:${isCollapsed ? 'none' : 'block'}; padding:0 22px 22px 22px; border-top:1px solid var(--border); margin-top:4px;">
+                    <div style="font-size:15px; color:#f8fafc; line-height:1.8; white-space:pre-wrap; padding-top:18px; letter-spacing:0.1px;">${item.content}</div>
                     
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px; padding-top:14px; border-top:1px dashed var(--border); flex-wrap:wrap; gap:10px;">
-                        <span style="font-size:11px; color:var(--text-muted);">Erstellt am <b>${timeDisplay}</b> von <b>${item.author || 'Klinikleitung'}</b></span>
-                        <button class="btn" style="width:auto; margin:0; padding:6px 16px; font-size:12px; font-weight:800; background:${isRead ? 'rgba(255,255,255,0.08)' : 'var(--success)'}; color:${isRead ? 'var(--text-main)' : '#080c14'}; border:${isRead ? '1px solid var(--border)' : 'none'};" onclick="event.stopPropagation(); toggleNewsRead('${nId}')">
+                    ${readersHtml}
+
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px; padding-top:16px; border-top:1px dashed var(--border); flex-wrap:wrap; gap:12px;">
+                        <span style="font-size:12px; color:var(--text-muted);">Erstellt am <b>${timeDisplay}</b> von <b>${item.author || 'Klinikleitung'}</b></span>
+                        <button class="btn" style="width:auto; margin:0; padding:8px 18px; font-size:13px; font-weight:800; background:${isRead ? 'rgba(255,255,255,0.08)' : 'var(--success)'}; color:${isRead ? 'var(--text-main)' : '#080c14'}; border:${isRead ? '1px solid var(--border)' : 'none'};" onclick="event.stopPropagation(); toggleNewsRead('${nId}')">
                             ${isRead ? '⭕ Als ungelesen markieren' : '✔️ Als gelesen markieren & einklappen'}
                         </button>
                     </div>
@@ -3648,12 +3709,15 @@ Die Medics haben die alleinige Entscheidung zu treffen, welche Personen nach ein
             let isPassed = passedObj[examId] === true;
             let hasFailed = false;
             let lastSub = null;
+            let bestSub = null;
 
             if (cachedSubmissions) {
                 const userSubs = Object.values(cachedSubmissions).filter(sub => sub.userId === myUserId && sub.examId === examId);
                 if (userSubs.length > 0) {
                     lastSub = userSubs[userSubs.length - 1];
-                    if (lastSub.passed === true) {
+                    const passedSubs = userSubs.filter(s => s.passed === true);
+                    if (passedSubs.length > 0) {
+                        bestSub = passedSubs[passedSubs.length - 1];
                         isPassed = true;
                         hasFailed = false;
                     } else {
@@ -3668,8 +3732,9 @@ Die Medics haben die alleinige Entscheidung zu treffen, welche Personen nach ein
             let actionBtn = "";
 
             if (isPassed) {
-                statusBadge = `<span style="background:rgba(16,185,129,0.15); color:var(--success); border:1px solid var(--success); padding:3px 10px; border-radius:20px; font-size:11px; font-weight:800;">✅ Bestanden ${lastSub ? `(${lastSub.percentage}%)` : '(Altsystem)'}</span>`;
-                actionBtn = `<button class="btn" style="background:rgba(255,255,255,0.08); color:var(--text-muted); font-weight:800; margin-top:14px;" onclick="startExam('${examId}')">🔄 Prüfung erneut ablegen</button>`;
+                const displaySub = bestSub || lastSub;
+                statusBadge = `<span style="background:rgba(16,185,129,0.15); color:var(--success); border:1px solid var(--success); padding:3px 10px; border-radius:20px; font-size:11px; font-weight:800;">🏆 Bestanden ${displaySub ? `(${displaySub.percentage}%)` : ''}</span>`;
+                actionBtn = ""; // Passed exams require no button
             } else if (isUnlocked) {
                 // Exam is unlocked by instructor (first time OR re-unlocked for retake)
                 if (hasFailed) {
@@ -4102,31 +4167,50 @@ Die Medics haben die alleinige Entscheidung zu treffen, welche Personen nach ein
     function getExamSortScore(exam) {
         if (!exam) return { group: 99, number: 99, title: "" };
         const title = (exam.title || "").toLowerCase();
+        const kat = (exam.kat || "").toLowerCase();
         
         let group = 99;
         let number = 1;
         
-        if (title.includes("grundausbildung") || title.includes("ga")) {
+        if (title.includes("grundausbildung") || title.includes("ga1") || title.includes("ga2") || title.includes("ga 1") || title.includes("ga 2") || kat.includes("grundausbildung")) {
             group = 1;
             const m = title.match(/(?:grundausbildung|ga)\s*(\d+)/i);
             if (m) number = parseInt(m[1]);
-            else if (title.includes("1")) number = 1;
             else if (title.includes("2")) number = 2;
-        } else if (title.includes("dienstvorschrift") || title.includes("dv")) {
+            else number = 1;
+        } else if (title.includes("dienstvorschrift") || title.includes("dv1") || title.includes("dv2") || title.includes("dv 1") || title.includes("dv 2") || kat.includes("dienstvorschrift")) {
             group = 2;
-            const m = title.match(/(?:dienstvorschriften|dv)\s*(\d+)/i);
+            const m = title.match(/(?:dienstvorschriften|dienstvorschrift|dv)\s*(\d+)/i);
             if (m) number = parseInt(m[1]);
             else if (title.includes("2")) number = 2;
-        } else if (title.includes("para")) {
+            else number = 1;
+        } else if (title.includes("paramedic") || title.includes("para") || kat.includes("paramedic")) {
             group = 3;
-            const m = title.match(/para\s*(\d+)/i);
+            const m = title.match(/(?:paramedic|para)\s*(\d+)/i);
             if (m) number = parseInt(m[1]);
-        } else if (title.includes("arzt")) {
+            else number = 1;
+        } else if (title.includes("erste hilfe") || title.includes("erste-hilfe") || title.includes("ehk") || kat.includes("erste hilfe")) {
             group = 4;
-            const m = title.match(/arzt\s*(\d+)/i);
+            const m = title.match(/(?:ehk|erste hilfe)\s*(\d+)/i);
             if (m) number = parseInt(m[1]);
-        } else {
+            else number = 1;
+        } else if (title.includes("cls") || title.includes("combat") || kat.includes("sonderausbildung")) {
             group = 5;
+            const m = title.match(/cls\s*(\d+)/i);
+            if (m) number = parseInt(m[1]);
+            else number = 1;
+        } else if (title.includes("psycholog") || title.includes("psgu") || kat.includes("psychologie")) {
+            group = 6;
+            const m = title.match(/(?:psgu|psycholog)\s*(\d+)/i);
+            if (m) number = parseInt(m[1]);
+            else number = 1;
+        } else if (title.includes("notarzt") || title.includes("arzt") || kat.includes("arzt")) {
+            group = 7;
+            const m = title.match(/(?:notarzt|arzt)\s*(\d+)/i);
+            if (m) number = parseInt(m[1]);
+            else number = 1;
+        } else {
+            group = 10;
         }
         
         return { group, number, title: title };
@@ -4145,7 +4229,7 @@ Die Medics haben die alleinige Entscheidung zu treffen, welche Personen nach ein
             if (scoreA.number !== scoreB.number) {
                 return scoreA.number - scoreB.number;
             }
-            return scoreA.title.localeCompare(scoreB.title);
+            return (examA?.title || '').localeCompare(examB?.title || '');
         });
     }
 
@@ -4216,12 +4300,12 @@ Die Medics haben die alleinige Entscheidung zu treffen, welche Personen nach ein
         if (!u) return false;
         const eff = getUserEffectivePermissions(u);
         if (eff.isAdmin || eff.isMasterAdmin || eff.canManageInstructors) return true;
-        if (!eff.isInstructor) return false;
+        if (u.canCreateExams === true) return true;
         const allowed = u.instructorAllowedManageExams;
-        if (allowed && Object.keys(allowed).length > 0) {
-            return allowed[examId] === true;
+        if (allowed && allowed[examId] === true) {
+            return true;
         }
-        return true;
+        return false;
     }
 
     function canInstructorDeleteSubmission() {
@@ -4670,6 +4754,69 @@ Die Medics haben die alleinige Entscheidung zu treffen, welche Personen nach ein
         if(modal) modal.style.display = 'none';
     }
 
+    function viewExamPreviewModal(examId) {
+        const exam = cachedExams && cachedExams[examId];
+        if (!exam) {
+            alert("Prüfung nicht gefunden!");
+            return;
+        }
+
+        const modal = document.getElementById('examPreviewModal');
+        if (!modal) return;
+
+        document.getElementById('examPreviewModalTitle').textContent = `👁️ Prüfung Einsehen: ${exam.title}`;
+
+        document.getElementById('examPreviewModalHeaderInfo').innerHTML = `
+            <div>📁 Kategorie: <b style="color:var(--primary);">${exam.kat || 'Allgemein'}</b></div>
+            <div>⏱️ Zeitlimit: <b style="color:var(--warning);">${exam.timeLimitMinutes || 30} Minuten</b></div>
+            <div>🎯 Mindestquote: <b style="color:var(--success);">${exam.passPercentage || 60}%</b></div>
+            <div>❓ Fragen: <b style="color:var(--text-main);">${exam.questions ? exam.questions.length : 0}</b></div>
+            ${exam.introText ? `<div style="width:100%; margin-top:6px; font-size:12px; color:var(--text-muted); white-space:pre-wrap;"><b>Einleitungstext:</b> ${exam.introText}</div>` : ''}
+        `;
+
+        const qBody = document.getElementById('examPreviewModalQuestionsBody');
+        qBody.innerHTML = "";
+
+        (exam.questions || []).forEach((q, idx) => {
+            const qType = q.type || 'choice';
+            let detailsHtml = "";
+
+            if (['info_dn', 'info_pruefer', 'info_name'].includes(qType)) {
+                detailsHtml = `<div style="font-size:12px; color:var(--text-muted); margin-top:4px;"><i>Standard-Eingabefeld (${qType})</i></div>`;
+            } else if (qType === 'text') {
+                detailsHtml = `<div style="font-size:12px; color:#a855f7; margin-top:4px;"><i>Freitextfrage (ohne automatische Bewertung)</i></div>`;
+            } else {
+                const correctIndices = q.correctAnswers || [];
+                const optionsHtml = (q.options || []).map((opt, oIdx) => {
+                    const isCorrect = correctIndices.includes(oIdx);
+                    const pts = q.points ? q.points[oIdx] : undefined;
+                    const ptsLabel = pts !== undefined ? ` <span style="color:var(--warning); font-size:11px;">(${pts} Pkt)</span>` : '';
+                    return `
+                    <div style="font-size:12px; padding:6px 10px; border-radius:6px; background:${isCorrect ? 'rgba(16,185,129,0.15)' : 'rgba(15,23,42,0.5)'}; border:1px solid ${isCorrect ? 'var(--success)' : 'var(--border)'}; margin-top:4px; display:flex; justify-content:space-between; align-items:center;">
+                        <span style="color:${isCorrect ? 'var(--success)' : 'var(--text-main)'}; font-weight:${isCorrect ? '700' : '500'};">${isCorrect ? '✔ ' : '• '}${opt}${ptsLabel}</span>
+                        ${isCorrect ? '<span style="font-size:10px; font-weight:800; color:var(--success); background:rgba(16,185,129,0.2); padding:2px 8px; border-radius:4px;">Richtige Antwort</span>' : ''}
+                    </div>`;
+                }).join('');
+                detailsHtml = `<div style="margin-top:6px;">${optionsHtml}</div>`;
+            }
+
+            qBody.innerHTML += `
+            <div style="background:rgba(30,41,59,0.4); border:1px solid var(--border); border-radius:12px; padding:14px; text-align:left;">
+                <div style="font-weight:700; font-size:13px; color:var(--primary);">
+                    Frage ${idx + 1}: ${q.text}
+                </div>
+                ${detailsHtml}
+            </div>`;
+        });
+
+        modal.style.display = 'flex';
+    }
+
+    function closeExamPreviewModal() {
+        const modal = document.getElementById('examPreviewModal');
+        if (modal) modal.style.display = 'none';
+    }
+
     function korrigiereAlleBisherigenPruefungen(silent = false) {
         if (!cachedSubmissions) return;
 
@@ -4712,22 +4859,12 @@ Die Medics haben die alleinige Entscheidung zu treffen, welche Personen nach ein
                 Object.keys(cachedExams).forEach(eId => {
                     const userSubs = Object.values(cachedSubmissions).filter(s => s.userId === myCleanId && s.examId === eId);
                     if (userSubs.length > 0) {
-                        const lastSub = userSubs[userSubs.length - 1];
                         const exam = cachedExams[eId];
                         const passTargetPercent = (exam && exam.passPercentage) ? Number(exam.passPercentage) : 60;
-                        const lastPassed = Number(lastSub.percentage) >= passTargetPercent;
-
+                        const anyPassed = userSubs.some(s => (s.passed === true) || (Number(s.percentage) >= passTargetPercent));
                         const currentPassedStatus = u.passedExams && u.passedExams[eId] === true;
 
-                        if (!lastPassed) {
-                            if (currentPassedStatus) {
-                                updates[`data/users/${uId}/passedExams/${eId}`] = false;
-                                updates[`data/users/${uId}/unlockedExams/${eId}`] = false;
-                                if (u.passedExams) u.passedExams[eId] = false;
-                                if (u.unlockedExams) u.unlockedExams[eId] = false;
-                                updatedUsersCount++;
-                            }
-                        } else if (lastPassed && !currentPassedStatus) {
+                        if (anyPassed && !currentPassedStatus) {
                             updates[`data/users/${uId}/passedExams/${eId}`] = true;
                             if (u.passedExams) u.passedExams[eId] = true;
                             updatedUsersCount++;
@@ -4751,40 +4888,79 @@ Die Medics haben die alleinige Entscheidung zu treffen, welche Personen nach ein
         }
     }
 
+    function standardPruefungenWiederherstellen() {
+        if (!sessionUser) return;
+        const eff = getUserEffectivePermissions(sessionUser);
+        if (!eff.isAdmin && !eff.isMasterAdmin && !eff.canManageInstructors) {
+            alert("❌ Sie besitzen keine Berechtigung zum Zurücksetzen/Aktualisieren des Prüfungskatalogs!");
+            return;
+        }
+
+        if (confirm("Möchtest du den offiziellen Standard-Prüfungskatalog (GA1, GA2, DV1, DV2, Paramedic, EHK, CLS, PSGU) aktualisieren und in die richtige Standard-Reihenfolge bringen?")) {
+            const updates = {};
+            Object.keys(defaultExams).forEach(eId => {
+                updates[`data/exams/${eId}`] = defaultExams[eId];
+            });
+            updates['data/examOrder'] = null;
+
+            db.ref().update(updates).then(() => {
+                alert("✅ Der offizielle Prüfungskatalog wurde erfolgreich aktualisiert und geordnet!");
+                cachedExams = Object.assign({}, defaultExams, cachedExams);
+                cachedExamOrder = [];
+                renderExamTab(cachedExams, cachedUsers, cachedSubmissions);
+            });
+        }
+    }
+
     function renderInstructorExistingExams(exams) {
         const container = document.getElementById('instructorExistingExamsList');
         if(!container) return;
         container.innerHTML = "";
 
         let eIds = Object.keys(exams).filter(eId => isExamAllowedForInstructor(eId));
+        eIds = sortExamIdsDynamically(eIds, exams);
 
-        // Sort based on cachedExamOrder
-        eIds.sort((a, b) => {
-            let idxA = cachedExamOrder.indexOf(a);
-            let idxB = cachedExamOrder.indexOf(b);
-            if (idxA === -1) idxA = 9999;
-            if (idxB === -1) idxB = 9999;
-            return idxA - idxB;
-        });
+        const eff = sessionUser ? getUserEffectivePermissions(sessionUser) : { isAdmin: false, isMasterAdmin: false, canManageInstructors: false };
+        const canManageAny = eff.isAdmin || eff.isMasterAdmin || eff.canManageInstructors || sessionUser?.canCreateExams === true;
+
+        // Hide/show the exam builder editor form for non-managers
+        const builderHeading = document.getElementById('examBuilderHeading');
+        const builderBox = builderHeading ? builderHeading.closest('div') : null;
+        if (builderBox) {
+            builderBox.style.display = canManageAny ? 'block' : 'none';
+        }
+
+        const manageTabBtn = document.querySelector('#examInstructorView button[onclick*="instrTabManage"]');
+        if (manageTabBtn) {
+            manageTabBtn.textContent = canManageAny ? '📝 Prüfungen verwalten / anlegen' : '👁️ Prüfungen einsehen';
+        }
 
         eIds.forEach(eId => {
             const exam = exams[eId];
+            const canManageThis = isExamAllowedToManage(sessionUser, eId);
+            const actionButtons = canManageThis
+                ? `<button class="btn" style="width:auto; padding:5px 12px; font-size:12px; background:rgba(56,189,248,0.15); color:var(--primary); border:1px solid var(--primary); font-weight:700;" onclick="editExamInBuilder('${eId}')">✏️ Bearbeiten</button>
+                   <button class="btn" style="width:auto; padding:5px 12px; font-size:12px; background:rgba(168,85,247,0.15); color:#a855f7; border:1px solid #a855f7; font-weight:700;" onclick="viewExamPreviewModal('${eId}')">👁️ Einsehen</button>
+                   <button class="btn-delete-row" onclick="deleteExam('${eId}')">🗑️</button>`
+                : `<button class="btn" style="width:auto; padding:5px 14px; font-size:12px; background:rgba(168,85,247,0.15); color:#a855f7; border:1px solid #a855f7; font-weight:700;" onclick="viewExamPreviewModal('${eId}')">👁️ Prüfung Einsehen</button>`;
+
             container.innerHTML += `
-            <div class="draggable-item" data-id="${eId}" style="background:rgba(15,23,42,0.6); border:1px solid var(--border); padding:12px 16px; border-radius:10px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
+            <div class="draggable-item" data-id="${eId}" style="background:rgba(15,23,42,0.6); border:1px solid var(--border); padding:12px 18px; border-radius:10px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
                 <div>
-                    <span style="font-size:12px; color:var(--text-muted); margin-right:8px; cursor:grab;">☰</span>
+                    ${canManageAny ? '<span style="font-size:13px; color:var(--text-muted); margin-right:8px; cursor:grab;" title="Verschieben">☰</span>' : ''}
                     <b style="color:var(--text-main); font-size:14px;">${exam.title}</b> 
-                    <span style="font-size:11px; color:var(--text-muted); margin-left:10px;">(${exam.kat || 'Allgemein'} | ❓ <b>${exam.questions ? exam.questions.length : 0} Fragen</b> | ⏱️ ${exam.timeLimitMinutes} Min)</span>
+                    <span style="font-size:12px; color:var(--text-muted); margin-left:10px;">(${exam.kat || 'Allgemein'} | ❓ <b>${exam.questions ? exam.questions.length : 0} Fragen</b> | ⏱️ ${exam.timeLimitMinutes} Min)</span>
                 </div>
-                <div style="display:flex; gap:8px; align-items:center;">
-                    <button class="btn" style="width:auto; padding:4px 10px; font-size:11px; background:rgba(56,189,248,0.15); color:var(--primary); border:1px solid var(--primary);" onclick="editExamInBuilder('${eId}')">✏️ Bearbeiten</button>
-                    <button class="btn-delete-row" onclick="deleteExam('${eId}')">🗑️</button>
+                <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                    ${actionButtons}
                 </div>
             </div>`;
         });
 
-        // Initialize drag and drop reordering
-        makeContainerSortable('instructorExistingExamsList', '.draggable-item', saveExamOrder);
+        // Initialize drag and drop reordering only for users who can manage
+        if (canManageAny) {
+            makeContainerSortable('instructorExistingExamsList', '.draggable-item', saveExamOrder);
+        }
     }
 
     function onQuestionTypeChange(selectEl) {
@@ -5433,8 +5609,11 @@ Die Medics haben die alleinige Entscheidung zu treffen, welche Personen nach ein
     window.toggleExamPassedForUser = toggleExamPassedForUser; 
     window.viewSubmissionDetails = viewSubmissionDetails; 
     window.closeSubmissionDetailsModal = closeSubmissionDetailsModal; 
+    window.viewExamPreviewModal = viewExamPreviewModal;
+    window.closeExamPreviewModal = closeExamPreviewModal;
     window.allowExamRetake = allowExamRetake; 
     window.korrigiereAlleBisherigenPruefungen = korrigiereAlleBisherigenPruefungen; 
+    window.standardPruefungenWiederherstellen = standardPruefungenWiederherstellen;
     window.neuePruefungErstellen = neuePruefungSpeichern; 
     window.neuePruefungSpeichern = neuePruefungSpeichern; 
     window.editExamInBuilder = editExamInBuilder; 
