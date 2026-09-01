@@ -1749,57 +1749,33 @@ Frage: In welches GPS loggst du dich ein?
     }
 
     function getUserAllowedLinkCategories(user, allCategories) {
-        if (!user) return ["MD Intern", "Allgemein", "Abkürzungen & Dokumente"];
+        if (!user || !allCategories) return allCategories || [];
         const eff = getUserEffectivePermissions(user);
-        if (eff.isAdmin) return allCategories;
+        if (eff.isAdmin || eff.isMasterAdmin) return allCategories;
 
-        let allowedSet = new Set(["MD Intern", "Allgemein", "Abkürzungen & Dokumente"]);
+        return allCategories.filter(kat => {
+            // Explicit block for user
+            if (user.allowedLinkKats && user.allowedLinkKats[kat] === false) return false;
+            if (user.allowedLinkKats && user.allowedLinkKats[kat] === true) return true;
 
-        const roleIds = getUserRolesList(user);
-        roleIds.forEach(rId => {
-            const role = cachedRoles[rId];
-            if (role && role.allowedLinkKats) {
-                Object.keys(role.allowedLinkKats).forEach(kat => {
-                    if (role.allowedLinkKats[kat] === true) allowedSet.add(kat);
-                });
-            }
+            // Visible by default
+            return true;
         });
-
-        if (user.allowedLinkKats) {
-            Object.keys(user.allowedLinkKats).forEach(kat => {
-                if (user.allowedLinkKats[kat] === true) allowedSet.add(kat);
-                else if (user.allowedLinkKats[kat] === false) allowedSet.delete(kat);
-            });
-        }
-
-        return allCategories.filter(k => allowedSet.has(k));
     }
 
     function getUserAllowedCmdCategories(user, allCategories) {
-        if (!user) return ["T-Codes", "Allgemein", "Abkürzungen & Dokumente", "Funkcodes"];
+        if (!user || !allCategories) return allCategories || [];
         const eff = getUserEffectivePermissions(user);
-        if (eff.isAdmin) return allCategories;
+        if (eff.isAdmin || eff.isMasterAdmin) return allCategories;
 
-        let allowedSet = new Set(["T-Codes", "Allgemein", "Abkürzungen & Dokumente", "Funkcodes"]);
+        return allCategories.filter(kat => {
+            // Explicit block for user
+            if (user.allowedCmdKats && user.allowedCmdKats[kat] === false) return false;
+            if (user.allowedCmdKats && user.allowedCmdKats[kat] === true) return true;
 
-        const roleIds = getUserRolesList(user);
-        roleIds.forEach(rId => {
-            const role = cachedRoles[rId];
-            if (role && role.allowedCmdKats) {
-                Object.keys(role.allowedCmdKats).forEach(kat => {
-                    if (role.allowedCmdKats[kat] === true) allowedSet.add(kat);
-                });
-            }
+            // Visible by default
+            return true;
         });
-
-        if (user.allowedCmdKats) {
-            Object.keys(user.allowedCmdKats).forEach(kat => {
-                if (user.allowedCmdKats[kat] === true) allowedSet.add(kat);
-                else if (user.allowedCmdKats[kat] === false) allowedSet.delete(kat);
-            });
-        }
-
-        return allCategories.filter(k => allowedSet.has(k));
     }
 
     let materialKatalog = {
@@ -2230,6 +2206,83 @@ dispEl.textContent = (hierarchieDaten[key] !== undefined && hierarchieDaten[key]
         });
     }
 
+    window.onload = function() {
+        const dateEl = document.getElementById('liveDateDisplay');
+        if (dateEl) dateEl.textContent = new Date().toLocaleDateString('de-DE');
+        
+        const savedSession = localStorage.getItem('mmd_session_user') || sessionStorage.getItem('mmd_session_user');
+        const isActive = (localStorage.getItem('mmd_session_active') === 'true') || (sessionStorage.getItem('mmd_session_active') === 'true');
+        if(savedSession && isActive) {
+            try {
+                initDienstEintritt(JSON.parse(savedSession));
+            } catch(e) {
+                console.error("Session restore error", e);
+            }
+        }
+        if (typeof resetExamBuilderForm === 'function') resetExamBuilderForm();
+    };
+
+    function baueMaterialUIAuf() {
+        const grid = document.getElementById('dynamischerMaterialVerbrauchGrid'); 
+        if(!grid) return; 
+        grid.innerHTML = "";
+        let htmlLeft = "<div>"; 
+        let htmlRight = "<div>"; 
+        let counter = 0;
+        const keys = Object.keys(materialKatalog);
+        keys.forEach(key => {
+            if(key === 'mat_wasser') return;
+            let currentQty = fallMaterial[key] || 0;
+            let itemHtml = `<label style="margin-top:4px;">${materialKatalog[key].name} ($${materialKatalog[key].preis})</label><div class="counter-group"><button class="counter-btn" onclick="stepMat('${key}', -1)">-</button><span class="counter-value" id="val_${key}">${currentQty}</span><button class="counter-btn plus-main" onclick="stepMat('${key}', 1)">+</button></div>`;
+            if(counter < (keys.length - 1) / 2) htmlLeft += itemHtml; 
+            else htmlRight += itemHtml; 
+            counter++;
+        });
+        grid.innerHTML = htmlLeft + "</div>" + htmlRight + "</div>";
+    }
+
+    function bauePreiseEinstellungenUI() {
+        const settingsContainer = document.getElementById('preiseEinstellungsContainer'); 
+        if(!settingsContainer) return; 
+        settingsContainer.innerHTML = "";
+        Object.keys(materialKatalog).forEach(key => { 
+            settingsContainer.innerHTML += `<div class="setting-row"><span>${materialKatalog[key].name}:</span><input type="number" style="width:100px; padding:6px;" id="setPrice_${key}" value="${materialKatalog[key].preis}"></div>`; 
+        });
+    }
+
+    function ladeSzenarioTemplateInSettings() {
+        const select = document.getElementById('templateSzenarioSelect'); 
+        const container = document.getElementById('templateMaterialsContainer'); 
+        if(!select || !container) return;
+        const szenario = select.value; 
+        container.innerHTML = "";
+        let currentTemplate = szenarioTemplates[szenario] || {};
+        for (let key in materialKatalog) { 
+            if (key !== 'mat_wasser') {
+                container.innerHTML += `<div class="setting-row"><span>${materialKatalog[key].name}:</span><input type="number" style="width:70px; padding:6px;" id="setTpl_${key}" value="${currentTemplate[key] || 0}" min="0"></div>`; 
+            }
+        }
+    }
+
+    function speichereSzenarioTemplate() {
+        const select = document.getElementById('templateSzenarioSelect');
+        if (!select) return;
+        const szenario = select.value;
+        if (!szenario) return;
+        if (!szenarioTemplates[szenario]) szenarioTemplates[szenario] = {};
+        for (let key in materialKatalog) { 
+            if (key !== 'mat_wasser') { 
+                let el = document.getElementById(`setTpl_${key}`);
+                let val = el ? (parseInt(el.value) || 0) : 0; 
+                if (val > 0) szenarioTemplates[szenario][key] = val; 
+                else delete szenarioTemplates[szenario][key];
+            } 
+        }
+        db.ref("data/szenarioTemplates").set(szenarioTemplates).then(() => {
+            alert("✅ Voreinstellungen gespeichert!");
+        });
+    }
+
     // FIREBASE MAIN DATA SYNC
     db.ref("data").on("value", snapshot => {
         const cloud = snapshot.val();
@@ -2362,8 +2415,6 @@ dispEl.textContent = (hierarchieDaten[key] !== undefined && hierarchieDaten[key]
             updates[`data/users/${uId}/canSeeLinks`] = true;
             updates[`data/users/${uId}/canSeeCommands`] = true;
             updates[`data/users/${uId}/canDelete`] = false;
-            updates[`data/users/${uId}/allowedLinkKats`] = { "MD Intern": true, "Allgemein": true, "Abkürzungen & Dokumente": true };
-            updates[`data/users/${uId}/allowedCmdKats`] = { "T-Codes": true, "Allgemein": true, "Abkürzungen & Dokumente": true, "Funkcodes": true };
         }
         return db.ref().update(updates);
     }
@@ -2726,7 +2777,7 @@ dispEl.textContent = (hierarchieDaten[key] !== undefined && hierarchieDaten[key]
             });
 
             allLinkCategories.forEach(kat => {
-                const isChecked = allowedLinkKats[kat] === true || (allowedLinkKats[kat] === undefined && (roleAllowedLinkKats[kat] === true || ["MD Intern", "Allgemein", "Abkürzungen & Dokumente"].includes(kat)));
+                const isChecked = allowedLinkKats[kat] !== false;
                 linksCont.innerHTML += `
                 <label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-size:12px;">
                     <input type="checkbox" class="perm-link-kat-cb" value="${kat}" ${isChecked ? 'checked' : ''}>
@@ -2739,13 +2790,9 @@ dispEl.textContent = (hierarchieDaten[key] !== undefined && hierarchieDaten[key]
         if (cmdsCont) {
             cmdsCont.innerHTML = "";
             const allowedCmdKats = u.allowedCmdKats || {};
-            const roleAllowedCmdKats = {};
-            getUserRolesList(u).forEach(rId => {
-                if (cachedRoles[rId]?.allowedCmdKats) Object.assign(roleAllowedCmdKats, cachedRoles[rId].allowedCmdKats);
-            });
 
             allCmdCategories.forEach(kat => {
-                const isChecked = allowedCmdKats[kat] === true || (allowedCmdKats[kat] === undefined && (roleAllowedCmdKats[kat] === true || ["T-Codes", "Allgemein", "Abkürzungen & Dokumente", "Funkcodes"].includes(kat)));
+                const isChecked = allowedCmdKats[kat] !== false;
                 cmdsCont.innerHTML += `
                 <label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-size:12px;">
                     <input type="checkbox" class="perm-cmd-kat-cb" value="${kat}" ${isChecked ? 'checked' : ''}>
@@ -5243,6 +5290,15 @@ Die Medics haben die alleinige Entscheidung zu treffen, welche Personen nach ein
     window.deleteNews = deleteNews;
     window.switchTab = switchTab; 
     window.settingsTabClick = settingsTabClick;
+    window.baueMaterialUIAuf = baueMaterialUIAuf;
+    window.bauePreiseEinstellungenUI = bauePreiseEinstellungenUI;
+    window.ladeSzenarioTemplateInSettings = ladeSzenarioTemplateInSettings;
+    window.speichereSzenarioTemplate = speichereSzenarioTemplate;
+    window.stepMat = stepMat;
+    window.stepKosten = stepKosten;
+    window.stepVerletzungenAnzahl = stepVerletzungenAnzahl;
+    window.ladeCheckliste = ladeCheckliste;
+    window.patientHinzufuegen = patientHinzufuegen;
 </script>
 </body>
 </html>
