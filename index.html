@@ -21,13 +21,13 @@
             --primary-hover: #0ea5e9; 
             --success: #10b981; 
             --success-hover: #059669;
-            --danger: #f43f5e; 
-            --danger-hover: #e11d48; 
+            --danger: #be123c; 
+            --danger-hover: #9f1239; 
             --warning: #f59e0b; 
             --warning-hover: #d97706; 
             --border: rgba(255, 255, 255, 0.08);
             --border-glow: rgba(56, 189, 248, 0.25);
-            --grad-red: linear-gradient(135deg, #ef4444, #dc2626);
+            --grad-red: linear-gradient(135deg, #991b1b, #7f1d1d);
             --grad-dark: linear-gradient(180deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.8) 100%);
             --grad-primary: linear-gradient(135deg, #38bdf8, #6366f1);
             
@@ -310,7 +310,7 @@
             <button class="tab-btn active" onclick="switchTab('docTab', this)">📝 Dokumentation & Einsatz</button>
             <button class="tab-btn" onclick="switchTab('statsTab', this)">📊 Statistik & Archiv</button>
             <button class="tab-btn" onclick="switchTab('hierarchieTab', this)">🌳 Hierarchie</button>
-            <button class="tab-btn" onclick="switchTab('guideTab', this)">📋 Funk und Codes</button>
+            <button class="tab-btn" onclick="switchTab('guideTab', this)">📋 Funk & Codes</button>
             <button class="tab-btn" onclick="switchTab('commandTab', this)">💻 Commands</button>
             <button class="tab-btn" id="examTabNavBtn" onclick="switchTab('examTab', this)">🎓 Ausbildungsbereich</button>
             <button class="tab-btn" id="linksTabBtn" onclick="switchTab('linksTab', this)">🔗 Links & Dokumente</button>
@@ -686,63 +686,42 @@
 
         <!-- REITER 3: LEITFADEN & FUNK -->
         <div id="guideTab" class="tab-content">
-            <h2>📋 Funk und Codes</h2>
+            <h2>📋 Funk & Codes</h2>
             <div class="guide-split-container">
-                <div class="section">
+                <div class="section" style="padding:0; overflow:hidden;">
                     <table class="guide-table">
-                        <thead><tr><th colspan="2" class="red-head">Ten Codes</th></tr><tr><th class="sub-head text-center" style="width: 30%;">Code</th><th class="sub-head">Beschreibung</th></tr></thead>
-                        <tbody>
-                            <tr><td style="font-weight:bold; color:var(--warning);">10-1</td><td>Auf Anfahrt</td></tr>
-                            <tr><td style="font-weight:bold; color:var(--warning);">10-2</td><td>Am Einsatzort</td></tr>
-                            <tr><td style="font-weight:bold; color:var(--warning);">10-3</td><td>Weg ins MD</td></tr>
-                            <tr><td style="font-weight:bold; color:var(--success);">10-4</td><td style="font-weight:bold;">Verstanden, Ende</td></tr>
-                            <tr><td style="font-weight:bold; color:var(--success);">10-5</td><td>Einsatz Beendet</td></tr>
-                            <tr><td style="font-weight:bold; color:var(--primary);">10-6</td><td>Auf Zuteilung</td></tr>
-                            <tr><td style="font-weight:bold; color:var(--primary);">10-7</td><td>Auf Bereitschaft</td></tr>
-                            <tr><td style="font-weight:bold; color:var(--primary);">10-8</td><td>Statusabfrage</td></tr>
-                            <tr><td style="font-weight:bold; color:var(--text-main);">10-9</td><td>Funkspruch wiederholen</td></tr>
-                            <tr><td style="font-weight:bold; color:var(--warning);">10-10</td><td>Weiterer RTW benötigt</td></tr>
-                            <tr><td style="font-weight:bold; color:var(--success);">10-11</td><td>Im Dienst</td></tr>
-                            <tr><td style="font-weight:bold; color:var(--danger);">10-12</td><td>Dienstende</td></tr>
-                            <tr><td style="font-weight:bold; color:var(--danger);">10-20</td><td style="font-weight:bold; color:var(--danger);">Aktives Schussgefecht</td></tr>
-                            <tr><td style="font-weight:bold; color:var(--warning);">10-19</td><td>Abholung benötigt</td></tr>
-                            <tr><td style="font-weight:bold; color:var(--danger);">11-44</td><td style="font-weight:bold; color:var(--danger);">RTW von PD/USMS benötigt</td></tr>
-                            <tr style="background: rgba(244, 63, 94, 0.08);"><td style="font-weight:bold; color:var(--danger);">11-99</td><td style="font-weight:bold; color:var(--danger); text-shadow: 0 0 8px rgba(244,63,94,0.4);">Medic in Gefahr (Code Red)</td></tr>
-                        </tbody>
+                        <thead>
+                            <tr><th colspan="2" class="red-head">Ten Codes</th></tr>
+                            <tr><th class="sub-head text-center" style="width: 30%;">Code</th><th class="sub-head">Beschreibung</th></tr>
+                        </thead>
+                        <tbody id="guideTenCodesBody"></tbody>
                     </table>
                 </div>
                 <div class="guide-right-stack">
                     <div class="section" style="padding:0; overflow:hidden;">
                         <table class="guide-table">
-                            <thead><tr><th colspan="2" class="red-head">Status Codes</th></tr><tr><th class="sub-head text-center" style="width: 30%;">Code</th><th class="sub-head">Beschreibung</th></tr></thead>
-                            <tbody>
-                                <tr><td class="text-center" style="font-weight:bold; color:var(--primary);">1</td><td style="font-weight:bold;">Ausbildung</td></tr>
-                                <tr><td class="text-center" style="font-weight:bold; color:var(--success);">2</td><td style="font-weight:bold;">verfügbar</td></tr>
-                                <tr><td class="text-center" style="font-weight:bold; color:var(--warning);">3</td><td style="font-weight:bold;">In Pause</td></tr>
-                                <tr><td class="text-center" style="font-weight:bold; color:var(--primary);">4</td><td style="font-weight:bold;">Psychologie</td></tr>
-                                <tr><td class="text-center" style="font-weight:bold; color:var(--text-main);">5</td><td style="font-weight:bold;">Besprechung</td></tr>
-                            </tbody>
+                            <thead>
+                                <tr><th colspan="2" class="red-head">Status Codes</th></tr>
+                                <tr><th class="sub-head text-center" style="width: 30%;">Code</th><th class="sub-head">Beschreibung</th></tr>
+                            </thead>
+                            <tbody id="guideStatusCodesBody"></tbody>
                         </table>
                     </div>
                     <div class="section" style="padding:0; overflow:hidden;">
                         <table class="guide-table">
-                            <thead><tr><th colspan="2" class="red-head">Streifen Anordnung</th></tr><tr><th class="sub-head text-center" style="width: 30%;">Code</th><th class="sub-head">Beschreibung</th></tr></thead>
-                            <tbody>
-                                <tr><td class="text-center" style="font-weight:bold; color:var(--primary);">1</td><td style="font-weight:bold;">Streifen</td></tr>
-                                <tr><td class="text-center" style="font-weight:bold; color:var(--primary);">2</td><td style="font-weight:bold;">Luftrettung</td></tr>
-                                <tr><td class="text-center" style="font-weight:bold; color:var(--primary);">3</td><td style="font-weight:bold;">Sonderstreife</td></tr>
-                                <tr><td class="text-center" style="font-weight:bold; color:var(--primary);">4</td><td style="font-weight:bold;">Bereitschaft</td></tr>
-                            </tbody>
+                            <thead>
+                                <tr><th colspan="2" class="red-head">Streifen Anordnung</th></tr>
+                                <tr><th class="sub-head text-center" style="width: 30%;">Code</th><th class="sub-head">Beschreibung</th></tr>
+                            </thead>
+                            <tbody id="guideStreifenBody"></tbody>
                         </table>
                     </div>
                     <div class="section" style="padding:0; overflow:hidden;">
                         <table class="guide-table">
-                            <thead><tr><th colspan="2" class="red-head">Keine Rechnung</th></tr></thead>
-                            <tbody>
-                                <tr><td style="font-weight:bold; width: 50%;">Staatliche Fraktionen<br><span style="color:var(--text-muted); font-size:11px;">(SAPD, USMS, DOJ & SAMD)</span></td><td style="color:var(--danger); font-weight:600;">Im Dienst wird keine Rechnung ausgestellt</td></tr>
-                                <tr><td style="font-weight:bold;">Mechaniker<br><span style="color:var(--text-muted); font-size:11px;">(Benny´s, Redfield & Roxwood Tuning)</span></td><td style="color:var(--danger); font-weight:600;">Im Dienst wird keine Rechnung ausgestellt</td></tr>
-                                <tr><td style="font-weight:bold;">Security C77 / Bahamas / Casino</td><td style="color:var(--danger); font-weight:600;">Im Dienst wird keine Rechnung ausgestellt</td></tr>
-                            </tbody>
+                            <thead>
+                                <tr><th colspan="2" class="red-head">Keine Rechnung</th></tr>
+                            </thead>
+                            <tbody id="guideKeineRechnungBody"></tbody>
                         </table>
                     </div>
                 </div>
@@ -1019,8 +998,7 @@ Frage: In welches GPS loggst du dich ein?
                     <p style="color: var(--text-muted); font-size: 13px; margin: 4px 0 0 0;">Wichtige Richtlinien, Dienstanweisungen und Ankündigungen der Klinikleitung.</p>
                 </div>
                 <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-                    <button id="btnOpenPostNews" class="btn" style="width: auto; margin: 0; padding: 8px 16px; background: var(--primary); color: #080c14; font-weight: 800; font-size: 12px; display: none;" onclick="togglePostNewsForm()">➕ Neue News posten</button>
-                    <button class="btn" style="width: auto; margin: 0; padding: 8px 14px; background: rgba(56,189,248,0.15); color: var(--primary); border: 1px solid var(--primary); font-size: 12px; font-weight: 700;" onclick="toggleAllNewsCollapse()">📂 Alle aus-/einklappen</button>
+                    <button id="btnOpenPostNews" class="btn" style="width: auto; margin: 0; padding: 8px 18px; background: var(--primary); color: #080c14; font-weight: 800; font-size: 13px; display: none; border-radius: 8px;" onclick="togglePostNewsForm()">➕ Neue News posten</button>
                 </div>
             </div>
 
@@ -1248,18 +1226,12 @@ Frage: In welches GPS loggst du dich ein?
                                         <span style="color:var(--primary);">📢 News & Threads posten</span>
                                     </label>
                                 </div>
+                                <label style="font-size:13px; font-weight:800; color:var(--primary); margin-bottom:10px; display:block;">🔗 Freigeschaltete Link-Kategorien</label>
+                                <div id="roleEditLinksCategoriesContainer" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap:6px;"></div>
                             </div>
-
-                            <!-- AUTOMATISCH FREIGESCHALTETE KATEGORIEN -->
-                            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px;">
-                                <div style="background:rgba(15,23,42,0.7); padding:16px 18px; border-radius:12px; border:1px solid var(--border);">
-                                    <label style="font-size:13px; font-weight:800; color:var(--primary); margin-bottom:10px; display:block;">🔗 Freigeschaltete Link-Kategorien</label>
-                                    <div id="roleEditLinksCategoriesContainer" style="display:flex; flex-direction:column; gap:8px; max-height:170px; overflow-y:auto;"></div>
-                                </div>
-                                <div style="background:rgba(15,23,42,0.7); padding:16px 18px; border-radius:12px; border:1px solid var(--border);">
-                                    <label style="font-size:13px; font-weight:800; color:var(--warning); margin-bottom:10px; display:block;">💻 Freigeschaltete Command-Kategorien</label>
-                                    <div id="roleEditCmdsCategoriesContainer" style="display:flex; flex-direction:column; gap:8px; max-height:170px; overflow-y:auto;"></div>
-                                </div>
+                            <div style="background:rgba(15,23,42,0.7); padding:16px 18px; border-radius:12px; border:1px solid var(--border);">
+                                <label style="font-size:13px; font-weight:800; color:var(--warning); margin-bottom:10px; display:block;">💻 Freigeschaltete Command-Kategorien</label>
+                                <div id="roleEditCmdsCategoriesContainer" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap:6px;"></div>
                             </div>
 
                             <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid var(--border); padding-top:16px; margin-top:8px;">
@@ -1271,11 +1243,76 @@ Frage: In welches GPS loggst du dich ein?
                 </div>
             </div>
 
-            <!-- SUB-TAB 3: LINKS & COMMANDS HINZUFÜGEN & BULK-IMPORT -->
+            <!-- SUB-TAB 3: FUNK & CODES, LINKS & COMMANDS CMS -->
             <div id="adminSubTabContent" class="admin-subtab-content">
                 <div style="background:rgba(168, 85, 247, 0.04); padding:24px 28px; border-radius:16px; border:1px solid rgba(168, 85, 247, 0.25); margin-bottom:24px; box-shadow:0 4px 20px rgba(0,0,0,0.25);">
-                    <h3 style="margin:0 0 16px 0; color:#a855f7; font-size:16px; font-weight:800; text-transform:uppercase; letter-spacing:0.5px;">🔗 Links & 💻 Commands verwalten (Admin)</h3>
-                    
+                    <h3 style="margin:0 0 16px 0; color:#a855f7; font-size:16px; font-weight:800; text-transform:uppercase; letter-spacing:0.5px;">📋 Funk & Codes, 🔗 Links & 💻 Commands (CMS-Verwaltung)</h3>
+                    <p style="color:var(--text-muted); font-size:13px; margin-top:0; margin-bottom:20px;">
+                        Verwalte hier eigenständig alle Inhalte für Funk & Codes, Statuscodes, Streifenanordnung, Keine-Rechnungen-Listen sowie Links und Befehle direkt in der Cloud.
+                    </p>
+
+                    <!-- SECTION 1: FUNK & CODES (TEN CODES) CRUD -->
+                    <div style="background:rgba(15,23,42,0.6); padding:20px; border-radius:14px; border:1px solid var(--border); margin-bottom:20px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:10px;">
+                            <h4 style="margin:0; color:var(--primary); font-size:15px; font-weight:800;">📻 Ten Codes (Funk & Codes)</h4>
+                            <button class="btn" style="width:auto; margin:0; padding:6px 14px; font-size:12px; background:var(--primary); color:#080c14; font-weight:800;" onclick="openAddGuideItemModal('tenCodes')">➕ Neuen Ten Code anlegen</button>
+                        </div>
+                        <div class="table-responsive" style="max-height:260px; overflow-y:auto;">
+                            <table style="width:100%;">
+                                <thead>
+                                    <tr><th style="width:20%;">Code</th><th>Beschreibung</th><th style="width:20%;">Farbe / Typ</th><th style="width:15%; text-align:right;">Aktionen</th></tr>
+                                </thead>
+                                <tbody id="adminTenCodesTableBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- SECTION 2: STATUS CODES & STREIFEN ANORDNUNG GRID -->
+                    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap:20px; margin-bottom:20px;">
+                        <!-- STATUS CODES -->
+                        <div style="background:rgba(15,23,42,0.6); padding:20px; border-radius:14px; border:1px solid var(--border);">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:10px;">
+                                <h4 style="margin:0; color:var(--warning); font-size:14px; font-weight:800;">📟 Statuscodes</h4>
+                                <button class="btn" style="width:auto; margin:0; padding:6px 12px; font-size:11px; background:var(--warning); color:#080c14; font-weight:800;" onclick="openAddGuideItemModal('statusCodes')">➕ Neu</button>
+                            </div>
+                            <div class="table-responsive" style="max-height:220px; overflow-y:auto;">
+                                <table>
+                                    <thead><tr><th>Code</th><th>Beschreibung</th><th style="text-align:right;">Aktionen</th></tr></thead>
+                                    <tbody id="adminStatusCodesTableBody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- STREIFEN ANORDNUNG -->
+                        <div style="background:rgba(15,23,42,0.6); padding:20px; border-radius:14px; border:1px solid var(--border);">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:10px;">
+                                <h4 style="margin:0; color:var(--primary); font-size:14px; font-weight:800;">🚓 Streifenanordnung</h4>
+                                <button class="btn" style="width:auto; margin:0; padding:6px 12px; font-size:11px; background:var(--primary); color:#080c14; font-weight:800;" onclick="openAddGuideItemModal('streifen')">➕ Neu</button>
+                            </div>
+                            <div class="table-responsive" style="max-height:220px; overflow-y:auto;">
+                                <table>
+                                    <thead><tr><th>Code</th><th>Beschreibung</th><th style="text-align:right;">Aktionen</th></tr></thead>
+                                    <tbody id="adminStreifenTableBody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SECTION 3: KEINE RECHNUNGEN LISTE -->
+                    <div style="background:rgba(15,23,42,0.6); padding:20px; border-radius:14px; border:1px solid var(--border); margin-bottom:20px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:10px;">
+                            <h4 style="margin:0; color:var(--danger); font-size:15px; font-weight:800;">🚫 „Keine Rechnung“-Listen</h4>
+                            <button class="btn" style="width:auto; margin:0; padding:6px 14px; font-size:12px; background:var(--danger); color:#fff; font-weight:800;" onclick="openAddGuideItemModal('keineRechnung')">➕ Neuen Eintrag anlegen</button>
+                        </div>
+                        <div class="table-responsive" style="max-height:220px; overflow-y:auto;">
+                            <table>
+                                <thead><tr><th style="width:35%;">Name / Fraktion</th><th style="width:25%;">Zusatz / Notiz</th><th>Befreiungsregel</th><th style="width:15%; text-align:right;">Aktionen</th></tr></thead>
+                                <tbody id="adminKeineRechnungTableBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- SECTION 4: LINKS & COMMANDS CRUD -->
                     <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap:24px;">
                         <!-- NEUEN LINK HINZUFÜGEN -->
                         <div style="background:rgba(15,23,42,0.6); padding:20px; border-radius:14px; border:1px solid var(--border);">
@@ -1291,6 +1328,9 @@ Frage: In welches GPS loggst du dich ein?
                                 <option value="EHK">
                                 <option value="Psychologie">
                                 <option value="CLS">
+                                <option value="Ausbildung">
+                                <option value="Luftrettung">
+                                <option value="Personalabteilung">
                             </datalist>
                             <button class="btn" style="margin-top:14px; font-weight:800; font-size:14px; padding:12px;" onclick="linkHinzufuegen()">Link in Cloud speichern</button>
                         </div>
@@ -1309,33 +1349,24 @@ Frage: In welches GPS loggst du dich ein?
                                 <option value="T-Codes">
                                 <option value="Abkürzungen & Dokumente">
                                 <option value="Ausbildung">
+                                <option value="Ausbildungsabteilung">
                             </datalist>
                             <button class="btn" style="background:var(--primary); color:#080c14; margin-top:14px; font-weight:800; font-size:14px; padding:12px;" onclick="commandHinzufuegen()">Command in Cloud speichern</button>
                         </div>
                     </div>
 
-                    <!-- MASSEN-IMPORT / BULK COMMANDS -->
-                    <div style="margin-top:24px; border-top:1px solid rgba(255,255,255,0.1); padding-top:20px;">
-                        <h4 style="margin:0 0 8px 0; color:var(--success); font-size:15px; font-weight:800; display:flex; align-items:center; gap:8px;">
-                            ⚡ Massen-Import: Mehrere Commands auf einmal hinzufügen
-                        </h4>
-                        <p style="color:var(--text-muted); font-size:13px; margin-top:0; margin-bottom:14px;">
-                            Füge hier deine Liste an Commands ein. Jede Zeile wird automatisch als eigener Command verarbeitet!<br>
-                            <b>Format pro Zeile:</b> <code>Command | Beschreibung | Kategorie</code> <i>(Beispiel: <code>!psych | Psychologie anfordern | Psychologie</code>)</i><br>
-                            <i>Oder <code>Command | Beschreibung</code> (wenn du unten eine Standard-Kategorie auswählst/eintippst).</i>
-                        </p>
-                        
-                        <div style="display:grid; grid-template-columns: 1fr; gap:14px; margin-bottom:14px;">
-                            <div>
-                                <label for="bulkCmdCategoryFallback" style="font-size:12px;">Standard-Kategorie (falls in den Zeilen keine angegeben ist):</label>
-                                <input type="text" id="bulkCmdCategoryFallback" list="cmdKatList" placeholder="Z.B. Psychologie, T-Codes, Ausbildung...">
+                    <!-- MASSEN-IMPORT FÜR COMMANDS -->
+                    <div style="background:rgba(15,23,42,0.6); padding:20px; border-radius:14px; border:1px solid var(--border); margin-top:20px;">
+                        <h4 style="margin:0 0 10px 0; color:var(--primary); font-size:14px; font-weight:800;">⚡ Mehrere Commands gleichzeitig importieren (Massen-Import)</h4>
+                        <p style="color:var(--text-muted); font-size:12px; margin-top:0;">Format pro Zeile: <code>Command | Beschreibung | Kategorie</code> (z.B. <code>!funk | Funk beitreten | Allgemein</code>)</p>
+                        <textarea id="bulkCmdTextarea" rows="4" style="width:100%; padding:10px; background:rgba(8,12,20,0.6); border:1px solid var(--border); border-radius:8px; color:var(--text-main); font-family:monospace; font-size:12px;" placeholder="/t1 | Status 1: Einsatzbereit | T-Codes&#10;/t2 | Status 2: Auf Funk | T-Codes"></textarea>
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px; flex-wrap:wrap; gap:10px;">
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                <label style="font-size:12px; margin:0;">Standard-Kategorie:</label>
+                                <input type="text" id="bulkCmdCategoryFallback" value="Allgemein" style="width:180px; padding:6px; font-size:12px;">
                             </div>
-                            <div>
-                                <label for="bulkCmdTextarea" style="font-size:12px;">Commands-Liste (1 Command pro Zeile):</label>
-                                <textarea id="bulkCmdTextarea" rows="7" placeholder="!Psych | Psych anforderungen | Psychologie&#10;!waffenschein | Warten für die überprüfung | Psychologie&#10;/editmdthud | MD HUD ändern | T-Codes&#10;CLS | Combat Life Saver | Abkürzungen & Dokumente&#10;!ausbildung | Ausbildungsanfrage stellen | Ausbildung" style="width:100%; box-sizing:border-box; font-family:monospace; font-size:13px; padding:12px; border-radius:10px; background:rgba(8,12,20,0.7); color:var(--text-main); border:1px solid var(--border);"></textarea>
-                            </div>
+                            <button class="btn" style="width:auto; margin:0; padding:8px 18px; font-size:13px; font-weight:800;" onclick="bulkCommandsImportieren()">⚡ Alle Commands importieren</button>
                         </div>
-                        <button class="btn" style="background:var(--success); color:#080c14; font-weight:800; padding:14px 28px; font-size:14px; border-radius:10px;" onclick="bulkCommandsImportieren()">⚡ Alle eingefügten Commands auf einmal speichern</button>
                     </div>
                 </div>
             </div>
@@ -1343,35 +1374,39 @@ Frage: In welches GPS loggst du dich ein?
             <!-- SUB-TAB 4: HIERARCHIE & ABTEILUNGEN -->
             <div id="adminSubTabHierarchy" class="admin-subtab-content">
                 <div style="background:rgba(56, 189, 248, 0.04); padding:24px 28px; border-radius:16px; border:1px solid rgba(56, 189, 248, 0.25); margin-bottom:24px; box-shadow:0 4px 20px rgba(0,0,0,0.25);">
-                    <h3 style="margin:0 0 8px 0; color:var(--primary); font-size:16px; font-weight:800; text-transform:uppercase; letter-spacing:0.5px;">🌳 Hierarchie, Besetzungen & Abteilungen bearbeiten</h3>
-                    <p style="color:var(--text-muted); font-size:13px; margin-top:0; margin-bottom:18px;">Trage hier die Namen und Leitungen ein. Die Daten erscheinen live auf dem <b>Hierarchie-Board</b>.</p>
+                    <h3 style="margin:0 0 16px 0; color:var(--primary); font-size:16px; font-weight:800; text-transform:uppercase; letter-spacing:0.5px;">🌳 Hierarchie-Namen & Abteilungsleitungen anpassen</h3>
+                    <p style="color:var(--text-muted); font-size:13px; margin-top:0; margin-bottom:20px;">Trage hier die aktuellen Namen für das Hierarchie-Board ein. Diese werden live für alle Mitarbeiter synchronisiert.</p>
                     
-                    <!-- CHIEFEBENE & HIGH COMMAND -->
-                    <div style="background:rgba(15,23,42,0.6); padding:18px 22px; border-radius:14px; border:1px solid var(--border); margin-bottom:20px;">
-                        <label style="color:var(--primary); font-weight:800; font-size:14px; display:block; margin-bottom:12px; margin-top:0;">⭐ Chiefebene & High Command Namen</label>
-                        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:14px;">
-                            <div><label style="font-size:12px;">01 Chief</label><input type="text" id="inp_h_chief_01" placeholder="#REF!"></div>
-                            <div><label style="font-size:12px;">02 Ass. Chief</label><input type="text" id="inp_h_chief_02" placeholder="#REF!"></div>
-                            <div><label style="font-size:12px;">03 Deputy Chief</label><input type="text" id="inp_h_chief_03" placeholder="#REF!"></div>
-                            <div><label style="font-size:12px;">04 D.o.M.O</label><input type="text" id="inp_h_domo_04" placeholder="Nick Garcia"></div>
-                            <div><label style="font-size:12px;">04 D.o.M.O Zusatz</label><input type="text" id="inp_h_domo_04_sub" placeholder="Freifeld / Zusatz"></div>
-                            <div><label style="font-size:12px;">05 F.o.D</label><input type="text" id="inp_h_fod_05" placeholder="Mike Gonzalo"></div>
-                            <div><label style="font-size:12px;">05 F.o.D Zusatz</label><input type="text" id="inp_h_fod_05_sub" placeholder="Freifeld / Zusatz"></div>
-                            <div><label style="font-size:12px;">06 Chief Phys</label><input type="text" id="inp_h_chiefphys_06" placeholder="Katarina Harper"></div>
-                            <div><label style="font-size:12px;">07 Chief Phys</label><input type="text" id="inp_h_chiefphys_07" placeholder="Tim Sanddorn"></div>
-                            <div><label style="font-size:12px;">08 Lieutenant</label><input type="text" id="inp_h_lt_08" placeholder="Aktuell nicht belegt"></div>
-                            <div><label style="font-size:12px;">09 Lieutenant</label><input type="text" id="inp_h_lt_09" placeholder="Aktuell nicht belegt"></div>
+                    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:20px; margin-bottom:20px;">
+                        <!-- HIGH COMMAND -->
+                        <div style="background:rgba(15,23,42,0.6); padding:18px; border-radius:12px; border:1px solid var(--border);">
+                            <h4 style="margin:0 0 12px 0; color:var(--danger); font-size:13px; font-weight:800;">High Command</h4>
+                            <div><label style="font-size:12px;">Chief of SAMD 1</label><input type="text" id="inp_h_chief_01" placeholder="#REF! / Frei"></div>
+                            <div><label style="font-size:12px;">Chief of SAMD 2</label><input type="text" id="inp_h_chief_02" placeholder="#REF! / Frei"></div>
+                            <div><label style="font-size:12px;">Chief of SAMD 3</label><input type="text" id="inp_h_chief_03" placeholder="#REF! / Frei"></div>
+                            <div><label style="font-size:12px;">Director of Medical Operations (DOMO)</label><input type="text" id="inp_h_domo_04" placeholder="Nick Garcia"></div>
+                            <div><label style="font-size:12px;">Head of Department (FOD)</label><input type="text" id="inp_h_fod_05" placeholder="Mike Gonzalo"></div>
+                            <div><label style="font-size:12px;">Chief Physician</label><input type="text" id="inp_h_chiefphys_06" placeholder="Katarina Harper"></div>
                         </div>
-                    </div>
 
-                    <!-- ABTEILUNGEN LEITUNG & STELLV -->
-                    <div style="background:rgba(15,23,42,0.6); padding:18px 22px; border-radius:14px; border:1px solid var(--border); margin-bottom:20px;">
-                        <label style="color:#a855f7; font-weight:800; font-size:14px; display:block; margin-bottom:12px; margin-top:0;">🏢 Abteilungen Leitungen & Stellvertretungen</label>
-                        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap:14px;">
+                        <!-- MID COMMAND -->
+                        <div style="background:rgba(15,23,42,0.6); padding:18px; border-radius:12px; border:1px solid var(--border);">
+                            <h4 style="margin:0 0 12px 0; color:var(--warning); font-size:13px; font-weight:800;">Mid Command</h4>
+                            <div><label style="font-size:12px;">Medical Specialist</label><input type="text" id="inp_h_medspec_07" placeholder="Frei / Unbesetzt"></div>
+                            <div><label style="font-size:12px;">Head of Paramedic (HOP)</label><input type="text" id="inp_h_hop_08" placeholder="Frei / Unbesetzt"></div>
+                            <div><label style="font-size:12px;">Attending Physician</label><input type="text" id="inp_h_attphys_09" placeholder="N/A"></div>
+                            <div><label style="font-size:12px;">Lead Paramedic</label><input type="text" id="inp_h_leadpara_10" placeholder="N/A"></div>
+                            <div><label style="font-size:12px;">Physician</label><input type="text" id="inp_h_phys_11" placeholder="N/A"></div>
+                            <div><label style="font-size:12px;">Senior Paramedic</label><input type="text" id="inp_h_snrpara_12" placeholder="N/A"></div>
+                        </div>
+
+                        <!-- ABTEILUNGSLEITUNGEN -->
+                        <div style="background:rgba(15,23,42,0.6); padding:18px; border-radius:12px; border:1px solid var(--border);">
+                            <h4 style="margin:0 0 12px 0; color:var(--primary); font-size:13px; font-weight:800;">Abteilungsleitungen</h4>
                             <div><label style="font-size:12px;">Psychologie Leitung</label><input type="text" id="inp_h_dept_psych_l" placeholder="Aktuell nicht belegt"></div>
                             <div><label style="font-size:12px;">Psychologie Stellv.</label><input type="text" id="inp_h_dept_psych_sl" placeholder="Aktuell nicht belegt"></div>
-                            <div><label style="font-size:12px;">Personalabteilung L.</label><input type="text" id="inp_h_dept_perso_l" placeholder="Aktuell nicht belegt"></div>
-                            <div><label style="font-size:12px;">Personalabteilung Stellv.</label><input type="text" id="inp_h_dept_perso_sl" placeholder="Aktuell nicht belegt"></div>
+                            <div><label style="font-size:12px;">Personal Leitung</label><input type="text" id="inp_h_dept_perso_l" placeholder="Aktuell nicht belegt"></div>
+                            <div><label style="font-size:12px;">Personal Stellv.</label><input type="text" id="inp_h_dept_perso_sl" placeholder="Aktuell nicht belegt"></div>
                             <div><label style="font-size:12px;">Ausbildung Leitung</label><input type="text" id="inp_h_dept_ausb_l" placeholder="Aktuell nicht belegt"></div>
                             <div><label style="font-size:12px;">Ausbildung Stellv.</label><input type="text" id="inp_h_dept_ausb_sl" placeholder="Aktuell nicht belegt"></div>
                             <div><label style="font-size:12px;">Luftrettung Leitung</label><input type="text" id="inp_h_dept_luft_l" placeholder="Gleich die Ausbildungsleitung"></div>
@@ -1383,7 +1418,7 @@ Frage: In welches GPS loggst du dich ein?
                 </div>
             </div>
 
-            <!-- SUB-TAB 5: PREISE & SZENARIEN -->
+            <!-- SUB-TAB 5: PREISE & SZENARIEN (KOMPAKT OHNE SCROLLBAR) -->
             <div id="adminSubTabPrices" class="admin-subtab-content">
                 <div style="background:rgba(245, 158, 11, 0.04); padding:24px 28px; border-radius:16px; border:1px solid rgba(245, 158, 11, 0.25); margin-bottom:24px; box-shadow:0 4px 20px rgba(0,0,0,0.25);">
                     <h3 style="margin:0 0 16px 0; color:var(--warning); font-size:16px; font-weight:800; text-transform:uppercase; letter-spacing:0.5px;">💰 Materialpreise & Szenario-Voreinstellungen (Admin)</h3>
@@ -1392,7 +1427,7 @@ Frage: In welches GPS loggst du dich ein?
                         <!-- PREISE -->
                         <div style="background:rgba(15,23,42,0.6); padding:20px; border-radius:14px; border:1px solid var(--border);">
                             <h4 style="margin:0 0 12px 0; color:var(--primary); font-size:14px; font-weight:800;">💰 Materialpreise ändern</h4>
-                            <div id="preiseEinstellungsContainer" style="max-height:320px; overflow-y:auto; padding-right:8px;"></div>
+                            <div id="preiseEinstellungsContainer" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap:6px;"></div>
                             <button class="btn" style="margin-top:14px; font-weight:800; font-size:14px; padding:12px;" onclick="speicherePreise()">Preise übernehmen</button>
                         </div>
 
@@ -1403,21 +1438,35 @@ Frage: In welches GPS loggst du dich ein?
                             <select id="templateSzenarioSelect" onchange="ladeSzenarioTemplateInSettings()" style="margin-bottom:12px;">
                                 <option value="Stumpfe Gewalt">Stumpfe Gewalt</option><option value="Schusswunde">Schusswunde</option><option value="Schnittwunde">Schnittwunde</option><option value="Undefinierbar">Undefinierbar</option>
                             </select>
-                            <div id="templateMaterialsContainer" style="max-height:260px; overflow-y:auto; padding-right:8px;"></div>
+                            <div id="templateMaterialsContainer" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap:6px;"></div>
                             <button class="btn" style="background-color: var(--primary); color:#080c14; font-weight:800; margin-top:14px; font-size:14px; padding:12px;" onclick="speichereSzenarioTemplate()">Voreinstellungen speichern</button>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- SUB-TAB 6: SCHICHT & SYSTEM-RESET -->
+            <!-- SUB-TAB 6: SCHICHT, SYSTEM-RESET & BACKUP -->
             <div id="adminSubTabSystem" class="admin-subtab-content">
+                <!-- SCHICHT-VERWALTUNG & RESET -->
                 <div style="background:rgba(244, 63, 94, 0.06); padding:24px 28px; border-radius:16px; border:1px solid rgba(244, 63, 94, 0.25); margin-bottom:24px; box-shadow:0 4px 20px rgba(0,0,0,0.25);">
                     <h3 style="margin:0 0 10px 0; color:var(--danger); font-size:16px; font-weight:800; text-transform:uppercase; letter-spacing:0.5px;">⚙️ Schicht-Verwaltung (Reset & Archiv)</h3>
                     <p style="color:var(--text-muted); font-size:13px; margin:0 0 16px 0;">Führe am Schichtende den Tagesdaten-Reset durch, um alle Behandlungen ins Archiv zu übertragen.</p>
                     <div class="btn-group" style="margin-top:0;">
                         <button class="btn-day-reset" style="padding:16px 24px; font-size:14px; border-radius:12px;" onclick="tagesstatistikZuruecksetzen()">Schicht beenden & Tagesdaten archivieren</button>
                         <button class="btn-full-reset" style="padding:16px 20px; font-size:14px; border-radius:12px;" onclick="allesKomplettLoeschen()">Alles komplett zurücksetzen</button>
+                    </div>
+                </div>
+
+                <!-- BACKUP & RESTORE SYSTEM -->
+                <div style="background:rgba(56, 189, 248, 0.05); padding:24px 28px; border-radius:16px; border:1px solid rgba(56, 189, 248, 0.25); margin-bottom:24px; box-shadow:0 4px 20px rgba(0,0,0,0.25);">
+                    <h3 style="margin:0 0 10px 0; color:var(--primary); font-size:16px; font-weight:800; text-transform:uppercase; letter-spacing:0.5px;">💾 System-Backup & Wiederherstellung</h3>
+                    <p style="color:var(--text-muted); font-size:13px; margin:0 0 18px 0;">Erstelle jederzeit ein vollständiges Datenbank-Backup oder spiele eine gespeicherte Sicherungsdatei (JSON) wieder ein.</p>
+                    <div style="display:flex; gap:14px; flex-wrap:wrap; align-items:center;">
+                        <button class="btn" style="background:var(--primary); color:#080c14; font-weight:800; width:auto; padding:14px 24px; font-size:13px; border-radius:10px; margin:0;" onclick="downloadSystemBackup()">📥 Backup erstellen & herunterladen (JSON)</button>
+                        <label class="btn" style="background:rgba(56,189,248,0.15); color:var(--primary); border:1px solid var(--primary); font-weight:800; width:auto; padding:14px 24px; font-size:13px; border-radius:10px; margin:0; cursor:pointer; display:inline-flex; align-items:center; gap:6px;">
+                            <span>📤 Backup-Datei einspielen (Wiederherstellen)</span>
+                            <input type="file" id="backupFileInput" accept=".json" style="display:none;" onchange="restoreSystemBackup(event)">
+                        </label>
                     </div>
                 </div>
             </div>
@@ -1568,6 +1617,25 @@ Frage: In welches GPS loggst du dich ein?
         </div>
     </div>
 
+    <!-- GUIDE CMS ITEM MODAL -->
+    <div id="guideItemModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(8,12,20,0.85); z-index:100000; align-items:center; justify-content:center; backdrop-filter:blur(8px);">
+        <div style="background:rgba(15,23,42,0.96); border:2px solid var(--primary); border-radius:20px; width:95%; max-width:480px; padding:24px; display:flex; flex-direction:column; box-shadow:0 15px 50px rgba(0,0,0,0.7);">
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:12px; margin-bottom:16px;">
+                <h3 id="guideItemModalTitle" style="margin:0; color:var(--primary); font-size:17px; font-weight:800;">Eintrag bearbeiten</h3>
+                <button style="background:rgba(255,255,255,0.08); color:var(--text-muted); border:1px solid var(--border); width:32px; height:32px; border-radius:8px; font-size:15px; cursor:pointer;" onclick="closeGuideItemModal()">✖</button>
+            </div>
+            <input type="hidden" id="guideItemSection" value="">
+            <input type="hidden" id="guideItemId" value="">
+            
+            <div id="guideItemFieldsContainer" style="display:flex; flex-direction:column; gap:12px;"></div>
+
+            <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:20px; padding-top:14px; border-top:1px solid var(--border);">
+                <button class="btn" style="background:rgba(255,255,255,0.1); color:var(--text-main); width:auto; padding:10px 20px; font-size:13px; font-weight:700; border:1px solid var(--border);" onclick="closeGuideItemModal()">Abbrechen</button>
+                <button class="btn" style="background:var(--success); color:#080c14; font-weight:800; width:auto; padding:10px 26px; font-size:13px;" onclick="saveGuideItem()">💾 Speichern</button>
+            </div>
+        </div>
+    </div>
+
     <!-- ROLLEN-ZUWEISUNG MODAL (FÜR AUSBILDUNGSLEITUNG & ADMINS) -->
     <div id="assignRolesModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(8,12,20,0.85); z-index:10000; align-items:center; justify-content:center; backdrop-filter:blur(8px);">
         <div style="background:rgba(15,23,42,0.96); border:2px solid var(--primary); border-radius:22px; width:95%; max-width:680px; max-height:88vh; padding:28px; display:flex; flex-direction:column; box-shadow:0 15px 50px rgba(0,0,0,0.7);">
@@ -1628,6 +1696,46 @@ Frage: In welches GPS loggst du dich ein?
         luftrettung: { id: 'luftrettung', name: 'Luftrettung', color: '#0284c7', icon: '🚁', isSystem: true, isAdmin: false, isMasterAdmin: false, canDelete: false, isInstructor: false, canManageInstructors: false, canPostNews: false, allowedLinkKats: { 'Luftrettung': true, 'MD Intern': true, 'Allgemein': true }, allowedCmdKats: { 'T-Codes': true, 'Abkürzungen & Dokumente': true } }
     };
     let cachedRoles = Object.assign({}, defaultRoles);
+
+    let defaultGuideData = {
+        tenCodes: [
+            { id: "tc_1", code: "10-1", desc: "Auf Anfahrt", color: "var(--warning)" },
+            { id: "tc_2", code: "10-2", desc: "Am Einsatzort", color: "var(--warning)" },
+            { id: "tc_3", code: "10-3", desc: "Weg ins MD", color: "var(--warning)" },
+            { id: "tc_4", code: "10-4", desc: "Verstanden, Ende", color: "var(--success)" },
+            { id: "tc_5", code: "10-5", desc: "Einsatz Beendet", color: "var(--success)" },
+            { id: "tc_6", code: "10-6", desc: "Auf Zuteilung", color: "var(--primary)" },
+            { id: "tc_7", code: "10-7", desc: "Auf Bereitschaft", color: "var(--primary)" },
+            { id: "tc_8", code: "10-8", desc: "Statusabfrage", color: "var(--primary)" },
+            { id: "tc_9", code: "10-9", desc: "Funkspruch wiederholen", color: "var(--text-main)" },
+            { id: "tc_10", code: "10-10", desc: "Weiterer RTW benötigt", color: "var(--warning)" },
+            { id: "tc_11", code: "10-11", desc: "Im Dienst", color: "var(--success)" },
+            { id: "tc_12", code: "10-12", desc: "Dienstende", color: "var(--danger)" },
+            { id: "tc_13", code: "10-20", desc: "Aktives Schussgefecht", color: "var(--danger)" },
+            { id: "tc_14", code: "10-19", desc: "Abholung benötigt", color: "var(--warning)" },
+            { id: "tc_15", code: "11-44", desc: "RTW von PD/USMS benötigt", color: "var(--danger)" },
+            { id: "tc_16", code: "11-99", desc: "Medic in Gefahr (Code Red)", color: "var(--danger)" }
+        ],
+        statusCodes: [
+            { id: "sc_1", code: "1", desc: "Ausbildung", color: "var(--primary)" },
+            { id: "sc_2", code: "2", desc: "verfügbar", color: "var(--success)" },
+            { id: "sc_3", code: "3", desc: "In Pause", color: "var(--warning)" },
+            { id: "sc_4", code: "4", desc: "Psychologie", color: "var(--primary)" },
+            { id: "sc_5", code: "5", desc: "Besprechung", color: "var(--text-main)" }
+        ],
+        streifen: [
+            { id: "st_1", code: "1", desc: "Streifen", color: "var(--primary)" },
+            { id: "st_2", code: "2", desc: "Luftrettung", color: "var(--primary)" },
+            { id: "st_3", code: "3", desc: "Sonderstreife", color: "var(--primary)" },
+            { id: "st_4", code: "4", desc: "Bereitschaft", color: "var(--primary)" }
+        ],
+        keineRechnung: [
+            { id: "kr_1", name: "Staatliche Fraktionen", note: "(SAPD, USMS, DOJ & SAMD)", desc: "Im Dienst wird keine Rechnung ausgestellt" },
+            { id: "kr_2", name: "Mechaniker", note: "(Benny´s, Redfield & Roxwood Tuning)", desc: "Im Dienst wird keine Rechnung ausgestellt" },
+            { id: "kr_3", name: "Security C77 / Bahamas / Casino", note: "", desc: "Im Dienst wird keine Rechnung ausgestellt" }
+        ]
+    };
+    let cachedGuideData = Object.assign({}, defaultGuideData);
 
     function getUserRolesList(user) {
         if (!user) return [];
@@ -2347,6 +2455,14 @@ dispEl.textContent = (hierarchieDaten[key] !== undefined && hierarchieDaten[key]
             if(cloud.tagesZaehler) tagesZaehler = cloud.tagesZaehler;
             cachedExamOrder = cloud.examOrder || [];
             
+            if (cloud.guideData) {
+                cachedGuideData = Object.assign({}, defaultGuideData, cloud.guideData);
+            } else {
+                cachedGuideData = Object.assign({}, defaultGuideData);
+            }
+            renderGuideTab(cachedGuideData);
+            renderAdminGuideTables();
+
             if(cloud.hierarchie) renderHierarchieBoard(cloud.hierarchie);
             else renderHierarchieBoard(hierarchieDaten);
             
@@ -2401,6 +2517,357 @@ dispEl.textContent = (hierarchieDaten[key] !== undefined && hierarchieDaten[key]
 
     function canUserDelete() {
         return sessionUser && getUserEffectivePermissions(sessionUser).canDelete;
+    }
+
+    // --- GUIDE & FUNK CMS RENDERING & CRUD ---
+    function renderGuideTab(guideData) {
+        const data = guideData || cachedGuideData || defaultGuideData;
+
+        // 1. Ten Codes
+        const tcBody = document.getElementById('guideTenCodesBody');
+        if (tcBody) {
+            const list = Array.isArray(data.tenCodes) ? data.tenCodes : Object.values(data.tenCodes || {});
+            tcBody.innerHTML = list.map(item => {
+                const color = item.color || 'var(--text-main)';
+                const isSpecial = item.code === '11-99';
+                const rowBg = isSpecial ? 'background: rgba(190, 18, 60, 0.12);' : '';
+                const textShadow = isSpecial ? 'text-shadow: 0 0 8px rgba(190,18,60,0.5);' : '';
+                return `<tr style="${rowBg}">
+                    <td style="font-weight:bold; color:${color};">${item.code}</td>
+                    <td style="${isSpecial ? `font-weight:bold; color:${color}; ${textShadow}` : ''}">${item.desc}</td>
+                </tr>`;
+            }).join('');
+        }
+
+        // 2. Status Codes
+        const scBody = document.getElementById('guideStatusCodesBody');
+        if (scBody) {
+            const list = Array.isArray(data.statusCodes) ? data.statusCodes : Object.values(data.statusCodes || {});
+            scBody.innerHTML = list.map(item => {
+                const color = item.color || 'var(--primary)';
+                return `<tr>
+                    <td class="text-center" style="font-weight:bold; color:${color};">${item.code}</td>
+                    <td style="font-weight:bold;">${item.desc}</td>
+                </tr>`;
+            }).join('');
+        }
+
+        // 3. Streifen Anordnung
+        const stBody = document.getElementById('guideStreifenBody');
+        if (stBody) {
+            const list = Array.isArray(data.streifen) ? data.streifen : Object.values(data.streifen || {});
+            stBody.innerHTML = list.map(item => {
+                const color = item.color || 'var(--primary)';
+                return `<tr>
+                    <td class="text-center" style="font-weight:bold; color:${color};">${item.code}</td>
+                    <td style="font-weight:bold;">${item.desc}</td>
+                </tr>`;
+            }).join('');
+        }
+
+        // 4. Keine Rechnung
+        const krBody = document.getElementById('guideKeineRechnungBody');
+        if (krBody) {
+            const list = Array.isArray(data.keineRechnung) ? data.keineRechnung : Object.values(data.keineRechnung || {});
+            krBody.innerHTML = list.map(item => {
+                return `<tr>
+                    <td style="font-weight:bold; width: 50%;">${item.name}${item.note ? `<br><span style="color:var(--text-muted); font-size:11px;">${item.note}</span>` : ''}</td>
+                    <td style="color:var(--danger); font-weight:600;">${item.desc || 'Im Dienst wird keine Rechnung ausgestellt'}</td>
+                </tr>`;
+            }).join('');
+        }
+    }
+
+    function renderAdminGuideTables() {
+        const data = cachedGuideData || defaultGuideData;
+
+        // 1. Admin Ten Codes
+        const tcTbody = document.getElementById('adminTenCodesTableBody');
+        if (tcTbody) {
+            const list = Array.isArray(data.tenCodes) ? data.tenCodes : Object.values(data.tenCodes || {});
+            tcTbody.innerHTML = list.map((item, idx) => `
+                <tr>
+                    <td><b style="color:${item.color || 'var(--primary)'};">${item.code}</b></td>
+                    <td>${item.desc}</td>
+                    <td><span style="font-size:11px; padding:2px 8px; border-radius:6px; background:${item.color ? item.color + '22' : 'transparent'}; color:${item.color || 'var(--text-main)'}; border:1px solid ${item.color || 'var(--border)'}; font-weight:700;">${item.color || 'Standard'}</span></td>
+                    <td style="text-align:right;">
+                        <button class="btn-edit-row" onclick="openEditGuideItemModal('tenCodes', '${item.id || idx}')" title="Bearbeiten">✏️</button>
+                        <button class="btn-delete-row" onclick="deleteGuideItem('tenCodes', '${item.id || idx}')" title="Löschen">🗑️</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // 2. Admin Status Codes
+        const scTbody = document.getElementById('adminStatusCodesTableBody');
+        if (scTbody) {
+            const list = Array.isArray(data.statusCodes) ? data.statusCodes : Object.values(data.statusCodes || {});
+            scTbody.innerHTML = list.map((item, idx) => `
+                <tr>
+                    <td><b style="color:${item.color || 'var(--primary)'};">${item.code}</b></td>
+                    <td>${item.desc}</td>
+                    <td style="text-align:right;">
+                        <button class="btn-edit-row" onclick="openEditGuideItemModal('statusCodes', '${item.id || idx}')" title="Bearbeiten">✏️</button>
+                        <button class="btn-delete-row" onclick="deleteGuideItem('statusCodes', '${item.id || idx}')" title="Löschen">🗑️</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // 3. Admin Streifen
+        const stTbody = document.getElementById('adminStreifenTableBody');
+        if (stTbody) {
+            const list = Array.isArray(data.streifen) ? data.streifen : Object.values(data.streifen || {});
+            stTbody.innerHTML = list.map((item, idx) => `
+                <tr>
+                    <td><b style="color:${item.color || 'var(--primary)'};">${item.code}</b></td>
+                    <td>${item.desc}</td>
+                    <td style="text-align:right;">
+                        <button class="btn-edit-row" onclick="openEditGuideItemModal('streifen', '${item.id || idx}')" title="Bearbeiten">✏️</button>
+                        <button class="btn-delete-row" onclick="deleteGuideItem('streifen', '${item.id || idx}')" title="Löschen">🗑️</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // 4. Admin Keine Rechnung
+        const krTbody = document.getElementById('adminKeineRechnungTableBody');
+        if (krTbody) {
+            const list = Array.isArray(data.keineRechnung) ? data.keineRechnung : Object.values(data.keineRechnung || {});
+            krTbody.innerHTML = list.map((item, idx) => `
+                <tr>
+                    <td><b>${item.name}</b></td>
+                    <td><span style="color:var(--text-muted); font-size:12px;">${item.note || '-'}</span></td>
+                    <td><span style="color:var(--danger); font-size:12px;">${item.desc || 'Keine Rechnung'}</span></td>
+                    <td style="text-align:right;">
+                        <button class="btn-edit-row" onclick="openEditGuideItemModal('keineRechnung', '${item.id || idx}')" title="Bearbeiten">✏️</button>
+                        <button class="btn-delete-row" onclick="deleteGuideItem('keineRechnung', '${item.id || idx}')" title="Löschen">🗑️</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+    }
+
+    function openAddGuideItemModal(section) {
+        document.getElementById('guideItemSection').value = section;
+        document.getElementById('guideItemId').value = '';
+        const cont = document.getElementById('guideItemFieldsContainer');
+        const titleEl = document.getElementById('guideItemModalTitle');
+
+        if (section === 'tenCodes') {
+            titleEl.textContent = '➕ Neuen Ten Code anlegen';
+            cont.innerHTML = `
+                <div><label>Code (z. B. 10-15):</label><input type="text" id="gInpCode" placeholder="10-15"></div>
+                <div><label>Beschreibung:</label><input type="text" id="gInpDesc" placeholder="Verdächtige Person"></div>
+                <div><label>Farbe / Signalton:</label>
+                    <select id="gInpColor">
+                        <option value="var(--primary)">Blau (Standard/Info)</option>
+                        <option value="var(--success)">Grün (Erfolg/Im Dienst)</option>
+                        <option value="var(--warning)">Gelb/Orange (Warnung/Anfahrt)</option>
+                        <option value="var(--danger)">Rot (Gefahr/Priorität)</option>
+                        <option value="var(--text-main)">Weiß/Neutral</option>
+                    </select>
+                </div>`;
+        } else if (section === 'statusCodes') {
+            titleEl.textContent = '➕ Neuen Statuscode anlegen';
+            cont.innerHTML = `
+                <div><label>Code / Nummer:</label><input type="text" id="gInpCode" placeholder="6"></div>
+                <div><label>Beschreibung / Bedeutung:</label><input type="text" id="gInpDesc" placeholder="Krankentransport"></div>
+                <div><label>Farbe:</label>
+                    <select id="gInpColor">
+                        <option value="var(--primary)">Blau (Standard)</option>
+                        <option value="var(--success)">Grün (Verfügbar)</option>
+                        <option value="var(--warning)">Gelb/Orange (Pause/Beschäftigt)</option>
+                        <option value="var(--danger)">Rot (Alarm)</option>
+                        <option value="var(--text-main)">Weiß</option>
+                    </select>
+                </div>`;
+        } else if (section === 'streifen') {
+            titleEl.textContent = '➕ Neue Streifenanordnung anlegen';
+            cont.innerHTML = `
+                <div><label>Code / Nummer:</label><input type="text" id="gInpCode" placeholder="5"></div>
+                <div><label>Bezeichnung / Fahrzeug:</label><input type="text" id="gInpDesc" placeholder="Notarztzubringer (NEF)"></div>
+                <div><label>Farbe:</label>
+                    <select id="gInpColor">
+                        <option value="var(--primary)">Blau (Standard)</option>
+                        <option value="var(--warning)">Gelb/Orange</option>
+                        <option value="var(--danger)">Rot</option>
+                        <option value="var(--success)">Grün</option>
+                    </select>
+                </div>`;
+        } else if (section === 'keineRechnung') {
+            titleEl.textContent = '➕ Eintrag für „Keine Rechnung“';
+            cont.innerHTML = `
+                <div><label>Fraktion / Einrichtung:</label><input type="text" id="gInpName" placeholder="Z. B. FIB & Justiz"></div>
+                <div><label>Zusatzinfo / Notiz (optional):</label><input type="text" id="gInpNote" placeholder="(Hauptquartier & Agenten)"></div>
+                <div><label>Befreiungsregel / Bemerkung:</label><input type="text" id="gInpDesc" value="Im Dienst wird keine Rechnung ausgestellt"></div>`;
+        }
+
+        document.getElementById('guideItemModal').style.display = 'flex';
+    }
+
+    function openEditGuideItemModal(section, id) {
+        document.getElementById('guideItemSection').value = section;
+        document.getElementById('guideItemId').value = id;
+        const cont = document.getElementById('guideItemFieldsContainer');
+        const titleEl = document.getElementById('guideItemModalTitle');
+
+        const list = Array.isArray(cachedGuideData[section]) ? cachedGuideData[section] : Object.values(cachedGuideData[section] || {});
+        const item = list.find((it, idx) => (it.id === id || String(idx) === String(id))) || {};
+
+        if (section === 'tenCodes' || section === 'statusCodes' || section === 'streifen') {
+            titleEl.textContent = `✏️ Eintrag bearbeiten: ${item.code || ''}`;
+            cont.innerHTML = `
+                <div><label>Code / Nummer:</label><input type="text" id="gInpCode" value="${item.code || ''}"></div>
+                <div><label>Beschreibung:</label><input type="text" id="gInpDesc" value="${item.desc || ''}"></div>
+                <div><label>Farbe:</label>
+                    <select id="gInpColor">
+                        <option value="var(--primary)" ${item.color === 'var(--primary)' ? 'selected' : ''}>Blau (Standard/Info)</option>
+                        <option value="var(--success)" ${item.color === 'var(--success)' ? 'selected' : ''}>Grün (Erfolg/Im Dienst)</option>
+                        <option value="var(--warning)" ${item.color === 'var(--warning)' ? 'selected' : ''}>Gelb/Orange (Warnung)</option>
+                        <option value="var(--danger)" ${item.color === 'var(--danger)' ? 'selected' : ''}>Rot (Gefahr/Priorität)</option>
+                        <option value="var(--text-main)" ${item.color === 'var(--text-main)' ? 'selected' : ''}>Weiß/Neutral</option>
+                    </select>
+                </div>`;
+        } else if (section === 'keineRechnung') {
+            titleEl.textContent = `✏️ Eintrag bearbeiten: ${item.name || ''}`;
+            cont.innerHTML = `
+                <div><label>Fraktion / Einrichtung:</label><input type="text" id="gInpName" value="${item.name || ''}"></div>
+                <div><label>Zusatzinfo / Notiz (optional):</label><input type="text" id="gInpNote" value="${item.note || ''}"></div>
+                <div><label>Befreiungsregel / Bemerkung:</label><input type="text" id="gInpDesc" value="${item.desc || 'Im Dienst wird keine Rechnung ausgestellt'}"></div>`;
+        }
+
+        document.getElementById('guideItemModal').style.display = 'flex';
+    }
+
+    function closeGuideItemModal() {
+        document.getElementById('guideItemModal').style.display = 'none';
+    }
+
+    function saveGuideItem() {
+        const section = document.getElementById('guideItemSection').value;
+        const itemId = document.getElementById('guideItemId').value;
+        if (!section || !cachedGuideData[section]) return;
+
+        let list = Array.isArray(cachedGuideData[section]) ? [...cachedGuideData[section]] : Object.values(cachedGuideData[section] || {});
+
+        if (section === 'tenCodes' || section === 'statusCodes' || section === 'streifen') {
+            const code = (document.getElementById('gInpCode').value || '').trim();
+            const desc = (document.getElementById('gInpDesc').value || '').trim();
+            const color = document.getElementById('gInpColor').value || 'var(--primary)';
+            if (!code || !desc) { alert("Bitte Code und Beschreibung ausfüllen!"); return; }
+
+            if (itemId) {
+                const idx = list.findIndex((it, i) => it.id === itemId || String(i) === String(itemId));
+                if (idx !== -1) {
+                    list[idx] = { ...list[idx], code, desc, color };
+                }
+            } else {
+                const newId = section.slice(0, 2) + '_' + Date.now();
+                list.push({ id: newId, code, desc, color });
+            }
+        } else if (section === 'keineRechnung') {
+            const name = (document.getElementById('gInpName').value || '').trim();
+            const note = (document.getElementById('gInpNote').value || '').trim();
+            const desc = (document.getElementById('gInpDesc').value || '').trim();
+            if (!name) { alert("Bitte Namen/Fraktion ausfüllen!"); return; }
+
+            if (itemId) {
+                const idx = list.findIndex((it, i) => it.id === itemId || String(i) === String(itemId));
+                if (idx !== -1) {
+                    list[idx] = { ...list[idx], name, note, desc };
+                }
+            } else {
+                const newId = 'kr_' + Date.now();
+                list.push({ id: newId, name, note, desc });
+            }
+        }
+
+        cachedGuideData[section] = list;
+        db.ref('data/guideData/' + section).set(list).then(() => {
+            closeGuideItemModal();
+            renderGuideTab(cachedGuideData);
+            renderAdminGuideTables();
+            alert("✅ Eintrag erfolgreich in der Cloud gespeichert!");
+        }).catch(err => {
+            alert("Fehler beim Speichern: " + err.message);
+        });
+    }
+
+    function deleteGuideItem(section, id) {
+        if (!confirm("Diesen Eintrag wirklich löschen?")) return;
+        let list = Array.isArray(cachedGuideData[section]) ? [...cachedGuideData[section]] : Object.values(cachedGuideData[section] || {});
+        list = list.filter((it, idx) => !(it.id === id || String(idx) === String(id)));
+        cachedGuideData[section] = list;
+        db.ref('data/guideData/' + section).set(list).then(() => {
+            renderGuideTab(cachedGuideData);
+            renderAdminGuideTables();
+        });
+    }
+
+    // --- SYSTEM BACKUP & RESTORE ---
+    function downloadSystemBackup() {
+        if (!sessionUser) return;
+        const eff = getUserEffectivePermissions(sessionUser);
+        if (!eff.isMasterAdmin && !eff.isAdmin) {
+            alert("❌ Nur Administratoren können ein System-Backup exportieren!");
+            return;
+        }
+        db.ref("data").once("value", snap => {
+            const val = snap.val() || {};
+            const jsonStr = JSON.stringify(val, null, 2);
+            const blob = new Blob([jsonStr], { type: "application/json" });
+            const now = new Date();
+            const dateStr = now.toISOString().slice(0, 10);
+            const timeStr = String(now.getHours()).padStart(2, '0') + "-" + String(now.getMinutes()).padStart(2, '0');
+            const filename = `MMD_System_Backup_${dateStr}_${timeStr}.json`;
+            
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(a.href);
+            alert(`✅ Backup erfolgreich als "${filename}" heruntergeladen!`);
+        }).catch(err => {
+            alert("Fehler beim Erstellen des Backups: " + err.message);
+        });
+    }
+
+    function restoreSystemBackup(e) {
+        if (!sessionUser) return;
+        const eff = getUserEffectivePermissions(sessionUser);
+        if (!eff.isMasterAdmin) {
+            alert("❌ Nur der Master-Admin darf ein System-Backup wiederherstellen!");
+            return;
+        }
+        const file = e.target.files && e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function(evt) {
+            try {
+                const data = JSON.parse(evt.target.result);
+                if (!data || typeof data !== 'object') {
+                    alert("❌ Ungültiges Backup-Dateiformat!");
+                    return;
+                }
+                if (confirm(`⚠️ WARNUNG: Möchtest du die Datei "${file.name}" wirklich einspielen?\n\nAlle bestehenden Datenbankdaten werden durch den Inhalt dieser Sicherung ersetzt!`) &&
+                    confirm(`Bist du absolut sicher? Klicke auf OK, um das Backup jetzt live zu schreiben.`)) {
+                    db.ref("data").set(data).then(() => {
+                        alert("✅ System-Backup erfolgreich wiederhergestellt! Das System wird neu geladen.");
+                        location.reload();
+                    }).catch(err => {
+                        alert("Fehler beim Wiederherstellen: " + err.message);
+                    });
+                }
+            } catch (err) {
+                alert("❌ Fehler beim Lesen der Backup-Datei: " + err.message);
+            }
+            e.target.value = '';
+        };
+        reader.readAsText(file);
     }
 
     function renderAdminUserTable(users) {
@@ -2474,6 +2941,19 @@ dispEl.textContent = (hierarchieDaten[key] !== undefined && hierarchieDaten[key]
     function mitarbeiterEntlassen(uId) { if(confirm("Account unwiderruflich löschen?")) db.ref("data/users/" + uId).remove(); }
 
     // --- DISCORD-STYLE ROLE CRUD FUNCTIONS ---
+    const fixedRoleOrder = [
+        'masteradmin',
+        'admin',
+        'ausbildungsleitung',
+        'ausbilder',
+        'psychologie',
+        'personal',
+        'cls',
+        'ehk',
+        'luftrettung',
+        'mitarbeiter'
+    ];
+
     function renderAdminRolesList() {
         const sidebar = document.getElementById('adminRolesSidebarList');
         if (!sidebar) return;
@@ -2481,7 +2961,17 @@ dispEl.textContent = (hierarchieDaten[key] !== undefined && hierarchieDaten[key]
 
         const editingId = document.getElementById('editingRoleId').value;
 
-        Object.keys(cachedRoles).forEach(rId => {
+        const allRoleKeys = Object.keys(cachedRoles);
+        allRoleKeys.sort((a, b) => {
+            const idxA = fixedRoleOrder.indexOf(a);
+            const idxB = fixedRoleOrder.indexOf(b);
+            const rankA = idxA !== -1 ? idxA : 99;
+            const rankB = idxB !== -1 ? idxB : 99;
+            if (rankA !== rankB) return rankA - rankB;
+            return (cachedRoles[a]?.name || '').localeCompare(cachedRoles[b]?.name || '');
+        });
+
+        allRoleKeys.forEach(rId => {
             const role = cachedRoles[rId];
             const isSelected = editingId === rId;
             const color = role.color || '#38bdf8';
@@ -3363,30 +3853,6 @@ Die Medics haben die alleinige Entscheidung zu treffen, welche Personen nach ein
         renderNewsFeed();
     }
 
-    function toggleNewsCollapse(newsId) {
-        const bodyEl = document.getElementById(`news-body-${newsId}`);
-        const arrowEl = document.getElementById(`news-arrow-${newsId}`);
-        if (!bodyEl) return;
-        const isHidden = bodyEl.style.display === 'none';
-        bodyEl.style.display = isHidden ? 'block' : 'none';
-        if (arrowEl) arrowEl.textContent = isHidden ? '▲ Zuklappen' : '▼ Ausklappen';
-    }
-
-    let allNewsCollapsedState = false;
-    function toggleAllNewsCollapse() {
-        allNewsCollapsedState = !allNewsCollapsedState;
-        Object.keys(cachedNews).forEach(nId => {
-            const bodyEl = document.getElementById(`news-body-${nId}`);
-            const arrowEl = document.getElementById(`news-arrow-${nId}`);
-            if (bodyEl) {
-                bodyEl.style.display = allNewsCollapsedState ? 'none' : 'block';
-            }
-            if (arrowEl) {
-                arrowEl.textContent = allNewsCollapsedState ? '▼ Ausklappen' : '▲ Zuklappen';
-            }
-        });
-    }
-
     function togglePostNewsForm() {
         const cont = document.getElementById('postNewsContainer');
         if (!cont) return;
@@ -3470,16 +3936,22 @@ Die Medics haben die alleinige Entscheidung zu treffen, welche Personen nach ein
 
         const canSeeReaders = eff.isMasterAdmin || eff.isAdmin || eff.canManageInstructors;
 
-        const newsKeys = Object.keys(cachedNews).filter(k => !cachedNews[k].deleted);
+        // Sort news descending by creation timestamp / ID (newest first)
+        const newsKeys = Object.keys(cachedNews)
+            .filter(k => !cachedNews[k].deleted)
+            .sort((a, b) => b.localeCompare(a));
+
         if (newsKeys.length === 0) {
             container.innerHTML = `<div style="text-align:center; color:var(--text-muted); padding:40px; background:rgba(15,23,42,0.4); border-radius:12px; border:1px solid var(--border); font-size:14px;">Noch keine Ankündigungen vorhanden.</div>`;
             return;
         }
 
-        newsKeys.forEach(nId => {
+        const top5Keys = newsKeys.slice(0, 5);
+        const archiveKeys = newsKeys.slice(5);
+
+        function buildNewsCardHtml(nId) {
             const item = cachedNews[nId];
             const isRead = isNewsRead(nId);
-            const isCollapsed = isRead;
 
             let tagColor = 'var(--primary)';
             let tagBg = 'rgba(56, 189, 248, 0.15)';
@@ -3489,7 +3961,7 @@ Die Medics haben die alleinige Entscheidung zu treffen, welche Personen nach ein
 
             const readBadge = isRead 
                 ? `<span style="font-size:12px; font-weight:800; color:var(--success); background:rgba(16,185,129,0.15); border:1px solid var(--success); padding:3px 10px; border-radius:12px; display:inline-flex; align-items:center; gap:4px;">✅ Gelesen</span>`
-                : `<span style="font-size:12px; font-weight:800; color:var(--danger); background:rgba(244,63,94,0.15); border:1px solid var(--danger); padding:3px 10px; border-radius:12px; display:inline-flex; align-items:center; gap:4px;">🔴 Neu / Ungelesen</span>`;
+                : `<span style="font-size:12px; font-weight:800; color:var(--danger); background:rgba(190,18,60,0.15); border:1px solid var(--danger); padding:3px 10px; border-radius:12px; display:inline-flex; align-items:center; gap:4px;">🔴 Neu / Ungelesen</span>`;
 
             const canDeleteThis = eff.canDelete || eff.isMasterAdmin || eff.isAdmin;
             const deleteBtn = canDeleteThis 
@@ -3516,10 +3988,10 @@ Die Medics haben die alleinige Entscheidung zu treffen, welche Personen nach ein
                 </div>`;
             }
 
-            container.innerHTML += `
-            <div class="news-thread-card" style="background:rgba(15, 23, 42, 0.65); border:1px solid ${isRead ? 'var(--border)' : 'rgba(56, 189, 248, 0.4)'}; border-left: 5px solid ${isRead ? 'var(--success)' : tagColor}; border-radius:14px; overflow:hidden; transition:all 0.2s; box-shadow: 0 4px 18px rgba(0,0,0,0.25); margin-bottom:14px;">
-                <!-- HEADER / KLICKBAR -->
-                <div style="padding:16px 22px; cursor:pointer; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; background:${isRead ? 'transparent' : 'rgba(56, 189, 248, 0.04)'};" onclick="toggleNewsCollapse('${nId}')">
+            return `
+            <div class="news-thread-card" style="background:rgba(15, 23, 42, 0.65); border:1px solid ${isRead ? 'var(--border)' : 'rgba(56, 189, 248, 0.4)'}; border-left: 5px solid ${isRead ? 'var(--success)' : tagColor}; border-radius:14px; overflow:hidden; transition:all 0.2s; box-shadow: 0 4px 18px rgba(0,0,0,0.25); margin-bottom:18px;">
+                <!-- HEADER (VOLL SICHTBAR) -->
+                <div style="padding:16px 22px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; background:${isRead ? 'transparent' : 'rgba(56, 189, 248, 0.04)'}; border-bottom:1px solid var(--border);">
                     <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
                         <span style="font-size:12px; font-weight:800; color:${tagColor}; background:${tagBg}; padding:4px 10px; border-radius:6px; text-transform:uppercase; letter-spacing:0.5px;">${item.category || 'Allgemein'}</span>
                         <h3 style="margin:0; font-size:18px; color:var(--text-main); font-weight:800; letter-spacing:-0.2px;">${item.title}</h3>
@@ -3527,26 +3999,54 @@ Die Medics haben die alleinige Entscheidung zu treffen, welche Personen nach ein
                     </div>
                     <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
                         <span style="font-size:13px; color:var(--text-muted); font-weight:500;">🕒 ${timeDisplay} (${item.author || 'Leitung'})</span>
-                        <span id="news-arrow-${nId}" style="font-size:13px; font-weight:700; color:var(--primary);">${isCollapsed ? '▼ Ausklappen' : '▲ Zuklappen'}</span>
                         ${deleteBtn}
                     </div>
                 </div>
 
-                <!-- CONTENT / THREAD BODY -->
-                <div id="news-body-${nId}" style="display:${isCollapsed ? 'none' : 'block'}; padding:0 22px 22px 22px; border-top:1px solid var(--border); margin-top:4px;">
-                    <div style="font-size:15px; color:#f8fafc; line-height:1.8; white-space:pre-wrap; padding-top:18px; letter-spacing:0.1px;">${item.content}</div>
+                <!-- CONTENT / THREAD BODY (IMMER VOLLSTÄNDIG LESBAR) -->
+                <div style="padding:18px 22px 22px 22px;">
+                    <div style="font-size:15px; color:#f8fafc; line-height:1.8; white-space:pre-wrap; letter-spacing:0.1px;">${item.content}</div>
                     
                     ${readersHtml}
 
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px; padding-top:16px; border-top:1px dashed var(--border); flex-wrap:wrap; gap:12px;">
                         <span style="font-size:12px; color:var(--text-muted);">Erstellt am <b>${timeDisplay}</b> von <b>${item.author || 'Klinikleitung'}</b></span>
-                        <button class="btn" style="width:auto; margin:0; padding:8px 18px; font-size:13px; font-weight:800; background:${isRead ? 'rgba(255,255,255,0.08)' : 'var(--success)'}; color:${isRead ? 'var(--text-main)' : '#080c14'}; border:${isRead ? '1px solid var(--border)' : 'none'};" onclick="event.stopPropagation(); toggleNewsRead('${nId}')">
-                            ${isRead ? '⭕ Als ungelesen markieren' : '✔️ Als gelesen markieren & einklappen'}
+                        <button class="btn" style="width:auto; margin:0; padding:8px 20px; font-size:13px; font-weight:800; background:${isRead ? 'rgba(255,255,255,0.08)' : 'var(--success)'}; color:${isRead ? 'var(--text-main)' : '#080c14'}; border:${isRead ? '1px solid var(--border)' : 'none'};" onclick="event.stopPropagation(); toggleNewsRead('${nId}')">
+                            ${isRead ? '⭕ Als ungelesen markieren' : '✔️ Als gelesen markieren'}
                         </button>
                     </div>
                 </div>
             </div>`;
+        }
+
+        top5Keys.forEach(nId => {
+            container.innerHTML += buildNewsCardHtml(nId);
         });
+
+        if (archiveKeys.length > 0) {
+            let archiveHtml = `
+            <div style="margin-top:28px; border:1px solid var(--border); border-radius:14px; overflow:hidden; background:rgba(8,12,20,0.4);">
+                <div style="background:rgba(30,41,59,0.7); padding:16px 20px; display:flex; justify-content:space-between; align-items:center; cursor:pointer; user-select:none;" onclick="toggleNewsArchiveSection()">
+                    <div style="display:flex; align-items:center; gap:8px; font-size:15px; font-weight:800; color:var(--warning);">
+                        <span>📂 News-Archiv (${archiveKeys.length} ältere Beiträge)</span>
+                    </div>
+                    <span id="newsArchiveToggleArrow" style="font-size:13px; font-weight:700; color:var(--primary);">▶ Archiv anzeigen</span>
+                </div>
+                <div id="newsArchiveBody" style="display:none; padding:18px;">
+                    ${archiveKeys.map(nId => buildNewsCardHtml(nId)).join('')}
+                </div>
+            </div>`;
+            container.innerHTML += archiveHtml;
+        }
+    }
+
+    function toggleNewsArchiveSection() {
+        const body = document.getElementById('newsArchiveBody');
+        const arrow = document.getElementById('newsArchiveToggleArrow');
+        if (!body || !arrow) return;
+        const isHidden = body.style.display === 'none';
+        body.style.display = isHidden ? 'block' : 'none';
+        arrow.textContent = isHidden ? '▼ Archiv schließen' : '▶ Archiv anzeigen';
     }
 
     // AUSBILDUNGS- & PRÜFUNGSSYSTEM LOGIK
@@ -3710,15 +4210,34 @@ Die Medics haben die alleinige Entscheidung zu treffen, welche Personen nach ein
 
     function renderExamTab(examsData, usersData, submissionsData) {
         let rawExams = Object.assign({}, defaultExams, examsData || {});
-        delete rawExams.exam_ehk;
-        delete rawExams.exam_cls;
-        delete rawExams.exam_psgu;
-        delete rawExams.exam_dv1;
-        delete rawExams.exam_dv2;
-        delete rawExams.exam_para3;
-        delete rawExams.exam_arzt3;
-        cachedExams = rawExams;
+        
+        // Remove obsolete exams & duplicate exams explicitly
+        const obsoleteKeys = [
+            'exam_ehk', 'exam_cls', 'exam_psgu', 'exam_dv1', 'exam_dv2', 'exam_para3', 'exam_arzt3',
+            'paramedic_1_theorie', 'paramedic_2_notfall', 'arzt_1_allgemein', 'arzt_2_chirurgie'
+        ];
+        obsoleteKeys.forEach(k => delete rawExams[k]);
 
+        Object.keys(rawExams).forEach(eId => {
+            const t = (rawExams[eId]?.title || "").toLowerCase();
+            if (t.includes("praxis und theorie") || 
+                t.includes("erweiterte notfallmedizin") || 
+                t.includes("allgemeinmedizin und notfallversorgung") || 
+                t.includes("notfallchirurgie und chefarztqualifikation") ||
+                t.includes("paramedic 3") || 
+                t.includes("arzt 3") || 
+                t.includes("erste hilfe") || 
+                t.includes("combat life saver") || 
+                t.includes("psychologie") || 
+                t.includes("ehk") || 
+                t.includes("cls") || 
+                t.includes("psgu")) {
+                delete rawExams[eId];
+                db.ref("data/exams/" + eId).remove();
+            }
+        });
+
+        cachedExams = rawExams;
         Object.keys(cachedExams).forEach(eId => {
             cachedExams[eId] = ensureExamHasDefaultHeaderFields(cachedExams[eId]);
         });
@@ -4254,59 +4773,28 @@ Die Medics haben die alleinige Entscheidung zu treffen, welche Personen nach ein
         return eff.isAdmin || eff.isMasterAdmin || eff.canManageInstructors;
     }
 
-    function getExamSortScore(exam) {
-        if (!exam) return { group: 99, number: 99, title: "" };
-        const title = (exam.title || "").toLowerCase();
-        const kat = (exam.kat || "").toLowerCase();
+    function getExamSortScore(exam, eId) {
+        if (!exam && !eId) return 99;
+        const id = (eId || exam?.id || "").toLowerCase();
+        const title = (exam?.title || "").toLowerCase();
         
-        let group = 99;
-        let number = 1;
+        if (id === "exam_ga1" || title.includes("ga 1") || title.includes("ga1") || (title.includes("grundausbildung") && title.includes("1"))) return 1;
+        if (id === "exam_ga2" || title.includes("ga 2") || title.includes("ga2") || (title.includes("grundausbildung") && title.includes("2"))) return 2;
+        if (id === "exam_dv" || id === "exam_dv1" || title.includes("dienstvorschrift") || title.includes("dv")) return 3;
+        if (id === "exam_para1" || (title.includes("paramedic") && title.includes("1")) || (title.includes("para") && title.includes("1"))) return 4;
+        if (id === "exam_para2" || (title.includes("paramedic") && title.includes("2")) || (title.includes("para") && title.includes("2"))) return 5;
+        if (id === "exam_arzt1" || (title.includes("arzt") && title.includes("1")) || (title.includes("doctor") && title.includes("1"))) return 6;
+        if (id === "exam_arzt2" || (title.includes("arzt") && title.includes("2")) || (title.includes("doctor") && title.includes("2"))) return 7;
         
-        if (title.includes("grundausbildung") || title.includes("ga1") || title.includes("ga2") || title.includes("ga 1") || title.includes("ga 2") || kat.includes("grundausbildung")) {
-            group = 1;
-            const m = title.match(/(?:grundausbildung|ga)\s*(\d+)/i);
-            if (m) number = parseInt(m[1]);
-            else if (title.includes("2")) number = 2;
-            else number = 1;
-        } else if (title.includes("dienstvorschrift") || title.includes("dv1") || title.includes("dv2") || title.includes("dv 1") || title.includes("dv 2") || kat.includes("dienstvorschrift")) {
-            group = 2;
-            const m = title.match(/(?:dienstvorschriften|dienstvorschrift|dv)\s*(\d+)/i);
-            if (m) number = parseInt(m[1]);
-            else if (title.includes("2")) number = 2;
-            else number = 1;
-        } else if (title.includes("paramedic") || title.includes("para") || kat.includes("paramedic")) {
-            group = 3;
-            const m = title.match(/(?:paramedic|para)\s*(\d+)/i);
-            if (m) number = parseInt(m[1]);
-            else if (title.includes("2")) number = 2;
-            else number = 1;
-        } else if (title.includes("arzt") || title.includes("doctor") || kat.includes("doctor") || kat.includes("arzt")) {
-            group = 4;
-            const m = title.match(/(?:notarzt|arzt|doctor)\s*(\d+)/i);
-            if (m) number = parseInt(m[1]);
-            else if (title.includes("2")) number = 2;
-            else number = 1;
-        } else {
-            group = 10;
-        }
-        
-        return { group, number, title: title };
+        return 10;
     }
 
     function sortExamIdsDynamically(eIds, exams) {
         return [...eIds].sort((a, b) => {
-            const examA = exams[a];
-            const examB = exams[b];
-            const scoreA = getExamSortScore(examA);
-            const scoreB = getExamSortScore(examB);
-            
-            if (scoreA.group !== scoreB.group) {
-                return scoreA.group - scoreB.group;
-            }
-            if (scoreA.number !== scoreB.number) {
-                return scoreA.number - scoreB.number;
-            }
-            return (examA?.title || '').localeCompare(examB?.title || '');
+            const scoreA = getExamSortScore(exams ? exams[a] : null, a);
+            const scoreB = getExamSortScore(exams ? exams[b] : null, b);
+            if (scoreA !== scoreB) return scoreA - scoreB;
+            return ((exams && exams[a]?.title) || a).localeCompare((exams && exams[b]?.title) || b);
         });
     }
 
@@ -4411,16 +4899,16 @@ Die Medics haben die alleinige Entscheidung zu treffen, welche Personen nach ein
                     : `<span style="background:rgba(245,158,11,0.15); color:var(--warning); border:1px solid var(--warning); padding:2px 8px; border-radius:12px; font-size:10px; font-weight:800;">Gesperrt / Beantragt</span>`;
 
                 const actionButton = isApproved
-                    ? `<button class="btn" style="margin:0; width:auto; padding:4px 8px; font-size:10px; background:rgba(244,63,94,0.15); color:var(--danger); border:1px solid var(--danger); font-weight:800;" onclick="toggleInstructorUserStatus('${uId}', 'pending')">Sperren</button>`
+                    ? `<button class="btn" style="margin:0; width:auto; padding:4px 8px; font-size:10px; background:rgba(190,18,60,0.15); color:var(--danger); border:1px solid var(--danger); font-weight:800;" onclick="toggleInstructorUserStatus('${uId}', 'pending')">Sperren</button>`
                     : `<button class="btn" style="margin:0; width:auto; padding:4px 8px; font-size:10px; background:rgba(16,185,129,0.15); color:var(--success); border:1px solid var(--success); font-weight:800;" onclick="toggleInstructorUserStatus('${uId}', 'approved')">Zulassen</button>`;
 
                 approvalTbody.innerHTML += `
                 <tr>
-                    <td><b>${u.vorname} ${u.nachname}</b></td>
+                    <td style="white-space:normal;"><b>${u.vorname} ${u.nachname}</b></td>
                     <td><span style="font-family:monospace; font-size:11px;">${u.dn || 'Keine DN'}</span></td>
-                    <td><div style="display:flex; flex-wrap:wrap; gap:3px;">${rolesHtml}</div></td>
+                    <td style="white-space:normal;"><div style="display:flex; flex-wrap:wrap; gap:3px;">${rolesHtml}</div></td>
                     <td>${statusBadge}</td>
-                    <td>
+                    <td style="white-space:normal;">
                         <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
                             ${actionButton}
                             <button class="btn" style="margin:0; width:auto; padding:4px 8px; font-size:10px; background:rgba(168,85,247,0.15); color:#a855f7; border:1px solid #a855f7; font-weight:800;" onclick="openAssignRolesModal('${uId}')">🎭 Rollen</button>
@@ -4445,11 +4933,11 @@ Die Medics haben die alleinige Entscheidung zu treffen, welche Personen nach ein
 
                 const globalCheckboxes = `
                 <div style="display:flex; flex-direction:column; gap:6px;">
-                    <label style="display:inline-flex; align-items:center; gap:6px; cursor:pointer; font-size:11px;">
+                    <label style="display:inline-flex; align-items:center; gap:6px; cursor:pointer; font-size:11px; margin:0;">
                         <input type="checkbox" ${canCreateExams ? 'checked' : ''} onchange="toggleInstructorGlobalPermission('${uId}', 'canCreateExams', this.checked)">
                         <span>Neue Prüfungen anlegen</span>
                     </label>
-                    <label style="display:inline-flex; align-items:center; gap:6px; cursor:pointer; font-size:11px;">
+                    <label style="display:inline-flex; align-items:center; gap:6px; cursor:pointer; font-size:11px; margin:0;">
                         <input type="checkbox" ${canDeleteSubmissions ? 'checked' : ''} onchange="toggleInstructorGlobalPermission('${uId}', 'canDeleteSubmissions', this.checked)">
                         <span style="color:var(--danger);">Ergebnisse löschen</span>
                     </label>
@@ -4458,7 +4946,7 @@ Die Medics haben die alleinige Entscheidung zu treffen, welche Personen nach ein
                 const allowedSee = u.instructorAllowedSeeExams || {};
                 const allowedManage = u.instructorAllowedManageExams || {};
 
-                let examCompetenciesHtml = `<div style="max-height: 200px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; padding: 4px; background: rgba(8,12,20,0.3); border-radius: 8px; border: 1px solid var(--border);">`;
+                let examCompetenciesHtml = `<div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(220px, 1fr)); gap:6px; padding:4px; background:rgba(8,12,20,0.3); border-radius:8px; border:1px solid var(--border);">`;
                 
                 // Sort exams dynamically to prevent mixed representation
                 let sortedExamIds = sortExamIdsDynamically(Object.keys(exams), exams);
@@ -4467,9 +4955,9 @@ Die Medics haben die alleinige Entscheidung zu treffen, welche Personen nach ein
                     const isSeeChecked = allowedSee[eId] === true;
                     const isManageChecked = allowedManage[eId] === true;
                     examCompetenciesHtml += `
-                    <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(30,41,59,0.5); padding: 6px 10px; border-radius: 6px; border: 1px solid var(--border); gap: 12px;">
-                        <span style="font-size:11px; font-weight:700; color:var(--text-main);">${exam.title}</span>
-                        <div style="display: flex; gap: 10px; align-items:center;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(30,41,59,0.5); padding: 6px 10px; border-radius: 6px; border: 1px solid var(--border); gap: 8px;">
+                        <span style="font-size:11px; font-weight:700; color:var(--text-main); overflow:hidden; text-overflow:ellipsis;">${exam.title}</span>
+                        <div style="display: flex; gap: 8px; align-items:center; flex-shrink:0;">
                             <label style="display: inline-flex; align-items: center; gap: 2px; cursor: pointer; font-size: 11px; margin:0;">
                                 <input type="checkbox" ${isSeeChecked ? 'checked' : ''} onchange="toggleInstructorExamPermission('${uId}', '${eId}', 'see', this.checked)"> 👁️ Sehen
                             </label>
@@ -4484,12 +4972,12 @@ Die Medics haben die alleinige Entscheidung zu treffen, welche Personen nach ein
 
                 tbody.innerHTML += `
                 <tr>
-                    <td>
+                    <td style="white-space:normal; min-width:180px;">
                         <b>${u.vorname} ${u.nachname}</b>
-                        <div style="margin-top:4px;">${renderUserRoleBadges(u)}</div>
+                        <div style="margin-top:4px; display:flex; flex-wrap:wrap; gap:3px;">${renderUserRoleBadges(u)}</div>
                     </td>
-                    <td>${globalCheckboxes}</td>
-                    <td>${examCompetenciesHtml}</td>
+                    <td style="white-space:normal; min-width:160px;">${globalCheckboxes}</td>
+                    <td style="white-space:normal;">${examCompetenciesHtml}</td>
                 </tr>`;
             });
         }
