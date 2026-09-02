@@ -1139,7 +1139,6 @@ Frage: In welches GPS loggst du dich ein?
                 <button class="admin-tab-btn" id="btnAdminSubHierarchy" onclick="switchAdminTab('adminSubTabHierarchy', this)">🌳 Hierarchie & Abteilungen</button>
                 <button class="admin-tab-btn" id="btnAdminSubPrices" onclick="switchAdminTab('adminSubTabPrices', this)">💰 Preise & Szenarien</button>
                 <button class="admin-tab-btn" id="btnAdminSubSystem" onclick="switchAdminTab('adminSubTabSystem', this)">⚙️ Schicht & System-Reset</button>
-                <button class="admin-tab-btn" id="btnAdminSubExams" onclick="switchAdminTab('adminSubTabExams', this)">🎓 Ausbildungsleitung</button>
             </div>
 
             <!-- SUB-TAB 1: MITARBEITER & RECHTE -->
@@ -1423,49 +1422,6 @@ Frage: In welches GPS loggst du dich ein?
                 </div>
             </div>
 
-            <!-- SUB-TAB 7: AUSBILDUNGSLEITUNG -->
-            <div id="adminSubTabExams" class="admin-subtab-content">
-                <div style="background:rgba(168, 85, 247, 0.04); padding:24px 28px; border-radius:16px; border:1px solid rgba(168, 85, 247, 0.25); margin-bottom:24px; box-shadow:0 4px 20px rgba(0,0,0,0.25);">
-                    <h3 style="margin:0 0 14px 0; color:#a855f7; font-size:16px; font-weight:800; text-transform:uppercase; letter-spacing:0.5px;">🎓 Ausbildungsleitung & Ausbilder-Rechte</h3>
-                    <p style="color:var(--text-muted); font-size:13px; margin-top:0; margin-bottom:18px;">Hier kannst du als Leitung die Ausbilder-Rechte verwalten, Prüfungskompetenzen zuteilen und Mitgliedsfreigaben bearbeiten.</p>
-                    
-                    <div style="margin-bottom: 24px; background:rgba(30,41,59,0.3); padding:18px 22px; border-radius:14px; border:1px solid var(--border);">
-                        <h5 style="color:var(--primary); margin:0 0 12px 0; font-size:14px; text-transform:uppercase; font-weight:800;">👥 Fraktions-Mitglieder freischalten & sperren</h5>
-                        <div class="table-responsive" style="max-height:320px; overflow-y:auto;">
-                            <table>
-                                <thead>
-                                    <tr>
-                                        <th style="font-size:13px; font-weight:800;">Mitarbeiter Name</th>
-                                        <th style="font-size:13px; font-weight:800;">Dienstnummer (DN)</th>
-                                        <th style="font-size:13px; font-weight:800;">Rolle</th>
-                                        <th style="font-size:13px; font-weight:800;">Status</th>
-                                        <th style="font-size:13px; font-weight:800;">Aktion</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="adminMembersApprovalTableBody">
-                                    <tr><td colspan="5" style="text-align:center; color:var(--text-muted); font-size:13px;">Lade Mitglieder...</td></tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    <div style="background:rgba(168,85,247,0.04); padding:18px 22px; border-radius:14px; border:1px solid rgba(168,85,247,0.25);">
-                        <h5 style="color:#a855f7; margin:0 0 12px 0; font-size:14px; text-transform:uppercase; font-weight:800;">🎓 Ausbilder Prüfungs-Berechtigungen</h5>
-                        <div class="table-responsive" style="max-height:420px; overflow-y:auto;">
-                            <table>
-                                <thead>
-                                    <tr>
-                                        <th style="font-size:13px; font-weight:800;">Ausbilder</th>
-                                        <th style="font-size:13px; font-weight:800;">Prüfungskompetenzen (Erlaubte Prüfungen)</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="adminAllowedExamsTableBody"></tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
             <div style="display:flex; justify-content:flex-end; margin-top:10px;">
                 <button class="btn" style="background:rgba(255,255,255,0.1); color:var(--text-main); width:auto; padding:12px 36px; font-weight:800; font-size:14px; border:1px solid var(--border); border-radius:10px;" onclick="closeAdminManagementModal()">Schließen</button>
             </div>
@@ -1650,6 +1606,15 @@ Frage: In welches GPS loggst du dich ein?
     let tagesZaehler = 1; let aktuellerFallKosten = 0; let anzahlVerletzungenFall = 1;
     let fallMaterial = {}; let daten = { patienten: 0, verletzungen: 0, ausgaben: 0 };
     let mySessionRef = null;
+    let cachedUsers = {};
+    let cachedExams = {};
+    let cachedSubmissions = {};
+    let cachedExamOrder = [];
+    let allLinkCategories = [];
+    let allCmdCategories = [];
+    let activeExam = null;
+    let activeExamTimerInterval = null;
+    let activeExamSecondsElapsed = 0;
     
     let defaultRoles = {
         masteradmin: { id: 'masteradmin', name: 'Master-Admin', color: '#eab308', icon: '👑', isSystem: true, isAdmin: true, isMasterAdmin: true, canDelete: true, isInstructor: true, canManageInstructors: true, canPostNews: true, allowedLinkKats: {}, allowedCmdKats: {} },
@@ -2054,12 +2019,12 @@ Frage: In welches GPS loggst du dich ein?
         document.getElementById('topBarMedicName').innerHTML = `<span style="font-weight:700;">${user.vorname} ${user.nachname}</span> <span style="margin-left:6px;">${renderUserRoleBadges(user)}</span>`;
         document.getElementById('daysMedicName').textContent = user.vorname + " " + user.nachname;
 
-        if(eff.isAdmin || eff.isMasterAdmin || eff.canManageInstructors) {
+        if(eff.isAdmin || eff.isMasterAdmin) {
             document.getElementById('adminKeyBtn').style.display = 'inline-block';
             document.querySelectorAll('.admin-action-th').forEach(el => el.style.display = eff.canDelete ? 'table-cell' : 'none');
         } else {
             document.getElementById('adminKeyBtn').style.display = 'none';
-            document.querySelectorAll('.admin-action-th').forEach(el => el.style.display = 'none');
+            document.querySelectorAll('.admin-action-th').forEach(el => el.style.display = eff.canDelete ? 'table-cell' : 'none');
         }
         
         applyUserPermissions(user);
@@ -2080,12 +2045,10 @@ Frage: In welches GPS loggst du dich ein?
         const btnHierarchy = document.getElementById('btnAdminSubHierarchy');
         const btnPrices = document.getElementById('btnAdminSubPrices');
         const btnSystem = document.getElementById('btnAdminSubSystem');
-        const btnExams = document.getElementById('btnAdminSubExams');
         const btnFullReset = document.querySelector('.btn-full-reset');
 
         const isMaster = eff.isMasterAdmin;
         const isAdmin = eff.isAdmin;
-        const isAusbLeitung = eff.canManageInstructors;
 
         if (isMaster) {
             if (btnUsers) btnUsers.style.display = '';
@@ -2094,7 +2057,6 @@ Frage: In welches GPS loggst du dich ein?
             if (btnHierarchy) btnHierarchy.style.display = '';
             if (btnPrices) btnPrices.style.display = '';
             if (btnSystem) btnSystem.style.display = '';
-            if (btnExams) btnExams.style.display = '';
             if (btnFullReset) btnFullReset.style.display = '';
         } else if (isAdmin) {
             if (btnUsers) btnUsers.style.display = '';
@@ -2103,17 +2065,7 @@ Frage: In welches GPS loggst du dich ein?
             if (btnHierarchy) btnHierarchy.style.display = '';
             if (btnPrices) btnPrices.style.display = '';
             if (btnSystem) btnSystem.style.display = ''; // Admin darf Schichten abschließen & archivieren
-            if (btnExams) btnExams.style.display = '';
             if (btnFullReset) btnFullReset.style.display = 'none'; // Gesamtsystem-Reset für normale Admins ausgeblendet
-        } else if (isAusbLeitung) {
-            if (btnUsers) btnUsers.style.display = 'none';
-            if (btnRoles) btnRoles.style.display = 'none';
-            if (btnContent) btnContent.style.display = 'none';
-            if (btnHierarchy) btnHierarchy.style.display = 'none'; // ❌ Ausgeblendet für Ausbildungsleitung
-            if (btnPrices) btnPrices.style.display = 'none';
-            if (btnSystem) btnSystem.style.display = 'none';
-            if (btnExams) btnExams.style.display = '';
-            if (btnFullReset) btnFullReset.style.display = 'none';
         }
 
         const visibleBtns = Array.from(document.querySelectorAll('.admin-tab-btn')).filter(btn => btn.style.display !== 'none');
@@ -2130,7 +2082,7 @@ Frage: In welches GPS loggst du dich ein?
     function openAdminKeyModal() {
         if(!sessionUser) return;
         const eff = getUserEffectivePermissions(sessionUser);
-        if(!eff.isAdmin && !eff.isMasterAdmin && !eff.canManageInstructors) return;
+        if(!eff.isAdmin && !eff.isMasterAdmin) return;
         document.getElementById('adminAuthPassInput').value = "";
         document.getElementById('adminAuthModal').style.display = 'flex';
         document.getElementById('adminAuthPassInput').focus();
@@ -2538,9 +2490,6 @@ dispEl.textContent = (hierarchieDaten[key] !== undefined && hierarchieDaten[key]
     }
     function mitarbeiterEntlassen(uId) { if(confirm("Account unwiderruflich löschen?")) db.ref("data/users/" + uId).remove(); }
 
-    let allLinkCategories = [];
-    let allCmdCategories = [];
-
     // --- DISCORD-STYLE ROLE CRUD FUNCTIONS ---
     function renderAdminRolesList() {
         const sidebar = document.getElementById('adminRolesSidebarList');
@@ -2731,10 +2680,18 @@ dispEl.textContent = (hierarchieDaten[key] !== undefined && hierarchieDaten[key]
 
     // --- HELPER TO BUILD STRUCTURED ROLE SELECTION GRID ---
     function buildRolesSelectionHtml(userRoleIds, checkboxClass) {
+        const eff = sessionUser ? getUserEffectivePermissions(sessionUser) : {};
+        const isTopAdmin = eff.isAdmin || eff.isMasterAdmin;
+
+        let adminRolesList = ['ausbildungsleitung'];
+        if (isTopAdmin) {
+            adminRolesList = ['masteradmin', 'admin', 'ausbildungsleitung'];
+        }
+
         const groups = [
             {
                 title: "👑 Administrative Führung",
-                roles: ['masteradmin', 'admin', 'ausbildungsleitung']
+                roles: adminRolesList
             },
             {
                 title: "🎓 Ausbilder-Team",
@@ -2796,18 +2753,36 @@ dispEl.textContent = (hierarchieDaten[key] !== undefined && hierarchieDaten[key]
 
     // --- ASSIGN ROLES MODAL (AUSBILDUNGSLEITUNG & ADMIN) ---
     function openAssignRolesModal(uId) {
-        if (!cachedUsers || !cachedUsers[uId]) return;
-        const u = cachedUsers[uId];
+        if (!uId) return;
 
-        document.getElementById('assignRoleUserId').value = uId;
-        document.getElementById('assignRoleUserName').textContent = `${u.vorname} ${u.nachname}`;
+        function showRolesModal(u) {
+            document.getElementById('assignRoleUserId').value = uId;
+            document.getElementById('assignRoleUserName').textContent = `${u.vorname || ''} ${u.nachname || ''}`;
 
-        const cont = document.getElementById('assignRolesContainer');
-        if (!cont) return;
-        const userRoleIds = getUserRolesList(u);
-        cont.innerHTML = buildRolesSelectionHtml(userRoleIds, 'assign-user-role-cb');
+            const cont = document.getElementById('assignRolesContainer');
+            if (cont) {
+                const userRoleIds = getUserRolesList(u);
+                cont.innerHTML = buildRolesSelectionHtml(userRoleIds, 'assign-user-role-cb');
+            }
 
-        document.getElementById('assignRolesModal').style.display = 'flex';
+            const modal = document.getElementById('assignRolesModal');
+            if (modal) modal.style.display = 'flex';
+        }
+
+        if (cachedUsers && cachedUsers[uId]) {
+            showRolesModal(cachedUsers[uId]);
+        } else {
+            db.ref("data/users/" + uId).once("value", snap => {
+                const u = snap.val();
+                if (u) {
+                    if (!cachedUsers) cachedUsers = {};
+                    cachedUsers[uId] = u;
+                    showRolesModal(u);
+                } else {
+                    alert("⚠️ Mitarbeiter konnte nicht geladen werden.");
+                }
+            });
+        }
     }
 
     function closeAssignRolesModal() {
@@ -2819,14 +2794,27 @@ dispEl.textContent = (hierarchieDaten[key] !== undefined && hierarchieDaten[key]
         const uId = document.getElementById('assignRoleUserId').value;
         if (!uId) return;
 
+        const u = (cachedUsers && cachedUsers[uId]) ? cachedUsers[uId] : {};
+        const eff = sessionUser ? getUserEffectivePermissions(sessionUser) : {};
+        const isTopAdmin = eff.isAdmin || eff.isMasterAdmin;
+
         const selectedRoles = {};
         document.querySelectorAll('.assign-user-role-cb:checked').forEach(cb => {
             selectedRoles[cb.value] = true;
         });
 
+        // If actor is not Top-Admin (e.g. Ausbildungsleitung), preserve any existing admin roles the target user already had
+        if (!isTopAdmin && u.roles) {
+            if (u.roles.masteradmin) selectedRoles.masteradmin = true;
+            if (u.roles.admin) selectedRoles.admin = true;
+        }
+
         db.ref(`data/users/${uId}/roles`).set(selectedRoles).then(() => {
             alert("✅ Rollen erfolgreich zugewiesen!");
             closeAssignRolesModal();
+            if (cachedUsers && cachedUsers[uId]) {
+                cachedUsers[uId].roles = selectedRoles;
+            }
         }).catch(err => {
             alert("Fehler beim Zuweisen der Rollen: " + err.message);
         });
@@ -2834,92 +2822,111 @@ dispEl.textContent = (hierarchieDaten[key] !== undefined && hierarchieDaten[key]
 
     // --- FULL USER PERMISSIONS MODAL (MASTER-ADMIN & ADMIN) ---
     function openUserPermissionsModal(uId) {
-        if(!cachedUsers || !cachedUsers[uId]) return;
-        const u = cachedUsers[uId];
+        if (!uId) return;
 
-        document.getElementById('permModalUserId').value = uId;
-        document.getElementById('permVorname').value = u.vorname || '';
-        document.getElementById('permNachname').value = u.nachname || '';
+        function showPermModal(u) {
+            document.getElementById('permModalUserId').value = uId;
+            document.getElementById('permVorname').value = u.vorname || '';
+            document.getElementById('permNachname').value = u.nachname || '';
 
-        document.getElementById('permStatus').value = u.status || 'approved';
-        document.getElementById('permDN').value = u.dn || '';
+            document.getElementById('permStatus').value = u.status || 'approved';
+            document.getElementById('permDN').value = u.dn || '';
 
-        // Master-Admin can view the password, Admins only reset it
-        const sessionEff = sessionUser ? getUserEffectivePermissions(sessionUser) : { isMasterAdmin: false };
-        const isMaster = sessionEff.isMasterAdmin;
+            // Master-Admin can view the password, Admins only reset it
+            const sessionEff = sessionUser ? getUserEffectivePermissions(sessionUser) : { isMasterAdmin: false };
+            const isMaster = sessionEff.isMasterAdmin;
 
-        const passInput = document.getElementById('permPassword');
-        const passLabel = document.getElementById('permPasswordLabel');
-        const passToggleBtn = document.getElementById('btnTogglePermPass');
+            const passInput = document.getElementById('permPassword');
+            const passLabel = document.getElementById('permPasswordLabel');
+            const passToggleBtn = document.getElementById('btnTogglePermPass');
 
-        if (isMaster) {
-            if (passLabel) passLabel.textContent = "Passwort (Master-Admin Einsicht):";
-            if (passInput) {
-                passInput.type = "text";
-                passInput.value = u.pass || '';
-                passInput.placeholder = "Passwort eingeben...";
+            if (isMaster) {
+                if (passLabel) passLabel.textContent = "Passwort (Master-Admin Einsicht):";
+                if (passInput) {
+                    passInput.type = "text";
+                    passInput.value = u.pass || '';
+                    passInput.placeholder = "Passwort eingeben...";
+                }
+                if (passToggleBtn) {
+                    passToggleBtn.style.display = 'inline-block';
+                    passToggleBtn.textContent = '🔒 Verbergen';
+                }
+            } else {
+                if (passLabel) passLabel.textContent = "Passwort zurücksetzen:";
+                if (passInput) {
+                    passInput.type = "password";
+                    passInput.value = '';
+                    passInput.placeholder = "Neues Passwort (leer = unverändert)";
+                }
+                if (passToggleBtn) passToggleBtn.style.display = 'none';
             }
-            if (passToggleBtn) {
-                passToggleBtn.style.display = 'inline-block';
-                passToggleBtn.textContent = '🔒 Verbergen';
+
+            const rolesCont = document.getElementById('permRolesContainer');
+            if (rolesCont) {
+                const userRoleIds = getUserRolesList(u);
+                rolesCont.innerHTML = buildRolesSelectionHtml(userRoleIds, 'perm-user-role-cb');
             }
+
+            const eff = getUserEffectivePermissions(u);
+            document.getElementById('permCanSeeLinks').checked = u.canSeeLinks !== false;
+            document.getElementById('permCanSeeCommands').checked = u.canSeeCommands !== false;
+            document.getElementById('permCanDelete').checked = u.canDelete === true || eff.canDelete === true;
+            document.getElementById('permCanPostNews').checked = u.canPostNews === true || eff.canPostNews === true;
+
+            const standardLinkKats = ['MD Intern', 'Allgemein', 'Ausbildung', 'Luftrettung', 'Psychologie', 'Personalabteilung', 'EHK', 'CLS'];
+            const allAvailableLinks = Array.from(new Set([...standardLinkKats, ...allLinkCategories])).sort();
+
+            const linksCont = document.getElementById('permLinksCategoriesContainer');
+            if (linksCont) {
+                linksCont.innerHTML = "";
+                const allowedLinkKats = u.allowedLinkKats || {};
+
+                allAvailableLinks.forEach(kat => {
+                    const isChecked = allowedLinkKats[kat] !== false;
+                    linksCont.innerHTML += `
+                    <label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-size:12px; padding:3px 6px; border-radius:6px; background:rgba(255,255,255,0.03);">
+                        <input type="checkbox" class="perm-link-kat-cb" value="${kat}" ${isChecked ? 'checked' : ''}>
+                        <span>${kat}</span>
+                    </label>`;
+                });
+            }
+
+            const standardCmdKats = ['T-Codes', 'Funkcodes', 'Abkürzungen & Dokumente', 'Allgemein', 'Ausbildung', 'Luftrettung', 'Psychologie', 'Personalabteilung', 'EHK', 'CLS'];
+            const allAvailableCmds = Array.from(new Set([...standardCmdKats, ...allCmdCategories])).sort();
+
+            const cmdsCont = document.getElementById('permCmdsCategoriesContainer');
+            if (cmdsCont) {
+                cmdsCont.innerHTML = "";
+                const allowedCmdKats = u.allowedCmdKats || {};
+
+                allAvailableCmds.forEach(kat => {
+                    const isChecked = allowedCmdKats[kat] !== false;
+                    cmdsCont.innerHTML += `
+                    <label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-size:12px; padding:3px 6px; border-radius:6px; background:rgba(255,255,255,0.03);">
+                        <input type="checkbox" class="perm-cmd-kat-cb" value="${kat}" ${isChecked ? 'checked' : ''}>
+                        <span>${kat}</span>
+                    </label>`;
+                });
+            }
+
+            const modal = document.getElementById('userPermissionsModal');
+            if (modal) modal.style.display = 'flex';
+        }
+
+        if (cachedUsers && cachedUsers[uId]) {
+            showPermModal(cachedUsers[uId]);
         } else {
-            if (passLabel) passLabel.textContent = "Passwort zurücksetzen:";
-            if (passInput) {
-                passInput.type = "password";
-                passInput.value = '';
-                passInput.placeholder = "Neues Passwort (leer = unverändert)";
-            }
-            if (passToggleBtn) passToggleBtn.style.display = 'none';
-        }
-
-        const rolesCont = document.getElementById('permRolesContainer');
-        if (rolesCont) {
-            const userRoleIds = getUserRolesList(u);
-            rolesCont.innerHTML = buildRolesSelectionHtml(userRoleIds, 'perm-user-role-cb');
-        }
-
-        const eff = getUserEffectivePermissions(u);
-        document.getElementById('permCanSeeLinks').checked = u.canSeeLinks !== false;
-        document.getElementById('permCanSeeCommands').checked = u.canSeeCommands !== false;
-        document.getElementById('permCanDelete').checked = u.canDelete === true || eff.canDelete === true;
-        document.getElementById('permCanPostNews').checked = u.canPostNews === true || eff.canPostNews === true;
-
-        const linksCont = document.getElementById('permLinksCategoriesContainer');
-        if (linksCont) {
-            linksCont.innerHTML = "";
-            const allowedLinkKats = u.allowedLinkKats || {};
-            const roleAllowedLinkKats = {};
-            getUserRolesList(u).forEach(rId => {
-                if (cachedRoles[rId]?.allowedLinkKats) Object.assign(roleAllowedLinkKats, cachedRoles[rId].allowedLinkKats);
-            });
-
-            allLinkCategories.forEach(kat => {
-                const isChecked = allowedLinkKats[kat] !== false;
-                linksCont.innerHTML += `
-                <label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-size:12px;">
-                    <input type="checkbox" class="perm-link-kat-cb" value="${kat}" ${isChecked ? 'checked' : ''}>
-                    <span>${kat}</span>
-                </label>`;
+            db.ref("data/users/" + uId).once("value", snap => {
+                const u = snap.val();
+                if (u) {
+                    if (!cachedUsers) cachedUsers = {};
+                    cachedUsers[uId] = u;
+                    showPermModal(u);
+                } else {
+                    alert("⚠️ Mitarbeiter konnte nicht geladen werden.");
+                }
             });
         }
-
-        const cmdsCont = document.getElementById('permCmdsCategoriesContainer');
-        if (cmdsCont) {
-            cmdsCont.innerHTML = "";
-            const allowedCmdKats = u.allowedCmdKats || {};
-
-            allCmdCategories.forEach(kat => {
-                const isChecked = allowedCmdKats[kat] !== false;
-                cmdsCont.innerHTML += `
-                <label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-size:12px;">
-                    <input type="checkbox" class="perm-cmd-kat-cb" value="${kat}" ${isChecked ? 'checked' : ''}>
-                    <span>${kat}</span>
-                </label>`;
-            });
-        }
-
-        document.getElementById('userPermissionsModal').style.display = 'flex';
     }
 
     function togglePermPasswordVisibility() {
@@ -3051,7 +3058,13 @@ dispEl.textContent = (hierarchieDaten[key] !== undefined && hierarchieDaten[key]
         const container = document.getElementById('linksAccordionContainer'); if (!container) return; container.innerHTML = "";
         if (!links) { container.innerHTML = `<p style="color:var(--text-muted); text-align:center; padding: 20px;">Keine Links hinterlegt.</p>`; return; }
         let gruppierteLinks = {};
-        Object.keys(links).forEach(key => { let item = links[key]; let themaName = item.thema || "Allgemein"; if (!gruppierteLinks[themaName]) gruppierteLinks[themaName] = []; gruppierteLinks[themaName].push({ id: key, name: item.name, url: item.url }); });
+        Object.keys(links).forEach(key => { 
+            let item = links[key]; 
+            let themaName = (item.thema || item.kat || "Allgemein").trim(); 
+            if (themaName.toLowerCase() === "ausbildungsabteilung") themaName = "Ausbildung";
+            if (!gruppierteLinks[themaName]) gruppierteLinks[themaName] = []; 
+            gruppierteLinks[themaName].push({ id: key, name: item.name, url: item.url }); 
+        });
         
         const hasDeletePermission = canUserDelete();
 
@@ -3093,7 +3106,8 @@ dispEl.textContent = (hierarchieDaten[key] !== undefined && hierarchieDaten[key]
         let gruppierteCommands = {};
         Object.keys(listData).forEach(key => { 
             let item = listData[key]; 
-            let katName = item.kat || item.thema || "Allgemein"; 
+            let katName = (item.kat || item.thema || "Allgemein").trim(); 
+            if (katName.toLowerCase() === "ausbildungsabteilung") katName = "Ausbildung";
             if (!gruppierteCommands[katName]) gruppierteCommands[katName] = []; 
             gruppierteCommands[katName].push({ id: key, name: item.name, desc: item.desc }); 
         });
@@ -3665,14 +3679,6 @@ Die Medics haben die alleinige Entscheidung zu treffen, welche Personen nach ein
             ]
         }
     };
-
-    let activeExam = null;
-    let activeExamTimerInterval = null;
-    let activeExamSecondsElapsed = 0;
-    let cachedExams = {};
-    let cachedUsers = {};
-    let cachedSubmissions = {};
-    let cachedExamOrder = [];
 
     function isUserInstructor() {
         if (!sessionUser) return false;
@@ -4379,11 +4385,8 @@ Die Medics haben die alleinige Entscheidung zu treffen, welche Personen nach ein
     function renderInstructorAllowedExams(users, exams) {
         // 1. Render Member Approvals Table (for Ausbildungsleitung and Admin)
         const approvalTbody = document.getElementById('instructorMembersApprovalTableBody');
-        const adminApprovalTbody = document.getElementById('adminMembersApprovalTableBody');
-        
-        const renderApprovals = (tbody) => {
-            if (!tbody || !users) return;
-            tbody.innerHTML = "";
+        if (approvalTbody && users) {
+            approvalTbody.innerHTML = "";
             Object.keys(users).forEach(uId => {
                 const u = users[uId];
                 const rolesHtml = renderUserRoleBadges(u);
@@ -4397,7 +4400,7 @@ Die Medics haben die alleinige Entscheidung zu treffen, welche Personen nach ein
                     ? `<button class="btn" style="margin:0; width:auto; padding:4px 8px; font-size:10px; background:rgba(244,63,94,0.15); color:var(--danger); border:1px solid var(--danger); font-weight:800;" onclick="toggleInstructorUserStatus('${uId}', 'pending')">Sperren</button>`
                     : `<button class="btn" style="margin:0; width:auto; padding:4px 8px; font-size:10px; background:rgba(16,185,129,0.15); color:var(--success); border:1px solid var(--success); font-weight:800;" onclick="toggleInstructorUserStatus('${uId}', 'approved')">Zulassen</button>`;
 
-                tbody.innerHTML += `
+                approvalTbody.innerHTML += `
                 <tr>
                     <td><b>${u.vorname} ${u.nachname}</b></td>
                     <td><span style="font-family:monospace; font-size:11px;">${u.dn || 'Keine DN'}</span></td>
@@ -4411,17 +4414,12 @@ Die Medics haben die alleinige Entscheidung zu treffen, welche Personen nach ein
                     </td>
                 </tr>`;
             });
-        };
-        renderApprovals(approvalTbody);
-        renderApprovals(adminApprovalTbody);
+        }
 
         // 2. Render Allowed Exams Table (for Ausbildungsleitung and Admin)
         const tbody = document.getElementById('instructorAllowedExamsTableBody');
-        const adminTbody = document.getElementById('adminAllowedExamsTableBody');
-        
-        const renderExamsComp = (targetBody) => {
-            if (!targetBody || !users) return;
-            targetBody.innerHTML = "";
+        if (tbody && users) {
+            tbody.innerHTML = "";
 
             Object.keys(users).forEach(uId => {
                 const u = users[uId];
@@ -4470,7 +4468,7 @@ Die Medics haben die alleinige Entscheidung zu treffen, welche Personen nach ein
 
                 examCompetenciesHtml += `</div>`;
 
-                targetBody.innerHTML += `
+                tbody.innerHTML += `
                 <tr>
                     <td>
                         <b>${u.vorname} ${u.nachname}</b>
@@ -4480,9 +4478,7 @@ Die Medics haben die alleinige Entscheidung zu treffen, welche Personen nach ein
                     <td>${examCompetenciesHtml}</td>
                 </tr>`;
             });
-        };
-        renderExamsComp(tbody);
-        renderExamsComp(adminTbody);
+        }
     }
 
     function toggleInstructorGlobalPermission(uId, field, value) {
