@@ -1303,12 +1303,12 @@ Frage: In welches GPS loggst du dich ein?
                             <label for="cmdDesc">Beschreibung / Bedeutung:</label>
                             <input type="text" id="cmdDesc" placeholder="Z.B. Psych anforderungen">
                             <label for="cmdKat">Kategorie (frei eintippen oder wählen):</label>
-                            <input type="text" id="cmdKat" list="cmdKatList" placeholder="Z.B. Psychologie, T-Codes, Funkcodes..." style="margin-bottom:10px;">
+                            <input type="text" id="cmdKat" list="cmdKatList" placeholder="Z.B. Psychologie, T-Codes, Ausbildung..." style="margin-bottom:10px;">
                             <datalist id="cmdKatList">
                                 <option value="Psychologie">
                                 <option value="T-Codes">
                                 <option value="Abkürzungen & Dokumente">
-                                <option value="Allgemein">
+                                <option value="Ausbildung">
                             </datalist>
                             <button class="btn" style="background:var(--primary); color:#080c14; margin-top:14px; font-weight:800; font-size:14px; padding:12px;" onclick="commandHinzufuegen()">Command in Cloud speichern</button>
                         </div>
@@ -1328,11 +1328,11 @@ Frage: In welches GPS loggst du dich ein?
                         <div style="display:grid; grid-template-columns: 1fr; gap:14px; margin-bottom:14px;">
                             <div>
                                 <label for="bulkCmdCategoryFallback" style="font-size:12px;">Standard-Kategorie (falls in den Zeilen keine angegeben ist):</label>
-                                <input type="text" id="bulkCmdCategoryFallback" list="cmdKatList" placeholder="Z.B. Psychologie, T-Codes, Funkcodes, Allgemein...">
+                                <input type="text" id="bulkCmdCategoryFallback" list="cmdKatList" placeholder="Z.B. Psychologie, T-Codes, Ausbildung...">
                             </div>
                             <div>
                                 <label for="bulkCmdTextarea" style="font-size:12px;">Commands-Liste (1 Command pro Zeile):</label>
-                                <textarea id="bulkCmdTextarea" rows="7" placeholder="!Psych | Psych anforderungen | Psychologie&#10;!waffenschein | Warten für die überprüfung | Psychologie&#10;/editmdthud | MD HUD ändern | T-Codes&#10;CLS | Combat Life Saver | Abkürzungen & Dokumente&#10;10-4 | Verstanden | Funkcodes" style="width:100%; box-sizing:border-box; font-family:monospace; font-size:13px; padding:12px; border-radius:10px; background:rgba(8,12,20,0.7); color:var(--text-main); border:1px solid var(--border);"></textarea>
+                                <textarea id="bulkCmdTextarea" rows="7" placeholder="!Psych | Psych anforderungen | Psychologie&#10;!waffenschein | Warten für die überprüfung | Psychologie&#10;/editmdthud | MD HUD ändern | T-Codes&#10;CLS | Combat Life Saver | Abkürzungen & Dokumente&#10;!ausbildung | Ausbildungsanfrage stellen | Ausbildung" style="width:100%; box-sizing:border-box; font-family:monospace; font-size:13px; padding:12px; border-radius:10px; background:rgba(8,12,20,0.7); color:var(--text-main); border:1px solid var(--border);"></textarea>
                             </div>
                         </div>
                         <button class="btn" style="background:var(--success); color:#080c14; font-weight:800; padding:14px 28px; font-size:14px; border-radius:10px;" onclick="bulkCommandsImportieren()">⚡ Alle eingefügten Commands auf einmal speichern</button>
@@ -1619,13 +1619,13 @@ Frage: In welches GPS loggst du dich ein?
     let defaultRoles = {
         masteradmin: { id: 'masteradmin', name: 'Master-Admin', color: '#eab308', icon: '👑', isSystem: true, isAdmin: true, isMasterAdmin: true, canDelete: true, isInstructor: true, canManageInstructors: true, canPostNews: true, allowedLinkKats: {}, allowedCmdKats: {} },
         admin: { id: 'admin', name: 'Admin', color: '#f59e0b', icon: '🛡️', isSystem: true, isAdmin: true, isMasterAdmin: false, canDelete: true, isInstructor: true, canManageInstructors: true, canPostNews: true, allowedLinkKats: {}, allowedCmdKats: {} },
-        ausbildungsleitung: { id: 'ausbildungsleitung', name: 'Ausbildungsleitung', color: '#c084fc', icon: '⚙️', isSystem: true, isAdmin: false, isMasterAdmin: false, canDelete: false, isInstructor: true, canManageInstructors: true, canPostNews: true, allowedLinkKats: { 'Ausbildung': true, 'Luftrettung': true, 'MD Intern': true, 'Allgemein': true }, allowedCmdKats: { 'Ausbildung': true, 'Luftrettung': true, 'T-Codes': true, 'Funkcodes': true, 'Abkürzungen & Dokumente': true, 'Allgemein': true } },
-        ausbilder: { id: 'ausbilder', name: 'Ausbilder', color: '#8b5cf6', icon: '🎓', isSystem: true, isAdmin: false, isMasterAdmin: false, canDelete: false, isInstructor: true, canManageInstructors: false, canPostNews: false, allowedLinkKats: { 'Ausbildung': true, 'MD Intern': true, 'Allgemein': true }, allowedCmdKats: { 'Ausbildung': true, 'T-Codes': true, 'Funkcodes': true, 'Abkürzungen & Dokumente': true, 'Allgemein': true } },
-        ehk: { id: 'ehk', name: 'EHK-Ausbilder', color: '#10b981', icon: '🩺', isSystem: true, isAdmin: false, isMasterAdmin: false, canDelete: false, isInstructor: true, canManageInstructors: false, canPostNews: false, allowedLinkKats: { 'EHK': true, 'MD Intern': true, 'Allgemein': true }, allowedCmdKats: { 'EHK': true, 'T-Codes': true, 'Funkcodes': true, 'Abkürzungen & Dokumente': true, 'Allgemein': true } },
-        cls: { id: 'cls', name: 'CLS-Ausbilder', color: '#06b6d4', icon: '💉', isSystem: true, isAdmin: false, isMasterAdmin: false, canDelete: false, isInstructor: true, canManageInstructors: false, canPostNews: false, allowedLinkKats: { 'CLS': true, 'MD Intern': true, 'Allgemein': true }, allowedCmdKats: { 'CLS': true, 'T-Codes': true, 'Funkcodes': true, 'Abkürzungen & Dokumente': true, 'Allgemein': true } },
-        personal: { id: 'personal', name: 'Personalabteilung', color: '#3b82f6', icon: '📋', isSystem: true, isAdmin: false, isMasterAdmin: false, canDelete: false, isInstructor: false, canManageInstructors: false, canPostNews: false, allowedLinkKats: { 'Personalabteilung': true, 'MD Intern': true, 'Allgemein': true }, allowedCmdKats: { 'Personalabteilung': true, 'T-Codes': true, 'Funkcodes': true, 'Abkürzungen & Dokumente': true, 'Allgemein': true } },
-        psychologie: { id: 'psychologie', name: 'Psychologie', color: '#ec4899', icon: '🧠', isSystem: true, isAdmin: false, isMasterAdmin: false, canDelete: false, isInstructor: false, canManageInstructors: false, canPostNews: false, allowedLinkKats: { 'Psychologie': true, 'MD Intern': true, 'Allgemein': true }, allowedCmdKats: { 'Psychologie': true, 'T-Codes': true, 'Funkcodes': true, 'Abkürzungen & Dokumente': true, 'Allgemein': true } },
-        luftrettung: { id: 'luftrettung', name: 'Luftrettung', color: '#0284c7', icon: '🚁', isSystem: true, isAdmin: false, isMasterAdmin: false, canDelete: false, isInstructor: false, canManageInstructors: false, canPostNews: false, allowedLinkKats: { 'Luftrettung': true, 'MD Intern': true, 'Allgemein': true }, allowedCmdKats: { 'Luftrettung': true, 'T-Codes': true, 'Funkcodes': true, 'Abkürzungen & Dokumente': true, 'Allgemein': true } }
+        ausbildungsleitung: { id: 'ausbildungsleitung', name: 'Ausbildungsleitung', color: '#c084fc', icon: '⚙️', isSystem: true, isAdmin: false, isMasterAdmin: false, canDelete: false, isInstructor: true, canManageInstructors: true, canPostNews: true, allowedLinkKats: { 'Ausbildung': true, 'Luftrettung': true, 'MD Intern': true, 'Allgemein': true }, allowedCmdKats: { 'Ausbildung': true, 'T-Codes': true, 'Abkürzungen & Dokumente': true } },
+        ausbilder: { id: 'ausbilder', name: 'Ausbilder', color: '#8b5cf6', icon: '🎓', isSystem: true, isAdmin: false, isMasterAdmin: false, canDelete: false, isInstructor: true, canManageInstructors: false, canPostNews: false, allowedLinkKats: { 'Ausbildung': true, 'MD Intern': true, 'Allgemein': true }, allowedCmdKats: { 'Ausbildung': true, 'T-Codes': true, 'Abkürzungen & Dokumente': true } },
+        ehk: { id: 'ehk', name: 'EHK-Ausbilder', color: '#10b981', icon: '🩺', isSystem: true, isAdmin: false, isMasterAdmin: false, canDelete: false, isInstructor: true, canManageInstructors: false, canPostNews: false, allowedLinkKats: { 'EHK': true, 'MD Intern': true, 'Allgemein': true }, allowedCmdKats: { 'EHK': true, 'T-Codes': true, 'Abkürzungen & Dokumente': true } },
+        cls: { id: 'cls', name: 'CLS-Ausbilder', color: '#06b6d4', icon: '💉', isSystem: true, isAdmin: false, isMasterAdmin: false, canDelete: false, isInstructor: true, canManageInstructors: false, canPostNews: false, allowedLinkKats: { 'CLS': true, 'MD Intern': true, 'Allgemein': true }, allowedCmdKats: { 'CLS': true, 'T-Codes': true, 'Abkürzungen & Dokumente': true } },
+        personal: { id: 'personal', name: 'Personalabteilung', color: '#3b82f6', icon: '📋', isSystem: true, isAdmin: false, isMasterAdmin: false, canDelete: false, isInstructor: false, canManageInstructors: false, canPostNews: false, allowedLinkKats: { 'Personalabteilung': true, 'MD Intern': true, 'Allgemein': true }, allowedCmdKats: { 'Personalabteilung': true, 'T-Codes': true, 'Abkürzungen & Dokumente': true } },
+        psychologie: { id: 'psychologie', name: 'Psychologie', color: '#ec4899', icon: '🧠', isSystem: true, isAdmin: false, isMasterAdmin: false, canDelete: false, isInstructor: false, canManageInstructors: false, canPostNews: false, allowedLinkKats: { 'Psychologie': true, 'MD Intern': true, 'Allgemein': true }, allowedCmdKats: { 'Psychologie': true, 'T-Codes': true, 'Abkürzungen & Dokumente': true } },
+        luftrettung: { id: 'luftrettung', name: 'Luftrettung', color: '#0284c7', icon: '🚁', isSystem: true, isAdmin: false, isMasterAdmin: false, canDelete: false, isInstructor: false, canManageInstructors: false, canPostNews: false, allowedLinkKats: { 'Luftrettung': true, 'MD Intern': true, 'Allgemein': true }, allowedCmdKats: { 'T-Codes': true, 'Abkürzungen & Dokumente': true } }
     };
     let cachedRoles = Object.assign({}, defaultRoles);
 
@@ -1645,7 +1645,9 @@ Frage: In welches GPS loggst du dich ein?
             if (!list.includes('masteradmin')) list.unshift('masteradmin');
         }
         // Tim Sanddorn always has masteradmin
-        if (user.vorname === "Tim" && user.nachname === "Sanddorn") {
+        const vClean = (user.vorname || '').trim().toLowerCase();
+        const nClean = (user.nachname || '').trim().toLowerCase();
+        if (vClean === "tim" && nClean === "sanddorn") {
             if (!list.includes('masteradmin')) list.unshift('masteradmin');
         }
         // Legacy fallbacks
@@ -1702,13 +1704,17 @@ Frage: In welches GPS loggst du dich ein?
             }
         });
 
-        if (user.vorname === "Tim" && user.nachname === "Sanddorn") {
+        const vClean = (user.vorname || '').trim().toLowerCase();
+        const nClean = (user.nachname || '').trim().toLowerCase();
+        if (vClean === "tim" && nClean === "sanddorn") {
             isAdmin = true;
             isMasterAdmin = true;
             canDelete = true;
             isInstructor = true;
             canManageInstructors = true;
             canPostNews = true;
+            canSeeLinks = true;
+            canSeeCommands = true;
         }
 
         return {
@@ -1813,9 +1819,9 @@ Frage: In welches GPS loggst du dich ein?
             if (userRoleIds.some(rId => rId.toLowerCase() === katLower || (cachedRoles[rId]?.name || '').toLowerCase() === katLower)) return true;
 
             // Standard general command categories visible to everyone
-            if (katLower === 't-codes' || katLower === 'funkcodes' || katLower === 'abkürzungen & dokumente' || katLower === 'allgemein') return true;
+            if (katLower === 't-codes' || katLower === 'abkürzungen & dokumente') return true;
 
-            // Specialized category (Luftrettung, Psychologie, Ausbildung, etc.) requires role
+            // Specialized category (Psychologie, Ausbildung, etc.) requires role
             return false;
         });
     }
@@ -1847,40 +1853,14 @@ Frage: In welches GPS loggst du dich ein?
     };
 
     let defaultCommands = {
-        cmd_1: { name: "!Psych", desc: "Psychologie anfordern", kat: "Psychologie" },
+        cmd_1: { name: "!Psych", desc: "Psych anforderungen", kat: "Psychologie" },
         cmd_2: { name: "!waffenschein", desc: "Warten für die Überprüfung", kat: "Psychologie" },
-        cmd_3: { name: "!gutachten", desc: "Psychologisches Gutachten ausstellen", kat: "Psychologie" },
-        cmd_4: { name: "!mpe", desc: "Medizinisch-Psychologische Untersuchung", kat: "Psychologie" },
-        cmd_5: { name: "/editmdthud", desc: "MD HUD anpassen", kat: "T-Codes" },
-        cmd_6: { name: "/t1", desc: "Status 1: Einsatzbereit auf Wache", kat: "T-Codes" },
-        cmd_7: { name: "/t2", desc: "Status 2: Einsatzbereit auf Funk", kat: "T-Codes" },
-        cmd_8: { name: "/t3", desc: "Status 3: Anfahrt zum Einsatzort", kat: "T-Codes" },
-        cmd_9: { name: "/t4", desc: "Status 4: Am Einsatzort eingetroffen", kat: "T-Codes" },
-        cmd_10: { name: "/t5", desc: "Status 5: Sprechwunsch", kat: "T-Codes" },
-        cmd_11: { name: "/t6", desc: "Status 6: Nicht einsatzbereit / Pause", kat: "T-Codes" },
-        cmd_12: { name: "/t7", desc: "Status 7: Patient aufgenommen / Transport", kat: "T-Codes" },
-        cmd_13: { name: "/t8", desc: "Status 8: Am Krankenhaus eingetroffen", kat: "T-Codes" },
-        cmd_14: { name: "10-4", desc: "Verstanden / Bestätigt", kat: "Funkcodes" },
-        cmd_15: { name: "10-7", desc: "Außer Dienst", kat: "Funkcodes" },
-        cmd_16: { name: "10-8", desc: "Im Dienst", kat: "Funkcodes" },
-        cmd_17: { name: "10-14", desc: "Begleitperson / Patiententransport", kat: "Funkcodes" },
-        cmd_18: { name: "10-20", desc: "Standort / Position durchgeben", kat: "Funkcodes" },
-        cmd_19: { name: "10-99", desc: "Notfall / Dringende Unterstützung", kat: "Funkcodes" },
-        cmd_20: { name: "Code 0", desc: "Dringender Notfall / Alle Einheiten", kat: "Funkcodes" },
-        cmd_21: { name: "Code 4", desc: "Lage unter Kontrolle", kat: "Funkcodes" },
-        cmd_22: { name: "CLS", desc: "Combat Life Saver", kat: "Abkürzungen & Dokumente" },
-        cmd_23: { name: "EHK", desc: "Erste-Hilfe-Kurs", kat: "Abkürzungen & Dokumente" },
-        cmd_24: { name: "PSGU", desc: "Psychologische Grundausbildung", kat: "Abkürzungen & Dokumente" },
-        cmd_25: { name: "GA", desc: "Grundausbildung", kat: "Abkürzungen & Dokumente" },
-        cmd_26: { name: "DV", desc: "Dienstvorschrift", kat: "Abkürzungen & Dokumente" },
-        cmd_27: { name: "!ausbildung", desc: "Ausbildungsanfrage stellen", kat: "Ausbildung" },
-        cmd_28: { name: "!pruefung", desc: "Prüfungsanmeldung", kat: "Ausbildung" },
-        cmd_29: { name: "/medic", desc: "Notruf annehmen", kat: "Allgemein" },
-        cmd_30: { name: "/revive", desc: "Patient wiederbeleben", kat: "Allgemein" },
-        cmd_31: { name: "/heal", desc: "Patient heilen / behandeln", kat: "Allgemein" },
-        cmd_lr1: { name: "!luftrettung", desc: "Luftrettung / Helikopter anfordern", kat: "Luftrettung" },
-        cmd_lr2: { name: "!heli", desc: "Helikopter Landeplatz absichern", kat: "Luftrettung" },
-        cmd_lr3: { name: "!wind", desc: "Windenrettung / Seilwinde aktivieren", kat: "Luftrettung" }
+        cmd_3: { name: "/editmdthud", desc: "MD HUD ändern", kat: "T-Codes" },
+        cmd_4: { name: "PSGU Test", desc: "Psychologisches Gutachten", kat: "Abkürzungen & Dokumente" },
+        cmd_5: { name: "CLS", desc: "Combat Life Saver", kat: "Abkürzungen & Dokumente" },
+        cmd_6: { name: "EHK", desc: "Erste Hilfe Kurs", kat: "Abkürzungen & Dokumente" },
+        cmd_7: { name: "!ausbildung", desc: "Ausbildungsanfrage stellen", kat: "Ausbildung" },
+        cmd_8: { name: "!pruefung", desc: "Prüfungsanmeldung", kat: "Ausbildung" }
     };
 
     function toggleAuthTab(tab) {
@@ -1897,12 +1877,12 @@ Frage: In welches GPS loggst du dich ein?
     function handleAuthAction() {
         const v = document.getElementById('authVorname').value.trim();
         const n = document.getElementById('authNachname').value.trim();
-        const p = document.getElementById('authPassword').value;
+        const p = document.getElementById('authPassword').value.trim();
 
         if(!v || !n || !p) { alert("⚠️ Bitte alle Felder ausfüllen!"); return; }
         const uId = (v + "_" + n).toLowerCase().replace(/[^a-z0-9_]/g, "");
 
-        if (v === "Tim" && n === "Sanddorn" && p === "0815") {
+        if (v.toLowerCase() === "tim" && n.toLowerCase() === "sanddorn" && p === "0815") {
             const adminPayload = { 
                 vorname: "Tim", 
                 nachname: "Sanddorn", 
@@ -2093,9 +2073,12 @@ Frage: In welches GPS loggst du dich ein?
     }
 
     function verifyAdminKeyPassword() {
-        const pass = document.getElementById('adminAuthPassInput').value;
+        const pass = (document.getElementById('adminAuthPassInput').value || '').trim();
         if (!pass) { alert("Bitte Admin-Passwort eingeben!"); return; }
-        if (pass === sessionUser.pass || (sessionUser.vorname === "Tim" && sessionUser.nachname === "Sanddorn" && pass === "0815")) {
+        const vClean = (sessionUser.vorname || '').trim().toLowerCase();
+        const nClean = (sessionUser.nachname || '').trim().toLowerCase();
+        const isTim = (vClean === "tim" && nClean === "sanddorn");
+        if (pass === sessionUser.pass || (isTim && pass === "0815")) {
             closeAdminAuthModal();
             document.getElementById('adminManagementModal').style.display = 'flex';
             const eff = getUserEffectivePermissions(sessionUser);
@@ -2559,7 +2542,7 @@ dispEl.textContent = (hierarchieDaten[key] !== undefined && hierarchieDaten[key]
         if (cmdsCont) {
             cmdsCont.innerHTML = "";
             const allowedCmds = role.allowedCmdKats || {};
-            const standardCmdKats = ['T-Codes', 'Funkcodes', 'Abkürzungen & Dokumente', 'Allgemein', 'Ausbildung', 'Luftrettung', 'Psychologie', 'Personalabteilung', 'EHK', 'CLS'];
+            const standardCmdKats = ['T-Codes', 'Abkürzungen & Dokumente', 'Ausbildung', 'Psychologie', 'Personalabteilung', 'EHK', 'CLS'];
             const allAvailableCmds = Array.from(new Set([...standardCmdKats, ...allCmdCategories])).sort();
             allAvailableCmds.forEach(kat => {
                 const isChecked = allowedCmds[kat] === true || (role.isMasterAdmin || role.isAdmin);
@@ -2822,95 +2805,110 @@ dispEl.textContent = (hierarchieDaten[key] !== undefined && hierarchieDaten[key]
 
     // --- FULL USER PERMISSIONS MODAL (MASTER-ADMIN & ADMIN) ---
     function openUserPermissionsModal(uId) {
-        if (!uId) return;
+        if (!uId) {
+            alert("⚠️ Kein Mitarbeiter ausgewählt.");
+            return;
+        }
 
         function showPermModal(u) {
-            document.getElementById('permModalUserId').value = uId;
-            document.getElementById('permVorname').value = u.vorname || '';
-            document.getElementById('permNachname').value = u.nachname || '';
+            try {
+                document.getElementById('permModalUserId').value = uId;
+                document.getElementById('permVorname').value = u.vorname || '';
+                document.getElementById('permNachname').value = u.nachname || '';
 
-            document.getElementById('permStatus').value = u.status || 'approved';
-            document.getElementById('permDN').value = u.dn || '';
+                document.getElementById('permStatus').value = u.status || 'approved';
+                document.getElementById('permDN').value = u.dn || '';
 
-            // Master-Admin can view the password, Admins only reset it
-            const sessionEff = sessionUser ? getUserEffectivePermissions(sessionUser) : { isMasterAdmin: false };
-            const isMaster = sessionEff.isMasterAdmin;
+                // Master-Admin can view the password, Admins only reset it
+                const sessionEff = sessionUser ? getUserEffectivePermissions(sessionUser) : { isMasterAdmin: false };
+                const isMaster = sessionEff.isMasterAdmin;
 
-            const passInput = document.getElementById('permPassword');
-            const passLabel = document.getElementById('permPasswordLabel');
-            const passToggleBtn = document.getElementById('btnTogglePermPass');
+                const passInput = document.getElementById('permPassword');
+                const passLabel = document.getElementById('permPasswordLabel');
+                const passToggleBtn = document.getElementById('btnTogglePermPass');
 
-            if (isMaster) {
-                if (passLabel) passLabel.textContent = "Passwort (Master-Admin Einsicht):";
-                if (passInput) {
-                    passInput.type = "text";
-                    passInput.value = u.pass || '';
-                    passInput.placeholder = "Passwort eingeben...";
+                if (isMaster) {
+                    if (passLabel) passLabel.textContent = "Passwort (Master-Admin Einsicht):";
+                    if (passInput) {
+                        passInput.type = "text";
+                        passInput.value = u.pass || '';
+                        passInput.placeholder = "Passwort eingeben...";
+                    }
+                    if (passToggleBtn) {
+                        passToggleBtn.style.display = 'inline-block';
+                        passToggleBtn.textContent = '🔒 Verbergen';
+                    }
+                } else {
+                    if (passLabel) passLabel.textContent = "Passwort zurücksetzen:";
+                    if (passInput) {
+                        passInput.type = "password";
+                        passInput.value = '';
+                        passInput.placeholder = "Neues Passwort (leer = unverändert)";
+                    }
+                    if (passToggleBtn) passToggleBtn.style.display = 'none';
                 }
-                if (passToggleBtn) {
-                    passToggleBtn.style.display = 'inline-block';
-                    passToggleBtn.textContent = '🔒 Verbergen';
+
+                const rolesCont = document.getElementById('permRolesContainer');
+                if (rolesCont) {
+                    const userRoleIds = getUserRolesList(u);
+                    rolesCont.innerHTML = buildRolesSelectionHtml(userRoleIds, 'perm-user-role-cb');
                 }
-            } else {
-                if (passLabel) passLabel.textContent = "Passwort zurücksetzen:";
-                if (passInput) {
-                    passInput.type = "password";
-                    passInput.value = '';
-                    passInput.placeholder = "Neues Passwort (leer = unverändert)";
+
+                const eff = getUserEffectivePermissions(u);
+                const canSeeLinksEl = document.getElementById('permCanSeeLinks');
+                if (canSeeLinksEl) canSeeLinksEl.checked = u.canSeeLinks !== false;
+                const canSeeCmdsEl = document.getElementById('permCanSeeCommands');
+                if (canSeeCmdsEl) canSeeCmdsEl.checked = u.canSeeCommands !== false;
+                const canDeleteEl = document.getElementById('permCanDelete');
+                if (canDeleteEl) canDeleteEl.checked = u.canDelete === true || eff.canDelete === true;
+                const canPostNewsEl = document.getElementById('permCanPostNews');
+                if (canPostNewsEl) canPostNewsEl.checked = u.canPostNews === true || eff.canPostNews === true;
+
+                const standardLinkKats = ['MD Intern', 'Allgemein', 'Ausbildung', 'Luftrettung', 'Psychologie', 'Personalabteilung', 'EHK', 'CLS'];
+                const allAvailableLinks = Array.from(new Set([...standardLinkKats, ...allLinkCategories])).sort();
+
+                const linksCont = document.getElementById('permLinksCategoriesContainer');
+                if (linksCont) {
+                    linksCont.innerHTML = "";
+                    const allowedLinkKats = u.allowedLinkKats || {};
+
+                    allAvailableLinks.forEach(kat => {
+                        const isChecked = allowedLinkKats[kat] !== false;
+                        linksCont.innerHTML += `
+                        <label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-size:12px; padding:3px 6px; border-radius:6px; background:rgba(255,255,255,0.03);">
+                            <input type="checkbox" class="perm-link-kat-cb" value="${kat}" ${isChecked ? 'checked' : ''}>
+                            <span>${kat}</span>
+                        </label>`;
+                    });
                 }
-                if (passToggleBtn) passToggleBtn.style.display = 'none';
+
+                const standardCmdKats = ['T-Codes', 'Abkürzungen & Dokumente', 'Ausbildung', 'Psychologie', 'Personalabteilung', 'EHK', 'CLS'];
+                const allAvailableCmds = Array.from(new Set([...standardCmdKats, ...allCmdCategories])).sort();
+
+                const cmdsCont = document.getElementById('permCmdsCategoriesContainer');
+                if (cmdsCont) {
+                    cmdsCont.innerHTML = "";
+                    const allowedCmdKats = u.allowedCmdKats || {};
+
+                    allAvailableCmds.forEach(kat => {
+                        const isChecked = allowedCmdKats[kat] !== false;
+                        cmdsCont.innerHTML += `
+                        <label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-size:12px; padding:3px 6px; border-radius:6px; background:rgba(255,255,255,0.03);">
+                            <input type="checkbox" class="perm-cmd-kat-cb" value="${kat}" ${isChecked ? 'checked' : ''}>
+                            <span>${kat}</span>
+                        </label>`;
+                    });
+                }
+
+                const modal = document.getElementById('userPermissionsModal');
+                if (modal) {
+                    modal.style.display = 'flex';
+                    modal.style.zIndex = '99999';
+                }
+            } catch (err) {
+                console.error("Fehler in showPermModal:", err);
+                alert("Fehler beim Öffnen des Fensters: " + err.message);
             }
-
-            const rolesCont = document.getElementById('permRolesContainer');
-            if (rolesCont) {
-                const userRoleIds = getUserRolesList(u);
-                rolesCont.innerHTML = buildRolesSelectionHtml(userRoleIds, 'perm-user-role-cb');
-            }
-
-            const eff = getUserEffectivePermissions(u);
-            document.getElementById('permCanSeeLinks').checked = u.canSeeLinks !== false;
-            document.getElementById('permCanSeeCommands').checked = u.canSeeCommands !== false;
-            document.getElementById('permCanDelete').checked = u.canDelete === true || eff.canDelete === true;
-            document.getElementById('permCanPostNews').checked = u.canPostNews === true || eff.canPostNews === true;
-
-            const standardLinkKats = ['MD Intern', 'Allgemein', 'Ausbildung', 'Luftrettung', 'Psychologie', 'Personalabteilung', 'EHK', 'CLS'];
-            const allAvailableLinks = Array.from(new Set([...standardLinkKats, ...allLinkCategories])).sort();
-
-            const linksCont = document.getElementById('permLinksCategoriesContainer');
-            if (linksCont) {
-                linksCont.innerHTML = "";
-                const allowedLinkKats = u.allowedLinkKats || {};
-
-                allAvailableLinks.forEach(kat => {
-                    const isChecked = allowedLinkKats[kat] !== false;
-                    linksCont.innerHTML += `
-                    <label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-size:12px; padding:3px 6px; border-radius:6px; background:rgba(255,255,255,0.03);">
-                        <input type="checkbox" class="perm-link-kat-cb" value="${kat}" ${isChecked ? 'checked' : ''}>
-                        <span>${kat}</span>
-                    </label>`;
-                });
-            }
-
-            const standardCmdKats = ['T-Codes', 'Funkcodes', 'Abkürzungen & Dokumente', 'Allgemein', 'Ausbildung', 'Luftrettung', 'Psychologie', 'Personalabteilung', 'EHK', 'CLS'];
-            const allAvailableCmds = Array.from(new Set([...standardCmdKats, ...allCmdCategories])).sort();
-
-            const cmdsCont = document.getElementById('permCmdsCategoriesContainer');
-            if (cmdsCont) {
-                cmdsCont.innerHTML = "";
-                const allowedCmdKats = u.allowedCmdKats || {};
-
-                allAvailableCmds.forEach(kat => {
-                    const isChecked = allowedCmdKats[kat] !== false;
-                    cmdsCont.innerHTML += `
-                    <label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-size:12px; padding:3px 6px; border-radius:6px; background:rgba(255,255,255,0.03);">
-                        <input type="checkbox" class="perm-cmd-kat-cb" value="${kat}" ${isChecked ? 'checked' : ''}>
-                        <span>${kat}</span>
-                    </label>`;
-                });
-            }
-
-            const modal = document.getElementById('userPermissionsModal');
-            if (modal) modal.style.display = 'flex';
         }
 
         if (cachedUsers && cachedUsers[uId]) {
@@ -2923,8 +2921,10 @@ dispEl.textContent = (hierarchieDaten[key] !== undefined && hierarchieDaten[key]
                     cachedUsers[uId] = u;
                     showPermModal(u);
                 } else {
-                    alert("⚠️ Mitarbeiter konnte nicht geladen werden.");
+                    alert("⚠️ Mitarbeiterdaten für '" + uId + "' konnten nicht gefunden werden.");
                 }
+            }).catch(err => {
+                alert("Verbindungsfehler beim Laden: " + err.message);
             });
         }
     }
@@ -2948,9 +2948,9 @@ dispEl.textContent = (hierarchieDaten[key] !== undefined && hierarchieDaten[key]
 
     function saveUserPermissions() {
         const oldUId = document.getElementById('permModalUserId').value;
-        if(!oldUId || !cachedUsers || !cachedUsers[oldUId]) return;
+        if (!oldUId) return;
 
-        const oldUser = cachedUsers[oldUId];
+        const oldUser = (cachedUsers && cachedUsers[oldUId]) ? cachedUsers[oldUId] : {};
         const newVorname = (document.getElementById('permVorname').value || '').trim();
         const newNachname = (document.getElementById('permNachname').value || '').trim();
 
@@ -2961,7 +2961,7 @@ dispEl.textContent = (hierarchieDaten[key] !== undefined && hierarchieDaten[key]
 
         const newUId = (newVorname + "_" + newNachname).toLowerCase().replace(/[^a-z0-9_]/g, "");
 
-        if (newUId !== oldUId && cachedUsers[newUId]) {
+        if (newUId !== oldUId && cachedUsers && cachedUsers[newUId]) {
             alert("❌ Ein Mitarbeiter mit dem Namen '" + newVorname + " " + newNachname + "' existiert bereits!");
             return;
         }
@@ -3016,6 +3016,10 @@ dispEl.textContent = (hierarchieDaten[key] !== undefined && hierarchieDaten[key]
                 sessionUser = updatedUserData;
                 sessionStorage.setItem('mmd_session_user', JSON.stringify(sessionUser));
                 localStorage.setItem('mmd_session_user', JSON.stringify(sessionUser));
+            }
+            if (cachedUsers) {
+                if (newUId !== oldUId) delete cachedUsers[oldUId];
+                cachedUsers[newUId] = updatedUserData;
             }
             closeUserPermissionsModal();
         };
@@ -3103,11 +3107,21 @@ dispEl.textContent = (hierarchieDaten[key] !== undefined && hierarchieDaten[key]
         container.innerHTML = "";
         const listData = Object.assign({}, defaultCommands, commands || {});
         
+        const ignoredKats = ['funkcodes', 'luftrettung', 'allgemein'];
+        const ignoredNames = ['/t1', '/t2', '/t3', '/t4', '/t5', '/t6', '/t7', '/t8', 'ga', 'dv'];
+
         let gruppierteCommands = {};
         Object.keys(listData).forEach(key => { 
             let item = listData[key]; 
-            let katName = (item.kat || item.thema || "Allgemein").trim(); 
+            if (!item || !item.name) return;
+            let katName = (item.kat || item.thema || "").trim(); 
             if (katName.toLowerCase() === "ausbildungsabteilung") katName = "Ausbildung";
+            if (!katName) katName = "Abkürzungen & Dokumente";
+
+            // Filter out deleted categories and commands
+            if (ignoredKats.includes(katName.toLowerCase())) return;
+            if (ignoredNames.includes(item.name.trim().toLowerCase())) return;
+
             if (!gruppierteCommands[katName]) gruppierteCommands[katName] = []; 
             gruppierteCommands[katName].push({ id: key, name: item.name, desc: item.desc }); 
         });
