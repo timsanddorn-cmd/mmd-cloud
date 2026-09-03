@@ -1297,7 +1297,7 @@ dispEl.textContent = (hierarchieDaten[key] !== undefined && hierarchieDaten[key]
     function setMitarbeiterStatus(uId, status) { 
         updateUserStatusAndPermissions(uId, status); 
     }
-    function mitarbeiterEntlassen(uId) { if(confirm("Account unwiderruflich löschen?")) const u = cachedUsers[uId] || {}; logSystemActivity('Account gelöscht', `Mitarbeiter ${u.vorname} ${u.nachname} wurde entlassen/gelöscht.`); db.ref("data/users/" + uId).remove(); }
+    function mitarbeiterEntlassen(uId) { if(confirm("Account unwiderruflich löschen?")) { const u = cachedUsers[uId] || {}; logSystemActivity('Account gelöscht', `Mitarbeiter ${u.vorname} ${u.nachname} wurde entlassen/gelöscht.`); db.ref("data/users/" + uId).remove(); } }
 
     // --- DISCORD-STYLE ROLE CRUD FUNCTIONS ---
     const fixedRoleOrder = [
