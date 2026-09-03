@@ -810,7 +810,7 @@ dispEl.textContent = (hierarchieDaten[key] !== undefined && hierarchieDaten[key]
             
         const btnAudit = document.getElementById('btnAdminSubAudit');
         if (btnAudit) {
-            btnAudit.style.display = isMasterAdmin ? 'inline-block' : 'none';
+            const effAudit = sessionUser ? getUserEffectivePermissions(sessionUser) : {}; btnAudit.style.display = effAudit.isMasterAdmin ? 'inline-block' : 'none';
         }
 
             if(cloud.users) {
