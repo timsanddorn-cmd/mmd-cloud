@@ -2620,6 +2620,7 @@ Die Medics haben die alleinige Entscheidung zu treffen, welche Personen nach ein
         const myUserId = (sessionUser.vorname + "_" + sessionUser.nachname).toLowerCase().replace(/[^a-z0-9_]/g, "");
         const unlockedObj = sessionUser.unlockedExams || {};
         const passedObj = sessionUser.passedExams || {};
+        const statusObj = sessionUser.examStatus || {};
 
         // Collect all exam IDs: directly unlocked, passed, or previously attempted
         const examIdSet = new Set();
@@ -2869,7 +2870,7 @@ Die Medics haben die alleinige Entscheidung zu treffen, welche Personen nach ein
         }
     }
 
-    function submitActiveExam() {
+    function submitActiveExam(btn) {
         if(!activeExam || !sessionUser) return;
 
         let userDN = "";
@@ -2896,6 +2897,11 @@ Die Medics haben die alleinige Entscheidung zu treffen, welche Personen nach ein
 
         if(!confirm("Möchtest du deine Antworten jetzt einreichen und die Prüfung beenden?")) return;
 
+        if (btn) {
+            btn.disabled = true;
+            btn.innerText = "Wird übermittelt...";
+        }
+
         if(activeExamTimerInterval) clearInterval(activeExamTimerInterval);
 
         const durationSec = activeExamSecondsElapsed;
@@ -2907,87 +2913,99 @@ Die Medics haben die alleinige Entscheidung zu treffen, welche Personen nach ein
         let earnedScore = 0;
         let details = [];
 
-        activeExam.questions.forEach((q, idx) => {
-            const qType = q.type || 'choice';
-            const inputName = `q_ans_${q.id}`;
+        try {
+            activeExam.questions.forEach((q, idx) => {
+                const qType = q.type || 'choice';
+                const inputName = `q_ans_${q.id}`;
 
-            if (['info_dn', 'info_pruefer', 'info_name'].includes(qType)) {
-                const el = document.querySelector(`input[name="${inputName}"]`);
-                const val = el ? el.value.trim() : "";
-                details.push({
-                    questionText: q.text,
-                    selectedOptions: [val || 'Keine Angabe'],
-                    correctOptions: [],
-                    isCorrect: true,
-                    isInfo: true
-                });
-                return;
-            }
+                if (['info_dn', 'info_pruefer', 'info_name'].includes(qType)) {
+                    const el = document.querySelector(`input[name="${inputName}"]`);
+                    const val = el ? el.value.trim() : "";
+                    details.push({
+                        questionText: q.text,
+                        selectedOptions: [val || 'Keine Angabe'],
+                        correctOptions: [],
+                        isCorrect: true,
+                        isInfo: true
+                    });
+                    return;
+                }
 
-            if (qType === 'text') {
-                const el = document.querySelector(`textarea[name="${inputName}"]`);
-                const val = el ? el.value.trim() : "";
-                details.push({
-                    questionText: q.text,
-                    selectedOptions: [val || 'Keine Antwort'],
-                    correctOptions: [],
-                    isCorrect: true,
-                    isFreeText: true
-                });
-                return;
-            }
+                if (qType === 'text') {
+                    const el = document.querySelector(`textarea[name="${inputName}"]`);
+                    const val = el ? el.value.trim() : "";
+                    details.push({
+                        questionText: q.text,
+                        selectedOptions: [val || 'Keine Antwort'],
+                        correctOptions: [],
+                        isCorrect: true,
+                        isFreeText: true
+                    });
+                    return;
+                }
 
-            if (qType === 'checkbox_weighted') {
+                const optionsArr = q.options || [];
+
+                if (qType === 'checkbox_weighted') {
+                    const selectedNodes = document.querySelectorAll(`input[name="${inputName}"]:checked`);
+                    const selectedIndices = Array.from(selectedNodes).map(node => parseInt(node.value));
+                    
+                    let qMaxPoints = 0;
+                    let qEarnedPoints = 0;
+                    
+                    (q.points || []).forEach(p => {
+                        if (p > 0) qMaxPoints += p;
+                    });
+                    if (qMaxPoints === 0) qMaxPoints = 1;
+
+                    selectedIndices.forEach(idx => {
+                        const pts = q.points ? q.points[idx] || 0 : 0;
+                        qEarnedPoints += pts;
+                    });
+
+                    totalPossibleScore += qMaxPoints;
+                    earnedScore += qEarnedPoints;
+
+                    details.push({
+                        questionText: q.text,
+                        selectedOptions: selectedIndices.map(i => `${optionsArr[i] || 'Unbekannt'} (${q.points[i]} Pkt)`),
+                        correctOptions: (q.points || []).map((p, i) => p > 0 ? `${optionsArr[i] || 'Unbekannt'} (${p} Pkt)` : null).filter(Boolean),
+                        isCorrect: qEarnedPoints >= qMaxPoints,
+                        earnedPoints: qEarnedPoints,
+                        maxPoints: qMaxPoints
+                    });
+                    return;
+                }
+
+                // Default Choice
                 const selectedNodes = document.querySelectorAll(`input[name="${inputName}"]:checked`);
                 const selectedIndices = Array.from(selectedNodes).map(node => parseInt(node.value));
-                
-                let qMaxPoints = 0;
-                let qEarnedPoints = 0;
-                
-                (q.points || []).forEach(p => {
-                    if (p > 0) qMaxPoints += p;
-                });
-                if (qMaxPoints === 0) qMaxPoints = 1; // Fallback
+                const expectedIndices = q.correctAnswers || [];
 
-                selectedIndices.forEach(idx => {
-                    const pts = q.points ? q.points[idx] || 0 : 0;
-                    qEarnedPoints += pts;
-                });
+                let isCorrect = selectedIndices.length === expectedIndices.length &&
+                    selectedIndices.every(val => expectedIndices.includes(val));
 
-                totalPossibleScore += qMaxPoints;
-                earnedScore += qEarnedPoints;
+                totalPossibleScore += 1;
+                if(isCorrect) earnedScore += 1;
 
                 details.push({
                     questionText: q.text,
-                    selectedOptions: selectedIndices.map(i => `${q.options[i]} (${q.points[i]} Pkt)`),
-                    correctOptions: (q.points || []).map((p, i) => p > 0 ? `${q.options[i]} (${p} Pkt)` : null).filter(Boolean),
-                    isCorrect: qEarnedPoints >= qMaxPoints,
-                    earnedPoints: qEarnedPoints,
-                    maxPoints: qMaxPoints
+                    selectedOptions: selectedIndices.map(i => optionsArr[i] || 'Keine'),
+                    correctOptions: expectedIndices.map(i => optionsArr[i]),
+                    isCorrect: isCorrect
                 });
-                return;
-            }
-
-            // Default Choice
-            const selectedNodes = document.querySelectorAll(`input[name="${inputName}"]:checked`);
-            const selectedIndices = Array.from(selectedNodes).map(node => parseInt(node.value));
-            const expectedIndices = q.correctAnswers || [];
-
-            let isCorrect = selectedIndices.length === expectedIndices.length &&
-                selectedIndices.every(val => expectedIndices.includes(val));
-
-            totalPossibleScore += 1;
-            if(isCorrect) earnedScore += 1;
-
-            details.push({
-                questionText: q.text,
-                selectedOptions: selectedIndices.map(i => q.options[i] || 'Keine'),
-                correctOptions: expectedIndices.map(i => q.options[i]),
-                isCorrect: isCorrect
             });
-        });
+        } catch (err) {
+            console.error("Error parsing answers:", err);
+            alert("Fehler beim Auswerten der Antworten. Bitte prüfe die Eingaben oder wende dich an einen Admin.");
+            if(btn) {
+                btn.disabled = false;
+                btn.innerText = "Prüfung jetzt einreichen";
+            }
+            return;
+        }
 
-        if (totalPossibleScore === 0) totalPossibleScore = 1; // Avoid division by zero
+        if (totalPossibleScore === 0) totalPossibleScore = 1;
         const percentage = Math.round((earnedScore / totalPossibleScore) * 100);
         const passTargetPercent = Number(activeExam.passPercentage) || 60;
         const passed = percentage >= passTargetPercent;
@@ -3018,7 +3036,9 @@ Die Medics haben die alleinige Entscheidung zu treffen, welche Personen nach ein
             details: details,
             datum: new Date().toLocaleDateString('de-DE') + " " + new Date().toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit'}),
             feedback: feedbackVal,
-            isPractical: activeExam.isPractical === true
+            isPractical: activeExam.isPractical === true,
+            status: "submitted",
+            submittedAt: Date.now()
         };
 
         const updates = {};
@@ -3026,6 +3046,10 @@ Die Medics haben die alleinige Entscheidung zu treffen, welche Personen nach ein
         updates[`data/examSubmissions/${newSubRef.key}`] = submission;
         updates[`data/users/${userId}/passedExams/${activeExam.id}`] = passed;
         updates[`data/users/${userId}/unlockedExams/${activeExam.id}`] = passed ? true : false;
+        
+        // Zwingend den Status beim User eintragen
+        updates[`data/users/${userId}/examStatus/${activeExam.id}`] = "submitted";
+        updates[`data/users/${userId}/examSubmittedAt/${activeExam.id}`] = Date.now();
 
         if (passed && sessionUser && sessionUser.isInstructor) {
             updates[`data/users/${userId}/instructorAllowedSeeExams/${activeExam.id}`] = true;
@@ -3033,516 +3057,40 @@ Die Medics haben die alleinige Entscheidung zu treffen, welche Personen nach ein
         }
 
         db.ref().update(updates).then(() => {
-            if (!sessionUser.passedExams) sessionUser.passedExams = {};
-            if (!sessionUser.unlockedExams) sessionUser.unlockedExams = {};
-            sessionUser.passedExams[activeExam.id] = passed;
             logSystemActivity(passed ? 'Prüfung bestanden' : 'Prüfung nicht bestanden', `Der Mitarbeiter ${userFullName} hat die Prüfung '${activeExam.title}' mit ${percentage}% abgeschlossen.`);
-            sessionUser.unlockedExams[activeExam.id] = passed ? true : false;
-            sessionStorage.setItem('mmd_session_user', JSON.stringify(sessionUser));
-            localStorage.setItem('mmd_session_user', JSON.stringify(sessionUser));
+            
+            const cleanId = (sessionUser.vorname + "_" + sessionUser.nachname).toLowerCase().replace(/[^a-z0-9_]/g, "");
+            if (userId === cleanId) {
+                if (!sessionUser.passedExams) sessionUser.passedExams = {};
+                sessionUser.passedExams[activeExam.id] = passed;
+                if (!sessionUser.examStatus) sessionUser.examStatus = {};
+                sessionUser.examStatus[activeExam.id] = "submitted";
+                
+                if (passed && sessionUser.isInstructor) {
+                    if (!sessionUser.instructorAllowedSeeExams) sessionUser.instructorAllowedSeeExams = {};
+                    if (!sessionUser.instructorAllowedManageExams) sessionUser.instructorAllowedManageExams = {};
+                    sessionUser.instructorAllowedSeeExams[activeExam.id] = true;
+                    sessionUser.instructorAllowedManageExams[activeExam.id] = true;
+                }
+                localStorage.setItem('mmd_session_user', JSON.stringify(sessionUser));
+            }
 
             renderStudentUnlockedExams();
             if(typeof renderInstructorSubmissions !== 'undefined') renderInstructorSubmissions(cachedSubmissions);
 
             document.getElementById('activeExamContainer').style.display = 'none';
-            const resContainer = document.getElementById('activeExamResultContainer');
-            resContainer.style.display = 'block';
-
-            let breakdownHtml = details.map((d, i) => {
-                if (d.isInfo) {
-                    return `
-                    <div style="background:rgba(30,41,59,0.4); border:1px solid rgba(56,189,248,0.3); border-radius:10px; padding:12px; margin-top:8px; text-align:left;">
-                        <div style="font-weight:700; font-size:13px; color:var(--primary);">
-                            ℹ️ ${d.questionText}
-                        </div>
-                        <div style="font-size:12px; color:var(--text-main); margin-top:4px;">
-                            Eingabe: <b>${d.selectedOptions[0]}</b>
-                        </div>
-                    </div>`;
-                }
-                if (d.isFreeText) {
-                    return `
-                    <div style="background:rgba(30,41,59,0.4); border:1px solid rgba(168,85,247,0.3); border-radius:10px; padding:12px; margin-top:8px; text-align:left;">
-                        <div style="font-weight:700; font-size:13px; color:#a855f7;">
-                            📝 Freitext: ${d.questionText}
-                        </div>
-                        <div style="font-size:12px; color:var(--text-main); margin-top:4px; white-space:pre-wrap;">
-                            Antwort: <i>${d.selectedOptions[0]}</i>
-                        </div>
-                    </div>`;
-                }
-                const ptsLabel = d.earnedPoints !== undefined ? ` (${d.earnedPoints}/${d.maxPoints} Pkt)` : '';
-                return `
-                <div style="background:rgba(30,41,59,0.4); border:1px solid ${d.isCorrect ? 'rgba(16,185,129,0.3)' : 'rgba(244,63,94,0.3)'}; border-radius:10px; padding:12px; margin-top:8px; text-align:left;">
-                    <div style="font-weight:700; font-size:13px; color:${d.isCorrect ? 'var(--success)' : 'var(--danger)'};">
-                        ${d.isCorrect ? '✔ Richtig' : '✖ Falsch'} - Frage ${i+1}: ${d.questionText}${ptsLabel}
-                    </div>
-                    <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">
-                        Deine Antwort: <b style="color:var(--text-main);">${d.selectedOptions.join(', ') || 'Keine'}</b>
-                    </div>
-                    ${(!d.isCorrect && d.correctOptions && d.correctOptions.length > 0) ? `<div style="font-size:12px; color:var(--success); margin-top:2px;">Richtige Lösung: <b>${d.correctOptions.join(', ')}</b></div>` : ''}
-                </div>`;
-            }).join('');
-
-            resContainer.innerHTML = `
-            <div class="exam-score-card">
-                <span style="font-size:48px;">${passed ? '🎉' : '❌'}</span>
-                <h3 style="margin:10px 0; color:${passed ? 'var(--success)' : 'var(--danger)'}; font-size:24px;">
-                    ${passed ? 'Prüfung Bestanden!' : 'Leider Nicht Bestanden'}
-                </h3>
-                <p style="color:var(--text-main); font-size:16px; margin:0 0 16px 0;">
-                    Ergebnis: <b>${percentage}%</b> (${earnedScore} von ${totalPossibleScore} Punkten)
-                </p>
-                <div style="display:flex; justify-content:center; gap:20px; font-size:13px; color:var(--text-muted); margin-bottom:20px;">
-                    <div>👤 Prüfling DN: <b style="color:var(--primary);">${userDN}</b></div>
-                    <div>👨‍🏫 Prüfer DN: <b style="color:var(--warning);">${prueferDN}</b></div>
-                    <div>⏱️ Zeit: <b style="color:var(--warning);">${durationFormatted}</b></div>
-                </div>
-
-                <h4 style="margin:20px 0 10px 0; text-align:left; color:var(--primary);">Detail-Auswertung aller Fragen:</h4>
-                ${breakdownHtml}
-
-                <button class="btn" style="margin-top:20px; width:auto; padding:12px 30px; font-weight:800;" onclick="document.getElementById('activeExamResultContainer').style.display='none'">Ergebnis Schließen</button>
-            </div>`;
-
-            resContainer.scrollIntoView({ behavior: 'smooth' });
-            activeExam = null;
-        });
-    }
-
-    function canManageInstructors(u) {
-        if (!u) return false;
-        const eff = getUserEffectivePermissions(u);
-        return eff.isAdmin || eff.isMasterAdmin || eff.canManageInstructors;
-    }
-
-    function getExamSortScore(exam, eId) {
-        if (!exam && !eId) return 99;
-        const id = (eId || exam?.id || "").toLowerCase();
-        const title = (exam?.title || "").toLowerCase();
-        
-        if (id === "exam_ga1" || title.includes("ga 1") || title.includes("ga1") || (title.includes("grundausbildung") && title.includes("1"))) return 1;
-        if (id === "exam_ga2" || title.includes("ga 2") || title.includes("ga2") || (title.includes("grundausbildung") && title.includes("2"))) return 2;
-        if (id === "exam_dv" || id === "exam_dv1" || title.includes("dienstvorschrift") || title.includes("dv")) return 3;
-        if (id === "exam_para1" || (title.includes("paramedic") && title.includes("1")) || (title.includes("para") && title.includes("1"))) return 4;
-        if (id === "exam_para2" || (title.includes("paramedic") && title.includes("2")) || (title.includes("para") && title.includes("2"))) return 5;
-        if (id === "exam_arzt1" || (title.includes("arzt") && title.includes("1")) || (title.includes("doctor") && title.includes("1"))) return 6;
-        if (id === "exam_arzt2" || (title.includes("arzt") && title.includes("2")) || (title.includes("doctor") && title.includes("2"))) return 7;
-        
-        return 10;
-    }
-
-    function sortExamIdsDynamically(eIds, exams) {
-        return [...eIds].sort((a, b) => {
-            const scoreA = getExamSortScore(exams ? exams[a] : null, a);
-            const scoreB = getExamSortScore(exams ? exams[b] : null, b);
-            if (scoreA !== scoreB) return scoreA - scoreB;
-            return ((exams && exams[a]?.title) || a).localeCompare((exams && exams[b]?.title) || b);
-        });
-    }
-
-    function ensureExamHasDefaultHeaderFields(exam) {
-        if (!exam || !exam.questions) return exam;
-        
-        let hasDN = exam.questions.some(q => q.type === 'info_dn' || (q.text || "").toLowerCase().includes("dienstnummer des mitarbeiters"));
-        let hasPruefer = exam.questions.some(q => q.type === 'info_pruefer' || (q.text || "").toLowerCase().includes("dienstnummer des prüfers"));
-        let hasName = exam.questions.some(q => q.type === 'info_name' || (q.text || "").toLowerCase().includes("vor- und nachname"));
-        
-        let newQuestions = [];
-        if (!hasDN) {
-            newQuestions.push({
-                type: "info_dn",
-                text: "Dienstnummer des Mitarbeiters",
-                options: [],
-                correctAnswers: [],
-                points: []
-            });
-        }
-        if (!hasPruefer) {
-            newQuestions.push({
-                type: "info_pruefer",
-                text: "Dienstnummer des Prüfers",
-                options: [],
-                correctAnswers: [],
-                points: []
-            });
-        }
-        if (!hasName) {
-            newQuestions.push({
-                type: "info_name",
-                text: "Vor- und Nachname des Mitarbeiters",
-                options: [],
-                correctAnswers: [],
-                points: []
-            });
-        }
-        
-        if (newQuestions.length > 0) {
-            exam.questions = [...newQuestions, ...exam.questions];
-        }
-        
-        exam.questions.forEach((q, idx) => {
-            q.id = idx + 1;
-            if (!q.type) q.type = "choice";
-            if (q.type === 'choice' && (!q.correctAnswers || q.correctAnswers.length === 0)) {
-                q.correctAnswers = [0];
+            alert("Deine Prüfung wurde erfolgreich eingereicht und liegt dem Prüfer zur Korrektur vor.");
+            
+            // Zurück zum Dashboard
+            switchTab('examTab', document.getElementById('btnExamTab'));
+            
+        }).catch(err => {
+            console.error("Firebase Update Error:", err);
+            alert("Fehler beim Speichern der Prüfung! Bitte überprüfe deine Verbindung.");
+            if (btn) {
+                btn.disabled = false;
+                btn.innerText = "Prüfung jetzt einreichen";
             }
-        });
-        
-        return exam;
-    }
-
-    function isExamAllowedToSee(u, examId) {
-        if (!u) return false;
-        const eff = getUserEffectivePermissions(u);
-        if (eff.isAdmin || eff.isMasterAdmin || eff.canManageInstructors) return true;
-        if (!eff.isInstructor) return false;
-        const allowed = u.instructorAllowedSeeExams;
-        if (allowed && Object.keys(allowed).length > 0) {
-            return allowed[examId] === true;
-        }
-        return true;
-    }
-
-    function isExamAllowedToManage(u, examId) {
-        if (!u) return false;
-        const eff = getUserEffectivePermissions(u);
-        if (eff.isAdmin || eff.isMasterAdmin || eff.canManageInstructors) return true;
-        if (u.canCreateExams === true) return true;
-        const allowed = u.instructorAllowedManageExams;
-        if (allowed && allowed[examId] === true) {
-            return true;
-        }
-        return false;
-    }
-
-    function canInstructorDeleteSubmission() {
-        if (!sessionUser) return false;
-        const eff = getUserEffectivePermissions(sessionUser);
-        if (eff.isAdmin || eff.isMasterAdmin || eff.canDelete) return true;
-        return eff.isInstructor && (sessionUser.canDeleteSubmissions === true);
-    }
-
-    function isExamAllowedForInstructor(examId) {
-        return isExamAllowedToSee(sessionUser, examId);
-    }
-
-    function renderInstructorAllowedExams(users, exams) {
-        // 1. Render Member Approvals Table (for Ausbildungsleitung and Admin)
-        const approvalTbody = document.getElementById('instructorMembersApprovalTableBody');
-        if (approvalTbody && users) {
-            approvalTbody.innerHTML = "";
-            Object.keys(users).forEach(uId => {
-                const u = users[uId];
-                const rolesHtml = renderUserRoleBadges(u);
-
-                const isApproved = u.status === 'approved';
-                const statusBadge = isApproved 
-                    ? `<span style="background:rgba(16,185,129,0.15); color:var(--success); border:1px solid var(--success); padding:2px 8px; border-radius:12px; font-size:10px; font-weight:800;">Zugelassen</span>`
-                    : `<span style="background:rgba(245,158,11,0.15); color:var(--warning); border:1px solid var(--warning); padding:2px 8px; border-radius:12px; font-size:10px; font-weight:800;">Gesperrt / Beantragt</span>`;
-
-                const actionButton = isApproved
-                    ? `<button class="btn" style="margin:0; width:auto; padding:4px 8px; font-size:10px; background:rgba(190,18,60,0.15); color:var(--danger); border:1px solid var(--danger); font-weight:800;" onclick="toggleInstructorUserStatus('${uId}', 'pending')">Sperren</button>`
-                    : `<button class="btn" style="margin:0; width:auto; padding:4px 8px; font-size:10px; background:rgba(16,185,129,0.15); color:var(--success); border:1px solid var(--success); font-weight:800;" onclick="toggleInstructorUserStatus('${uId}', 'approved')">Zulassen</button>`;
-
-                approvalTbody.innerHTML += `
-                <tr>
-                    <td style="white-space:normal;"><b>${u.vorname} ${u.nachname}</b></td>
-                    <td><span style="font-family:monospace; font-size:11px;">${u.dn || 'Keine DN'}</span></td>
-                    <td style="white-space:normal;"><div style="display:flex; flex-wrap:wrap; gap:3px;">${rolesHtml}</div></td>
-                    <td>${statusBadge}</td>
-                    <td style="white-space:normal;">
-                        <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
-                            ${actionButton}
-                            <button class="btn" style="margin:0; width:auto; padding:4px 8px; font-size:10px; background:rgba(168,85,247,0.15); color:#a855f7; border:1px solid #a855f7; font-weight:800;" onclick="openAssignRolesModal('${uId}')">🎭 Rollen</button>
-                        </div>
-                    </td>
-                </tr>`;
-            });
-        }
-
-        // 2. Render Allowed Exams Table (for Ausbildungsleitung and Admin)
-        const tbody = document.getElementById('instructorAllowedExamsTableBody');
-        if (tbody && users) {
-            tbody.innerHTML = "";
-
-            Object.keys(users).forEach(uId => {
-                const u = users[uId];
-                const eff = getUserEffectivePermissions(u);
-                if (!eff.isInstructor && !eff.isAdmin) return; // Only show instructors and admins
-
-                const canCreateExams = u.canCreateExams === true;
-                const canDeleteSubmissions = u.canDeleteSubmissions === true;
-
-                const globalCheckboxes = `
-                <div style="display:flex; flex-direction:column; gap:6px;">
-                    <label style="display:inline-flex; align-items:center; gap:6px; cursor:pointer; font-size:11px; margin:0;">
-                        <input type="checkbox" ${canCreateExams ? 'checked' : ''} onchange="toggleInstructorGlobalPermission('${uId}', 'canCreateExams', this.checked)">
-                        <span>Neue Prüfungen anlegen</span>
-                    </label>
-                    <label style="display:inline-flex; align-items:center; gap:6px; cursor:pointer; font-size:11px; margin:0;">
-                        <input type="checkbox" ${canDeleteSubmissions ? 'checked' : ''} onchange="toggleInstructorGlobalPermission('${uId}', 'canDeleteSubmissions', this.checked)">
-                        <span style="color:var(--danger);">Ergebnisse löschen</span>
-                    </label>
-                </div>`;
-
-                const allowedSee = u.instructorAllowedSeeExams || {};
-                const allowedManage = u.instructorAllowedManageExams || {};
-
-                let examCompetenciesHtml = `<div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(220px, 1fr)); gap:6px; padding:4px; background:rgba(8,12,20,0.3); border-radius:8px; border:1px solid var(--border);">`;
-                
-                // Sort exams dynamically to prevent mixed representation
-                let sortedExamIds = sortExamIdsDynamically(Object.keys(exams), exams);
-                sortedExamIds.forEach(eId => {
-                    const exam = exams[eId];
-                    const isSeeChecked = allowedSee[eId] === true;
-                    const isManageChecked = allowedManage[eId] === true;
-                    examCompetenciesHtml += `
-                    <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(30,41,59,0.5); padding: 6px 10px; border-radius: 6px; border: 1px solid var(--border); gap: 8px;">
-                        <span style="font-size:11px; font-weight:700; color:var(--text-main); overflow:hidden; text-overflow:ellipsis;">${exam.title}</span>
-                        <div style="display: flex; gap: 8px; align-items:center; flex-shrink:0;">
-                            <label style="display: inline-flex; align-items: center; gap: 2px; cursor: pointer; font-size: 11px; margin:0;">
-                                <input type="checkbox" ${isSeeChecked ? 'checked' : ''} onchange="toggleInstructorExamPermission('${uId}', '${eId}', 'see', this.checked)"> 👁️ Sehen
-                            </label>
-                            <label style="display: inline-flex; align-items: center; gap: 2px; cursor: pointer; font-size: 11px; margin:0;">
-                                <input type="checkbox" ${isManageChecked ? 'checked' : ''} onchange="toggleInstructorExamPermission('${uId}', '${eId}', 'manage', this.checked)"> 🛠️ Verwalten
-                            </label>
-                        </div>
-                    </div>`;
-                });
-
-                examCompetenciesHtml += `</div>`;
-
-                tbody.innerHTML += `
-                <tr>
-                    <td style="white-space:normal; min-width:180px;">
-                        <b>${u.vorname} ${u.nachname}</b>
-                        <div style="margin-top:4px; display:flex; flex-wrap:wrap; gap:3px;">${renderUserRoleBadges(u)}</div>
-                    </td>
-                    <td style="white-space:normal; min-width:160px;">${globalCheckboxes}</td>
-                    <td style="white-space:normal;">${examCompetenciesHtml}</td>
-                </tr>`;
-            });
-        }
-    }
-
-    function toggleInstructorGlobalPermission(uId, field, value) {
-        db.ref(`data/users/${uId}/${field}`).set(value);
-    }
-
-    function toggleInstructorExamPermission(uId, examId, type, value) {
-        const node = type === 'see' ? 'instructorAllowedSeeExams' : 'instructorAllowedManageExams';
-        db.ref(`data/users/${uId}/${node}/${examId}`).set(value);
-    }
-
-    function toggleInstructorUserStatus(uId, newStatus) {
-        updateUserStatusAndPermissions(uId, newStatus).then(() => {
-            alert(`✅ Status für ${uId.replace('_', ' ')} wurde auf '${newStatus === 'approved' ? 'Zugelassen' : 'Gesperrt'}' geändert.`);
-        });
-    }
-
-
-
-    function toggleStudentCompletedExamsCollapse() {
-        const body = document.getElementById('studentCompletedExamsContainer');
-        const header = document.getElementById('studentCompletedExamsHeader');
-        const arrow = document.getElementById('studentCompletedExamsCollapseArrow');
-        if(!body || !arrow || !header) return;
-
-        const isCollapsed = body.style.display === 'none';
-        if(isCollapsed) {
-            body.style.display = 'grid';
-            arrow.textContent = '▼ Ausblenden';
-            header.style.borderBottom = '1px solid var(--border)';
-            localStorage.setItem('mmd_student_completed_collapsed', 'false');
-        } else {
-            body.style.display = 'none';
-            arrow.textContent = '▶ Anzeigen';
-            header.style.borderBottom = 'none';
-            localStorage.setItem('mmd_student_completed_collapsed', 'true');
-        }
-    }
-
-    function makeContainerSortable(containerId, itemSelector, onOrderChange) {
-        if (!isUserInstructor()) return; // Restricted to instructors/admins
-        const container = document.getElementById(containerId);
-        if (!container) return;
-
-        container.querySelectorAll(itemSelector).forEach(item => {
-            if (item.dataset.sortableInit) return;
-            item.dataset.sortableInit = 'true';
-            item.setAttribute('draggable', 'true');
-            item.classList.add('draggable-item');
-
-            item.addEventListener('dragstart', (e) => {
-                item.classList.add('dragging');
-                e.dataTransfer.setData('text/plain', item.getAttribute('data-id'));
-            });
-
-            item.addEventListener('dragend', () => {
-                item.classList.remove('dragging');
-                const items = Array.from(container.querySelectorAll(itemSelector));
-                const newOrder = items.map(el => el.getAttribute('data-id'));
-                onOrderChange(newOrder);
-            });
-
-            item.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                const draggingItem = container.querySelector('.dragging');
-                if (!draggingItem) return;
-                const siblings = Array.from(container.querySelectorAll(`${itemSelector}:not(.dragging)`));
-                const nextSibling = siblings.find(sibling => {
-                    const box = sibling.getBoundingClientRect();
-                    const offset = e.clientY - box.top - box.height / 2;
-                    return offset < 0;
-                });
-                container.insertBefore(draggingItem, nextSibling);
-            });
-        });
-    }
-
-    function saveExamOrder(newOrder) {
-        db.ref("data/examOrder").set(newOrder).then(() => {
-            console.log("Exam order updated:", newOrder);
-        });
-    }
-
-    function deleteExamSubmission(subId) {
-        if (!canInstructorDeleteSubmission()) {
-            alert("❌ Sie besitzen keine Berechtigung zum Löschen von Prüfungsergebnissen!");
-            return;
-        }
-        if (confirm("Möchtest du dieses Prüfungsergebnis wirklich unwiderruflich löschen?")) {
-            db.ref(`data/examSubmissions/${subId}`).remove().then(() => {
-                alert("✅ Prüfungsergebnis erfolgreich gelöscht!");
-            });
-        }
-    }
-
-    function renderInstructorUnlocks(users, exams) {
-        const tbody = document.getElementById('instructorUserUnlocksTableBody');
-        if(!tbody || !users) return;
-        tbody.innerHTML = "";
-
-        Object.keys(users).forEach(uId => {
-            const u = users[uId];
-
-            const unlocked = u.unlockedExams || {};
-            const passedMap = u.passedExams || {};
-            let sortedExamIds = sortExamIdsDynamically(Object.keys(exams), exams);
-            let examCheckboxes = sortedExamIds.map(eId => {
-                if (!isExamAllowedToManage(sessionUser, eId)) return '';
-                const exam = exams[eId];
-                const isChecked = unlocked[eId] === true;
-                const isPassed = passedMap[eId] === true;
-                return `
-                <div style="display:flex; flex-direction:column; gap:4px; padding:8px 12px; background:rgba(30,41,59,0.5); border:1px solid var(--border); border-radius:10px; margin:2px; min-width:210px; text-align:left;">
-                    <div style="font-weight:700; font-size:11px; color:var(--text-main); line-height:1.2; margin-bottom:4px;">${exam.title}</div>
-                    <div style="display:flex; gap:10px; align-items:center; margin-top:2px; flex-wrap:wrap;">
-                        <label style="display:inline-flex; align-items:center; gap:4px; font-size:10px; margin:0; cursor:pointer;" title="Prüfung für Mitarbeiter freischalten">
-                            <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleExamUnlockForUser('${uId}', '${eId}', this.checked)" style="margin:0; transform:scale(0.95);">
-                            <span>🔓 Freigabe</span>
-                        </label>
-                        <label style="display:inline-flex; align-items:center; gap:4px; font-size:10px; margin:0; cursor:pointer;" title="Als bestanden markieren (Altsystem)">
-                            <input type="checkbox" ${isPassed ? 'checked' : ''} onchange="toggleExamPassedForUser('${uId}', '${eId}', this.checked)" style="margin:0; transform:scale(0.95);">
-                            <span style="color:var(--success); font-weight:700;">🏆 Bestanden</span>
-                        </label>
-                        <button class="btn" style="margin:0; width:auto; padding:2px 8px; font-size:10px; background:rgba(245,158,11,0.15); color:var(--warning); border:1px solid var(--warning); font-weight:700; border-radius:6px;" onclick="allowExamRetake('${uId}', '${eId}')" title="Prüfungsstatus zurücksetzen & zur Wiederholung freischalten">🔄 Reset</button>
-                    </div>
-                </div>`;
-            }).filter(h => h !== '').join('');
-
-            tbody.innerHTML += `
-            <tr>
-                <td><b>${u.vorname} ${u.nachname}</b></td>
-                <td>${u.date || '--'}</td>
-                <td>
-                    <div style="display:flex; flex-wrap:wrap; gap:6px;">
-                        ${examCheckboxes || '<span style="color:var(--text-muted); font-size:11px;">Keine Prüfungen definiert</span>'}
-                    </div>
-                </td>
-            </tr>`;
-        });
-    }
-
-    function toggleExamUnlockForUser(uId, examId, isUnlocked) {
-        db.ref(`data/users/${uId}/unlockedExams/${examId}`).set(isUnlocked).then(() => { renderStudentUnlockedExams(); if(typeof renderInstructorUnlocks !== 'undefined') renderInstructorUnlocks(cachedUsers, cachedExams); });
-        const u = cachedUsers[uId] || {}; logSystemActivity('Prüfung-Freigabe', `Die Prüfung '${examId}' wurde für ${u.vorname} ${u.nachname} ${isUnlocked ? 'freigeschaltet' : 'gesperrt'}.`);
-     }
-
-    function toggleExamPassedForUser(uId, examId, isPassed) {
-        const u = cachedUsers[uId] || {}; logSystemActivity('Prüfung-Status (Manuell)', `Der Status der Prüfung '${examId}' für ${u.vorname} ${u.nachname} wurde auf ${isPassed ? 'Bestanden' : 'Nicht bestanden'} gesetzt.`);
-        const updates = {
-            [`data/users/${uId}/passedExams/${examId}`]: isPassed
-        };
-        
-        // Auto-grant instructor permissions if they are marked passed
-        if (isPassed && cachedUsers[uId] && cachedUsers[uId].isInstructor) {
-            updates[`data/users/${uId}/instructorAllowedSeeExams/${examId}`] = true;
-            updates[`data/users/${uId}/instructorAllowedManageExams/${examId}`] = true;
-        }
-
-        db.ref().update(updates).then(() => {
-            const cleanId = (sessionUser.vorname + "_" + sessionUser.nachname).toLowerCase().replace(/[^a-z0-9_]/g, "");
-            if (uId === cleanId) {
-                if (!sessionUser.passedExams) sessionUser.passedExams = {};
-                sessionUser.passedExams[examId] = isPassed;
-                if (isPassed && sessionUser.isInstructor) {
-                    if (!sessionUser.instructorAllowedSeeExams) sessionUser.instructorAllowedSeeExams = {};
-                    if (!sessionUser.instructorAllowedManageExams) sessionUser.instructorAllowedManageExams = {};
-                    sessionUser.instructorAllowedSeeExams[examId] = true;
-                    sessionUser.instructorAllowedManageExams[examId] = true;
-                }
-                sessionStorage.setItem('mmd_session_user', JSON.stringify(sessionUser));
-                localStorage.setItem('mmd_session_user', JSON.stringify(sessionUser));
-            }
-            renderStudentUnlockedExams();
-            if(typeof renderInstructorUnlocks !== 'undefined') renderInstructorUnlocks(cachedUsers, cachedExams);
-            if(typeof renderInstructorSubmissions !== 'undefined') renderInstructorSubmissions(cachedSubmissions);
-        });
-    }
-
-    function allowExamRetake(uId, examId, subId) {
-        if (!isUserInstructor()) {
-            alert("❌ Sie besitzen keine Ausbilder-Berechtigung!");
-            return;
-        }
-        const examTitle = (cachedExams && cachedExams[examId]) ? cachedExams[examId].title : "Prüfung";
-        let userName = uId;
-        if (cachedUsers && cachedUsers[uId]) {
-            userName = `${cachedUsers[uId].vorname} ${cachedUsers[uId].nachname}`;
-        }
-        
-        if (!confirm(`Möchtest du die Prüfung "${examTitle}" für ${userName} zur Wiederholung freischalten?\n\nDie Prüfung wird auf 'Freigegeben' gesetzt und der 'Bestanden'-Status wird zurückgesetzt, sodass der Prüfling sofort erneut antreten kann.`)) {
-            return;
-        }
-
-        const updates = {
-            [`data/users/${uId}/unlockedExams/${examId}`]: true,
-            [`data/users/${uId}/passedExams/${examId}`]: false
-        };
-
-        if (subId) {
-            db.ref(`data/examSubmissions/${subId}`).remove();
-        }
-
-        db.ref().update(updates).then(() => {
-            const cleanMyId = sessionUser ? (sessionUser.vorname + "_" + sessionUser.nachname).toLowerCase().replace(/[^a-z0-9_]/g, "") : "";
-            if (uId === cleanMyId) {
-                if (!sessionUser.unlockedExams) sessionUser.unlockedExams = {};
-                if (!sessionUser.passedExams) sessionUser.passedExams = {};
-                sessionUser.unlockedExams[examId] = true;
-                sessionUser.passedExams[examId] = false;
-                sessionStorage.setItem('mmd_session_user', JSON.stringify(sessionUser));
-                localStorage.setItem('mmd_session_user', JSON.stringify(sessionUser));
-            }
-            renderStudentUnlockedExams();
-            if(typeof renderInstructorUnlocks !== 'undefined') renderInstructorUnlocks(cachedUsers, cachedExams);
-            if(typeof renderInstructorSubmissions !== 'undefined') renderInstructorSubmissions(cachedSubmissions);
-            alert(`✅ Prüfung "${examTitle}" wurde für ${userName} erfolgreich zur Wiederholung freigeschaltet!`);
-            logSystemActivity('Prüfung wiederholt', `Die Prüfung '${examTitle}' wurde für ${userName} zur Wiederholung freigeschaltet.`);
-            closeSubmissionDetailsModal();
-            renderStudentUnlockedExams();
         });
     }
 
