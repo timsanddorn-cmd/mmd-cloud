@@ -824,7 +824,10 @@ dispEl.textContent = (hierarchieDaten[key] !== undefined && hierarchieDaten[key]
                         sessionUser = cloud.users[uId];
                         sessionStorage.setItem('mmd_session_user', JSON.stringify(sessionUser));
                         localStorage.setItem('mmd_session_user', JSON.stringify(sessionUser));
-                    }
+            }
+            renderStudentUnlockedExams();
+            if(typeof renderInstructorUnlocks !== 'undefined') renderInstructorUnlocks(cachedUsers, cachedExams);
+            if(typeof renderInstructorSubmissions !== 'undefined') renderInstructorSubmissions(cachedSubmissions);
                     applyUserPermissions(sessionUser);
                     const eff = getUserEffectivePermissions(sessionUser);
                     if(eff.isAdmin) renderAdminUserTable(cloud.users);
@@ -1932,6 +1935,9 @@ dispEl.textContent = (hierarchieDaten[key] !== undefined && hierarchieDaten[key]
                 sessionStorage.setItem('mmd_session_user', JSON.stringify(sessionUser));
                 localStorage.setItem('mmd_session_user', JSON.stringify(sessionUser));
             }
+            renderStudentUnlockedExams();
+            if(typeof renderInstructorUnlocks !== 'undefined') renderInstructorUnlocks(cachedUsers, cachedExams);
+            if(typeof renderInstructorSubmissions !== 'undefined') renderInstructorSubmissions(cachedSubmissions);
             if (cachedUsers) {
                 if (newUId !== oldUId) delete cachedUsers[oldUId];
                 cachedUsers[newUId] = updatedUserData;
@@ -2414,9 +2420,9 @@ Die Medics haben die alleinige Entscheidung zu treffen, welche Personen nach ein
             }
 
             return `
-            <div class="news-thread-card" style="background:rgba(15, 23, 42, 0.65); border:1px solid ${isRead ? 'var(--border)' : 'rgba(56, 189, 248, 0.4)'}; border-left: 5px solid ${isRead ? 'var(--success)' : tagColor}; border-radius:14px; overflow:hidden; transition:all 0.2s; box-shadow: 0 4px 18px rgba(0,0,0,0.25); margin-bottom:18px;">
+            <div class="news-thread-card ${isRead ? 'is-read' : ''}" style="background:rgba(15, 23, 42, 0.65); border:1px solid ${isRead ? 'var(--border)' : 'rgba(56, 189, 248, 0.4)'}; border-left: 5px solid ${isRead ? 'var(--success)' : tagColor}; border-radius:14px; overflow:hidden; transition:all 0.2s; box-shadow: 0 4px 18px rgba(0,0,0,0.25); margin-bottom:18px;">
                 <!-- HEADER (VOLL SICHTBAR) -->
-                <div style="padding:16px 22px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; background:${isRead ? 'transparent' : 'rgba(56, 189, 248, 0.04)'}; border-bottom:1px solid var(--border);">
+                <div class="news-card-header" onclick="if(this.parentNode.classList.contains('is-read')) this.parentNode.classList.toggle('expanded')" style="padding:16px 22px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; background:${isRead ? 'transparent' : 'rgba(56, 189, 248, 0.04)'}; border-bottom:1px solid var(--border);">
                     <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
                         <span style="font-size:12px; font-weight:800; color:${tagColor}; background:${tagBg}; padding:4px 10px; border-radius:6px; text-transform:uppercase; letter-spacing:0.5px;">${item.category || 'Allgemein'}</span>
                         <h3 style="margin:0; font-size:18px; color:var(--text-main); font-weight:800; letter-spacing:-0.2px;">${item.title}</h3>
@@ -2428,8 +2434,8 @@ Die Medics haben die alleinige Entscheidung zu treffen, welche Personen nach ein
                     </div>
                 </div>
 
-                <!-- CONTENT / THREAD BODY (IMMER VOLLSTÄNDIG LESBAR) -->
-                <div style="padding:18px 22px 22px 22px;">
+                <!-- CONTENT / THREAD BODY -->
+                <div class="news-card-content" style="padding:18px 22px 22px 22px;">
                     <div style="font-size:15px; color:#f8fafc; line-height:1.8; white-space:pre-wrap; letter-spacing:0.1px;">${item.content}</div>
                     
                     ${readersHtml}
@@ -3035,6 +3041,9 @@ Die Medics haben die alleinige Entscheidung zu treffen, welche Personen nach ein
             sessionStorage.setItem('mmd_session_user', JSON.stringify(sessionUser));
             localStorage.setItem('mmd_session_user', JSON.stringify(sessionUser));
 
+            renderStudentUnlockedExams();
+            if(typeof renderInstructorSubmissions !== 'undefined') renderInstructorSubmissions(cachedSubmissions);
+
             document.getElementById('activeExamContainer').style.display = 'none';
             const resContainer = document.getElementById('activeExamResultContainer');
             resContainer.style.display = 'block';
@@ -3457,7 +3466,7 @@ Die Medics haben die alleinige Entscheidung zu treffen, welche Personen nach ein
     }
 
     function toggleExamUnlockForUser(uId, examId, isUnlocked) {
-        db.ref(`data/users/${uId}/unlockedExams/${examId}`).set(isUnlocked);
+        db.ref(`data/users/${uId}/unlockedExams/${examId}`).set(isUnlocked).then(() => { renderStudentUnlockedExams(); if(typeof renderInstructorUnlocks !== 'undefined') renderInstructorUnlocks(cachedUsers, cachedExams); });
         const u = cachedUsers[uId] || {}; logSystemActivity('Prüfung-Freigabe', `Die Prüfung '${examId}' wurde für ${u.vorname} ${u.nachname} ${isUnlocked ? 'freigeschaltet' : 'gesperrt'}.`);
      }
 
@@ -3487,6 +3496,9 @@ Die Medics haben die alleinige Entscheidung zu treffen, welche Personen nach ein
                 sessionStorage.setItem('mmd_session_user', JSON.stringify(sessionUser));
                 localStorage.setItem('mmd_session_user', JSON.stringify(sessionUser));
             }
+            renderStudentUnlockedExams();
+            if(typeof renderInstructorUnlocks !== 'undefined') renderInstructorUnlocks(cachedUsers, cachedExams);
+            if(typeof renderInstructorSubmissions !== 'undefined') renderInstructorSubmissions(cachedSubmissions);
         });
     }
 
@@ -3524,6 +3536,9 @@ Die Medics haben die alleinige Entscheidung zu treffen, welche Personen nach ein
                 sessionStorage.setItem('mmd_session_user', JSON.stringify(sessionUser));
                 localStorage.setItem('mmd_session_user', JSON.stringify(sessionUser));
             }
+            renderStudentUnlockedExams();
+            if(typeof renderInstructorUnlocks !== 'undefined') renderInstructorUnlocks(cachedUsers, cachedExams);
+            if(typeof renderInstructorSubmissions !== 'undefined') renderInstructorSubmissions(cachedSubmissions);
             alert(`✅ Prüfung "${examTitle}" wurde für ${userName} erfolgreich zur Wiederholung freigeschaltet!`);
             logSystemActivity('Prüfung wiederholt', `Die Prüfung '${examTitle}' wurde für ${userName} zur Wiederholung freigeschaltet.`);
             closeSubmissionDetailsModal();
@@ -4159,7 +4174,7 @@ Die Medics haben die alleinige Entscheidung zu treffen, welche Personen nach ein
             addExamQuestionRow({ type: 'info_name', text: 'Vor- und Nachname des Mitarbeiters' });
         }
 
-        document.getElementById('examBuilderHeading').textContent = "📝 Prüfungs-Editor & Ersteller";
+        document.getElementById('examBuilderHeading').innerHTML = "📝 Prüfungs-Editor <span style=\"font-size:12px; color:var(--text-muted); font-weight:normal;\">(Ein-/Ausklappen)</span>";
         updateQuestionsCountDisplay();
     }
 
@@ -4590,3 +4605,29 @@ Die Medics haben die alleinige Entscheidung zu treffen, welche Personen nach ein
     window.patientHinzufuegen = patientHinzufuegen;
 
     console.log("? APP.JS COMPLETELY LOADED AND ALL FUNCTIONS EXPORTED!");
+
+
+    // Added table filter function
+    window.filterTable = function(tbodyId, query) {
+        const tbody = document.getElementById(tbodyId);
+        if (!tbody) return;
+        const q = query.toLowerCase();
+        const rows = tbody.querySelectorAll('tr');
+        rows.forEach(row => {
+            const txt = row.innerText.toLowerCase();
+            row.style.display = txt.includes(q) ? '' : 'none';
+        });
+    };
+
+
+    // Scroll to Top Logic
+    window.addEventListener('scroll', () => {
+        const btn = document.getElementById('scrollTopBtn');
+        if (btn) {
+            if (window.scrollY > 300) {
+                btn.style.display = 'flex';
+            } else {
+                btn.style.display = 'none';
+            }
+        }
+    });

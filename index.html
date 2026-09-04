@@ -28,17 +28,17 @@
 
             <div id="authForm">
                 <label>Vorname</label>
-                <input type="text" id="authVorname" placeholder="Vorname">
+                <input type="text" id="authVorname" placeholder="Vorname" name="authVorname" aria-label="Vorname">
                 
                 <label>Nachname</label>
-                <input type="text" id="authNachname" placeholder="Nachname">
+                <input type="text" id="authNachname" placeholder="Nachname" name="authNachname" aria-label="Nachname">
                 
                 <label>Passwort</label>
-                <input type="password" id="authPassword" placeholder="Passwort">
+                <form onsubmit="event.preventDefault();" style="margin:0; padding:0; width:100%;"><input type="password" id="authPassword" name="authPassword" autocomplete="current-password" placeholder="Passwort" aria-label="Passwort"></form>
                 
                 <div id="authDNContainer" style="display:none;">
                     <label>Dienstnummer (DN)</label>
-                    <input type="text" id="authDN" placeholder="z.B. DN 42">
+                    <input type="text" id="authDN" placeholder="z.B. DN 42" name="authDN" aria-label="z.B. DN 42">
                 </div>
                 
                 <button class="btn" id="mainAuthActionBtn" onclick="handleAuthAction()" style="margin-top:20px;">Dienst antreten</button>
@@ -85,9 +85,9 @@
                     <div class="section">
                         <h3>👤 Patient</h3>
                         <label for="pName">Patienten-Name (optional):</label>
-                        <input type="text" id="pName" placeholder="Z.B. Max Mustermann">
+                        <input type="text" id="pName" placeholder="Z.B. Max Mustermann" name="pName">
                         
-                        <label for="val_pVerletzungenAnzahl">Anzahl Verletzungen:</label>
+                        <label>Anzahl Verletzungen:</label>
                         <div class="counter-group">
                             <button class="counter-btn" onclick="stepVerletzungenAnzahl(-1)">-</button>
                             <span class="counter-value" id="val_pVerletzungenAnzahl">1</span>
@@ -95,7 +95,7 @@
                         </div>
                         
                         <label for="verletzungSelect">Szenario wählen:</label>
-                        <select id="verletzungSelect" onchange="ladeCheckliste()">
+                        <select id="verletzungSelect" onchange="ladeCheckliste()" name="verletzungSelect">
                             <option value="">-- Bitte wählen --</option>
                             <option value="Stumpfe Gewalt">Stumpfe Gewalt</option>
                             <option value="Schusswunde">Schusswunde</option>
@@ -549,7 +549,7 @@
                     <!-- AUSBILDER SUB-TABS -->
                     <div class="admin-subtabs" style="margin-bottom:16px;">
                         <button class="admin-tab-btn active" onclick="switchInstructorTab('instrTabUnlocks', this)">🔓 Prüfungen freischalten</button>
-                        <button class="admin-tab-btn" onclick="switchInstructorTab('instrTabResults', this)">📊 Absolvierte Prüfungen & Zeiten</button>
+                        <button class="admin-tab-btn" onclick="switchInstructorTab('instrTabResults', this)">📊 Absolvierte Prüfungen</button>
                         <button class="admin-tab-btn" onclick="switchInstructorTab('instrTabManage', this)">📝 Prüfungen verwalten / anlegen</button>
                         <button class="admin-tab-btn" id="instrAllowedExamsTabBtn" onclick="switchInstructorTab('instrTabInstructorAllowedExams', this)">🎓 Ausbildungsleitung</button>
                     </div>
@@ -583,21 +583,21 @@
                     <!-- SUB-TAB C: PRÜFUNGEN MANAGEN / ERSTELLEN -->
                     <div id="instrTabManage" class="admin-subtab-content">
                         <div style="background:rgba(15,23,42,0.6); padding:20px; border-radius:14px; border:1px solid var(--border); margin-bottom:20px;">
-                            <h4 id="examBuilderHeading" style="margin:0 0 14px 0; color:var(--success); font-size:16px;">📝 Prüfungs-Editor & Ersteller</h4>
+                            <h4 id="examBuilderHeading" style="margin:0 0 14px 0; color:var(--success); font-size:16px;">📝 Prüfungs-Editor</h4>
                             
                             <input type="hidden" id="editingExamId" value="">
 
                             <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:12px; margin-bottom:16px;">
-                                <div><label>Prüfungstitel:</label><input type="text" id="newExamTitle" placeholder="Z.B. Grundausbildung 2 (GA2)"></div>
-                                <div><label>Kategorie / Thema:</label><input type="text" id="newExamKat" placeholder="Z.B. Grundausbildung"></div>
-                                <div><label>Dauer (Minuten):</label><input type="number" id="newExamTime" value="30" min="1"></div>
-                                <div><label>Mindestquote (%):</label><input type="number" id="newExamPassRate" value="60" min="1" max="100"></div>
-                                <div><label>Mindestpunkte:</label><input type="number" id="newExamPassScore" value="15" min="1"></div>
+                                <div><label>Prüfungstitel:</label><input type="text" id="newExamTitle" placeholder="Z.B. Grundausbildung 2 (GA2)" name="newExamTitle" aria-label="Z.B. Grundausbildung 2 (GA2)"></div>
+                                <div><label>Kategorie / Thema:</label><input type="text" id="newExamKat" placeholder="Z.B. Grundausbildung" name="newExamKat" aria-label="Z.B. Grundausbildung"></div>
+                                <div><label>Dauer (Minuten):</label><input type="number" id="newExamTime" value="30" min="1" name="newExamTime" aria-label="newExamTime"></div>
+                                <div><label>Mindestquote (%):</label><input type="number" id="newExamPassRate" value="60" min="1" max="100" name="newExamPassRate" aria-label="newExamPassRate"></div>
+                                <div><label>Mindestpunkte:</label><input type="number" id="newExamPassScore" value="15" min="1" name="newExamPassScore" aria-label="newExamPassScore"></div>
                             </div>
 
                             <div style="margin-bottom:16px;">
                                 <label>Einleitungstext / Begrüßung (optional):</label>
-                                <textarea id="newExamIntroText" rows="3" placeholder="Willkommen bei der Prüfung... Du benötigst mindestens 15 Punkte (60%)..."></textarea>
+                                <textarea id="newExamIntroText" rows="3" placeholder="Willkommen bei der Prüfung... Du benötigst mindestens 15 Punkte (60%)..." name="newExamIntroText" aria-label="Willkommen bei der Prüfung... Du benötigst mindestens 15 Punkte (60%)..."></textarea>
                             </div>
 
                             <!-- MÖGLICHKEIT A: MASSEN-IMPORT VON FRAGEN -->
@@ -609,6 +609,16 @@
                                     Füge Fragen & Antworten als Text ein. Markiere richtige Antworten mit einem Sternchen <code>*</code> oder <code>(Richtig)</code>:
                                 </p>
                                 <textarea id="examBulkTextarea" rows="6" placeholder="Frage: Wie viel kostet ein MRT?
+- 10.000 $
+- 7.500 $
+- 5.000 $
+* 2.500 $ (Richtig)
+
+Frage: In welches GPS loggst du dich ein?
+- Kanal 1
+- Kanal 2
+* Kanal 3 (Richtig)
+- Kanal 4" name="examBulkTextarea" aria-label="Frage: Wie viel kostet ein MRT?
 - 10.000 $
 - 7.500 $
 - 5.000 $
@@ -708,7 +718,7 @@ Frage: In welches GPS loggst du dich ein?
                     <div style="background: rgba(8, 12, 20, 0.5); padding: 20px; border-radius: 14px; border: 1px solid var(--border);">
                         <p style="margin-top:0; font-size:14px; font-weight:700;">Mitarbeiter: <b id="daysMedicName" style="color:var(--primary); text-shadow:0 0 8px rgba(56,189,248,0.2);">--</b></p>
                         <label for="einstellungsDatum">Eingestellt am:</label>
-                        <input type="date" id="einstellungsDatum" onchange="berechneDienstTage()">
+                        <input type="date" id="einstellungsDatum" onchange="berechneDienstTage()" name="einstellungsDatum">
                         <div style="margin-top:20px; text-align:center; background: rgba(56, 189, 248, 0.04); padding:22px; border-radius:14px; border:1px dashed rgba(56, 189, 248, 0.3);">
                             <span style="font-size:10px; font-weight:800; color:var(--text-muted); display:block; text-transform:uppercase; letter-spacing:1px;">Dienstzeit aktuell</span>
                             <span id="val_dienstTage" style="font-size:44px; font-weight:800; color:var(--warning); display:block; margin: 4px 0; text-shadow: 0 0 15px rgba(245,158,11,0.3);">0</span>
@@ -767,11 +777,11 @@ Frage: In welches GPS loggst du dich ein?
                 <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 14px; margin-bottom: 12px;">
                     <div>
                         <label for="newNewsTitle">Titel / Betreff:</label>
-                        <input type="text" id="newNewsTitle" placeholder="Z. B. Neue Regelung für Notfallfahrten...">
+                        <input type="text" id="newNewsTitle" placeholder="Z. B. Neue Regelung für Notfallfahrten..." name="newNewsTitle">
                     </div>
                     <div>
                         <label for="newNewsCategory">Kategorie / Tag:</label>
-                        <select id="newNewsCategory" style="padding: 10px; border-radius: 8px; border: 1px solid var(--border); background: rgba(30,41,59,0.8); color: var(--text-main); width: 100%;">
+                        <select id="newNewsCategory" style="padding: 10px; border-radius: 8px; border: 1px solid var(--border); background: rgba(30,41,59,0.8); color: var(--text-main); width: 100%;" name="newNewsCategory">
                             <option value="Dienstanweisung">📌 Dienstanweisung</option>
                             <option value="Regelwerk">⚖️ Regelwerk</option>
                             <option value="Ankündigung">📢 Ankündigung</option>
@@ -781,7 +791,7 @@ Frage: In welches GPS loggst du dich ein?
                 </div>
                 <div style="margin-bottom: 14px;">
                     <label for="newNewsContent">Inhalt / Text:</label>
-                    <textarea id="newNewsContent" rows="6" placeholder="Vollständigen Text der News hier eingeben..."></textarea>
+                    <textarea id="newNewsContent" rows="6" placeholder="Vollständigen Text der News hier eingeben..." name="newNewsContent"></textarea>
                 </div>
                 <div style="display: flex; gap: 10px;">
                     <button class="btn" style="width: auto; padding: 8px 20px; background: var(--success); color: #080c14; font-weight: 800;" onclick="speichereNeueNews()">📢 Veröffentlichen</button>
@@ -802,8 +812,10 @@ Frage: In welches GPS loggst du dich ein?
                 <div class="section">
                     <h3>🔑 Eigenes Passwort ändern</h3>
                     <label for="newPasswordInput">Neues Passwort:</label>
-                    <input type="password" id="newPasswordInput" placeholder="Neues Passwort eingeben">
-                    <button class="btn" style="background:var(--primary); color:#080c14;" onclick="passwortAendern()">Passwort speichern</button>
+                    <form onsubmit="event.preventDefault(); passwortAendern();" style="margin:0; display:flex; gap:10px;">
+                        <input type="password" id="newPasswordInput" name="newPasswordInput" autocomplete="new-password" placeholder="Neues Passwort eingeben">
+                        <button type="submit" class="btn" style="background:var(--primary); color:#080c14;">Passwort speichern</button>
+                    </form>
                 </div>
             </div>
         </div>
@@ -816,16 +828,16 @@ Frage: In welches GPS loggst du dich ein?
             <input type="hidden" id="editKey">
             
             <label for="editName">Patienten Name:</label>
-            <input type="text" id="editName">
+            <input type="text" id="editName" name="editName">
             
             <label for="editSzenario">Szenario:</label>
-            <input type="text" id="editSzenario">
+            <input type="text" id="editSzenario" name="editSzenario">
             
             <label for="editCount">Anzahl Verletzungen:</label>
-            <input type="number" id="editCount">
+            <input type="number" id="editCount" name="editCount">
             
             <label for="editCash">Ausgaben ($):</label>
-            <input type="number" id="editCash">
+            <input type="number" id="editCash" name="editCash">
             
             <div style="display:flex; gap:10px; margin-top:20px;">
                 <button class="btn" onclick="speicherePatientEdit()">Speichern</button>
@@ -841,7 +853,9 @@ Frage: In welches GPS loggst du dich ein?
             <p style="color:var(--text-muted); font-size:12px; margin-bottom:16px;">Bitte verifiziere dich mit deinem Admin-Passwort, um die geschützte Mitarbeiterverwaltung zu öffnen.</p>
             
             <label for="adminAuthPassInput">Admin-Passwort:</label>
-            <input type="password" id="adminAuthPassInput" placeholder="Passwort eingeben..." onkeydown="if(event.key==='Enter') verifyAdminKeyPassword()">
+            <form onsubmit="event.preventDefault(); verifyAdminKeyPassword();" style="margin:0;">
+                <input type="password" id="adminAuthPassInput" name="adminAuthPassInput" autocomplete="current-password" placeholder="Passwort eingeben...">
+            </form>
             
             <div style="display:flex; gap:10px; margin-top:20px;">
                 <button class="btn" style="background:var(--warning); color:#080c14;" onclick="verifyAdminKeyPassword()">Freischalten 🔓</button>
@@ -945,15 +959,15 @@ Frage: In welches GPS loggst du dich ein?
                             <div style="display:grid; grid-template-columns: 2fr 1fr 1fr; gap:14px;">
                                 <div>
                                     <label style="font-size:12px; font-weight:700;">Rollen-Name:</label>
-                                    <input type="text" id="roleEditName" placeholder="z.B. Notarzt" oninput="updateRoleBadgePreview()" style="font-size:14px;">
+                                    <input type="text" id="roleEditName" placeholder="z.B. Notarzt" oninput="updateRoleBadgePreview()" style="font-size:14px;" name="roleEditName" aria-label="z.B. Notarzt">
                                 </div>
                                 <div>
                                     <label style="font-size:12px; font-weight:700;">Farbe:</label>
-                                    <input type="color" id="roleEditColor" value="#38bdf8" style="height:42px; width:100%; padding:3px; cursor:pointer; border-radius:8px;" onchange="updateRoleBadgePreview()">
+                                    <input type="color" id="roleEditColor" value="#38bdf8" style="height:42px; width:100%; padding:3px; cursor:pointer; border-radius:8px;" onchange="updateRoleBadgePreview()" name="roleEditColor" aria-label="roleEditColor">
                                 </div>
                                 <div>
                                     <label style="font-size:12px; font-weight:700;">Icon / Emoji:</label>
-                                    <input type="text" id="roleEditIcon" placeholder="z.B. 🩺" oninput="updateRoleBadgePreview()" style="font-size:14px;">
+                                    <input type="text" id="roleEditIcon" placeholder="z.B. 🩺" oninput="updateRoleBadgePreview()" style="font-size:14px;" name="roleEditIcon" aria-label="z.B. 🩺">
                                 </div>
                             </div>
 
@@ -962,27 +976,27 @@ Frage: In welches GPS loggst du dich ein?
                                 <label style="font-size:13px; font-weight:800; color:var(--primary); margin-bottom:10px; display:block;">⚙️ Rollen-Berechtigungen & Privilegien</label>
                                 <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:12px; font-size:13px;">
                                     <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:600;">
-                                        <input type="checkbox" id="roleFlagAdmin">
+                                        <input type="checkbox" id="roleFlagAdmin" name="roleFlagAdmin">
                                         <span>🛡️ Admin-Panel Zugang</span>
                                     </label>
                                     <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:600;">
-                                        <input type="checkbox" id="roleFlagDelete">
+                                        <input type="checkbox" id="roleFlagDelete" name="roleFlagDelete">
                                         <span style="color:var(--danger);">🗑️ Löschrechte (Mülleimer)</span>
                                     </label>
                                     <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:600;">
-                                        <input type="checkbox" id="roleFlagInstructor">
+                                        <input type="checkbox" id="roleFlagInstructor" name="roleFlagInstructor">
                                         <span style="color:#a855f7;">🎓 Ausbilder (Prüfungen abnehmen)</span>
                                     </label>
                                     <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:600;">
-                                        <input type="checkbox" id="roleFlagManageInstructors">
+                                        <input type="checkbox" id="roleFlagManageInstructors" name="roleFlagManageInstructors">
                                         <span style="color:#c084fc;">⚙️ Ausbildungsleitung (Rollen vergeben)</span>
                                     </label>
                                     <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:600;">
-                                        <input type="checkbox" id="roleFlagMasterAdmin">
+                                        <input type="checkbox" id="roleFlagMasterAdmin" name="roleFlagMasterAdmin">
                                         <span style="color:var(--warning);">👑 Master-Admin (Vollzugriff)</span>
                                     </label>
                                     <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:600;">
-                                        <input type="checkbox" id="roleFlagPostNews">
+                                        <input type="checkbox" id="roleFlagPostNews" name="roleFlagPostNews">
                                         <span style="color:var(--primary);">📢 News & Threads posten</span>
                                     </label>
                                 </div>
@@ -1078,11 +1092,11 @@ Frage: In welches GPS loggst du dich ein?
                         <div style="background:rgba(15,23,42,0.6); padding:20px; border-radius:14px; border:1px solid var(--border);">
                             <h4 style="margin:0 0 12px 0; color:var(--primary); font-size:14px; font-weight:800;">➕ Einzelnen Link hinzufügen</h4>
                             <label for="linkName">Name der Datei / des Links:</label>
-                            <input type="text" id="linkName" placeholder="Z.B. EHK Leitfaden PDF">
+                            <input type="text" id="linkName" placeholder="Z.B. EHK Leitfaden PDF" name="linkName">
                             <label for="linkUrl">Internetadresse (URL):</label>
-                            <input type="text" id="linkUrl" placeholder="https://example.com/datei">
+                            <input type="text" id="linkUrl" placeholder="https://example.com/datei" name="linkUrl">
                             <label for="linkThema">Thema / Kategorie (frei eintippen oder wählen):</label>
-                            <input type="text" id="linkThema" list="linkThemaList" placeholder="Z.B. EHK, Psychologie, CLS...">
+                            <input type="text" id="linkThema" list="linkThemaList" placeholder="Z.B. EHK, Psychologie, CLS..." name="linkThema">
                             <datalist id="linkThemaList">
                                 <option value="Allgemein">
                                 <option value="EHK">
@@ -1099,11 +1113,11 @@ Frage: In welches GPS loggst du dich ein?
                         <div style="background:rgba(15,23,42,0.6); padding:20px; border-radius:14px; border:1px solid var(--border);">
                             <h4 style="margin:0 0 12px 0; color:var(--warning); font-size:14px; font-weight:800;">➕ Einzelnen Command / Kürzel hinzufügen</h4>
                             <label for="cmdName">Command / Kürzel:</label>
-                            <input type="text" id="cmdName" placeholder="Z.B. !Psych oder /editmdthud">
+                            <input type="text" id="cmdName" placeholder="Z.B. !Psych oder /editmdthud" name="cmdName">
                             <label for="cmdDesc">Beschreibung / Bedeutung:</label>
-                            <input type="text" id="cmdDesc" placeholder="Z.B. Psych anforderungen">
+                            <input type="text" id="cmdDesc" placeholder="Z.B. Psych anforderungen" name="cmdDesc">
                             <label for="cmdKat">Kategorie (frei eintippen oder wählen):</label>
-                            <input type="text" id="cmdKat" list="cmdKatList" placeholder="Z.B. Psychologie, T-Codes, Ausbildung..." style="margin-bottom:10px;">
+                            <input type="text" id="cmdKat" list="cmdKatList" placeholder="Z.B. Psychologie, T-Codes, Ausbildung..." style="margin-bottom:10px;" name="cmdKat">
                             <datalist id="cmdKatList">
                                 <option value="Psychologie">
                                 <option value="T-Codes">
@@ -1119,11 +1133,11 @@ Frage: In welches GPS loggst du dich ein?
                     <div style="background:rgba(15,23,42,0.6); padding:20px; border-radius:14px; border:1px solid var(--border); margin-top:20px;">
                         <h4 style="margin:0 0 10px 0; color:var(--primary); font-size:14px; font-weight:800;">⚡ Mehrere Commands gleichzeitig importieren (Massen-Import)</h4>
                         <p style="color:var(--text-muted); font-size:12px; margin-top:0;">Format pro Zeile: <code>Command | Beschreibung | Kategorie</code> (z.B. <code>!funk | Funk beitreten | Allgemein</code>)</p>
-                        <textarea id="bulkCmdTextarea" rows="4" style="width:100%; padding:10px; background:rgba(8,12,20,0.6); border:1px solid var(--border); border-radius:8px; color:var(--text-main); font-family:monospace; font-size:12px;" placeholder="/t1 | Status 1: Einsatzbereit | T-Codes&#10;/t2 | Status 2: Auf Funk | T-Codes"></textarea>
+                        <textarea id="bulkCmdTextarea" rows="4" style="width:100%; padding:10px; background:rgba(8,12,20,0.6); border:1px solid var(--border); border-radius:8px; color:var(--text-main); font-family:monospace; font-size:12px;" placeholder="/t1 | Status 1: Einsatzbereit | T-Codes&#10;/t2 | Status 2: Auf Funk | T-Codes" name="bulkCmdTextarea" aria-label="/t1 | Status 1: Einsatzbereit | T-Codes&#10;/t2 | Status 2: Auf Funk | T-Codes"></textarea>
                         <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px; flex-wrap:wrap; gap:10px;">
                             <div style="display:flex; align-items:center; gap:8px;">
                                 <label style="font-size:12px; margin:0;">Standard-Kategorie:</label>
-                                <input type="text" id="bulkCmdCategoryFallback" value="Allgemein" style="width:180px; padding:6px; font-size:12px;">
+                                <input type="text" id="bulkCmdCategoryFallback" value="Allgemein" style="width:180px; padding:6px; font-size:12px;" name="bulkCmdCategoryFallback" aria-label="bulkCmdCategoryFallback">
                             </div>
                             <button class="btn" style="width:auto; margin:0; padding:8px 18px; font-size:13px; font-weight:800;" onclick="bulkCommandsImportieren()">⚡ Alle Commands importieren</button>
                         </div>
@@ -1141,36 +1155,36 @@ Frage: In welches GPS loggst du dich ein?
                         <!-- HIGH COMMAND -->
                         <div style="background:rgba(15,23,42,0.6); padding:18px; border-radius:12px; border:1px solid var(--border);">
                             <h4 style="margin:0 0 12px 0; color:var(--danger); font-size:13px; font-weight:800;">High Command</h4>
-                            <div><label style="font-size:12px;">Chief of SAMD 1</label><input type="text" id="inp_h_chief_01" placeholder="#REF! / Frei"></div>
-                            <div><label style="font-size:12px;">Chief of SAMD 2</label><input type="text" id="inp_h_chief_02" placeholder="#REF! / Frei"></div>
-                            <div><label style="font-size:12px;">Chief of SAMD 3</label><input type="text" id="inp_h_chief_03" placeholder="#REF! / Frei"></div>
-                            <div><label style="font-size:12px;">Director of Medical Operations (DOMO)</label><input type="text" id="inp_h_domo_04" placeholder="Nick Garcia"></div>
-                            <div><label style="font-size:12px;">Head of Department (FOD)</label><input type="text" id="inp_h_fod_05" placeholder="Mike Gonzalo"></div>
-                            <div><label style="font-size:12px;">Chief Physician</label><input type="text" id="inp_h_chiefphys_06" placeholder="Katarina Harper"></div>
+                            <div><label style="font-size:12px;">Chief of SAMD 1</label><input type="text" id="inp_h_chief_01" placeholder="#REF! / Frei" name="inp_h_chief_01" aria-label="#REF! / Frei"></div>
+                            <div><label style="font-size:12px;">Chief of SAMD 2</label><input type="text" id="inp_h_chief_02" placeholder="#REF! / Frei" name="inp_h_chief_02" aria-label="#REF! / Frei"></div>
+                            <div><label style="font-size:12px;">Chief of SAMD 3</label><input type="text" id="inp_h_chief_03" placeholder="#REF! / Frei" name="inp_h_chief_03" aria-label="#REF! / Frei"></div>
+                            <div><label style="font-size:12px;">Director of Medical Operations (DOMO)</label><input type="text" id="inp_h_domo_04" placeholder="Nick Garcia" name="inp_h_domo_04" aria-label="Nick Garcia"></div>
+                            <div><label style="font-size:12px;">Head of Department (FOD)</label><input type="text" id="inp_h_fod_05" placeholder="Mike Gonzalo" name="inp_h_fod_05" aria-label="Mike Gonzalo"></div>
+                            <div><label style="font-size:12px;">Chief Physician</label><input type="text" id="inp_h_chiefphys_06" placeholder="Katarina Harper" name="inp_h_chiefphys_06" aria-label="Katarina Harper"></div>
                         </div>
 
                         <!-- MID COMMAND -->
                         <div style="background:rgba(15,23,42,0.6); padding:18px; border-radius:12px; border:1px solid var(--border);">
                             <h4 style="margin:0 0 12px 0; color:var(--warning); font-size:13px; font-weight:800;">Mid Command</h4>
-                            <div><label style="font-size:12px;">Medical Specialist</label><input type="text" id="inp_h_medspec_07" placeholder="Frei / Unbesetzt"></div>
-                            <div><label style="font-size:12px;">Head of Paramedic (HOP)</label><input type="text" id="inp_h_hop_08" placeholder="Frei / Unbesetzt"></div>
-                            <div><label style="font-size:12px;">Attending Physician</label><input type="text" id="inp_h_attphys_09" placeholder="N/A"></div>
-                            <div><label style="font-size:12px;">Lead Paramedic</label><input type="text" id="inp_h_leadpara_10" placeholder="N/A"></div>
-                            <div><label style="font-size:12px;">Physician</label><input type="text" id="inp_h_phys_11" placeholder="N/A"></div>
-                            <div><label style="font-size:12px;">Senior Paramedic</label><input type="text" id="inp_h_snrpara_12" placeholder="N/A"></div>
+                            <div><label style="font-size:12px;">Medical Specialist</label><input type="text" id="inp_h_medspec_07" placeholder="Frei / Unbesetzt" name="inp_h_medspec_07" aria-label="Frei / Unbesetzt"></div>
+                            <div><label style="font-size:12px;">Head of Paramedic (HOP)</label><input type="text" id="inp_h_hop_08" placeholder="Frei / Unbesetzt" name="inp_h_hop_08" aria-label="Frei / Unbesetzt"></div>
+                            <div><label style="font-size:12px;">Attending Physician</label><input type="text" id="inp_h_attphys_09" placeholder="N/A" name="inp_h_attphys_09" aria-label="N/A"></div>
+                            <div><label style="font-size:12px;">Lead Paramedic</label><input type="text" id="inp_h_leadpara_10" placeholder="N/A" name="inp_h_leadpara_10" aria-label="N/A"></div>
+                            <div><label style="font-size:12px;">Physician</label><input type="text" id="inp_h_phys_11" placeholder="N/A" name="inp_h_phys_11" aria-label="N/A"></div>
+                            <div><label style="font-size:12px;">Senior Paramedic</label><input type="text" id="inp_h_snrpara_12" placeholder="N/A" name="inp_h_snrpara_12" aria-label="N/A"></div>
                         </div>
 
                         <!-- ABTEILUNGSLEITUNGEN -->
                         <div style="background:rgba(15,23,42,0.6); padding:18px; border-radius:12px; border:1px solid var(--border);">
                             <h4 style="margin:0 0 12px 0; color:var(--primary); font-size:13px; font-weight:800;">Abteilungsleitungen</h4>
-                            <div><label style="font-size:12px;">Psychologie Leitung</label><input type="text" id="inp_h_dept_psych_l" placeholder="Aktuell nicht belegt"></div>
-                            <div><label style="font-size:12px;">Psychologie Stellv.</label><input type="text" id="inp_h_dept_psych_sl" placeholder="Aktuell nicht belegt"></div>
-                            <div><label style="font-size:12px;">Personal Leitung</label><input type="text" id="inp_h_dept_perso_l" placeholder="Aktuell nicht belegt"></div>
-                            <div><label style="font-size:12px;">Personal Stellv.</label><input type="text" id="inp_h_dept_perso_sl" placeholder="Aktuell nicht belegt"></div>
-                            <div><label style="font-size:12px;">Ausbildung Leitung</label><input type="text" id="inp_h_dept_ausb_l" placeholder="Aktuell nicht belegt"></div>
-                            <div><label style="font-size:12px;">Ausbildung Stellv.</label><input type="text" id="inp_h_dept_ausb_sl" placeholder="Aktuell nicht belegt"></div>
-                            <div><label style="font-size:12px;">Luftrettung Leitung</label><input type="text" id="inp_h_dept_luft_l" placeholder="Gleich die Ausbildungsleitung"></div>
-                            <div><label style="font-size:12px;">Luftrettung Stellv.</label><input type="text" id="inp_h_dept_luft_sl" placeholder="Aktuell nicht belegt"></div>
+                            <div><label style="font-size:12px;">Psychologie Leitung</label><input type="text" id="inp_h_dept_psych_l" placeholder="Aktuell nicht belegt" name="inp_h_dept_psych_l" aria-label="Aktuell nicht belegt"></div>
+                            <div><label style="font-size:12px;">Psychologie Stellv.</label><input type="text" id="inp_h_dept_psych_sl" placeholder="Aktuell nicht belegt" name="inp_h_dept_psych_sl" aria-label="Aktuell nicht belegt"></div>
+                            <div><label style="font-size:12px;">Personal Leitung</label><input type="text" id="inp_h_dept_perso_l" placeholder="Aktuell nicht belegt" name="inp_h_dept_perso_l" aria-label="Aktuell nicht belegt"></div>
+                            <div><label style="font-size:12px;">Personal Stellv.</label><input type="text" id="inp_h_dept_perso_sl" placeholder="Aktuell nicht belegt" name="inp_h_dept_perso_sl" aria-label="Aktuell nicht belegt"></div>
+                            <div><label style="font-size:12px;">Ausbildung Leitung</label><input type="text" id="inp_h_dept_ausb_l" placeholder="Aktuell nicht belegt" name="inp_h_dept_ausb_l" aria-label="Aktuell nicht belegt"></div>
+                            <div><label style="font-size:12px;">Ausbildung Stellv.</label><input type="text" id="inp_h_dept_ausb_sl" placeholder="Aktuell nicht belegt" name="inp_h_dept_ausb_sl" aria-label="Aktuell nicht belegt"></div>
+                            <div><label style="font-size:12px;">Luftrettung Leitung</label><input type="text" id="inp_h_dept_luft_l" placeholder="Gleich die Ausbildungsleitung" name="inp_h_dept_luft_l" aria-label="Gleich die Ausbildungsleitung"></div>
+                            <div><label style="font-size:12px;">Luftrettung Stellv.</label><input type="text" id="inp_h_dept_luft_sl" placeholder="Aktuell nicht belegt" name="inp_h_dept_luft_sl" aria-label="Aktuell nicht belegt"></div>
                         </div>
                     </div>
 
@@ -1195,7 +1209,7 @@ Frage: In welches GPS loggst du dich ein?
                         <div style="background:rgba(15,23,42,0.6); padding:20px; border-radius:14px; border:1px solid var(--border);">
                             <h4 style="margin:0 0 12px 0; color:var(--warning); font-size:14px; font-weight:800;">🛠️ Szenario-Voreinstellungen ändern</h4>
                             <label for="templateSzenarioSelect">Szenario wählen:</label>
-                            <select id="templateSzenarioSelect" onchange="ladeSzenarioTemplateInSettings()" style="margin-bottom:12px;">
+                            <select id="templateSzenarioSelect" onchange="ladeSzenarioTemplateInSettings()" style="margin-bottom:12px;" name="templateSzenarioSelect">
                                 <option value="Stumpfe Gewalt">Stumpfe Gewalt</option><option value="Schusswunde">Schusswunde</option><option value="Schnittwunde">Schnittwunde</option><option value="Undefinierbar">Undefinierbar</option>
                             </select>
                             <div id="templateMaterialsContainer" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap:6px;"></div>
@@ -1225,7 +1239,7 @@ Frage: In welches GPS loggst du dich ein?
                         <button class="btn" style="background:var(--primary); color:#080c14; font-weight:800; width:auto; padding:14px 24px; font-size:13px; border-radius:10px; margin:0;" onclick="downloadSystemBackup()">📥 Backup erstellen & herunterladen (JSON)</button>
                         <label class="btn" style="background:rgba(56,189,248,0.15); color:var(--primary); border:1px solid var(--primary); font-weight:800; width:auto; padding:14px 24px; font-size:13px; border-radius:10px; margin:0; cursor:pointer; display:inline-flex; align-items:center; gap:6px;">
                             <span>📤 Backup-Datei einspielen (Wiederherstellen)</span>
-                            <input type="file" id="backupFileInput" accept=".json" style="display:none;" onchange="restoreSystemBackup(event)">
+                            <input type="file" id="backupFileInput" accept=".json" style="display:none;" onchange="restoreSystemBackup(event)" name="backupFileInput">
                         </label>
                     </div>
                 </div>
@@ -1323,11 +1337,11 @@ Frage: In welches GPS loggst du dich ein?
                     <div style="display:grid; grid-template-columns: 1fr 1fr; gap:14px;">
                         <div>
                             <label style="font-size:12px; display:block; margin-bottom:6px; margin-top:0;">Vorname:</label>
-                            <input type="text" id="permVorname" placeholder="Vorname" style="width:100%; padding:8px 10px; font-size:13px; border-radius:8px; border:1px solid var(--border); background:rgba(15,23,42,0.85); color:var(--text-main);">
+                            <input type="text" id="permVorname" placeholder="Vorname" style="width:100%; padding:8px 10px; font-size:13px; border-radius:8px; border:1px solid var(--border); background:rgba(15,23,42,0.85); color:var(--text-main);" name="permVorname" aria-label="Vorname">
                         </div>
                         <div>
                             <label style="font-size:12px; display:block; margin-bottom:6px; margin-top:0;">Nachname:</label>
-                            <input type="text" id="permNachname" placeholder="Nachname" style="width:100%; padding:8px 10px; font-size:13px; border-radius:8px; border:1px solid var(--border); background:rgba(15,23,42,0.85); color:var(--text-main);">
+                            <input type="text" id="permNachname" placeholder="Nachname" style="width:100%; padding:8px 10px; font-size:13px; border-radius:8px; border:1px solid var(--border); background:rgba(15,23,42,0.85); color:var(--text-main);" name="permNachname" aria-label="Nachname">
                         </div>
                     </div>
                 </div>
@@ -1338,7 +1352,7 @@ Frage: In welches GPS loggst du dich ein?
                     <div style="display:grid; grid-template-columns: 1fr 1.2fr 1fr; gap:14px;">
                         <div>
                             <label style="font-size:12px; display:block; margin-bottom:6px; margin-top:0;">Status:</label>
-                            <select id="permStatus" style="width:100%; padding:8px 10px; font-size:13px; border-radius:8px; border:1px solid var(--border); background:rgba(15,23,42,0.85); color:var(--text-main);">
+                            <select id="permStatus" style="width:100%; padding:8px 10px; font-size:13px; border-radius:8px; border:1px solid var(--border); background:rgba(15,23,42,0.85); color:var(--text-main);" name="permStatus" aria-label="permStatus">
                                 <option value="approved">Zugelassen (Aktiv)</option>
                                 <option value="pending">Gesperrt (Inaktiv)</option>
                             </select>
@@ -1348,11 +1362,11 @@ Frage: In welches GPS loggst du dich ein?
                                 <label id="permPasswordLabel" style="font-size:12px; margin:0;">Passwort:</label>
                                 <button type="button" id="btnTogglePermPass" style="background:none; border:none; color:var(--primary); cursor:pointer; font-size:12px; padding:0; display:none;" onclick="togglePermPasswordVisibility()">👁️ Anzeigen</button>
                             </div>
-                            <input type="password" id="permPassword" placeholder="Passwort..." style="width:100%; padding:8px 10px; font-size:13px; border-radius:8px; border:1px solid var(--border); background:rgba(15,23,42,0.85); color:var(--text-main);" autocomplete="new-password">
+                            <form onsubmit="event.preventDefault();" style="margin:0; padding:0; width:100%;"><input type="password" id="permPassword" name="permPassword" placeholder="Passwort..." style="width:100%; padding:8px 10px; font-size:13px; border-radius:8px; border:1px solid var(--border); background:rgba(15,23,42,0.85); color:var(--text-main);" autocomplete="new-password" aria-label="Passwort..."></form>
                         </div>
                         <div>
                             <label style="font-size:12px; display:block; margin-bottom:6px; margin-top:0;">Dienstnummer (DN):</label>
-                            <input type="text" id="permDN" placeholder="z.B. DN 42" style="width:100%; padding:8px 10px; font-size:13px; border-radius:8px; border:1px solid var(--border); background:rgba(15,23,42,0.85); color:var(--text-main);">
+                            <input type="text" id="permDN" placeholder="z.B. DN 42" style="width:100%; padding:8px 10px; font-size:13px; border-radius:8px; border:1px solid var(--border); background:rgba(15,23,42,0.85); color:var(--text-main);" name="permDN" aria-label="z.B. DN 42">
                         </div>
                     </div>
                 </div>
@@ -1369,19 +1383,19 @@ Frage: In welches GPS loggst du dich ein?
                     <h4 style="margin:0 0 12px 0; color:var(--primary); font-size:14px; font-weight:800;">🌐 Globale Bereiche & Overrides</h4>
                     <div style="display:flex; flex-direction:column; gap:10px;">
                         <label style="display:flex; align-items:center; gap:10px; cursor:pointer; font-size:13px; margin:0;">
-                            <input type="checkbox" id="permCanSeeLinks">
+                            <input type="checkbox" id="permCanSeeLinks" name="permCanSeeLinks">
                             <span style="font-weight:700;">🔗 Links & Dokumente ansehen darf</span>
                         </label>
                         <label style="display:flex; align-items:center; gap:10px; cursor:pointer; font-size:13px; margin:0;">
-                            <input type="checkbox" id="permCanSeeCommands">
+                            <input type="checkbox" id="permCanSeeCommands" name="permCanSeeCommands">
                             <span style="font-weight:700;">💻 Commands ansehen darf</span>
                         </label>
                         <label style="display:flex; align-items:center; gap:10px; cursor:pointer; font-size:13px; margin:0;">
-                            <input type="checkbox" id="permCanDelete">
+                            <input type="checkbox" id="permCanDelete" name="permCanDelete">
                             <span style="font-weight:700; color:var(--danger);">🗑️ Einträge löschen darf (Mülleimer)</span>
                         </label>
                         <label style="display:flex; align-items:center; gap:10px; cursor:pointer; font-size:13px; margin:0;">
-                            <input type="checkbox" id="permCanPostNews">
+                            <input type="checkbox" id="permCanPostNews" name="permCanPostNews">
                             <span style="font-weight:700; color:var(--primary);">📢 News & Threads erstellen/posten darf</span>
                         </label>
                     </div>
@@ -1458,5 +1472,6 @@ Frage: In welches GPS loggst du dich ein?
     </div>
 
 <script src="app.js"></script>
+    <button id="scrollTopBtn" onclick="window.scrollTo({top: 0, behavior: 'smooth'})" style="display:none; position:fixed; bottom:20px; right:20px; z-index:999; background:var(--primary); color:#080c14; border:none; border-radius:50%; width:50px; height:50px; font-size:24px; cursor:pointer; box-shadow:0 4px 15px rgba(0,0,0,0.3); align-items:center; justify-content:center;">↑</button>
 </body>
 </html>

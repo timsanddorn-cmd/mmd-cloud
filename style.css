@@ -259,3 +259,27 @@
 *::-webkit-scrollbar-corner {
     background: transparent;
 }
+
+
+/* News Card Collapsing */
+.news-thread-card.is-read .news-thread-card-content {
+    display: none;
+}
+.news-thread-card.is-read.expanded .news-thread-card-content {
+    display: block;
+}
+.news-thread-card.is-read .news-thread-card-header {
+    cursor: pointer;
+}
+.news-thread-card.is-read .news-thread-card-header::after {
+    content: '↓ Aufklappen';
+    font-size: 11px;
+    color: var(--primary);
+    margin-left: auto;
+    padding: 4px 8px;
+    border-radius: 4px;
+    background: rgba(56,189,248,0.1);
+}
+.news-thread-card.is-read.expanded .news-thread-card-header::after {
+    content: '↑ Zuklappen';
+}
