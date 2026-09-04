@@ -1294,7 +1294,8 @@ dispEl.textContent = (hierarchieDaten[key] !== undefined && hierarchieDaten[key]
         return db.ref().update(updates);
     }
 
-    function setMitarbeiterStatus(uId, status) { 
+    function setMitarbeiterStatus(uId, status) {
+        const u = cachedUsers[uId] || {}; logSystemActivity('Mitarbeiter-Status', `Der Status für ${u.vorname} ${u.nachname} wurde auf '${status}' gesetzt.`); 
         updateUserStatusAndPermissions(uId, status); 
     }
     function mitarbeiterEntlassen(uId) { if(confirm("Account unwiderruflich löschen?")) { const u = cachedUsers[uId] || {}; logSystemActivity('Account gelöscht', `Mitarbeiter ${u.vorname} ${u.nachname} wurde entlassen/gelöscht.`); db.ref("data/users/" + uId).remove(); } }
@@ -1515,7 +1516,7 @@ dispEl.textContent = (hierarchieDaten[key] !== undefined && hierarchieDaten[key]
         const eff = sessionUser ? getUserEffectivePermissions(sessionUser) : {};
         const isTopAdmin = eff.isAdmin || eff.isMasterAdmin;
 
-        let adminRolesList = ['ausbildungsleitung'];
+        let adminRolesList = [];
         if (eff.isMasterAdmin) {
             adminRolesList = ['masteradmin', 'admin', 'ausbildungsleitung'];
         } else if (eff.isAdmin) {
@@ -1691,6 +1692,8 @@ dispEl.textContent = (hierarchieDaten[key] !== undefined && hierarchieDaten[key]
         const currRoles = getUserRolesList(u);
         if (!eff.isMasterAdmin && currRoles.includes('masteradmin')) selectedRoles.masteradmin = true;
         if (!eff.isAdmin && !eff.isMasterAdmin && currRoles.includes('admin')) selectedRoles.admin = true;
+        if (!eff.isAdmin && !eff.isMasterAdmin && currRoles.includes('ausbildungsleitung')) selectedRoles.ausbildungsleitung = true;
+        if (!eff.isAdmin && !eff.isMasterAdmin && currRoles.includes('ausbildungsleitung')) selectedRoles.ausbildungsleitung = true;
 
         db.ref(`data/users/${uId}/roles`).set(selectedRoles).then(() => {
             logSystemActivity('Rollen geändert', `Rollen für ${u.vorname} ${u.nachname} wurden aktualisiert.`);
@@ -1851,6 +1854,7 @@ dispEl.textContent = (hierarchieDaten[key] !== undefined && hierarchieDaten[key]
     }
 
     function saveUserPermissions() {
+        const currUId = document.getElementById('permModalUserId').value; const cUser = cachedUsers[currUId] || {}; logSystemActivity('Stammdaten / Rechte', `Die Stammdaten oder Spezial-Rechte für ${cUser.vorname} ${cUser.nachname} wurden aktualisiert.`);
         const oldUId = document.getElementById('permModalUserId').value;
         if (!oldUId) return;
 
@@ -1879,6 +1883,8 @@ dispEl.textContent = (hierarchieDaten[key] !== undefined && hierarchieDaten[key]
         const currRoles = getUserRolesList(oldUser);
         if (!eff.isMasterAdmin && currRoles.includes('masteradmin')) selectedRoles.masteradmin = true;
         if (!eff.isAdmin && !eff.isMasterAdmin && currRoles.includes('admin')) selectedRoles.admin = true;
+        if (!eff.isAdmin && !eff.isMasterAdmin && currRoles.includes('ausbildungsleitung')) selectedRoles.ausbildungsleitung = true;
+        if (!eff.isAdmin && !eff.isMasterAdmin && currRoles.includes('ausbildungsleitung')) selectedRoles.ausbildungsleitung = true;
 
         const canSeeLinks = document.getElementById('permCanSeeLinks').checked;
         const canSeeCommands = document.getElementById('permCanSeeCommands').checked;
@@ -3024,6 +3030,7 @@ Die Medics haben die alleinige Entscheidung zu treffen, welche Personen nach ein
             if (!sessionUser.passedExams) sessionUser.passedExams = {};
             if (!sessionUser.unlockedExams) sessionUser.unlockedExams = {};
             sessionUser.passedExams[activeExam.id] = passed;
+            logSystemActivity(passed ? 'Prüfung bestanden' : 'Prüfung nicht bestanden', `Der Mitarbeiter ${userFullName} hat die Prüfung '${activeExam.title}' mit ${percentage}% abgeschlossen.`);
             sessionUser.unlockedExams[activeExam.id] = passed ? true : false;
             sessionStorage.setItem('mmd_session_user', JSON.stringify(sessionUser));
             localStorage.setItem('mmd_session_user', JSON.stringify(sessionUser));
@@ -3451,9 +3458,11 @@ Die Medics haben die alleinige Entscheidung zu treffen, welche Personen nach ein
 
     function toggleExamUnlockForUser(uId, examId, isUnlocked) {
         db.ref(`data/users/${uId}/unlockedExams/${examId}`).set(isUnlocked);
+        const u = cachedUsers[uId] || {}; logSystemActivity('Prüfung-Freigabe', `Die Prüfung '${examId}' wurde für ${u.vorname} ${u.nachname} ${isUnlocked ? 'freigeschaltet' : 'gesperrt'}.`);
      }
 
     function toggleExamPassedForUser(uId, examId, isPassed) {
+        const u = cachedUsers[uId] || {}; logSystemActivity('Prüfung-Status (Manuell)', `Der Status der Prüfung '${examId}' für ${u.vorname} ${u.nachname} wurde auf ${isPassed ? 'Bestanden' : 'Nicht bestanden'} gesetzt.`);
         const updates = {
             [`data/users/${uId}/passedExams/${examId}`]: isPassed
         };
@@ -3516,6 +3525,7 @@ Die Medics haben die alleinige Entscheidung zu treffen, welche Personen nach ein
                 localStorage.setItem('mmd_session_user', JSON.stringify(sessionUser));
             }
             alert(`✅ Prüfung "${examTitle}" wurde für ${userName} erfolgreich zur Wiederholung freigeschaltet!`);
+            logSystemActivity('Prüfung wiederholt', `Die Prüfung '${examTitle}' wurde für ${userName} zur Wiederholung freigeschaltet.`);
             closeSubmissionDetailsModal();
             renderStudentUnlockedExams();
         });
