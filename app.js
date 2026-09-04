@@ -466,6 +466,7 @@ const FIREBASE_DB_URL = "https://mmd-live-default-rtdb.europe-west1.firebasedata
         const btnHierarchy = document.getElementById('btnAdminSubHierarchy');
         const btnPrices = document.getElementById('btnAdminSubPrices');
         const btnSystem = document.getElementById('btnAdminSubSystem');
+        const btnAudit = document.getElementById('btnAdminSubAudit');
         const btnFullReset = document.querySelector('.btn-full-reset');
 
         const isMaster = eff.isMasterAdmin;
@@ -478,6 +479,7 @@ const FIREBASE_DB_URL = "https://mmd-live-default-rtdb.europe-west1.firebasedata
             if (btnHierarchy) btnHierarchy.style.display = '';
             if (btnPrices) btnPrices.style.display = '';
             if (btnSystem) btnSystem.style.display = '';
+            if (btnAudit) btnAudit.style.display = '';
             if (btnFullReset) btnFullReset.style.display = '';
         } else if (isAdmin) {
             if (btnUsers) btnUsers.style.display = '';
@@ -485,7 +487,8 @@ const FIREBASE_DB_URL = "https://mmd-live-default-rtdb.europe-west1.firebasedata
             if (btnContent) btnContent.style.display = '';
             if (btnHierarchy) btnHierarchy.style.display = '';
             if (btnPrices) btnPrices.style.display = '';
-            if (btnSystem) btnSystem.style.display = ''; // Admin darf Schichten abschließen & archivieren
+            if (btnSystem) btnSystem.style.display = '';
+            if (btnAudit) btnAudit.style.display = ''; // Admin darf Schichten abschließen & archivieren
             if (btnFullReset) btnFullReset.style.display = 'none'; // Gesamtsystem-Reset für normale Admins ausgeblendet
         }
 
@@ -788,6 +791,7 @@ dispEl.textContent = (hierarchieDaten[key] !== undefined && hierarchieDaten[key]
             }
             if(cloud.tagesZaehler) tagesZaehler = cloud.tagesZaehler;
             cachedExamOrder = cloud.examOrder || [];
+            renderAuditLog(cloud.systemLogs);
             
             if (cloud.guideData) {
                 cachedGuideData = Object.assign({}, defaultGuideData, cloud.guideData);
@@ -1856,7 +1860,8 @@ dispEl.textContent = (hierarchieDaten[key] !== undefined && hierarchieDaten[key]
         document.getElementById('userPermissionsModal').style.display = 'none';
     }
 
-    function saveUserPermissions() {
+    function saveUserPermissions() {try {
+
         const currUId = document.getElementById('permModalUserId').value; const cUser = cachedUsers[currUId] || {}; logSystemActivity('Stammdaten / Rechte', `Die Stammdaten oder Spezial-Rechte für ${cUser.vorname} ${cUser.nachname} wurden aktualisiert.`);
         const oldUId = document.getElementById('permModalUserId').value;
         if (!oldUId) return;
@@ -1960,7 +1965,11 @@ dispEl.textContent = (hierarchieDaten[key] !== undefined && hierarchieDaten[key]
         }
     }
 
-    function linkHinzufuegen() {
+     catch (err) {
+        console.error('Error in saveUserPermissions:', err);
+        alert('Fehler: ' + err.message + '\nZeile: ' + err.stack);
+    }
+function linkHinzufuegen() {
         if (!sessionUser) return;
         const eff = getUserEffectivePermissions(sessionUser);
         if (!eff.isAdmin && !eff.isMasterAdmin) {
@@ -2607,6 +2616,29 @@ Die Medics haben die alleinige Entscheidung zu treffen, welche Personen nach ein
         korrigiereAlleBisherigenPruefungen(true);
     }
 
+    
+    function sortExamIdsDynamically(examIds, examsMap) {
+        if (!cachedExamOrder || cachedExamOrder.length === 0) {
+            return examIds.sort((a, b) => {
+                const titleA = (examsMap[a] && examsMap[a].title) ? examsMap[a].title.toLowerCase() : '';
+                const titleB = (examsMap[b] && examsMap[b].title) ? examsMap[b].title.toLowerCase() : '';
+                return titleA.localeCompare(titleB);
+            });
+        }
+        
+        return examIds.sort((a, b) => {
+            let idxA = cachedExamOrder.indexOf(a);
+            let idxB = cachedExamOrder.indexOf(b);
+            if (idxA === -1) idxA = 999999;
+            if (idxB === -1) idxB = 999999;
+            if (idxA !== idxB) return idxA - idxB;
+            
+            const titleA = (examsMap[a] && examsMap[a].title) ? examsMap[a].title.toLowerCase() : '';
+            const titleB = (examsMap[b] && examsMap[b].title) ? examsMap[b].title.toLowerCase() : '';
+            return titleA.localeCompare(titleB);
+        });
+    }
+
     function renderStudentUnlockedExams() {
         const container = document.getElementById('studentUnlockedExamsContainer');
         if(!container) return;
@@ -3091,6 +3123,95 @@ Die Medics haben die alleinige Entscheidung zu treffen, welche Personen nach ein
                 btn.disabled = false;
                 btn.innerText = "Prüfung jetzt einreichen";
             }
+        });
+    }
+
+    
+    function toggleExamUnlockForUser(uId, examId, isUnlocked) {
+        db.ref(`data/users/${uId}/unlockedExams/${examId}`).set(isUnlocked).then(() => { renderStudentUnlockedExams(); if(typeof renderInstructorUnlocks !== 'undefined') renderInstructorUnlocks(cachedUsers, cachedExams); });
+        const u = cachedUsers[uId] || {}; logSystemActivity('Prüfung-Freigabe', `Die Prüfung '${examId}' wurde für ${u.vorname} ${u.nachname} ${isUnlocked ? 'freigeschaltet' : 'gesperrt'}.`);
+    }
+
+    function toggleExamPassedForUser(uId, examId, isPassed) {
+        const u = cachedUsers[uId] || {}; logSystemActivity('Prüfung-Status (Manuell)', `Der Status der Prüfung '${examId}' für ${u.vorname} ${u.nachname} wurde auf ${isPassed ? 'Bestanden' : 'Nicht bestanden'} gesetzt.`);
+        const updates = {
+            [`data/users/${uId}/passedExams/${examId}`]: isPassed
+        };
+        
+        if (isPassed && cachedUsers[uId] && cachedUsers[uId].roles && (cachedUsers[uId].roles.ausbilder || cachedUsers[uId].roles.admin || cachedUsers[uId].roles.masteradmin)) {
+            updates[`data/users/${uId}/instructorAllowedSeeExams/${examId}`] = true;
+            updates[`data/users/${uId}/instructorAllowedManageExams/${examId}`] = true;
+        }
+
+        db.ref().update(updates).then(() => {
+            const cleanId = (sessionUser.vorname + '_' + sessionUser.nachname).toLowerCase().replace(/[^a-z0-9_]/g, '');
+            if (uId === cleanId) {
+                if (!sessionUser.passedExams) sessionUser.passedExams = {};
+                sessionUser.passedExams[examId] = isPassed;
+                if (isPassed && sessionUser.isInstructor) {
+                    if (!sessionUser.instructorAllowedSeeExams) sessionUser.instructorAllowedSeeExams = {};
+                    if (!sessionUser.instructorAllowedManageExams) sessionUser.instructorAllowedManageExams = {};
+                    sessionUser.instructorAllowedSeeExams[examId] = true;
+                    sessionUser.instructorAllowedManageExams[examId] = true;
+                }
+                sessionStorage.setItem('mmd_session_user', JSON.stringify(sessionUser));
+                localStorage.setItem('mmd_session_user', JSON.stringify(sessionUser));
+            }
+            renderStudentUnlockedExams();
+            if(typeof renderInstructorUnlocks !== 'undefined') renderInstructorUnlocks(cachedUsers, cachedExams);
+            if(typeof renderInstructorSubmissions !== 'undefined') renderInstructorSubmissions(cachedSubmissions);
+        });
+    }
+
+    function allowExamRetake(uId, examId, subId) {
+        if (!isUserInstructor()) {
+            alert('⚠️ Sie besitzen keine Ausbilder-Berechtigung!');
+            return;
+        }
+        const examTitle = (cachedExams && cachedExams[examId]) ? cachedExams[examId].title : 'Prüfung';
+        let userName = uId;
+        if (cachedUsers && cachedUsers[uId]) userName = cachedUsers[uId].vorname + ' ' + cachedUsers[uId].nachname;
+
+        if (!confirm(`Soll der Mitarbeiter '${userName}' die Prüfung '${examTitle}' wirklich wiederholen dürfen?\nDadurch wird die Prüfung erneut freigeschaltet.`)) return;
+
+        logSystemActivity('Prüfung-Wiederholung', `Für ${userName} wurde die Wiederholung der Prüfung '${examTitle}' freigeschaltet.`);
+
+        const updates = {};
+        updates[`data/users/${uId}/unlockedExams/${examId}`] = true;
+        
+        db.ref().update(updates).then(() => {
+            alert('Prüfung erfolgreich für Wiederholung freigeschaltet!');
+            renderStudentUnlockedExams();
+            if(typeof renderInstructorUnlocks !== 'undefined') renderInstructorUnlocks(cachedUsers, cachedExams);
+            if(typeof renderInstructorSubmissions !== 'undefined') renderInstructorSubmissions(cachedSubmissions);
+        }).catch(err => {
+            alert('Fehler beim Freischalten der Wiederholung: ' + err.message);
+        });
+    }
+
+    function toggleStudentCompletedExamsCollapse() {
+        const list = document.getElementById('studentCompletedExamsList');
+        const icon = document.getElementById('studentCompletedExamsIcon');
+        if (!list) return;
+        if (list.style.display === 'none') {
+            list.style.display = 'block';
+            if (icon) icon.textContent = '▼';
+        } else {
+            list.style.display = 'none';
+            if (icon) icon.textContent = '▶';
+        }
+    }
+
+    function deleteExamSubmission(subId) {
+        if (!isUserInstructor()) return;
+        const sub = cachedSubmissions[subId];
+        if (!sub) return;
+        if (!confirm(`Möchtest du diese Einreichung von ${sub.userName} (Prüfung: ${sub.examTitle}) wirklich löschen?`)) return;
+        
+        logSystemActivity('Prüfung gelöscht', `Einreichung von ${sub.userName} für '${sub.examTitle}' wurde gelöscht.`);
+        db.ref('data/examSubmissions/' + subId).remove().then(() => {
+            alert('Einreichung gelöscht.');
+            if(typeof renderInstructorSubmissions !== 'undefined') renderInstructorSubmissions(cachedSubmissions);
         });
     }
 
@@ -4070,7 +4191,7 @@ Die Medics haben die alleinige Entscheidung zu treffen, welche Personen nach ein
         if (confirm("Command / Kürzel löschen?")) db.ref("data/dienstCommands/" + key).remove();
     }
 
-    window.toggleInstructorUserStatus = toggleInstructorUserStatus;
+    // window.toggleInstructorUserStatus removed
     window.deletePatient = deletePatient; 
     window.deleteArchivSchicht = deleteArchivSchicht; 
     window.toggleThemeCollapse = toggleThemeCollapse; 
@@ -4082,6 +4203,49 @@ Die Medics haben die alleinige Entscheidung zu treffen, welche Personen nach ein
     window.toggleCmdCollapse = toggleCmdCollapse; 
     window.openUserPermissionsModal = openUserPermissionsModal; 
     window.closeUserPermissionsModal = closeUserPermissionsModal; 
+    
+    function logSystemActivity(type, message) {
+        if (!sessionUser) return;
+        const logEntry = {
+            type: type,
+            message: message,
+            timestamp: Date.now(),
+            dateFormatted: new Date().toLocaleDateString('de-DE') + ' ' + new Date().toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit'}),
+            user: sessionUser.vorname + ' ' + sessionUser.nachname,
+            userId: (sessionUser.vorname + '_' + sessionUser.nachname).toLowerCase().replace(/[^a-z0-9_]/g, '')
+        };
+        db.ref('data/systemLogs').push(logEntry);
+    }
+    
+    function renderAuditLog(logs) {
+        const tbody = document.getElementById('adminAuditLogTableBody');
+        if (!tbody) return;
+        tbody.innerHTML = '';
+        if (!logs) {
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:30px; color:var(--text-muted);">Keine Eintr&auml;ge gefunden.</td></tr>';
+            return;
+        }
+        
+        const logKeys = Object.keys(logs).reverse();
+        logKeys.forEach(k => {
+            const entry = logs[k];
+            const dateStr = entry.dateFormatted || '';
+            const userStr = entry.user || 'System';
+            const typeStr = entry.type || 'Info';
+            const msgStr = entry.message || '';
+            
+            tbody.innerHTML += `
+            <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                <td style="padding:12px; font-size:12px; color:var(--text-muted);">${dateStr}</td>
+                <td style="padding:12px; font-size:13px; font-weight:bold;">${userStr}</td>
+                <td style="padding:12px; font-size:12px; color:var(--primary);">${typeStr}</td>
+                <td style="padding:12px; font-size:13px;">${msgStr}</td>
+            </tr>`;
+        });
+    }
+
+    window.logSystemActivity = logSystemActivity;
+
     window.saveUserPermissions = saveUserPermissions; 
     window.togglePermPasswordVisibility = togglePermPasswordVisibility;
     window.openAssignRolesModal = openAssignRolesModal;
