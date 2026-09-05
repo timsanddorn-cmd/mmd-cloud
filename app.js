@@ -1969,6 +1969,7 @@ dispEl.textContent = (hierarchieDaten[key] !== undefined && hierarchieDaten[key]
         console.error('Error in saveUserPermissions:', err);
         alert('Fehler: ' + err.message + '\nZeile: ' + err.stack);
     }
+}
 function linkHinzufuegen() {
         if (!sessionUser) return;
         const eff = getUserEffectivePermissions(sessionUser);
