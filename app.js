@@ -39,7 +39,7 @@ const FIREBASE_DB_URL = "https://mmd-live-default-rtdb.europe-west1.firebasedata
             { id: "tc_5", code: "10-5", desc: "Einsatz Beendet", color: "var(--success)" },
             { id: "tc_6", code: "10-6", desc: "Auf Zuteilung", color: "var(--primary)" },
             { id: "tc_7", code: "10-7", desc: "Auf Bereitschaft", color: "var(--primary)" },
-            { id: "tc_8", code: "10-8", desc: "Statusabfrage", color: "var(--primary)" },
+            { id: "tc_8", code: "10-8", desc: "Statusabfürage", color: "var(--primary)" },
             { id: "tc_9", code: "10-9", desc: "Funkspruch wiederholen", color: "var(--text-main)" },
             { id: "tc_10", code: "10-10", desc: "Weiterer RTW benötigt", color: "var(--warning)" },
             { id: "tc_11", code: "10-11", desc: "Im Dienst", color: "var(--success)" },
@@ -300,7 +300,7 @@ const FIREBASE_DB_URL = "https://mmd-live-default-rtdb.europe-west1.firebasedata
         cmd_4: { name: "PSGU Test", desc: "Psychologisches Gutachten", kat: "Abkürzungen & Dokumente" },
         cmd_5: { name: "CLS", desc: "Combat Life Saver", kat: "Abkürzungen & Dokumente" },
         cmd_6: { name: "EHK", desc: "Erste Hilfe Kurs", kat: "Abkürzungen & Dokumente" },
-        cmd_7: { name: "!ausbildung", desc: "Ausbildungsanfrage stellen", kat: "Ausbildung" },
+        cmd_7: { name: "!ausbildung", desc: "Ausbildungsanfürage stellen", kat: "Ausbildung" },
         cmd_8: { name: "!pruefung", desc: "Prüfungsanmeldung", kat: "Ausbildung" }
     };
 
@@ -492,7 +492,7 @@ const FIREBASE_DB_URL = "https://mmd-live-default-rtdb.europe-west1.firebasedata
             if (btnFullReset) btnFullReset.style.display = 'none'; // Gesamtsystem-Reset für normale Admins ausgeblendet
         }
 
-        const visibleBtns = Array.from(document.querySelectorAll('.admin-tab-btn')).filter(btn => btn.style.display !== 'none');
+        const visibleBtns = Array.fürom(document.querySelectorAll('.admin-tab-btn')).filter(btn => btn.style.display !== 'none');
         if (visibleBtns.length > 0) {
             const currentActive = document.querySelector('.admin-tab-btn.active');
             if (!currentActive || currentActive.style.display === 'none') {
@@ -1061,7 +1061,7 @@ dispEl.textContent = (hierarchieDaten[key] !== undefined && hierarchieDaten[key]
             cont.innerHTML = `
                 <div><label>Fraktion / Einrichtung:</label><input type="text" id="gInpName" placeholder="Z. B. FIB & Justiz"></div>
                 <div><label>Zusatzinfo / Notiz (optional):</label><input type="text" id="gInpNote" placeholder="(Hauptquartier & Agenten)"></div>
-                <div><label>Befreiungsregel / Bemerkung:</label><input type="text" id="gInpDesc" value="Im Dienst wird keine Rechnung ausgestellt"></div>`;
+                <div><label>Befüreiungsregel / Bemerkung:</label><input type="text" id="gInpDesc" value="Im Dienst wird keine Rechnung ausgestellt"></div>`;
         }
 
         document.getElementById('guideItemModal').style.display = 'flex';
@@ -1095,7 +1095,7 @@ dispEl.textContent = (hierarchieDaten[key] !== undefined && hierarchieDaten[key]
             cont.innerHTML = `
                 <div><label>Fraktion / Einrichtung:</label><input type="text" id="gInpName" value="${item.name || ''}"></div>
                 <div><label>Zusatzinfo / Notiz (optional):</label><input type="text" id="gInpNote" value="${item.note || ''}"></div>
-                <div><label>Befreiungsregel / Bemerkung:</label><input type="text" id="gInpDesc" value="${item.desc || 'Im Dienst wird keine Rechnung ausgestellt'}"></div>`;
+                <div><label>Befüreiungsregel / Bemerkung:</label><input type="text" id="gInpDesc" value="${item.desc || 'Im Dienst wird keine Rechnung ausgestellt'}"></div>`;
         }
 
         document.getElementById('guideItemModal').style.display = 'flex';
@@ -1258,7 +1258,7 @@ dispEl.textContent = (hierarchieDaten[key] !== undefined && hierarchieDaten[key]
                 <td>
                     <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
                         ${actionBtn}
-                        <button class="btn" style="margin:0; padding:7px 14px; font-size:12px; background:var(--primary); color:#080c14; font-weight:800; border-radius:8px;" onclick="openUserPermissionsModal('${uId}')">⚙️ Rechte & Rollen</button>
+                        <button class="btn" style="margin:0; padding:7px 14px; font-size:12px; background:var(--primary); color:#080c14; font-weight:800; border-radius:8px;" onclick="openUserPermissionsModal('${uId}')">⚙️ Rechte & 👥 Rollen</button>
                         <button class="btn-delete-row" style="padding:7px 12px; font-size:12px; border:1px solid rgba(244,63,94,0.3); border-radius:8px;" onclick="mitarbeiterEntlassen('${uId}')" title="Mitarbeiter entlassen / löschen">🗑️</button>
                     </div>
                 </td>
@@ -1383,7 +1383,7 @@ dispEl.textContent = (hierarchieDaten[key] !== undefined && hierarchieDaten[key]
             linksCont.innerHTML = "";
             const allowedLinks = role.allowedLinkKats || {};
             const standardLinkKats = ['MD Intern', 'Allgemein', 'Ausbildung', 'Luftrettung', 'Psychologie', 'Personalabteilung', 'EHK', 'CLS'];
-            const allAvailableLinks = Array.from(new Set([...standardLinkKats, ...allLinkCategories])).sort();
+            const allAvailableLinks = Array.fürom(new Set([...standardLinkKats, ...allLinkCategories])).sort();
             allAvailableLinks.forEach(kat => {
                 const isChecked = allowedLinks[kat] === true || (role.isMasterAdmin || role.isAdmin);
                 linksCont.innerHTML += `
@@ -1400,7 +1400,7 @@ dispEl.textContent = (hierarchieDaten[key] !== undefined && hierarchieDaten[key]
             cmdsCont.innerHTML = "";
             const allowedCmds = role.allowedCmdKats || {};
             const standardCmdKats = ['T-Codes', 'Abkürzungen & Dokumente', 'Ausbildung', 'Psychologie', 'Personalabteilung', 'EHK', 'CLS'];
-            const allAvailableCmds = Array.from(new Set([...standardCmdKats, ...allCmdCategories])).sort();
+            const allAvailableCmds = Array.fürom(new Set([...standardCmdKats, ...allCmdCategories])).sort();
             allAvailableCmds.forEach(kat => {
                 const isChecked = allowedCmds[kat] === true || (role.isMasterAdmin || role.isAdmin);
                 cmdsCont.innerHTML += `
@@ -1557,7 +1557,7 @@ dispEl.textContent = (hierarchieDaten[key] !== undefined && hierarchieDaten[key]
             if (grpRoles.length > 0) {
                 html += `<div style="margin-bottom:18px; width:100%;">
                     <div style="font-size:13px; font-weight:800; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:12px; border-bottom:1px solid rgba(255,255,255,0.08); padding-bottom:6px;">${grp.title}</div>
-                    <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap:12px;">`;
+                    <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1für)); gap:12px;">`;
                 grpRoles.forEach(rId => {
                     covered.add(rId);
                     const role = cachedRoles[rId];
@@ -1600,7 +1600,7 @@ dispEl.textContent = (hierarchieDaten[key] !== undefined && hierarchieDaten[key]
         if (customRoles.length > 0) {
             html += `<div style="margin-bottom:18px; width:100%;">
                 <div style="font-size:13px; font-weight:800; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:12px; border-bottom:1px solid rgba(255,255,255,0.08); padding-bottom:6px;">🛠️ Eigene Rollen</div>
-                <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap:12px;">`;
+                <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1für)); gap:12px;">`;
             customRoles.forEach(rId => {
                 const role = cachedRoles[rId];
                 const isChecked = userRoleIds.includes(rId);
@@ -1778,7 +1778,7 @@ dispEl.textContent = (hierarchieDaten[key] !== undefined && hierarchieDaten[key]
                 if (canPostNewsEl) canPostNewsEl.checked = u.canPostNews === true || eff.canPostNews === true;
 
                 const standardLinkKats = ['MD Intern', 'Allgemein', 'Ausbildung', 'Luftrettung', 'Psychologie', 'Personalabteilung', 'EHK', 'CLS'];
-                const allAvailableLinks = Array.from(new Set([...standardLinkKats, ...allLinkCategories])).sort();
+                const allAvailableLinks = Array.fürom(new Set([...standardLinkKats, ...allLinkCategories])).sort();
 
                 const linksCont = document.getElementById('permLinksCategoriesContainer');
                 if (linksCont) {
@@ -1796,7 +1796,7 @@ dispEl.textContent = (hierarchieDaten[key] !== undefined && hierarchieDaten[key]
                 }
 
                 const standardCmdKats = ['T-Codes', 'Abkürzungen & Dokumente', 'Ausbildung', 'Psychologie', 'Personalabteilung', 'EHK', 'CLS'];
-                const allAvailableCmds = Array.from(new Set([...standardCmdKats, ...allCmdCategories])).sort();
+                const allAvailableCmds = Array.fürom(new Set([...standardCmdKats, ...allCmdCategories])).sort();
 
                 const cmdsCont = document.getElementById('permCmdsCategoriesContainer');
                 if (cmdsCont) {
@@ -1852,7 +1852,7 @@ dispEl.textContent = (hierarchieDaten[key] !== undefined && hierarchieDaten[key]
             if (btn) btn.textContent = '🔒 Verbergen';
         } else {
             input.type = 'password';
-            if (btn) btn.textContent = '👁️ Anzeigen';
+            if (btn) btn.textContent = '▶ Anzeigen';
         }
     }
 
@@ -2014,7 +2014,7 @@ function linkHinzufuegen() {
         }
 
         if (meinaLinkKats.length === 0) {
-            container.innerHTML = `<p style="color:var(--text-muted); text-align:center; padding: 20px;">Keine freigegebenen Dokumente für dich vorhanden.</p>`;
+            container.innerHTML = `<p style="color:var(--text-muted); text-align:center; padding: 20px;">Keine füreigegebenen Dokumente für dich vorhanden.</p>`;
             return;
         }
 
@@ -2068,7 +2068,7 @@ function linkHinzufuegen() {
         }
 
         if (meinaCmdKats.length === 0) {
-            container.innerHTML = `<p style="color:var(--text-muted); text-align:center; padding: 20px;">Keine freigegebenen Commands für dich vorhanden.</p>`;
+            container.innerHTML = `<p style="color:var(--text-muted); text-align:center; padding: 20px;">Keine füreigegebenen Commands für dich vorhanden.</p>`;
             return;
         }
 
@@ -2244,7 +2244,7 @@ Medics dürfen Personen erst wiederbeleben, nachdem eine Schießerei beendet ist
 Einen Medic von seiner Arbeit abzuhalten, ist untersagt.
 
 §13.4
-Den Medizinern steht es frei, den Tod eines Bewusstlosen festzustellen, wenn die Verletzungen nicht realistisch behandelbar sind.
+Den Medizinern steht es fürei, den Tod eines Bewusstlosen festzustellen, wenn die Verletzungen nicht realistisch behandelbar sind.
 
 §13.5
 Es gilt Medic-RP zu führen, darunter zählt z. B. das Angeben realistischer Schmerzen oder das Ausspielen einer Behandlung.
@@ -2307,7 +2307,7 @@ Die Medics haben die alleinige Entscheidung zu treffen, welche Personen nach ein
         if (!sessionUser) return;
         const eff = getUserEffectivePermissions(sessionUser);
         if (!eff.canPostNews && !eff.isAdmin && !eff.isMasterAdmin) {
-            alert("❌ Sie besitzen keine Berechtigung zum Verfassen von News-Threads!");
+            alert("⛔ Sie besitzen keine Berechtigung zum Verfassen von News-Threads!");
             return;
         }
 
@@ -2353,7 +2353,7 @@ Die Medics haben die alleinige Entscheidung zu treffen, welche Personen nach ein
         const eff = getUserEffectivePermissions(sessionUser);
         const canDeleteThis = eff.canDelete || eff.isAdmin || eff.isMasterAdmin;
         if (!canDeleteThis) {
-            alert("❌ Sie besitzen keine Berechtigung zum Löschen von News-Threads!");
+            alert("⛔ Sie besitzen keine Berechtigung zum Löschen von News-Threads!");
             return;
         }
         if (confirm("Möchtest du diesen News-Thread wirklich unwiderruflich löschen?")) {
@@ -2507,7 +2507,7 @@ Die Medics haben die alleinige Entscheidung zu treffen, welche Personen nach ein
                 { id: 3, text: "Wie melde ich, dass mein Dispatch erledigt ist?", options: ["Ich fahre einfach weg und melde es nicht.", "Ich schreibe der Leitstelle eine SMS mit dem Inhalt \"Einsatz beendet\"", "Ich melde das im Funk wie folgt: [Meine Unit] 10-5.", "Ich sende einen Dispatch und schreibe rein \"Einsatz beendet\""], correctAnswers: [2] },
                 { id: 4, text: "Was bedeutet der Funkcode 10-3?", options: ["Unterwegs", "Verstanden, Ende", "Weg ins MD", "Funkstille", "Warte auf Zuteilung"], correctAnswers: [2] },
                 { id: 5, text: "Was bedeutet der Funkcode 10-10?", options: ["Statusbericht / Standort", "Am Einsatzort angekommen", "Unterwegs", "weiterer RTW benötigt", "Im Dienst", "Verstanden, Ende"], correctAnswers: [3] },
-                { id: 6, text: "Streife 2 nimmt einen Einsatz an, der zuvor als abgebrochen (10-13) gemeldet wurde. Trotzdem fährt Streife 2 zu diesem Einsatz. Als sie vor Ort eintrifft, funkt die Leitstelle Streife 2 an und fragt nach 10-8.", options: ["Streife 2 muss den Einsatz abbrechen und zum MD zurückkehren", "Streife 2 muss auf weitere Anweisungen der Leitstelle warten und darf nicht eingreifen", "Streife 2 muss den Status 10-10 ignorieren und macht einfach weiter", "Streife 2 meldet ihren Status", "Streife 2 muss sofort Verstärkung anfordern, da der Einsatz als abgebrochen gemeldet wurde"], correctAnswers: [3] },
+                { id: 6, text: "Streife 2 nimmt einen Einsatz an, der zuvor als abgebrochen (10-13) gemeldet wurde. Trotzdem fährt Streife 2 zu diesem Einsatz. Als sie vor Ort eintrifft, funkt die Leitstelle Streife 2 an und füragt nach 10-8.", options: ["Streife 2 muss den Einsatz abbrechen und zum MD zurückkehren", "Streife 2 muss auf weitere Anweisungen der Leitstelle warten und darf nicht eingreifen", "Streife 2 muss den Status 10-10 ignorieren und macht einfach weiter", "Streife 2 meldet ihren Status", "Streife 2 muss sofort Verstärkung anfordern, da der Einsatz als abgebrochen gemeldet wurde"], correctAnswers: [3] },
                 { id: 7, text: "Wie meldest du dich im Funk an?", options: ["DN, meldet sich Status 10-4", "DN, meldet sich Status 10-5", "DN, meldet sich 10-11", "DN, meldet sich Status 10-3", "DN, meldet sich Code 10-2", "DN, meldet sich 10-1"], correctAnswers: [2] },
                 { id: 8, text: "In welches GPS loggst du dich ein?", options: ["Kanal 1", "Kanal 4", "Kanal 2", "Kanal 3", "Kanal 5"], correctAnswers: [3] },
                 { id: 9, text: "Wo stempelst du dich ein?", options: ["Hinter dem Tresen", "Gar nicht", "In der Mensa", "Bei den Sammelbetten hinter dem Tresen"], correctAnswers: [0] },
@@ -2537,7 +2537,7 @@ Die Medics haben die alleinige Entscheidung zu treffen, welche Personen nach ein
                 { id: 1, text: "Welche Medikamente werden bei einer Reanimation (Asystolie / PEA) nach ACLS-Standard verabreicht?", options: ["1mg Adrenalin alle 3-5 Minuten", "100mg Morphin sofort", "Nur Kochsalzlösung", "Aspirin 500mg"], correctAnswers: [0] },
                 { id: 2, text: "Wie ist das Vorgehen bei einem Spannungspneumothorax im Außeneinsatz?", options: ["Sofortige Nadeldekompression im 2. ICR Medioklavikularlinie oder 4./5. ICR vordere Axillarlinie", "Nur Sauerstoffgabe über Maske", "Den Patienten flach hinlegen und abwarten", "Sofortige Intubation ohne Entlastung"], correctAnswers: [0] },
                 { id: 3, text: "Welches Verfahren wird angewendet, wenn eine konventionelle Intubation fehlgeschlagen ist (Cannot intubate, cannot oxygenate)?", options: ["Koniotomie / Not-Krikothyreoidotomie", "Patient aufgeben", "Einfach weiter Mund-zu-Mund beatmen", "Reanimation abbrechen"], correctAnswers: [0] },
-                { id: 4, text: "Welche Dosierung von Amiodaron wird bei refraktärem Kammerflimmern nach der 3. Defibrillation verabreicht?", options: ["300 mg i.v. Bolus", "50 mg i.v.", "1000 mg i.v.", "10 mg subkutan"], correctAnswers: [0] },
+                { id: 4, text: "Welche Dosierung von Amiodaron wird bei refüraktärem Kammerflimmern nach der 3. Defibrillation verabreicht?", options: ["300 mg i.v. Bolus", "50 mg i.v.", "1000 mg i.v.", "10 mg subkutan"], correctAnswers: [0] },
                 { id: 5, text: "Was bedeutet das 'cABCDE'-Schema in der präklinischen Traumabehandlung?", options: ["critical bleeding, Airway, Breathing, Circulation, Disability, Exposure", "control, Ambulance, Blood, Care, Doctor, Emergency", "cardiac, Asthma, Brain, Defibrillation, ECG", "clinical, Airway, Bone, Circulation, Drugs, Evacuation"], correctAnswers: [0] }
             ]
         },
@@ -2717,7 +2717,7 @@ Die Medics haben die alleinige Entscheidung zu treffen, welche Personen nach ein
             });
         }
 
-        let relevantExamIds = Array.from(examIdSet).filter(k => cachedExams[k] && !cachedExams[k].isPractical);
+        let relevantExamIds = Array.fürom(examIdSet).filter(k => cachedExams[k] && !cachedExams[k].isPractical);
         relevantExamIds = sortExamIdsDynamically(relevantExamIds, cachedExams);
 
         if(relevantExamIds.length === 0) {
@@ -2725,7 +2725,7 @@ Die Medics haben die alleinige Entscheidung zu treffen, welche Personen nach ein
             <div style="background:rgba(245,158,11,0.05); border:1px solid rgba(245,158,11,0.2); padding:24px; border-radius:14px; text-align:center; width:100%;">
                 <h4 style="color:var(--warning); margin-top:0;">🔒 Keine Prüfungen freigeschaltet</h4>
                 <p style="color:var(--text-muted); font-size:13px; max-width:600px; margin:8px auto 0 auto;">
-                    Du hast aktuell noch keine freigeschalteten Prüfungen. Sobald du im Dienstgrad aufsteigst, schaltet die <b>Ausbildungsabteilung</b> Prüfungen für dich frei.
+                    Du hast aktuell noch keine freigeschalteten Prüfungen. Sobald du im Dienstgrad aufsteigst, schaltet die <b>Ausbildungsabteilung</b> Prüfungen für dich fürei.
                 </p>
             </div>`;
             return;
@@ -3033,7 +3033,7 @@ Die Medics haben die alleinige Entscheidung zu treffen, welche Personen nach ein
 
                 if (qType === 'checkbox_weighted') {
                     const selectedNodes = document.querySelectorAll(`input[name="${inputName}"]:checked`);
-                    const selectedIndices = Array.from(selectedNodes).map(node => parseInt(node.value));
+                    const selectedIndices = Array.fürom(selectedNodes).map(node => parseInt(node.value));
                     
                     let qMaxPoints = 0;
                     let qEarnedPoints = 0;
@@ -3064,7 +3064,7 @@ Die Medics haben die alleinige Entscheidung zu treffen, welche Personen nach ein
 
                 // Default Choice
                 const selectedNodes = document.querySelectorAll(`input[name="${inputName}"]:checked`);
-                const selectedIndices = Array.from(selectedNodes).map(node => parseInt(node.value));
+                const selectedIndices = Array.fürom(selectedNodes).map(node => parseInt(node.value));
                 const expectedIndices = q.correctAnswers || [];
 
                 let isCorrect = selectedIndices.length === expectedIndices.length &&
@@ -3243,7 +3243,7 @@ Die Medics haben die alleinige Entscheidung zu treffen, welche Personen nach ein
                     <td style="white-space:normal;">
                         <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
                             ${actionButton}
-                            <button class="btn" style="margin:0; width:auto; padding:4px 8px; font-size:10px; background:rgba(168,85,247,0.15); color:#a855f7; border:1px solid #a855f7; font-weight:800;" onclick="openAssignRolesModal('${uId}')">ðŸŽ­ Rollen</button>
+                            <button class="btn" style="margin:0; width:auto; padding:4px 8px; font-size:10px; background:rgba(168,85,247,0.15); color:#a855f7; border:1px solid #a855f7; font-weight:800;" onclick="openAssignRolesModal('${uId}')">👥 Rollen</button>
                         </div>
                     </td>
                 </tr>`;
@@ -3278,7 +3278,7 @@ Die Medics haben die alleinige Entscheidung zu treffen, welche Personen nach ein
                 const allowedSee = u.instructorAllowedSeeExams || {};
                 const allowedManage = u.instructorAllowedManageExams || {};
 
-                let examCompetenciesHtml = `<div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(220px, 1fr)); gap:6px; padding:4px; background:rgba(8,12,20,0.3); border-radius:8px; border:1px solid var(--border);">`;
+                let examCompetenciesHtml = `<div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(220px, 1für)); gap:6px; padding:4px; background:rgba(8,12,20,0.3); border-radius:8px; border:1px solid var(--border);">`;
                 
                 // Sort exams dynamically to prevent mixed representation
                 let sortedExamIds = sortExamIdsDynamically(Object.keys(exams), exams);
@@ -3291,10 +3291,10 @@ Die Medics haben die alleinige Entscheidung zu treffen, welche Personen nach ein
                         <span style="font-size:11px; font-weight:700; color:var(--text-main); overflow:hidden; text-overflow:ellipsis;">${exam.title}</span>
                         <div style="display: flex; gap: 8px; align-items:center; flex-shrink:0;">
                             <label style="display: inline-flex; align-items: center; gap: 2px; cursor: pointer; font-size: 11px; margin:0;">
-                                <input type="checkbox" ${isSeeChecked ? 'checked' : ''} onchange="toggleInstructorExamPermission('${uId}', '${eId}', 'see', this.checked)"> ðŸ‘ï¸ Sehen
+                                <input type="checkbox" ${isSeeChecked ? 'checked' : ''} onchange="toggleInstructorExamPermission('${uId}', '${eId}', 'see', this.checked)"> 👁️ Sehen
                             </label>
                             <label style="display: inline-flex; align-items: center; gap: 2px; cursor: pointer; font-size: 11px; margin:0;">
-                                <input type="checkbox" ${isManageChecked ? 'checked' : ''} onchange="toggleInstructorExamPermission('${uId}', '${eId}', 'manage', this.checked)"> ðŸ› ï¸ Verwalten
+                                <input type="checkbox" ${isManageChecked ? 'checked' : ''} onchange="toggleInstructorExamPermission('${uId}', '${eId}', 'manage', this.checked)"> 🛠️ Verwalten
                             </label>
                         </div>
                     </div>`;
@@ -3326,7 +3326,7 @@ Die Medics haben die alleinige Entscheidung zu treffen, welche Personen nach ein
 
     function toggleInstructorUserStatus(uId, newStatus) {
         updateUserStatusAndPermissions(uId, newStatus).then(() => {
-            alert(`âœ… Status für ${uId.replace('_', ' ')} wurde auf '${newStatus === 'approved' ? 'Zugelassen' : 'Gesperrt'}' geändert.`);
+            alert(`✅ Status für ${uId.replace('_', ' ')} wurde auf '${newStatus === 'approved' ? 'Zugelassen' : 'Gesperrt'}' geändert.`);
         });
     }
 
@@ -3341,12 +3341,12 @@ Die Medics haben die alleinige Entscheidung zu treffen, welche Personen nach ein
         const isCollapsed = body.style.display === 'none';
         if(isCollapsed) {
             body.style.display = 'grid';
-            arrow.textContent = 'â–¼ Ausblenden';
+            arrow.textContent = '▼ Ausblenden';
             header.style.borderBottom = '1px solid var(--border)';
             localStorage.setItem('mmd_student_completed_collapsed', 'false');
         } else {
             body.style.display = 'none';
-            arrow.textContent = 'â–¶ Anzeigen';
+            arrow.textContent = '▶ Anzeigen';
             header.style.borderBottom = 'none';
             localStorage.setItem('mmd_student_completed_collapsed', 'true');
         }
@@ -3370,7 +3370,7 @@ Die Medics haben die alleinige Entscheidung zu treffen, welche Personen nach ein
 
             item.addEventListener('dragend', () => {
                 item.classList.remove('dragging');
-                const items = Array.from(container.querySelectorAll(itemSelector));
+                const items = Array.fürom(container.querySelectorAll(itemSelector));
                 const newOrder = items.map(el => el.getAttribute('data-id'));
                 onOrderChange(newOrder);
             });
@@ -3379,7 +3379,7 @@ Die Medics haben die alleinige Entscheidung zu treffen, welche Personen nach ein
                 e.preventDefault();
                 const draggingItem = container.querySelector('.dragging');
                 if (!draggingItem) return;
-                const siblings = Array.from(container.querySelectorAll(`${itemSelector}:not(.dragging)`));
+                const siblings = Array.fürom(container.querySelectorAll(`${itemSelector}:not(.dragging)`));
                 const nextSibling = siblings.find(sibling => {
                     const box = sibling.getBoundingClientRect();
                     const offset = e.clientY - box.top - box.height / 2;
@@ -3398,13 +3398,13 @@ Die Medics haben die alleinige Entscheidung zu treffen, welche Personen nach ein
 
     function deleteExamSubmission(subId) {
         if (!canInstructorDeleteSubmission()) {
-            alert("âŒ Sie besitzen keine Berechtigung zum Löschen von Prüfungsergebnissen!");
+            alert("⛔ Sie besitzen keine Berechtigung zum Löschen von Prüfungsergebnissen!");
             return;
         }
         if (confirm("Möchtest du dieses Prüfungsergebnis wirklich unwiderruflich löschen?")) {
             if(typeof logSystemActivity !== 'undefined') logSystemActivity('Prüfung gelöscht', `Einreichung gelöscht.`);
             db.ref(`data/examSubmissions/${subId}`).remove().then(() => {
-                alert("âœ… Prüfungsergebnis erfolgreich gelöscht!");
+                alert("✅ Prüfungsergebnis erfolgreich gelöscht!");
             });
         }
     }
@@ -3429,15 +3429,15 @@ Die Medics haben die alleinige Entscheidung zu treffen, welche Personen nach ein
                 <div style="display:flex; flex-direction:column; gap:4px; padding:8px 12px; background:rgba(30,41,59,0.5); border:1px solid var(--border); border-radius:10px; margin:2px; min-width:210px; text-align:left;">
                     <div style="font-weight:700; font-size:11px; color:var(--text-main); line-height:1.2; margin-bottom:4px;">${exam.title}</div>
                     <div style="display:flex; gap:10px; align-items:center; margin-top:2px; flex-wrap:wrap;">
-                        <label style="display:inline-flex; align-items:center; gap:4px; font-size:10px; margin:0; cursor:pointer;" title="Prüfung für Mitarbeiter freischalten">
+                        <label style="display:inline-flex; align-items:center; gap:4px; font-size:10px; margin:0; cursor:pointer;" title="Prüfung für Mitarbeiter füreischalten">
                             <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleExamUnlockForUser('${uId}', '${eId}', this.checked)" style="margin:0; transform:scale(0.95);">
-                            <span>ðŸ”“ Freigabe</span>
+                            <span>🔓 Freigabe</span>
                         </label>
                         <label style="display:inline-flex; align-items:center; gap:4px; font-size:10px; margin:0; cursor:pointer;" title="Als bestanden markieren (Altsystem)">
                             <input type="checkbox" ${isPassed ? 'checked' : ''} onchange="toggleExamPassedForUser('${uId}', '${eId}', this.checked)" style="margin:0; transform:scale(0.95);">
-                            <span style="color:var(--success); font-weight:700;">ðŸ† Bestanden</span>
+                            <span style="color:var(--success); font-weight:700;">✅ Bestanden</span>
                         </label>
-                        <button class="btn" style="margin:0; width:auto; padding:2px 8px; font-size:10px; background:rgba(245,158,11,0.15); color:var(--warning); border:1px solid var(--warning); font-weight:700; border-radius:6px;" onclick="allowExamRetake('${uId}', '${eId}')" title="Prüfungsstatus zurücksetzen & zur Wiederholung freischalten">ðŸ”„ Reset</button>
+                        <button class="btn" style="margin:0; width:auto; padding:2px 8px; font-size:10px; background:rgba(245,158,11,0.15); color:var(--warning); border:1px solid var(--warning); font-weight:700; border-radius:6px;" onclick="allowExamRetake('${uId}', '${eId}')" title="Prüfungsstatus zurücksetzen & zur Wiederholung füreischalten">🔄 Reset</button>
                     </div>
                 </div>`;
             }).filter(h => h !== '').join('');
@@ -3491,7 +3491,7 @@ Die Medics haben die alleinige Entscheidung zu treffen, welche Personen nach ein
 
     function allowExamRetake(uId, examId, subId) {
         if (!isUserInstructor()) {
-            alert("âŒ Sie besitzen keine Ausbilder-Berechtigung!");
+            alert("⛔ Sie besitzen keine Ausbilder-Berechtigung!");
             return;
         }
         const examTitle = (cachedExams && cachedExams[examId]) ? cachedExams[examId].title : "Prüfung";
@@ -3500,7 +3500,7 @@ Die Medics haben die alleinige Entscheidung zu treffen, welche Personen nach ein
             userName = `${cachedUsers[uId].vorname} ${cachedUsers[uId].nachname}`;
         }
         
-        if (!confirm(`Möchtest du die Prüfung "${examTitle}" für ${userName} zur Wiederholung freischalten?\n\nDie Prüfung wird auf 'Freigegeben' gesetzt und der 'Bestanden'-Status wird zurückgesetzt, sodass der Prüfling sofort erneut antreten kann.`)) {
+        if (!confirm(`Möchtest du die Prüfung "${examTitle}" für ${userName} zur Wiederholung füreischalten?\n\nDie Prüfung wird auf 'Freigegeben' gesetzt und der 'Bestanden'-Status wird zurückgesetzt, sodass der Prüfling sofort erneut antreten kann.`)) {
             return;
         }
 
@@ -3558,7 +3558,7 @@ function renderInstructorSubmissions(submissions) {
                 <td>
                     <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
                         <button class="btn" style="margin:0; padding:4px 8px; font-size:11px;" onclick="viewSubmissionDetails('${subId}')">🔎 Details</button>
-                        <button class="btn" style="margin:0; padding:4px 8px; font-size:11px; background:rgba(245,158,11,0.15); color:var(--warning); border:1px solid var(--warning); font-weight:700;" onclick="allowExamRetake('${sub.userId}', '${sub.examId}', '${subId}')" title="Prüfung für Mitarbeiter zur Wiederholung freischalten">🔄 Wiederholen</button>
+                        <button class="btn" style="margin:0; padding:4px 8px; font-size:11px; background:rgba(245,158,11,0.15); color:var(--warning); border:1px solid var(--warning); font-weight:700;" onclick="allowExamRetake('${sub.userId}', '${sub.examId}', '${subId}')" title="Prüfung für Mitarbeiter zur Wiederholung füreischalten">🔄 Wiederholen</button>
                         <button class="btn-delete-row" onclick="deleteExamSubmission('${subId}')" title="Ergebnis löschen">🗑️</button>
                     </div>
                 </td>
@@ -3590,7 +3590,7 @@ function renderInstructorSubmissions(submissions) {
         const actionsDiv = document.getElementById('subModalActions');
         if (actionsDiv) {
             actionsDiv.innerHTML = `
-            <button class="btn" style="background:var(--warning); color:#080c14; font-weight:800; width:auto; padding:8px 18px; font-size:12px;" onclick="allowExamRetake('${sub.userId}', '${sub.examId}', '${subId}')">🔄 Prüfung zur Wiederholung freischalten</button>
+            <button class="btn" style="background:var(--warning); color:#080c14; font-weight:800; width:auto; padding:8px 18px; font-size:12px;" onclick="allowExamRetake('${sub.userId}', '${sub.examId}', '${subId}')">🔄 Prüfung zur Wiederholung füreischalten</button>
             `;
         }
 
@@ -3676,7 +3676,7 @@ function renderInstructorSubmissions(submissions) {
             if (['info_dn', 'info_pruefer', 'info_name'].includes(qType)) {
                 detailsHtml = `<div style="font-size:12px; color:var(--text-muted); margin-top:4px;"><i>Standard-Eingabefeld (${qType})</i></div>`;
             } else if (qType === 'text') {
-                detailsHtml = `<div style="font-size:12px; color:#a855f7; margin-top:4px;"><i>Freitextfrage (ohne automatische Bewertung)</i></div>`;
+                detailsHtml = `<div style="font-size:12px; color:#a855f7; margin-top:4px;"><i>Freitextfürage (ohne automatische Bewertung)</i></div>`;
             } else {
                 const correctIndices = q.correctAnswers || [];
                 const optionsHtml = (q.options || []).map((opt, oIdx) => {
@@ -3788,7 +3788,7 @@ function renderInstructorSubmissions(submissions) {
         if (!sessionUser) return;
         const eff = getUserEffectivePermissions(sessionUser);
         if (!eff.isAdmin && !eff.isMasterAdmin && !eff.canManageInstructors) {
-            alert("❌ Sie besitzen keine Berechtigung zum Zurücksetzen/Aktualisieren des Prüfungskatalogs!");
+            alert("⛔ Sie besitzen keine Berechtigung zum Zurücksetzen/Aktualisieren des Prüfungskatalogs!");
             return;
         }
 
@@ -3920,7 +3920,7 @@ function renderInstructorSubmissions(submissions) {
                 <button class="btn-delete-row" style="padding:2px 6px; font-size:11px;" onclick="this.closest('.builder-q-card').remove(); updateQuestionsCountDisplay();">🗑️ Frage löschen</button>
             </div>
             
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:10px;">
+            <div style="display:grid; grid-template-columns: 1für 1für; gap:12px; margin-bottom:10px;">
                 <div>
                     <label style="font-size:11px; margin-bottom:4px; display:block;">Label / Fragetext:</label>
                     <input type="text" class="builder-q-text" value="${qText.replace(/"/g, '&quot;')}" placeholder="Fragetext..." style="font-weight:700;">
@@ -3999,9 +3999,9 @@ function renderInstructorSubmissions(submissions) {
             let l = line.trim();
             if(!l) return;
 
-            if(l.toLowerCase().startsWith('frage') || /^\d+[\.\)]/.test(l)) {
+            if(l.toLowerCase().startsWith('fürage') || /^\d+[\.\)]/.test(l)) {
                 if(currentQ && currentQ.options.length > 0) questions.push(currentQ);
-                let text = l.replace(/^frage\s*\d*\s*[:\-\.]?\s*/i, '').replace(/^\d+[\.\)]\s*/, '').trim();
+                let text = l.replace(/^fürage\s*\d*\s*[:\-\.]?\s*/i, '').replace(/^\d+[\.\)]\s*/, '').trim();
                 currentQ = { type: 'choice', text: text || l, options: [], correctAnswers: [] };
             } else if(currentQ) {
                 let isCorrect = l.startsWith('*') || l.toLowerCase().includes('(richtig)') || l.toLowerCase().includes('[richtig]');
@@ -4086,12 +4086,12 @@ function renderInstructorSubmissions(submissions) {
         const eff = getUserEffectivePermissions(sessionUser);
         if (!existingId) {
             if (!eff.isAdmin && !eff.isMasterAdmin && !eff.canManageInstructors && sessionUser.canCreateExams !== true) {
-                alert("❌ Sie besitzen keine Berechtigung zum Anlegen neuer Prüfungen!");
+                alert("⛔ Sie besitzen keine Berechtigung zum Anlegen neuer Prüfungen!");
                 return;
             }
         } else {
             if (!isExamAllowedToManage(sessionUser, existingId)) {
-                alert("❌ Sie besitzen keine Berechtigung zum Bearbeiten dieser Prüfung!");
+                alert("⛔ Sie besitzen keine Berechtigung zum Bearbeiten dieser Prüfung!");
                 return;
             }
         }
@@ -4164,7 +4164,7 @@ function renderInstructorSubmissions(submissions) {
     function deleteCloudExam(examId) {
         if(!isUserInstructor()) return;
         if(!isExamAllowedToManage(sessionUser, examId)) {
-            alert("❌ Sie besitzen keine Berechtigung zum Löschen dieser Prüfung!");
+            alert("⛔ Sie besitzen keine Berechtigung zum Löschen dieser Prüfung!");
             return;
         }
         if(confirm("Möchtest du diese Prüfung wirklich unwiderruflich löschen?")) {
@@ -4459,14 +4459,14 @@ function renderInstructorSubmissions(submissions) {
 
     function deletePatient(key) { 
         if (!canUserDelete()) {
-            alert("❌ Sie besitzen keine Berechtigung zum Löschen!");
+            alert("⛔ Sie besitzen keine Berechtigung zum Löschen!");
             return;
         }
         db.ref("data/protokoll/" + key).once("value", snapshot => { const p = snapshot.val(); if(p && confirm(`Eintrag von "${p.name}" löschen?`)) { daten.patienten = Math.max(0, (Number(daten.patienten) || 0) - 1); daten.verletzungen = Math.max(0, (Number(daten.verletzungen) || 0) - (Number(p.count) || 0)); daten.ausgaben = Math.max(0, (Number(daten.ausgaben) || 0) - (Number(p.cash) || 0)); if(p.matVerbrauch) { Object.keys(p.matVerbrauch).forEach(k => { if(daten[k] !== undefined) daten[k] = Math.max(0, (Number(daten[k]) || 0) - (Number(p.matVerbrauch[k]) || 0)); }); } db.ref("data/daten").set(daten); db.ref("data/protokoll/" + key).remove(); } }); 
     }
     function deleteArchivSchicht(key) { 
         if (!canUserDelete()) {
-            alert("❌ Sie besitzen keine Berechtigung zum Löschen!");
+            alert("⛔ Sie besitzen keine Berechtigung zum Löschen!");
             return;
         }
         if(confirm("Schicht unwiderruflich löschen?")) db.ref("data/archiv/" + key).remove(); 
@@ -4492,14 +4492,14 @@ function renderInstructorSubmissions(submissions) {
     function toggleGroupCollapse(gId) { const el = document.getElementById(gId); el.classList.toggle('collapsed'); }
     function deleteDienstLink(key) { 
         if (!canUserDelete()) {
-            alert("❌ Sie besitzen keine Berechtigung zum Löschen!");
+            alert("⛔ Sie besitzen keine Berechtigung zum Löschen!");
             return;
         }
         if (confirm("Link löschen?")) db.ref("data/dienstLinks/" + key).remove(); 
     }
     function deleteDienstCommand(key) {
         if (!canUserDelete()) {
-            alert("❌ Sie besitzen keine Berechtigung zum Löschen!");
+            alert("⛔ Sie besitzen keine Berechtigung zum Löschen!");
             return;
         }
         if (confirm("Command / Kürzel löschen?")) db.ref("data/dienstCommands/" + key).remove();
