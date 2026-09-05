@@ -889,6 +889,14 @@ function makeContainerSortable() {}
 function saveExamOrder() {}
 function canManageInstructors() { return false; }
 function renderAdminAuditLogs() {}
+function switchInstructorTab(tabId, btnEl) {
+    document.querySelectorAll('#examInstructorView .admin-subtab-content').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('#examInstructorView .admin-tab-btn').forEach(el => el.classList.remove('active'));
+    const target = document.getElementById(tabId);
+    if(target) target.classList.add('active');
+    if(btnEl) btnEl.classList.add('active');
+}
+function renderAdminUserTable() {}
 
 // Window-Exporte
 window.switchTab = switchTab;
@@ -909,3 +917,4 @@ window.berechneDienstTage = berechneDienstTage;
 window.passwortAendern = passwortAendern;
 window.renderNewsFeed = renderNewsFeed;
 window.startExam = startExam;
+window.switchInstructorTab = switchInstructorTab;
