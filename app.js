@@ -150,18 +150,18 @@ function renderUserRoleBadges(user) {
     if (!user) return '';
     const roleIds = getUserRolesList(user);
     if (roleIds.length === 0) {
-        return `Mitarbeiter`;
+        return `<span style="font-size:10px; font-weight:700; color:var(--text-muted); background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); padding:2px 8px; border-radius:6px;">Mitarbeiter</span>`;
     }
     return roleIds.map(rId => {
         const role = cachedRoles[rId] || (rId === 'superadmin' ? cachedRoles['masteradmin'] : null);
         if (!role) {
-            return `${rId}`;
+            return `<span style="font-size:10px; font-weight:700; color:var(--text-muted); background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); padding:2px 8px; border-radius:6px; margin-right:4px;">${rId}</span>`;
         }
         const color = role.color || '#38bdf8';
         const icon = role.icon ? `${role.icon} ` : '';
         const isTopAdmin = role.id === 'masteradmin' || role.id === 'admin';
         const extraGlow = isTopAdmin ? `box-shadow: 0 0 8px ${color}33;` : '';
-        return `${icon}${role.name}`;
+        return `<span style="font-size:10px; font-weight:800; color:${color}; background:${color}1a; border:1px solid ${color}66; padding:2px 8px; border-radius:6px; margin-right:4px; display:inline-flex; align-items:center; gap:3px; letter-spacing:0.2px; ${extraGlow}">${icon}${role.name}</span>`;
     }).join('');
 }
 
@@ -864,6 +864,32 @@ function setDynamischenPatientenNamen() {
     } 
 }
 
+function renderNewsFeed() {
+    const container = document.getElementById('newsFeedList');
+    if (!container) return;
+    container.innerHTML = "";
+    container.innerHTML = `<div style="text-align:center; color:var(--text-muted); padding:20px;">News-Feed wird geladen...</div>`;
+}
+
+function korrigiereAlleBisherigenPruefungen(silent = false) {
+    if (silent && hasCorrectedExamsThisSession) return;
+    hasCorrectedExamsThisSession = true;
+}
+
+function startExam(examId) {
+    alert("Prüfung " + examId + " wird gestartet...");
+}
+
+function renderInstructorUnlocks(users, exams) {}
+function renderInstructorSubmissions(submissions) {}
+function renderInstructorExistingExams(exams) {}
+function renderInstructorAllowedExams(users, exams) {}
+function toggleStudentCompletedExamsCollapse() {}
+function makeContainerSortable() {}
+function saveExamOrder() {}
+function canManageInstructors() { return false; }
+function renderAdminAuditLogs() {}
+
 // Window-Exporte
 window.switchTab = switchTab;
 window.settingsTabClick = settingsTabClick;
@@ -881,3 +907,5 @@ window.closeAdminManagementModal = closeAdminManagementModal;
 window.handleDienstEndeLogout = handleDienstEndeLogout;
 window.berechneDienstTage = berechneDienstTage;
 window.passwortAendern = passwortAendern;
+window.renderNewsFeed = renderNewsFeed;
+window.startExam = startExam;
