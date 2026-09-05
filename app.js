@@ -596,23 +596,19 @@ function baueMaterialUIAuf() {
     const grid = document.getElementById('dynamischerMaterialVerbrauchGrid'); 
     if(!grid) return; 
     grid.innerHTML = "";
-    let htmlLeft = "
-"; let htmlRight = "
-"; let counter = 0;
+    let htmlLeft = "<div>"; 
+    let htmlRight = "<div>"; 
+    let counter = 0;
     const keys = Object.keys(materialKatalog);
     keys.forEach(key => {
         if(key === 'mat_wasser') return;
         let currentQty = fallMaterial[key] || 0;
-        let itemHtml = `${materialKatalog[key].name} ($${materialKatalog[key].preis})
--${currentQty}+
-`;
+        let itemHtml = `<label style="margin-top:4px;">${materialKatalog[key].name} ($${materialKatalog[key].preis})</label><div class="counter-group"><button class="counter-btn" onclick="stepMat('${key}', -1)">-</button><span class="counter-value" id="val_${key}">${currentQty}</span><button class="counter-btn plus-main" onclick="stepMat('${key}', 1)">+</button></div>`;
         if(counter < (keys.length - 1) / 2) htmlLeft += itemHtml; 
         else htmlRight += itemHtml; 
         counter++;
     });
-    grid.innerHTML = htmlLeft + "
-" + htmlRight + "
-";
+    grid.innerHTML = htmlLeft + "</div>" + htmlRight + "</div>";
 }
 
 function bauePreiseEinstellungenUI() {
@@ -620,9 +616,7 @@ function bauePreiseEinstellungenUI() {
     if(!settingsContainer) return; 
     settingsContainer.innerHTML = "";
     Object.keys(materialKatalog).forEach(key => { 
-        settingsContainer.innerHTML += `
-${materialKatalog[key].name}:
-`; 
+        settingsContainer.innerHTML += `<div class="setting-row"><span>${materialKatalog[key].name}:</span><input type="number" style="width:100px; padding:6px;" id="setPrice_${key}" value="${materialKatalog[key].preis}"></div>`; 
     });
 }
 
