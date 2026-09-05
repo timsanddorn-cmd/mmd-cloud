@@ -629,9 +629,7 @@ function ladeSzenarioTemplateInSettings() {
     let currentTemplate = szenarioTemplates[szenario] || {};
     for (let key in materialKatalog) { 
         if (key !== 'mat_wasser') {
-            container.innerHTML += `
-${materialKatalog[key].name}:
-`; 
+            container.innerHTML += `<div class="setting-row"><span>${materialKatalog[key].name}:</span><input type="number" style="width:70px; padding:6px;" id="setTpl_${key}" value="${currentTemplate[key] || 0}" min="0"></div>`; 
         }
     }
 }
@@ -728,9 +726,7 @@ function renderStudentUnlockedExams() {
     if(!container) return;
     container.innerHTML = "";
     if(!sessionUser) {
-        container.innerHTML = `
-Bitte melde dich an, um deinen Prüfungsstatus einzusehen.
-`;
+        container.innerHTML = `<p style="color:var(--text-muted); text-align:center; padding:20px;">Bitte melde dich an, um deinen Prüfungsstatus einzusehen.</p>`;
         return;
     }
 
@@ -752,18 +748,12 @@ Bitte melde dich an, um deinen Prüfungsstatus einzusehen.
 
     if(relevantExamIds.length === 0) {
         container.innerHTML = `
-        
-
-            
-🔒 Keine Prüfungen freigeschaltet
-
-            
-
-                Du hast aktuell noch keine freigeschalteten Prüfungen. Sobald du im Dienstgrad aufsteigst, schaltet die Ausbildungsabteilung Prüfungen für dich frei.
-            
-
-        
-`;
+        <div style="background:rgba(245,158,11,0.05); border:1px solid rgba(245,158,11,0.2); padding:24px; border-radius:14px; text-align:center; width:100%;">
+            <h4 style="color:var(--warning); margin-top:0;">🔒 Keine Prüfungen freigeschaltet</h4>
+            <p style="color:var(--text-muted); font-size:13px; max-width:600px; margin:8px auto 0 auto;">
+                Du hast aktuell noch keine freigeschalteten Prüfungen. Sobald du im Dienstgrad aufsteigst, schaltet die <b>Ausbildungsabteilung</b> Prüfungen für dich frei.
+            </p>
+        </div>`;
         return;
     }
 
@@ -791,65 +781,45 @@ Bitte melde dich an, um deinen Prüfungsstatus einzusehen.
         let statusBadge = ""; let actionBtn = "";
         if (isPassed) {
             const displaySub = bestSub || lastSub;
-            statusBadge = `🏆 Bestanden ${displaySub ? `(${displaySub.percentage}%)` : ''}`;
+            statusBadge = `<span style="background:rgba(16,185,129,0.15); color:var(--success); border:1px solid var(--success); padding:3px 10px; border-radius:20px; font-size:11px; font-weight:800;">🏆 Bestanden ${displaySub ? `(${displaySub.percentage}%)` : ''}</span>`;
         } else if (isUnlocked) {
-            statusBadge = `🔓 Bereit zur Prüfung`;
-            actionBtn = `🚀 Prüfung starten`;
+            statusBadge = `<span style="background:rgba(56,189,248,0.15); color:var(--primary); border:1px solid var(--primary); padding:3px 10px; border-radius:20px; font-size:11px; font-weight:800;">🔓 Bereit zur Prüfung</span>`;
+            actionBtn = `<button class="btn" style="background:var(--primary); color:#080c14; font-weight:800; margin-top:14px;" onclick="startExam('${examId}')">🚀 Prüfung starten</button>`;
         } else {
-            statusBadge = `❌ Nicht bestanden - 🔒 Gesperrt`;
-            actionBtn = `
-🔒 Prüfung gesperrt – Bitte an Ausbilder wenden
-`;
+            statusBadge = `<span style="background:rgba(244,63,94,0.15); color:var(--danger); border:1px solid var(--danger); padding:3px 10px; border-radius:20px; font-size:11px; font-weight:800;">❌ Nicht bestanden - 🔒 Gesperrt</span>`;
+            actionBtn = `<div style="background:rgba(244,63,94,0.08); border:1px solid rgba(244,63,94,0.25); padding:10px 14px; border-radius:8px; text-align:center; font-size:12px; color:var(--danger); font-weight:700; margin-top:14px;">🔒 Prüfung gesperrt – Bitte an Ausbilder wenden</div>`;
         }
 
         const cardHtml = `
-        
-
-            
-                
-
-                    ${exam.kat || 'Prüfung'}
+        <div class="exam-card ${isPassed ? 'completed' : (isUnlocked ? 'unlocked' : 'locked')}" data-id="${examId}">
+            <div>
+                <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px;">
+                    <span style="font-size:11px; color:var(--text-muted); font-weight:700; text-transform:uppercase;">${exam.kat || 'Prüfung'}</span>
                     ${statusBadge}
-                
-
-                
-${exam.title}
-
-                
-
-                    ⏱️ Dauer: ca. ${exam.timeLimitMinutes || 15} Min  |  ❓ Fragen: ${exam.questions ? exam.questions.length : 0}  |  🎯 Mindestquote: ${exam.passPercentage || 60}%
-                
-
-            
+                </div>
+                <h4 style="margin:0 0 8px 0; color:var(--text-main); font-size:16px;">${exam.title}</h4>
+                <p style="color:var(--text-muted); font-size:12px; margin:0 0 12px 0;">
+                    ⏱️ Dauer: ca. <b>${exam.timeLimitMinutes || 15} Min</b> &nbsp;|&nbsp; ❓ Fragen: <b>${exam.questions ? exam.questions.length : 0}</b> &nbsp;|&nbsp; 🎯 Mindestquote: <b>${exam.passPercentage || 60}%</b>
+                </p>
+            </div>
             ${actionBtn}
-        
-`;
+        </div>`;
 
         if (isPassed) { completedExamsHtml += cardHtml; completedCount++; } 
         else { activeExamsHtml += cardHtml; }
     });
 
-    container.innerHTML = `
-${activeExamsHtml || '
-Keine ausstehenden Prüfungen zu erledigen.
-'}
-`;
+    container.innerHTML = `<div id="studentActiveExamsContainer" class="exam-grid">${activeExamsHtml || '<p style="color:var(--text-muted); text-align:center; padding:10px; grid-column: 1/-1;">Keine ausstehenden Prüfungen zu erledigen.</p>'}</div>`;
     if (completedCount > 0) {
         let isCollapsed = localStorage.getItem('mmd_student_completed_collapsed') === 'true';
         container.innerHTML += `
-        
-
-            
-
-                ✅ Bereits bestandene Prüfungen (${completedCount})
-                ${isCollapsed ? '▶ Anzeigen' : '▼ Ausblenden'}
-            
-
-            
-${completedExamsHtml}
-
-        
-`;
+        <div style="margin-top:24px; border:1px solid var(--border); border-radius:12px; background:rgba(30,41,59,0.2); overflow:hidden;">
+            <div style="padding:14px 20px; background:rgba(16,185,129,0.05); cursor:pointer; display:flex; justify-content:space-between; align-items:center; font-weight:800; font-size:13px; color:var(--success);" onclick="toggleStudentCompletedExamsCollapse()">
+                <span>✅ Bereits bestandene Prüfungen (${completedCount})</span>
+                <span id="studentCompletedExamsCollapseArrow" style="font-size:12px;">${isCollapsed ? '▶ Anzeigen' : '▼ Ausblenden'}</span>
+            </div>
+            <div id="studentCompletedExamsContainer" style="display:${isCollapsed ? 'none' : 'grid'}; padding:20px;" class="exam-grid">${completedExamsHtml}</div>
+        </div>`;
     }
 }
 
@@ -911,4 +881,3 @@ window.closeAdminManagementModal = closeAdminManagementModal;
 window.handleDienstEndeLogout = handleDienstEndeLogout;
 window.berechneDienstTage = berechneDienstTage;
 window.passwortAendern = passwortAendern;
-
