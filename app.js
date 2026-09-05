@@ -2557,6 +2557,58 @@ Die Medics haben die alleinige Entscheidung zu treffen, welche Personen nach ein
         if(btnEl) btnEl.classList.add('active');
     }
 
+    
+    function ensureExamHasDefaultHeaderFields(exam) {
+        if (!exam || !exam.questions) return exam;
+        
+        let hasDN = exam.questions.some(q => q.type === 'info_dn' || (q.text || "").toLowerCase().includes("dienstnummer des mitarbeiters"));
+        let hasPruefer = exam.questions.some(q => q.type === 'info_pruefer' || (q.text || "").toLowerCase().includes("dienstnummer des prüfers"));
+        let hasName = exam.questions.some(q => q.type === 'info_name' || (q.text || "").toLowerCase().includes("vor- und nachname"));
+        
+        let newQuestions = [];
+        if (!hasDN) {
+            newQuestions.push({
+                type: "info_dn",
+                text: "Dienstnummer des Mitarbeiters",
+                options: [],
+                correctAnswers: [],
+                points: []
+            });
+        }
+        if (!hasPruefer) {
+            newQuestions.push({
+                type: "info_pruefer",
+                text: "Dienstnummer des Prüfers",
+                options: [],
+                correctAnswers: [],
+                points: []
+            });
+        }
+        if (!hasName) {
+            newQuestions.push({
+                type: "info_name",
+                text: "Vor- und Nachname des Mitarbeiters",
+                options: [],
+                correctAnswers: [],
+                points: []
+            });
+        }
+        
+        if (newQuestions.length > 0) {
+            exam.questions = [...newQuestions, ...exam.questions];
+        }
+        
+        exam.questions.forEach((q, idx) => {
+            q.id = idx + 1;
+            if (!q.type) q.type = "choice";
+            if (q.type === 'choice' && (!q.correctAnswers || q.correctAnswers.length === 0)) {
+                q.correctAnswers = [0];
+            }
+        });
+        
+        return exam;
+    }
+
     function renderExamTab(examsData, usersData, submissionsData) {
         let rawExams = Object.assign({}, defaultExams, examsData || {});
         
@@ -3128,24 +3180,300 @@ Die Medics haben die alleinige Entscheidung zu treffen, welche Personen nach ein
     }
 
     
-    function toggleExamUnlockForUser(uId, examId, isUnlocked) {
-        db.ref(`data/users/${uId}/unlockedExams/${examId}`).set(isUnlocked).then(() => { renderStudentUnlockedExams(); if(typeof renderInstructorUnlocks !== 'undefined') renderInstructorUnlocks(cachedUsers, cachedExams); });
-        const u = cachedUsers[uId] || {}; logSystemActivity('Prüfung-Freigabe', `Die Prüfung '${examId}' wurde für ${u.vorname} ${u.nachname} ${isUnlocked ? 'freigeschaltet' : 'gesperrt'}.`);
+    
+    function isExamAllowedToSee(u, examId) {
+        if (!u) return false;
+        const eff = getUserEffectivePermissions(u);
+        if (eff.isAdmin || eff.isMasterAdmin || eff.canManageInstructors) return true;
+        if (!eff.isInstructor) return false;
+        const allowed = u.instructorAllowedSeeExams;
+        if (allowed && Object.keys(allowed).length > 0) {
+            return allowed[examId] === true;
+        }
+        return true;
     }
 
+    function isExamAllowedToManage(u, examId) {
+        if (!u) return false;
+        const eff = getUserEffectivePermissions(u);
+        if (eff.isAdmin || eff.isMasterAdmin || eff.canManageInstructors) return true;
+        if (u.canCreateExams === true) return true;
+        const allowed = u.instructorAllowedManageExams;
+        if (allowed && allowed[examId] === true) {
+            return true;
+        }
+        return false;
+    }
+
+    function canInstructorDeleteSubmission() {
+        if (!sessionUser) return false;
+        const eff = getUserEffectivePermissions(sessionUser);
+        if (eff.isAdmin || eff.isMasterAdmin || eff.canDelete) return true;
+        return eff.isInstructor && (sessionUser.canDeleteSubmissions === true);
+    }
+
+    function isExamAllowedForInstructor(examId) {
+        return isExamAllowedToSee(sessionUser, examId);
+    }
+
+    function renderInstructorAllowedExams(users, exams) {
+        // 1. Render Member Approvals Table (for Ausbildungsleitung and Admin)
+        const approvalTbody = document.getElementById('instructorMembersApprovalTableBody');
+        if (approvalTbody && users) {
+            approvalTbody.innerHTML = "";
+            Object.keys(users).forEach(uId => {
+                const u = users[uId];
+                const rolesHtml = renderUserRoleBadges(u);
+
+                const isApproved = u.status === 'approved';
+                const statusBadge = isApproved 
+                    ? `<span style="background:rgba(16,185,129,0.15); color:var(--success); border:1px solid var(--success); padding:2px 8px; border-radius:12px; font-size:10px; font-weight:800;">Zugelassen</span>`
+                    : `<span style="background:rgba(245,158,11,0.15); color:var(--warning); border:1px solid var(--warning); padding:2px 8px; border-radius:12px; font-size:10px; font-weight:800;">Gesperrt / Beantragt</span>`;
+
+                const actionButton = isApproved
+                    ? `<button class="btn" style="margin:0; width:auto; padding:4px 8px; font-size:10px; background:rgba(190,18,60,0.15); color:var(--danger); border:1px solid var(--danger); font-weight:800;" onclick="toggleInstructorUserStatus('${uId}', 'pending')">Sperren</button>`
+                    : `<button class="btn" style="margin:0; width:auto; padding:4px 8px; font-size:10px; background:rgba(16,185,129,0.15); color:var(--success); border:1px solid var(--success); font-weight:800;" onclick="toggleInstructorUserStatus('${uId}', 'approved')">Zulassen</button>`;
+
+                approvalTbody.innerHTML += `
+                <tr>
+                    <td style="white-space:normal;"><b>${u.vorname} ${u.nachname}</b></td>
+                    <td><span style="font-family:monospace; font-size:11px;">${u.dn || 'Keine DN'}</span></td>
+                    <td style="white-space:normal;"><div style="display:flex; flex-wrap:wrap; gap:3px;">${rolesHtml}</div></td>
+                    <td>${statusBadge}</td>
+                    <td style="white-space:normal;">
+                        <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
+                            ${actionButton}
+                            <button class="btn" style="margin:0; width:auto; padding:4px 8px; font-size:10px; background:rgba(168,85,247,0.15); color:#a855f7; border:1px solid #a855f7; font-weight:800;" onclick="openAssignRolesModal('${uId}')">ðŸŽ­ Rollen</button>
+                        </div>
+                    </td>
+                </tr>`;
+            });
+        }
+
+        // 2. Render Allowed Exams Table (for Ausbildungsleitung and Admin)
+        const tbody = document.getElementById('instructorAllowedExamsTableBody');
+        if (tbody && users) {
+            tbody.innerHTML = "";
+
+            Object.keys(users).forEach(uId => {
+                const u = users[uId];
+                const eff = getUserEffectivePermissions(u);
+                if (!eff.isInstructor && !eff.isAdmin) return; // Only show instructors and admins
+
+                const canCreateExams = u.canCreateExams === true;
+                const canDeleteSubmissions = u.canDeleteSubmissions === true;
+
+                const globalCheckboxes = `
+                <div style="display:flex; flex-direction:column; gap:6px;">
+                    <label style="display:inline-flex; align-items:center; gap:6px; cursor:pointer; font-size:11px; margin:0;">
+                        <input type="checkbox" ${canCreateExams ? 'checked' : ''} onchange="toggleInstructorGlobalPermission('${uId}', 'canCreateExams', this.checked)">
+                        <span>Neue Prüfungen anlegen</span>
+                    </label>
+                    <label style="display:inline-flex; align-items:center; gap:6px; cursor:pointer; font-size:11px; margin:0;">
+                        <input type="checkbox" ${canDeleteSubmissions ? 'checked' : ''} onchange="toggleInstructorGlobalPermission('${uId}', 'canDeleteSubmissions', this.checked)">
+                        <span style="color:var(--danger);">Ergebnisse löschen</span>
+                    </label>
+                </div>`;
+
+                const allowedSee = u.instructorAllowedSeeExams || {};
+                const allowedManage = u.instructorAllowedManageExams || {};
+
+                let examCompetenciesHtml = `<div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(220px, 1fr)); gap:6px; padding:4px; background:rgba(8,12,20,0.3); border-radius:8px; border:1px solid var(--border);">`;
+                
+                // Sort exams dynamically to prevent mixed representation
+                let sortedExamIds = sortExamIdsDynamically(Object.keys(exams), exams);
+                sortedExamIds.forEach(eId => {
+                    const exam = exams[eId];
+                    const isSeeChecked = allowedSee[eId] === true;
+                    const isManageChecked = allowedManage[eId] === true;
+                    examCompetenciesHtml += `
+                    <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(30,41,59,0.5); padding: 6px 10px; border-radius: 6px; border: 1px solid var(--border); gap: 8px;">
+                        <span style="font-size:11px; font-weight:700; color:var(--text-main); overflow:hidden; text-overflow:ellipsis;">${exam.title}</span>
+                        <div style="display: flex; gap: 8px; align-items:center; flex-shrink:0;">
+                            <label style="display: inline-flex; align-items: center; gap: 2px; cursor: pointer; font-size: 11px; margin:0;">
+                                <input type="checkbox" ${isSeeChecked ? 'checked' : ''} onchange="toggleInstructorExamPermission('${uId}', '${eId}', 'see', this.checked)"> ðŸ‘ï¸ Sehen
+                            </label>
+                            <label style="display: inline-flex; align-items: center; gap: 2px; cursor: pointer; font-size: 11px; margin:0;">
+                                <input type="checkbox" ${isManageChecked ? 'checked' : ''} onchange="toggleInstructorExamPermission('${uId}', '${eId}', 'manage', this.checked)"> ðŸ› ï¸ Verwalten
+                            </label>
+                        </div>
+                    </div>`;
+                });
+
+                examCompetenciesHtml += `</div>`;
+
+                tbody.innerHTML += `
+                <tr>
+                    <td style="white-space:normal; min-width:180px;">
+                        <b>${u.vorname} ${u.nachname}</b>
+                        <div style="margin-top:4px; display:flex; flex-wrap:wrap; gap:3px;">${renderUserRoleBadges(u)}</div>
+                    </td>
+                    <td style="white-space:normal; min-width:160px;">${globalCheckboxes}</td>
+                    <td style="white-space:normal;">${examCompetenciesHtml}</td>
+                </tr>`;
+            });
+        }
+    }
+
+    function toggleInstructorGlobalPermission(uId, field, value) {
+        db.ref(`data/users/${uId}/${field}`).set(value);
+    }
+
+    function toggleInstructorExamPermission(uId, examId, type, value) {
+        const node = type === 'see' ? 'instructorAllowedSeeExams' : 'instructorAllowedManageExams';
+        db.ref(`data/users/${uId}/${node}/${examId}`).set(value);
+    }
+
+    function toggleInstructorUserStatus(uId, newStatus) {
+        updateUserStatusAndPermissions(uId, newStatus).then(() => {
+            alert(`âœ… Status für ${uId.replace('_', ' ')} wurde auf '${newStatus === 'approved' ? 'Zugelassen' : 'Gesperrt'}' geändert.`);
+        });
+    }
+
+
+
+    function toggleStudentCompletedExamsCollapse() {
+        const body = document.getElementById('studentCompletedExamsContainer');
+        const header = document.getElementById('studentCompletedExamsHeader');
+        const arrow = document.getElementById('studentCompletedExamsCollapseArrow');
+        if(!body || !arrow || !header) return;
+
+        const isCollapsed = body.style.display === 'none';
+        if(isCollapsed) {
+            body.style.display = 'grid';
+            arrow.textContent = 'â–¼ Ausblenden';
+            header.style.borderBottom = '1px solid var(--border)';
+            localStorage.setItem('mmd_student_completed_collapsed', 'false');
+        } else {
+            body.style.display = 'none';
+            arrow.textContent = 'â–¶ Anzeigen';
+            header.style.borderBottom = 'none';
+            localStorage.setItem('mmd_student_completed_collapsed', 'true');
+        }
+    }
+
+    function makeContainerSortable(containerId, itemSelector, onOrderChange) {
+        if (!isUserInstructor()) return; // Restricted to instructors/admins
+        const container = document.getElementById(containerId);
+        if (!container) return;
+
+        container.querySelectorAll(itemSelector).forEach(item => {
+            if (item.dataset.sortableInit) return;
+            item.dataset.sortableInit = 'true';
+            item.setAttribute('draggable', 'true');
+            item.classList.add('draggable-item');
+
+            item.addEventListener('dragstart', (e) => {
+                item.classList.add('dragging');
+                e.dataTransfer.setData('text/plain', item.getAttribute('data-id'));
+            });
+
+            item.addEventListener('dragend', () => {
+                item.classList.remove('dragging');
+                const items = Array.from(container.querySelectorAll(itemSelector));
+                const newOrder = items.map(el => el.getAttribute('data-id'));
+                onOrderChange(newOrder);
+            });
+
+            item.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                const draggingItem = container.querySelector('.dragging');
+                if (!draggingItem) return;
+                const siblings = Array.from(container.querySelectorAll(`${itemSelector}:not(.dragging)`));
+                const nextSibling = siblings.find(sibling => {
+                    const box = sibling.getBoundingClientRect();
+                    const offset = e.clientY - box.top - box.height / 2;
+                    return offset < 0;
+                });
+                container.insertBefore(draggingItem, nextSibling);
+            });
+        });
+    }
+
+    function saveExamOrder(newOrder) {
+        db.ref("data/examOrder").set(newOrder).then(() => {
+            console.log("Exam order updated:", newOrder);
+        });
+    }
+
+    function deleteExamSubmission(subId) {
+        if (!canInstructorDeleteSubmission()) {
+            alert("âŒ Sie besitzen keine Berechtigung zum Löschen von Prüfungsergebnissen!");
+            return;
+        }
+        if (confirm("Möchtest du dieses Prüfungsergebnis wirklich unwiderruflich löschen?")) {
+            if(typeof logSystemActivity !== 'undefined') logSystemActivity('Prüfung gelöscht', `Einreichung gelöscht.`);
+            db.ref(`data/examSubmissions/${subId}`).remove().then(() => {
+                alert("âœ… Prüfungsergebnis erfolgreich gelöscht!");
+            });
+        }
+    }
+
+    function renderInstructorUnlocks(users, exams) {
+        const tbody = document.getElementById('instructorUserUnlocksTableBody');
+        if(!tbody || !users) return;
+        tbody.innerHTML = "";
+
+        Object.keys(users).forEach(uId => {
+            const u = users[uId];
+
+            const unlocked = u.unlockedExams || {};
+            const passedMap = u.passedExams || {};
+            let sortedExamIds = sortExamIdsDynamically(Object.keys(exams), exams);
+            let examCheckboxes = sortedExamIds.map(eId => {
+                if (!isExamAllowedToManage(sessionUser, eId)) return '';
+                const exam = exams[eId];
+                const isChecked = unlocked[eId] === true;
+                const isPassed = passedMap[eId] === true;
+                return `
+                <div style="display:flex; flex-direction:column; gap:4px; padding:8px 12px; background:rgba(30,41,59,0.5); border:1px solid var(--border); border-radius:10px; margin:2px; min-width:210px; text-align:left;">
+                    <div style="font-weight:700; font-size:11px; color:var(--text-main); line-height:1.2; margin-bottom:4px;">${exam.title}</div>
+                    <div style="display:flex; gap:10px; align-items:center; margin-top:2px; flex-wrap:wrap;">
+                        <label style="display:inline-flex; align-items:center; gap:4px; font-size:10px; margin:0; cursor:pointer;" title="Prüfung für Mitarbeiter freischalten">
+                            <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleExamUnlockForUser('${uId}', '${eId}', this.checked)" style="margin:0; transform:scale(0.95);">
+                            <span>ðŸ”“ Freigabe</span>
+                        </label>
+                        <label style="display:inline-flex; align-items:center; gap:4px; font-size:10px; margin:0; cursor:pointer;" title="Als bestanden markieren (Altsystem)">
+                            <input type="checkbox" ${isPassed ? 'checked' : ''} onchange="toggleExamPassedForUser('${uId}', '${eId}', this.checked)" style="margin:0; transform:scale(0.95);">
+                            <span style="color:var(--success); font-weight:700;">ðŸ† Bestanden</span>
+                        </label>
+                        <button class="btn" style="margin:0; width:auto; padding:2px 8px; font-size:10px; background:rgba(245,158,11,0.15); color:var(--warning); border:1px solid var(--warning); font-weight:700; border-radius:6px;" onclick="allowExamRetake('${uId}', '${eId}')" title="Prüfungsstatus zurücksetzen & zur Wiederholung freischalten">ðŸ”„ Reset</button>
+                    </div>
+                </div>`;
+            }).filter(h => h !== '').join('');
+
+            tbody.innerHTML += `
+            <tr>
+                <td><b>${u.vorname} ${u.nachname}</b></td>
+                <td>${u.date || '--'}</td>
+                <td>
+                    <div style="display:flex; flex-wrap:wrap; gap:6px;">
+                        ${examCheckboxes || '<span style="color:var(--text-muted); font-size:11px;">Keine Prüfungen definiert</span>'}
+                    </div>
+                </td>
+            </tr>`;
+        });
+    }
+
+    function toggleExamUnlockForUser(uId, examId, isUnlocked) {
+        db.ref(`data/users/${uId}/unlockedExams/${examId}`).set(isUnlocked);
+        const u = cachedUsers[uId] || {}; if(typeof logSystemActivity !== 'undefined') logSystemActivity('Prüfung-Freigabe', `Die Prüfung '${examId}' wurde für ${u.vorname} ${u.nachname} ${isUnlocked ? 'freigeschaltet' : 'gesperrt'}.`);
+     }
+
     function toggleExamPassedForUser(uId, examId, isPassed) {
-        const u = cachedUsers[uId] || {}; logSystemActivity('Prüfung-Status (Manuell)', `Der Status der Prüfung '${examId}' für ${u.vorname} ${u.nachname} wurde auf ${isPassed ? 'Bestanden' : 'Nicht bestanden'} gesetzt.`);
+        const u = cachedUsers[uId] || {}; if(typeof logSystemActivity !== 'undefined') logSystemActivity('Prüfung-Status (Manuell)', `Der Status der Prüfung '${examId}' für ${u.vorname} ${u.nachname} wurde auf ${isPassed ? 'Bestanden' : 'Nicht bestanden'} gesetzt.`);
         const updates = {
             [`data/users/${uId}/passedExams/${examId}`]: isPassed
         };
         
-        if (isPassed && cachedUsers[uId] && cachedUsers[uId].roles && (cachedUsers[uId].roles.ausbilder || cachedUsers[uId].roles.admin || cachedUsers[uId].roles.masteradmin)) {
+        // Auto-grant instructor permissions if they are marked passed
+        if (isPassed && cachedUsers[uId] && cachedUsers[uId].isInstructor) {
             updates[`data/users/${uId}/instructorAllowedSeeExams/${examId}`] = true;
             updates[`data/users/${uId}/instructorAllowedManageExams/${examId}`] = true;
         }
 
         db.ref().update(updates).then(() => {
-            const cleanId = (sessionUser.vorname + '_' + sessionUser.nachname).toLowerCase().replace(/[^a-z0-9_]/g, '');
+            const cleanId = (sessionUser.vorname + "_" + sessionUser.nachname).toLowerCase().replace(/[^a-z0-9_]/g, "");
             if (uId === cleanId) {
                 if (!sessionUser.passedExams) sessionUser.passedExams = {};
                 sessionUser.passedExams[examId] = isPassed;
@@ -3158,65 +3486,50 @@ Die Medics haben die alleinige Entscheidung zu treffen, welche Personen nach ein
                 sessionStorage.setItem('mmd_session_user', JSON.stringify(sessionUser));
                 localStorage.setItem('mmd_session_user', JSON.stringify(sessionUser));
             }
-            renderStudentUnlockedExams();
-            if(typeof renderInstructorUnlocks !== 'undefined') renderInstructorUnlocks(cachedUsers, cachedExams);
-            if(typeof renderInstructorSubmissions !== 'undefined') renderInstructorSubmissions(cachedSubmissions);
         });
     }
 
     function allowExamRetake(uId, examId, subId) {
         if (!isUserInstructor()) {
-            alert('⚠️ Sie besitzen keine Ausbilder-Berechtigung!');
+            alert("âŒ Sie besitzen keine Ausbilder-Berechtigung!");
             return;
         }
-        const examTitle = (cachedExams && cachedExams[examId]) ? cachedExams[examId].title : 'Prüfung';
+        const examTitle = (cachedExams && cachedExams[examId]) ? cachedExams[examId].title : "Prüfung";
         let userName = uId;
-        if (cachedUsers && cachedUsers[uId]) userName = cachedUsers[uId].vorname + ' ' + cachedUsers[uId].nachname;
-
-        if (!confirm(`Soll der Mitarbeiter '${userName}' die Prüfung '${examTitle}' wirklich wiederholen dürfen?\nDadurch wird die Prüfung erneut freigeschaltet.`)) return;
-
-        logSystemActivity('Prüfung-Wiederholung', `Für ${userName} wurde die Wiederholung der Prüfung '${examTitle}' freigeschaltet.`);
-
-        const updates = {};
-        updates[`data/users/${uId}/unlockedExams/${examId}`] = true;
-        
-        db.ref().update(updates).then(() => {
-            alert('Prüfung erfolgreich für Wiederholung freigeschaltet!');
-            renderStudentUnlockedExams();
-            if(typeof renderInstructorUnlocks !== 'undefined') renderInstructorUnlocks(cachedUsers, cachedExams);
-            if(typeof renderInstructorSubmissions !== 'undefined') renderInstructorSubmissions(cachedSubmissions);
-        }).catch(err => {
-            alert('Fehler beim Freischalten der Wiederholung: ' + err.message);
-        });
-    }
-
-    function toggleStudentCompletedExamsCollapse() {
-        const list = document.getElementById('studentCompletedExamsList');
-        const icon = document.getElementById('studentCompletedExamsIcon');
-        if (!list) return;
-        if (list.style.display === 'none') {
-            list.style.display = 'block';
-            if (icon) icon.textContent = '▼';
-        } else {
-            list.style.display = 'none';
-            if (icon) icon.textContent = '▶';
+        if (cachedUsers && cachedUsers[uId]) {
+            userName = `${cachedUsers[uId].vorname} ${cachedUsers[uId].nachname}`;
         }
-    }
-
-    function deleteExamSubmission(subId) {
-        if (!isUserInstructor()) return;
-        const sub = cachedSubmissions[subId];
-        if (!sub) return;
-        if (!confirm(`Möchtest du diese Einreichung von ${sub.userName} (Prüfung: ${sub.examTitle}) wirklich löschen?`)) return;
         
-        logSystemActivity('Prüfung gelöscht', `Einreichung von ${sub.userName} für '${sub.examTitle}' wurde gelöscht.`);
-        db.ref('data/examSubmissions/' + subId).remove().then(() => {
-            alert('Einreichung gelöscht.');
-            if(typeof renderInstructorSubmissions !== 'undefined') renderInstructorSubmissions(cachedSubmissions);
+        if (!confirm(`Möchtest du die Prüfung "${examTitle}" für ${userName} zur Wiederholung freischalten?\n\nDie Prüfung wird auf 'Freigegeben' gesetzt und der 'Bestanden'-Status wird zurückgesetzt, sodass der Prüfling sofort erneut antreten kann.`)) {
+            return;
+        }
+
+        const updates = {
+            [`data/users/${uId}/unlockedExams/${examId}`]: true,
+            [`data/users/${uId}/passedExams/${examId}`]: false
+        };
+
+        if (subId) {
+            db.ref(`data/examSubmissions/${subId}`).remove();
+        }
+
+        db.ref().update(updates).then(() => {
+            const cleanMyId = sessionUser ? (sessionUser.vorname + "_" + sessionUser.nachname).toLowerCase().replace(/[^a-z0-9_]/g, "") : "";
+            if (uId === cleanMyId) {
+                if (!sessionUser.unlockedExams) sessionUser.unlockedExams = {};
+                if (!sessionUser.passedExams) sessionUser.passedExams = {};
+                sessionUser.unlockedExams[examId] = true;
+                sessionUser.passedExams[examId] = false;
+                sessionStorage.setItem('mmd_session_user', JSON.stringify(sessionUser));
+                localStorage.setItem('mmd_session_user', JSON.stringify(sessionUser));
+            }
+            alert(`âœ… Prüfung "${examTitle}" wurde für ${userName} erfolgreich zur Wiederholung freigeschaltet!`);
+            closeSubmissionDetailsModal();
+            renderStudentUnlockedExams();
         });
     }
 
-    function renderInstructorSubmissions(submissions) {
+function renderInstructorSubmissions(submissions) {
         const tbody = document.getElementById('instructorSubmissionsTableBody');
         if(!tbody) return;
         tbody.innerHTML = "";
