@@ -27,7 +27,9 @@
             </div>
 
             <!-- NACHHER -->
+<!-- NACHHER -->
 <form id="authForm" onsubmit="event.preventDefault(); handleAuthAction();">
+    <input type="text" name="username" autocomplete="username" style="display:none;" aria-hidden="true">
     <label for="authVorname">Vorname</label>
     <input type="text" id="authVorname" placeholder="Vorname" name="authVorname" autocomplete="given-name">
     
@@ -916,15 +918,15 @@
 
             <!-- SUB-TABS -->
             <div class="admin-subtabs">
-                <button type="button" class="admin-tab-btn active" id="btnAdminSubUsers" onclick="switchAdminTab('adminSubTabUsers', this)">👥 Mitarbeiter, Rollen & Rechte</button>
-                <button type="button" class="admin-tab-btn" id="btnAdminSubHierarchy" onclick="switchAdminTab('adminSubTabHierarchy', this)">🌳 Hierarchie</button>
+                <button type="button" class="admin-tab-btn active" id="btnAdminSubUsers" onclick="switchAdminTab('adminSubTabUsers', this)">👥 Mitarbeiter-Kartei</button>
+                <button type="button" class="admin-tab-btn" id="btnAdminSubRoles" onclick="switchAdminTab('adminSubTabRoles', this)">🎭 Rollen & Berechtigungs-Matrix</button>
                 <button type="button" class="admin-tab-btn" id="btnAdminSubSystem" onclick="switchAdminTab('adminSubTabSystem', this)">💾 Backup & Wiederherstellung</button>
                 <button type="button" class="admin-tab-btn" id="btnAdminSubAudit" onclick="switchAdminTab('adminSubTabAudit', this)">📋 System-Protokoll (Heute)</button>
             </div>
 
-            <!-- SUB-TAB 1: MITARBEITER, ROLLEN & RECHTE -->
+            <!-- SUB-TAB 1: MITARBEITER-KARTEI -->
             <div id="adminSubTabUsers" class="admin-subtab-content active">
-                <div style="background:rgba(15, 23, 42, 0.7); padding:20px 24px; border-radius:16px; border:1px solid var(--border); margin-bottom:24px;">
+                <div style="background:rgba(15, 23, 42, 0.7); padding:20px 24px; border-radius:16px; border:1px solid var(--border);">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:12px;">
                         <div>
                             <h3 style="margin:0; color:var(--warning); font-size:16px;">👤 Mitarbeiter-Kartei</h3>
@@ -947,18 +949,22 @@
                         </table>
                     </div>
                 </div>
+            </div>
 
+            <!-- SUB-TAB 2: ROLLEN & RECHTE-MATRIX -->
+            <div id="adminSubTabRoles" class="admin-subtab-content">
                 <div style="background:rgba(15, 23, 42, 0.7); padding:20px 24px; border-radius:16px; border:1px solid var(--border);">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:12px;">
                         <div>
                             <h3 style="margin:0; color:var(--primary); font-size:16px;">🎭 Rollen & Berechtigungs-Matrix</h3>
-                            <span style="color:var(--text-muted); font-size:12px;">Erstelle Rollen und bestimme millimetergenau, welche Module sichtbar sind und wer was löschen darf.</span>
+                            <span style="color:var(--text-muted); font-size:12px;">Thematisch strukturierte Modulrechte, Löschberechtigungen und Kategoriensichtbarkeiten</span>
                         </div>
                         <button type="button" class="btn" style="width:auto; margin:0; padding:8px 18px; background:var(--success); color:#080c14; font-weight:800;" onclick="neueRolleErstellen()">➕ Neue Rolle erstellen</button>
                     </div>
 
                     <div style="display:grid; grid-template-columns: 280px 1fr; gap:20px;">
                         <div id="adminRolesSidebarList" style="background:rgba(8,12,20,0.6); border:1px solid var(--border); border-radius:14px; padding:12px; display:flex; flex-direction:column; gap:8px;"></div>
+                        
                         <div id="adminRoleEditorCard" style="background:rgba(30,41,59,0.35); border:1px solid var(--border); border-radius:14px; padding:20px; display:flex; flex-direction:column; gap:16px;">
                             <input type="hidden" id="editingRoleId" value="">
                             <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -972,75 +978,82 @@
                                 <div><label for="roleEditIcon">Icon:</label><input type="text" id="roleEditIcon" placeholder="z.B. 🩺" oninput="updateRoleBadgePreview()"></div>
                             </div>
 
-                            <div style="background:rgba(15,23,42,0.7); padding:16px; border-radius:12px; border:1px solid var(--border);">
-                                <h5 style="margin:0 0 12px 0; color:var(--primary); font-size:13px; text-transform:uppercase;">⚙️ Granulare Rechte & Modul-Steuerung</h5>
+                            <div style="background:rgba(15,23,42,0.7); padding:16px; border-radius:12px; border:1px solid var(--border); display:flex; flex-direction:column; gap:16px;">
                                 
-                                <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:12px;">
-                                    <div class="role-perm-box">
-                                        <label for="roleFlagAdmin" class="perm-check"><input type="checkbox" id="roleFlagAdmin"> <b>🛡️ Admin-Zugang</b></label>
-                                        <span class="perm-desc">Darf das Admin-Zentralmenü öffnen.</span>
-                                    </div>
-                                    <div class="role-perm-box">
-                                        <label for="roleFlagMasterAdmin" class="perm-check"><input type="checkbox" id="roleFlagMasterAdmin"> <b>👑 Master-Admin</b></label>
-                                        <span class="perm-desc">Vollzugriff inklusive Backup und Rollen-Konfiguration.</span>
-                                    </div>
-                                    <div class="role-perm-box">
-                                        <label for="roleFlagArchive" class="perm-check"><input type="checkbox" id="roleFlagArchive"> <b>🗄️ Schicht-Archiv</b></label>
-                                        <span class="perm-desc">Darf das Gesamt-Archiv aller vergangenen Schichten einsehen.</span>
-                                    </div>
-                                    <div class="role-perm-box">
-                                        <label for="roleFlagInstructor" class="perm-check"><input type="checkbox" id="roleFlagInstructor"> <b>🎓 Ausbilder</b></label>
-                                        <span class="perm-desc">Prüfungen freischalten (nur selbst bestandene).</span>
-                                    </div>
-                                    <div class="role-perm-box">
-                                        <label for="roleFlagManageInstructors" class="perm-check"><input type="checkbox" id="roleFlagManageInstructors"> <b>⚙️ Ausbildungsleitung</b></label>
-                                        <span class="perm-desc">Voller Ausbildungs-Zugriff & Ausbilder-Rollen vergeben.</span>
-                                    </div>
-                                    <div class="role-perm-box">
-                                        <label for="roleFlagManageExams" class="perm-check"><input type="checkbox" id="roleFlagManageExams"> <b>📝 Prüfungen anlegen/bearbeiten</b></label>
-                                        <span class="perm-desc">Darf neue Prüfungen erstellen und Fragen bearbeiten.</span>
-                                    </div>
-                                    <div class="role-perm-box">
-                                        <label for="roleFlagPostNews" class="perm-check"><input type="checkbox" id="roleFlagPostNews"> <b>📢 News direkt posten</b></label>
-                                        <span class="perm-desc">Darf Mitteilungen sofort ohne Prüfung veröffentlichen.</span>
-                                    </div>
-                                    <div class="role-perm-box">
-                                        <label for="roleFlagApproveNews" class="perm-check"><input type="checkbox" id="roleFlagApproveNews"> <b>✅ News-Vorschläge freigeben</b></label>
-                                        <span class="perm-desc">Darf eingereichte Vorschläge von Mitarbeitern annehmen.</span>
-                                    </div>
-                                    <div class="role-perm-box">
-                                        <label for="roleFlagViewNewsRead" class="perm-check"><input type="checkbox" id="roleFlagViewNewsRead"> <b>👁️ News-Leserliste einsehen</b></label>
-                                        <span class="perm-desc">Sieht genau, welche Mitarbeiter die News gelesen haben.</span>
-                                    </div>
-                                    <div class="role-perm-box">
-                                        <label for="roleFlagEditPrices" class="perm-check"><input type="checkbox" id="roleFlagEditPrices"> <b>✏️ Preise vor Ort anpassen</b></label>
-                                        <span class="perm-desc">Sieht den Stift bei Dokumentation & Einsatz.</span>
-                                    </div>
-                                    <div class="role-perm-box">
-                                        <label for="roleFlagEditGuide" class="perm-check"><input type="checkbox" id="roleFlagEditGuide"> <b>✏️ Funk & Codes bearbeiten</b></label>
-                                        <span class="perm-desc">Darf Funkcodes und Streifen vor Ort editieren.</span>
-                                    </div>
-                                    <div class="role-perm-box">
-                                        <label for="roleFlagEditCommands" class="perm-check"><input type="checkbox" id="roleFlagEditCommands"> <b>✏️ Commands bearbeiten</b></label>
-                                        <span class="perm-desc">Darf Commands vor Ort anlegen und ändern.</span>
-                                    </div>
-                                    <div class="role-perm-box">
-                                        <label for="roleFlagEditLinks" class="perm-check"><input type="checkbox" id="roleFlagEditLinks"> <b>✏️ Links bearbeiten</b></label>
-                                        <span class="perm-desc">Darf Cloud-Links vor Ort hinzufügen und pflegen.</span>
+                                <!-- THEMA: SYSTEM & ADMIN -->
+                                <div>
+                                    <h5 style="margin:0 0 10px 0; color:var(--warning); font-size:13px; text-transform:uppercase;">🛡️ System & Administration</h5>
+                                    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:10px;">
+                                        <div class="role-perm-box"><label for="roleFlagAdmin" class="perm-check"><input type="checkbox" id="roleFlagAdmin"> <b>Admin-Zugang</b></label><span class="perm-desc">Darf das Admin-Menü öffnen.</span></div>
+                                        <div class="role-perm-box"><label for="roleFlagMasterAdmin" class="perm-check"><input type="checkbox" id="roleFlagMasterAdmin"> <b>👑 Master-Admin</b></label><span class="perm-desc">Vollzugriff inkl. Rollen & Backups.</span></div>
+                                        <div class="role-perm-box"><label for="delFlagUsers" class="perm-check"><input type="checkbox" id="delFlagUsers"> <b>🗑️ Accounts löschen</b></label><span class="perm-desc">Darf Mitarbeiterkonten entfernen.</span></div>
                                     </div>
                                 </div>
 
-                                <h5 style="margin:16px 0 10px 0; color:var(--danger); font-size:13px; text-transform:uppercase;">🗑️ Modul-Spezifische Löschrechte</h5>
-                                <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:10px;">
-                                    <label for="delFlagPatient" class="perm-check"><input type="checkbox" id="delFlagPatient"> 🗑️ Protokoll-Einträge</label>
-                                    <label for="delFlagArchiv" class="perm-check"><input type="checkbox" id="delFlagArchiv"> 🗑️ Schicht-Archive</label>
-                                    <label for="delFlagGuide" class="perm-check"><input type="checkbox" id="delFlagGuide"> 🗑️ Funk & Codes</label>
-                                    <label for="delFlagCommands" class="perm-check"><input type="checkbox" id="delFlagCommands"> 🗑️ Commands</label>
-                                    <label for="delFlagLinks" class="perm-check"><input type="checkbox" id="delFlagLinks"> 🗑️ Dienst-Links</label>
-                                    <label for="delFlagNews" class="perm-check"><input type="checkbox" id="delFlagNews"> 🗑️ News</label>
-                                    <label for="delFlagExams" class="perm-check"><input type="checkbox" id="delFlagExams"> 🗑️ Prüfungen / Ergebnisse</label>
-                                    <label for="delFlagUsers" class="perm-check"><input type="checkbox" id="delFlagUsers"> 🗑️ Mitarbeiter-Accounts</label>
+                                <!-- THEMA: EINSATZ & ARCHIV -->
+                                <div>
+                                    <h5 style="margin:0 0 10px 0; color:var(--primary); font-size:13px; text-transform:uppercase;">📝 Einsatz, Preise & Archiv</h5>
+                                    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:10px;">
+                                        <div class="role-perm-box"><label for="roleFlagEditPrices" class="perm-check"><input type="checkbox" id="roleFlagEditPrices"> <b>✏️ Preise anpassen</b></label><span class="perm-desc">Materialpreise vor Ort ändern.</span></div>
+                                        <div class="role-perm-box"><label for="roleFlagArchive" class="perm-check"><input type="checkbox" id="roleFlagArchive"> <b>🗄️ Schicht-Archiv</b></label><span class="perm-desc">Wochen-Gesamtarchiv einsehen.</span></div>
+                                        <div class="role-perm-box"><label for="delFlagPatient" class="perm-check"><input type="checkbox" id="delFlagPatient"> <b>🗑️ Patienten löschen</b></label><span class="perm-desc">Protokolleinträge entfernen.</span></div>
+                                        <div class="role-perm-box"><label for="delFlagArchiv" class="perm-check"><input type="checkbox" id="delFlagArchiv"> <b>🗑️ Archive löschen</b></label><span class="perm-desc">Schichten unwiderruflich löschen.</span></div>
+                                    </div>
                                 </div>
+
+                                <!-- THEMA: NEWS -->
+                                <div>
+                                    <h5 style="margin:0 0 10px 0; color:var(--success); font-size:13px; text-transform:uppercase;">📢 News & Schwarzes Brett</h5>
+                                    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:10px;">
+                                        <div class="role-perm-box"><label for="roleFlagPostNews" class="perm-check"><input type="checkbox" id="roleFlagPostNews"> <b>News direkt posten</b></label><span class="perm-desc">Ohne Freigabe veröffentlichen.</span></div>
+                                        <div class="role-perm-box"><label for="roleFlagApproveNews" class="perm-check"><input type="checkbox" id="roleFlagApproveNews"> <b>Vorschläge annehmen</b></label><span class="perm-desc">Mitarbeiter-News freigeben.</span></div>
+                                        <div class="role-perm-box"><label for="roleFlagViewNewsRead" class="perm-check"><input type="checkbox" id="roleFlagViewNewsRead"> <b>👁️ Gelesen-Liste</b></label><span class="perm-desc">Sieht wer die News gelesen hat.</span></div>
+                                        <div class="role-perm-box"><label for="delFlagNews" class="perm-check"><input type="checkbox" id="delFlagNews"> <b>🗑️ News löschen</b></label><span class="perm-desc">Beiträge dauerhaft entfernen.</span></div>
+                                    </div>
+                                </div>
+
+                                <!-- THEMA: AUSBILDUNG -->
+                                <div>
+                                    <h5 style="margin:0 0 10px 0; color:#c084fc; font-size:13px; text-transform:uppercase;">🎓 Ausbildung & Prüfungen</h5>
+                                    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:10px;">
+                                        <div class="role-perm-box"><label for="roleFlagInstructor" class="perm-check"><input type="checkbox" id="roleFlagInstructor"> <b>Ausbilder-Modus</b></label><span class="perm-desc">Freischalten bestandener Prüfungen.</span></div>
+                                        <div class="role-perm-box"><label for="roleFlagManageInstructors" class="perm-check"><input type="checkbox" id="roleFlagManageInstructors"> <b>⚙️ Ausbildungsleitung</b></label><span class="perm-desc">Vergabe von Ausbilderrollen.</span></div>
+                                        <div class="role-perm-box"><label for="roleFlagManageExams" class="perm-check"><input type="checkbox" id="roleFlagManageExams"> <b>✏️ Prüfungen bauen</b></label><span class="perm-desc">Prüfungen & Fragen anlegen/editieren.</span></div>
+                                        <div class="role-perm-box"><label for="delFlagExams" class="perm-check"><input type="checkbox" id="delFlagExams"> <b>🗑️ Prüfungen löschen</b></label><span class="perm-desc">Prüfungen & Ergebnisse löschen.</span></div>
+                                    </div>
+                                </div>
+
+                                <!-- THEMA: FUNK & CODES -->
+                                <div>
+                                    <h5 style="margin:0 0 10px 0; color:var(--text-main); font-size:13px; text-transform:uppercase;">📋 Funk & Codes</h5>
+                                    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:10px;">
+                                        <div class="role-perm-box"><label for="roleFlagEditGuide" class="perm-check"><input type="checkbox" id="roleFlagEditGuide"> <b>✏️ Codes bearbeiten</b></label><span class="perm-desc">Codes vor Ort bearbeiten.</span></div>
+                                        <div class="role-perm-box"><label for="delFlagGuide" class="perm-check"><input type="checkbox" id="delFlagGuide"> <b>🗑️ Codes löschen</b></label><span class="perm-desc">Codes-Einträge entfernen.</span></div>
+                                    </div>
+                                </div>
+
+                                <!-- THEMA: COMMANDS KATEGORIEN & RECHTE -->
+                                <div>
+                                    <h5 style="margin:0 0 10px 0; color:var(--primary); font-size:13px; text-transform:uppercase;">💻 Commands (Verwaltung & Sichtbare Kategorien)</h5>
+                                    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:10px; margin-bottom:10px;">
+                                        <div class="role-perm-box"><label for="roleFlagEditCommands" class="perm-check"><input type="checkbox" id="roleFlagEditCommands"> <b>✏️ Commands bearbeiten</b></label><span class="perm-desc">Befehle anlegen und ändern.</span></div>
+                                        <div class="role-perm-box"><label for="delFlagCommands" class="perm-check"><input type="checkbox" id="delFlagCommands"> <b>🗑️ Commands löschen</b></label><span class="perm-desc">Commands entfernen.</span></div>
+                                    </div>
+                                    <span style="font-size:12px; font-weight:700; color:var(--text-muted); display:block; margin-bottom:6px;">Sichtbare Kategorien für diese Rolle (Leer lassen = Alle Kategorien sichtbar):</span>
+                                    <div id="roleCommandsCategoriesContainer" style="display:flex; flex-wrap:wrap; gap:8px; background:rgba(8,12,20,0.5); padding:10px; border-radius:8px; border:1px solid var(--border);"></div>
+                                </div>
+
+                                <!-- THEMA: LINKS KATEGORIEN & RECHTE -->
+                                <div>
+                                    <h5 style="margin:0 0 10px 0; color:var(--primary); font-size:13px; text-transform:uppercase;">🔗 Links & Dokumente (Verwaltung & Sichtbare Kategorien)</h5>
+                                    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:10px; margin-bottom:10px;">
+                                        <div class="role-perm-box"><label for="roleFlagEditLinks" class="perm-check"><input type="checkbox" id="roleFlagEditLinks"> <b>✏️ Links bearbeiten</b></label><span class="perm-desc">Links anlegen und ändern.</span></div>
+                                        <div class="role-perm-box"><label for="delFlagLinks" class="perm-check"><input type="checkbox" id="delFlagLinks"> <b>🗑️ Links löschen</b></label><span class="perm-desc">Links entfernen.</span></div>
+                                    </div>
+                                    <span style="font-size:12px; font-weight:700; color:var(--text-muted); display:block; margin-bottom:6px;">Sichtbare Kategorien für diese Rolle (Leer lassen = Alle Kategorien sichtbar):</span>
+                                    <div id="roleLinksCategoriesContainer" style="display:flex; flex-wrap:wrap; gap:8px; background:rgba(8,12,20,0.5); padding:10px; border-radius:8px; border:1px solid var(--border);"></div>
+                                </div>
+
                             </div>
 
                             <div style="display:flex; justify-content:space-between; margin-top:10px;">
@@ -1049,22 +1062,6 @@
                             </div>
                         </div>
                     </div>
-                </div>
-            </div>
-
-            <!-- SUB-TAB 2: HIERARCHIE -->
-            <div id="adminSubTabHierarchy" class="admin-subtab-content">
-                <div style="background:rgba(56, 189, 248, 0.04); padding:20px; border-radius:16px; border:1px solid rgba(56, 189, 248, 0.25);">
-                    <h3 style="margin:0 0 14px 0; color:var(--primary);">🌳 Hierarchie Board Textanpassungen</h3>
-                    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap:14px; margin-bottom:18px;">
-                        <div style="background:rgba(15,23,42,0.6); padding:14px; border-radius:10px; border:1px solid var(--border);">
-                            <h4 style="margin:0 0 10px 0; color:var(--primary);">Chiefebene</h4>
-                            <label for="inp_h_chief_01">Chief 1</label><input type="text" id="inp_h_chief_01">
-                            <label for="inp_h_chief_02">Chief 2</label><input type="text" id="inp_h_chief_02">
-                            <label for="inp_h_chief_03">Chief 3</label><input type="text" id="inp_h_chief_03">
-                        </div>
-                    </div>
-                    <button type="button" class="btn" style="width:auto; padding:10px 24px; background:var(--primary); color:#080c14;" onclick="speichereHierarchieDaten()">💾 Hierarchie speichern</button>
                 </div>
             </div>
 

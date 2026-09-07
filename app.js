@@ -309,7 +309,9 @@ function getUserEffectivePermissions(user) {
         isInstructor:false, canManageInstructors:false, canManageExams:false,
         canPostNews:false, canApproveNews:false, canViewNewsRead:false,
         canEditPrices:false, canEditGuide:false, canEditCommands:false, canEditLinks:false,
-        delPatient:false, delArchiv:false, delGuide:false, delCommands:false, delLinks:false, delNews:false, delExams:false, delUsers:false
+        delPatient:false, delArchiv:false, delGuide:false, delCommands:false, delLinks:false, delNews:false, delExams:false, delUsers:false,
+        allowedCmdKats: [],
+        allowedLinkKats: []
     };
     if (!user) return eff;
 
@@ -318,17 +320,25 @@ function getUserEffectivePermissions(user) {
         const role = cachedRoles[rId] || defaultRoles[rId];
         if (!role) return;
         Object.keys(eff).forEach(prop => {
-            if (role[prop]) eff[prop] = true;
+            if (prop === 'allowedCmdKats' || prop === 'allowedLinkKats') {
+                if (role[prop] && Array.isArray(role[prop])) {
+                    eff[prop] = [...new Set([...eff[prop], ...role[prop]])];
+                }
+            } else if (role[prop]) {
+                eff[prop] = true;
+            }
         });
     });
 
     Object.keys(eff).forEach(k => {
-        if (user[k]) eff[k] = true;
+        if (k !== 'allowedCmdKats' && k !== 'allowedLinkKats' && user[k]) eff[k] = true;
     });
 
     const v = (user.vorname||'').trim().toLowerCase(), n = (user.nachname||'').trim().toLowerCase();
     if (v === 'tim' && n === 'sanddorn') {
-        Object.keys(eff).forEach(k => eff[k] = true);
+        Object.keys(eff).forEach(k => {
+            if (k !== 'allowedCmdKats' && k !== 'allowedLinkKats') eff[k] = true;
+        });
     }
     return eff;
 }
@@ -1226,10 +1236,15 @@ function saveGuideInline() {
 function renderCommandsTab(obj) {
     const cont = document.getElementById('commandsAccordionContainer'); if (!cont) return;
     const all = Object.assign({}, defaultCommands, obj || {});
-    const kats = [...new Set(Object.values(all).map(c => c.kat || 'Allgemein'))].sort();
+    let kats = [...new Set(Object.values(all).map(c => c.kat || 'Allgemein'))].sort();
     const eff = sessionUser ? getUserEffectivePermissions(sessionUser) : {};
 
-    if (!kats.length) { cont.innerHTML = '<p style="color:var(--text-muted);text-align:center;padding:24px;">Keine Commands verfügbar.</p>'; return; }
+    // Filter nach Rollenberechtigung (wenn leer definiert = alle sichtbar, außer Master-Admin sieht immer alles)
+    if (!eff.isMasterAdmin && eff.allowedCmdKats && eff.allowedCmdKats.length > 0) {
+        kats = kats.filter(k => eff.allowedCmdKats.includes(k));
+    }
+
+    if (!kats.length) { cont.innerHTML = '<p style="color:var(--text-muted);text-align:center;padding:24px;">Keine Commands für deinen Dienstgrad freigegeben.</p>'; return; }
 
     cont.innerHTML = kats.map(kat => {
         const cmds = Object.entries(all).filter(([,c]) => (c.kat || 'Allgemein') === kat);
@@ -1306,6 +1321,7 @@ function addCommandInline() {
     db.ref('data/dienstCommands').push({ name, desc, kat }).then(() => {
         alert('✅ Command angelegt!');
         closeCommandsInlineModal();
+        refreshOpenRoleCategoryCheckboxes();
     });
 }
 
@@ -1331,10 +1347,15 @@ function deleteDienstCommand(k) {
 function renderLinksTab(obj) {
     const cont = document.getElementById('linksAccordionContainer'); if (!cont) return;
     const allLinks = Object.assign({}, defaultLinks, obj || {});
-    const kats = [...new Set(Object.values(allLinks).map(l => l.kat || l.thema || 'Allgemein'))].sort();
+    let kats = [...new Set(Object.values(allLinks).map(l => l.kat || l.thema || 'Allgemein'))].sort();
     const eff = sessionUser ? getUserEffectivePermissions(sessionUser) : {};
 
-    if (!kats.length) { cont.innerHTML = '<p style="color:var(--text-muted);text-align:center;padding:24px;">Keine Links freigegeben.</p>'; return; }
+    // Filter nach Rollenberechtigung (wenn leer definiert = alle sichtbar, außer Master-Admin sieht immer alles)
+    if (!eff.isMasterAdmin && eff.allowedLinkKats && eff.allowedLinkKats.length > 0) {
+        kats = kats.filter(k => eff.allowedLinkKats.includes(k));
+    }
+
+    if (!kats.length) { cont.innerHTML = '<p style="color:var(--text-muted);text-align:center;padding:24px;">Keine Links für deinen Dienstgrad freigegeben.</p>'; return; }
 
     cont.innerHTML = kats.map(kat => {
         const lnks = Object.entries(allLinks).filter(([, l]) => (l.kat || l.thema || 'Allgemein') === kat);
@@ -1420,6 +1441,7 @@ function addLinkInline() {
     db.ref('data/dienstLinks').push({ name, url, desc, kat }).then(() => {
         alert('✅ Link gespeichert!');
         closeLinksInlineModal();
+        refreshOpenRoleCategoryCheckboxes();
     });
 }
 
@@ -2268,6 +2290,40 @@ function renderAdminRolesList() {
     `).join('');
 }
 
+// Hilfsfunktion: Baut dynamisch Checkboxen für alle existierenden Kategorien auf
+function renderRoleCategoryCheckboxes(containerId, allItems, selectedList = []) {
+    const cont = document.getElementById(containerId);
+    if (!cont) return;
+    const kats = [...new Set(Object.values(allItems).map(i => i.kat || i.thema || 'Allgemein'))].sort();
+    if (!kats.length) {
+        cont.innerHTML = '<span style="color:var(--text-muted);font-size:12px;">Keine Kategorien vorhanden.</span>';
+        return;
+    }
+    cont.innerHTML = kats.map(k => `
+        <label style="display:inline-flex;align-items:center;gap:6px;background:rgba(30,41,59,0.5);padding:4px 10px;border-radius:6px;font-size:12px;cursor:pointer;">
+            <input type="checkbox" class="${containerId}_check" value="${k}" ${selectedList.includes(k) ? 'checked' : ''}>
+            <span>${k}</span>
+        </label>
+    `).join('');
+}
+
+function refreshOpenRoleCategoryCheckboxes() {
+    const curRoleId = document.getElementById('editingRoleId')?.value;
+    if (!curRoleId) return;
+    const r = cachedRoles[curRoleId] || {};
+
+    db.ref('data/dienstCommands').once('value', sCmd => {
+        const allCmds = Object.assign({}, defaultCommands, sCmd.val() || {});
+        renderRoleCategoryCheckboxes('roleCommandsCategoriesContainer', allCmds, r.allowedCmdKats || []);
+    });
+
+    db.ref('data/dienstLinks').once('value', sLnk => {
+        const allLnks = Object.assign({}, defaultLinks, sLnk.val() || {});
+        renderRoleCategoryCheckboxes('roleLinksCategoriesContainer', allLnks, r.allowedLinkKats || []);
+    });
+}
+
+// Wird aufgerufen, wenn du links eine bestehende Rolle anklickst
 function selectRole(roleId) {
     const r = cachedRoles[roleId]; if (!r) return;
     document.getElementById('editingRoleId').value = roleId;
@@ -2275,6 +2331,7 @@ function selectRole(roleId) {
     document.getElementById('roleEditColor').value = r.color || '#38bdf8';
     document.getElementById('roleEditIcon').value = r.icon || '';
 
+    // Alle Berechtigungs-Checkboxen abgleichen
     const fields = [
         'roleFlagAdmin','roleFlagMasterAdmin','roleFlagArchive',
         'roleFlagInstructor','roleFlagManageInstructors','roleFlagManageExams',
@@ -2288,6 +2345,30 @@ function selectRole(roleId) {
         const chk = document.getElementById(fId);
         if (chk) chk.checked = !!r[key];
     });
+
+    // Lösch-Button sperren, falls es eine geschützte System-Rolle ist
+    const btnDel = document.getElementById('btnDeleteRole');
+    const protectedRoles = ['masteradmin', 'admin', 'mitarbeiter', 'ausbilder', 'ausbildungsleitung'];
+    if (btnDel) {
+        if (protectedRoles.includes(roleId) || r.isSystem) {
+            btnDel.style.display = 'none';
+        } else {
+            btnDel.style.display = 'inline-block';
+        }
+    }
+
+    // Kategorien für Commands laden und Haken setzen
+    db.ref('data/dienstCommands').once('value', sCmd => {
+        const allCmds = Object.assign({}, defaultCommands, sCmd.val() || {});
+        renderRoleCategoryCheckboxes('roleCommandsCategoriesContainer', allCmds, r.allowedCmdKats || []);
+    });
+
+    // Kategorien für Links & Dokumente laden und Haken setzen
+    db.ref('data/dienstLinks').once('value', sLnk => {
+        const allLnks = Object.assign({}, defaultLinks, sLnk.val() || {});
+        renderRoleCategoryCheckboxes('roleLinksCategoriesContainer', allLnks, r.allowedLinkKats || []);
+    });
+
     updateRoleBadgePreview();
 }
 
@@ -2300,14 +2381,46 @@ function updateRoleBadgePreview() {
     p.style.color = c; p.style.background = c + '22'; p.style.border = `1px solid ${c}44`;
 }
 
+// Setzt die Maske zurück, wenn du auf "➕ Neue Rolle erstellen" klickst
 function neueRolleErstellen() {
-    document.getElementById('editingRoleId').value = 'role_' + Date.now();
+    const newId = 'role_' + Date.now();
+    document.getElementById('editingRoleId').value = newId;
     document.getElementById('roleEditName').value = '';
+    document.getElementById('roleEditColor').value = '#38bdf8';
+    document.getElementById('roleEditIcon').value = '🎭';
+    
+    const btnDel = document.getElementById('btnDeleteRole');
+    if (btnDel) btnDel.style.display = 'none';
+    
+    // Alle Checkboxen leeren
+    document.querySelectorAll('#adminRoleEditorCard input[type="checkbox"]').forEach(c => c.checked = false);
+
+    // Kategorien-Listen ohne Haken rendern
+    db.ref('data/dienstCommands').once('value', sCmd => {
+        const allCmds = Object.assign({}, defaultCommands, sCmd.val() || {});
+        renderRoleCategoryCheckboxes('roleCommandsCategoriesContainer', allCmds, []);
+    });
+
+    db.ref('data/dienstLinks').once('value', sLnk => {
+        const allLnks = Object.assign({}, defaultLinks, sLnk.val() || {});
+        renderRoleCategoryCheckboxes('roleLinksCategoriesContainer', allLnks, []);
+    });
+
     updateRoleBadgePreview();
 }
 
+// Speichert alle Daten inklusive der angehakten Kategorien in Firebase
 function speichereRolle() {
     const id = document.getElementById('editingRoleId')?.value; if (!id) return;
+
+    // Sammelt alle angehakten Commands-Kategorien ein
+    const allowedCmds = [];
+    document.querySelectorAll('.roleCommandsCategoriesContainer_check:checked').forEach(c => allowedCmds.push(c.value));
+
+    // Sammelt alle angehakten Links-Kategorien ein
+    const allowedLnks = [];
+    document.querySelectorAll('.roleLinksCategoriesContainer_check:checked').forEach(c => allowedLnks.push(c.value));
+
     const r = {
         id,
         name: document.getElementById('roleEditName')?.value.trim() || id,
@@ -2333,21 +2446,54 @@ function speichereRolle() {
         delLinks: !!document.getElementById('delFlagLinks')?.checked,
         delNews: !!document.getElementById('delFlagNews')?.checked,
         delExams: !!document.getElementById('delFlagExams')?.checked,
-        delUsers: !!document.getElementById('delFlagUsers')?.checked
+        delUsers: !!document.getElementById('delFlagUsers')?.checked,
+        allowedCmdKats: allowedCmds,
+        allowedLinkKats: allowedLnks
     };
+
     db.ref('data/roles/' + id).set(r).then(() => {
         cachedRoles[id] = r;
         renderAdminRolesList();
-        alert('✅ Rolle gespeichert!');
+        alert('✅ Rolle erfolgreich gespeichert!');
     });
 }
 
 function loescheRolle() {
     const id = document.getElementById('editingRoleId')?.value;
-    if (id && confirm('Rolle wirklich löschen?')) {
+    if (!id) {
+        alert('Keine Rolle ausgewählt!');
+        return;
+    }
+
+    const role = cachedRoles[id] || defaultRoles[id];
+    
+    // System-Rollen vor versehentlichem Löschen schützen
+    const protectedSystemRoles = ['masteradmin', 'admin', 'mitarbeiter', 'ausbilder', 'ausbildungsleitung'];
+    if (protectedSystemRoles.includes(id) || role?.isSystem) {
+        alert(`⛔ Die Standard-Systemrolle "${role?.name || id}" kann nicht gelöscht werden!`);
+        return;
+    }
+
+    if (confirm(`Möchtest du die Rolle "${role?.name || id}" wirklich dauerhaft löschen?\n\nHinweis: Sie wird auch automatisch bei allen Mitarbeitern entfernt.`)) {
+        // 1. Aus der Rollen-Datenbank entfernen
         db.ref('data/roles/' + id).remove().then(() => {
             delete cachedRoles[id];
+
+            // 2. Rolle bei allen betroffenen Nutzern abziehen
+            db.ref('data/users').once('value', snap => {
+                const users = snap.val() || {};
+                Object.keys(users).forEach(uId => {
+                    if (users[uId]?.roles && users[uId].roles[id]) {
+                        db.ref(`data/users/${uId}/roles/${id}`).remove();
+                    }
+                });
+            });
+
+            // 3. UI aktualisieren & Formular zurücksetzen
             renderAdminRolesList();
+            neueRolleErstellen();
+            logAdminAudit('Rolle gelöscht', `${sessionUser.vorname} ${sessionUser.nachname} hat die Rolle "${role?.name || id}" gelöscht.`);
+            alert('✅ Rolle erfolgreich gelöscht!');
         });
     }
 }
