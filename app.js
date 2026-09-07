@@ -627,7 +627,35 @@ function startPresenceWatcher() {
 /* ── REITER 1: DOKUMENTATION & EINSATZ ─────────────────────── */
 function stepVerletzungenAnzahl(d) {
     anzahlVerletzungenFall = Math.max(1, anzahlVerletzungenFall + d);
-    const el = document.getElementById('val_pVerletzungenAnzahl'); if (el) el.textContent = anzahlVerletzungenFall;
+    const el = document.getElementById('val_pVerletzungenAnzahl'); 
+    if (el) el.textContent = anzahlVerletzungenFall;
+
+    // Falls ein Szenario gewählt ist, Verbrauch automatisch mit der Anzahl skalieren
+    const sz = document.getElementById('verletzungSelect')?.value;
+    if (sz && szenarioTemplates[sz]) {
+        const tpl = szenarioTemplates[sz];
+        Object.keys(materialKatalog).forEach(k => {
+            if (k === 'mat_wasser') return;
+            const baseQty = tpl[k] || 0;
+            fallMaterial[k] = baseQty * anzahlVerletzungenFall;
+            const e = document.getElementById('val_' + k);
+            if (e) e.textContent = fallMaterial[k];
+        });
+    }
+
+    // Wasser-Automatik anpassen
+    fallMaterial['mat_wasser'] = anzahlVerletzungenFall;
+    const we = document.getElementById('val_mat_wasser');
+    if (we) we.textContent = anzahlVerletzungenFall;
+
+    // Gesamtausgaben live neu berechnen
+    let total = 0;
+    Object.keys(fallMaterial).forEach(k => {
+        if (materialKatalog[k]) total += fallMaterial[k] * materialKatalog[k].preis;
+    });
+    aktuellerFallKosten = total;
+    const ke = document.getElementById('val_pKosten');
+    if (ke) ke.textContent = '$' + total;
 }
 function stepKosten(d) {
     aktuellerFallKosten = Math.max(0, aktuellerFallKosten + d);
@@ -645,21 +673,32 @@ function ladeCheckliste() {
     const sel = document.getElementById('verletzungSelect'), cont = document.getElementById('checklisteContainer');
     if (!sel || !cont) return;
     const sz = sel.value;
-    if (!sz) { cont.innerHTML = '<p style="color:var(--text-muted);font-size:12px;">Wähle links ein Szenario aus, um die Schritte zu sehen.</p>'; return; }
+    if (!sz) { 
+        cont.innerHTML = '<p style="color:var(--text-muted);font-size:12px;">Wähle links ein Szenario aus, um die Schritte zu sehen.</p>'; 
+        return; 
+    }
     const schritte = medicDatenbank[sz] || [];
     cont.innerHTML = schritte.map((s, i) => `<div class="todo-item" id="todo_${i}" onclick="toggleTodo(${i})"><input type="checkbox" id="check_${i}" onclick="event.stopPropagation();toggleTodo(${i})"><span>${s}</span></div>`).join('');
     
     const tpl = szenarioTemplates[sz] || {};
     Object.keys(materialKatalog).forEach(k => {
-        fallMaterial[k] = tpl[k] || 0;
-        const e = document.getElementById('val_' + k); if (e) e.textContent = fallMaterial[k];
+        if (k === 'mat_wasser') return;
+        const baseQty = tpl[k] || 0;
+        fallMaterial[k] = baseQty * anzahlVerletzungenFall;
+        const e = document.getElementById('val_' + k); 
+        if (e) e.textContent = fallMaterial[k];
     });
     fallMaterial['mat_wasser'] = anzahlVerletzungenFall;
-    const we = document.getElementById('val_mat_wasser'); if (we) we.textContent = anzahlVerletzungenFall;
+    const we = document.getElementById('val_mat_wasser'); 
+    if (we) we.textContent = anzahlVerletzungenFall;
     
-    let total = 0; Object.keys(fallMaterial).forEach(k => { if (materialKatalog[k]) total += fallMaterial[k] * materialKatalog[k].preis; });
+    let total = 0; 
+    Object.keys(fallMaterial).forEach(k => { 
+        if (materialKatalog[k]) total += fallMaterial[k] * materialKatalog[k].preis; 
+    });
     aktuellerFallKosten = total;
-    const ke = document.getElementById('val_pKosten'); if (ke) ke.textContent = '$' + total;
+    const ke = document.getElementById('val_pKosten'); 
+    if (ke) ke.textContent = '$' + total;
 }
 
 function toggleTodo(idx) {
