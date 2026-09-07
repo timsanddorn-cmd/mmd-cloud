@@ -271,7 +271,8 @@ let hierarchieDaten = {
     dept_psych_l:"Aktuell nicht belegt",  dept_psych_sl:"Aktuell nicht belegt",
     dept_perso_l:"Aktuell nicht belegt",  dept_perso_sl:"Aktuell nicht belegt",
     dept_ausb_l:"Aktuell nicht belegt",   dept_ausb_sl:"Aktuell nicht belegt",
-    dept_luft_l:"Gleich die Ausbildungsleitung", dept_luft_sl:"Aktuell nicht belegt"
+    dept_luft_l:"Gleich die Ausbildungsleitung", dept_luft_sl:"Aktuell nicht belegt",
+    a_emt_count:"2", emt_count:"0"
 };
 
 /* ── Audit Logger ──────────────────────────────────────────── */
@@ -438,6 +439,9 @@ function applyUserPermissions(user) {
 
     const lEdit = document.getElementById('btnEditLinksInline');
     if (lEdit) lEdit.style.display = eff.canEditLinks ? 'inline-block' : 'none';
+
+const hEdit = document.getElementById('btnEditHierarchieInline');
+    if (hEdit) hEdit.style.display = (eff.isAdmin || eff.isMasterAdmin) ? 'inline-block' : 'none';
 
     const aBtn = document.getElementById('btnOpenWeeklyArchive');
     if (aBtn) aBtn.style.display = (eff.canViewArchive || eff.isAdmin) ? 'inline-block' : 'none';
@@ -1003,15 +1007,86 @@ function renderHierarchieBoard(hData) {
         if (i && document.activeElement !== i) i.value = (val !== 'Aktuell nicht belegt' && val !== '#REF!') ? val : '';
     });
 }
-function speichereHierarchieDaten() {
+
+function openHierarchieInlineModal() {
+    const cont = document.getElementById('hierarchieInlineEditorContainer');
+    if (!cont) return;
+
+    const fields = [
+        { grp: "⭐ Chiefebene", items: [
+            { k: "chief_01", label: "01 Chief of SAMD" },
+            { k: "chief_02", label: "02 Ass. Chief of SAMD" },
+            { k: "chief_03", label: "03 Deputy Chief of SAMD" }
+        ]},
+        { grp: "🏢 Abteilungsleitungen", items: [
+            { k: "dept_psych_l", label: "Psychologie (Leitung)" },
+            { k: "dept_psych_sl", label: "Psychologie (Stellv. Leitung)" },
+            { k: "dept_perso_l", label: "Personal (Leitung)" },
+            { k: "dept_perso_sl", label: "Personal (Stellv. Leitung)" },
+            { k: "dept_ausb_l", label: "Ausbildung (Leitung)" },
+            { k: "dept_ausb_sl", label: "Ausbildung (Stellv. Leitung)" },
+            { k: "dept_luft_l", label: "Luftrettung (Leitung)" },
+            { k: "dept_luft_sl", label: "Luftrettung (Stellv. Leitung)" }
+        ]},
+        { grp: "🎖️ High Command", items: [
+            { k: "domo_04", label: "04 D.o.M.O" },
+            { k: "domo_04_sub", label: "04 Zusatzinfo / Stellv." },
+            { k: "fod_05", label: "05 F.o.D" },
+            { k: "fod_05_sub", label: "05 Zusatzinfo / Stellv." },
+            { k: "chiefphys_06", label: "06 Chief Physician" },
+            { k: "chiefphys_07", label: "07 Chief Physician" },
+            { k: "lt_08", label: "08 Lieutenant" },
+            { k: "lt_09", label: "09 Lieutenant" }
+        ]},
+        { grp: "🩺 Low Command (Belegungszahlen)", items: [
+            { k: "a_emt_count", label: "A-EMT (Anzahl Belegung)" },
+            { k: "emt_count", label: "EMT (Anzahl Belegung)" }
+        ]}
+    ];
+
+    cont.innerHTML = `
+        <div style="display:flex;flex-direction:column;gap:16px;">
+            ${fields.map(g => `
+                <div style="background:rgba(15,23,42,0.6);padding:14px;border-radius:10px;border:1px solid var(--border);">
+                    <h4 style="margin:0 0 10px 0;color:var(--primary);font-size:14px;">${g.grp}</h4>
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(240px, 1fr));gap:10px;">
+                        ${g.items.map(item => `
+                            <div>
+                                <label for="inline_h_${item.k}" style="font-size:11px;margin-bottom:4px;">${item.label}</label>
+                                <input type="text" id="inline_h_${item.k}" value="${hierarchieDaten[item.k] !== 'Aktuell nicht belegt' ? (hierarchieDaten[item.k] || '') : ''}" placeholder="Aktuell nicht belegt">
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `).join('')}
+
+            <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:8px;">
+                <button type="button" class="btn" style="width:auto;background:var(--text-muted);" onclick="closeHierarchieInlineModal()">Abbrechen</button>
+                <button type="button" class="btn" style="width:auto;background:var(--success);color:#080c14;font-weight:800;" onclick="saveHierarchieInline()">💾 Hierarchie speichern</button>
+            </div>
+        </div>
+    `;
+
+    document.getElementById('hierarchieInlineModal').style.display = 'flex';
+}
+
+function closeHierarchieInlineModal() {
+    document.getElementById('hierarchieInlineModal').style.display = 'none';
+}
+
+function saveHierarchieInline() {
     if (!sessionUser || !getUserEffectivePermissions(sessionUser).isAdmin) return;
-    Object.keys(hierarchieDaten).forEach(k => {
-        const e = document.getElementById('inp_h_' + k);
-        if (e) hierarchieDaten[k] = e.value.trim() || 'Aktuell nicht belegt';
+
+    const allInputs = document.querySelectorAll('#hierarchieInlineEditorContainer input');
+    allInputs.forEach(inp => {
+        const key = inp.id.replace('inline_h_', '');
+        hierarchieDaten[key] = inp.value.trim() || 'Aktuell nicht belegt';
     });
+
     db.ref('data/hierarchie').set(hierarchieDaten).then(() => {
-        logAdminAudit('Hierarchie aktualisiert', `${sessionUser.vorname} ${sessionUser.nachname} hat das Hierarchie-Board gespeichert.`);
-        alert('✅ Hierarchie gespeichert!');
+        logAdminAudit('Hierarchie vor Ort aktualisiert', `${sessionUser.vorname} ${sessionUser.nachname} hat das Hierarchie-Board gespeichert.`);
+        closeHierarchieInlineModal();
+        alert('✅ Hierarchie erfolgreich aktualisiert!');
     });
 }
 
@@ -2337,3 +2412,6 @@ _w.vollstaendigerReset = vollstaendigerReset; _w.renderAdminAuditLogs = renderAd
 _w.openAuditLogArchiveModal = openAuditLogArchiveModal; _w.closeAuditArchiveModal = closeAuditArchiveModal;
 _w.editCommandInline = editCommandInline;
 _w.editLinkInline = editLinkInline;
+_w.openHierarchieInlineModal = openHierarchieInlineModal;
+_w.closeHierarchieInlineModal = closeHierarchieInlineModal;
+_w.saveHierarchieInline = saveHierarchieInline;
