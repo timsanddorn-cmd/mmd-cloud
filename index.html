@@ -26,23 +26,24 @@
                 <button type="button" id="tabRegisterBtn" class="auth-tab-btn" onclick="toggleAuthTab('register')">Registrieren</button>
             </div>
 
-            <div id="authForm">
-                <label for="authVorname">Vorname</label>
-                <input type="text" id="authVorname" placeholder="Vorname" name="authVorname" autocomplete="given-name">
-                
-                <label for="authNachname">Nachname</label>
-                <input type="text" id="authNachname" placeholder="Nachname" name="authNachname" autocomplete="family-name">
-                
-                <label for="authPassword">Passwort</label>
-                <input type="password" id="authPassword" name="authPassword" autocomplete="current-password" placeholder="Passwort">
-                
-                <div id="authDNContainer" style="display:none;">
-                    <label for="authDN">Dienstnummer (DN)</label>
-                    <input type="text" id="authDN" placeholder="z.B. DN 42" name="authDN">
-                </div>
-                
-                <button type="button" class="btn" id="mainAuthActionBtn" onclick="handleAuthAction()" style="margin-top:20px;">Dienst antreten</button>
-            </div>
+            <!-- NACHHER -->
+<form id="authForm" onsubmit="event.preventDefault(); handleAuthAction();">
+    <label for="authVorname">Vorname</label>
+    <input type="text" id="authVorname" placeholder="Vorname" name="authVorname" autocomplete="given-name">
+    
+    <label for="authNachname">Nachname</label>
+    <input type="text" id="authNachname" placeholder="Nachname" name="authNachname" autocomplete="family-name">
+    
+    <label for="authPassword">Passwort</label>
+    <input type="password" id="authPassword" name="authPassword" autocomplete="current-password" placeholder="Passwort">
+    
+    <div id="authDNContainer" style="display:none;">
+        <label for="authDN">Dienstnummer (DN)</label>
+        <input type="text" id="authDN" placeholder="z.B. DN 42" name="authDN">
+    </div>
+    
+    <button type="button" class="btn" id="mainAuthActionBtn" onclick="handleAuthAction()" style="margin-top:20px;">Dienst antreten</button>
+</form>
         </div>
     </div>
 
@@ -742,11 +743,11 @@
                 <div class="section">
                     <h3>🔑 Eigenes Passwort ändern</h3>
                     <div style="background: rgba(8, 12, 20, 0.5); padding: 18px; border-radius: 14px; border: 1px solid var(--border);">
-                        <label for="newPasswordInput">Neues Passwort:</label>
-                        <div style="margin:0; display:flex; flex-direction:column; gap:12px;">
-                            <input type="password" id="newPasswordInput" name="newPasswordInput" autocomplete="new-password" placeholder="Neues Passwort eingeben">
-                            <button type="button" class="btn" style="background:var(--primary); color:#080c14; font-weight:800;" onclick="passwortAendern()">Passwort speichern</button>
-                        </div>
+                        <form onsubmit="event.preventDefault(); passwortAendern();" style="margin:0; display:flex; flex-direction:column; gap:12px;">
+    <label for="newPasswordInput">Neues Passwort:</label>
+    <input type="password" id="newPasswordInput" name="newPasswordInput" autocomplete="new-password" placeholder="Neues Passwort eingeben">
+    <button type="button" class="btn" style="background:var(--primary); color:#080c14; font-weight:800;" onclick="passwortAendern()">Passwort speichern</button>
+</form>
                     </div>
                 </div>
             </div>
@@ -874,12 +875,14 @@
         <div class="modal-card">
             <h3 style="margin-top:0; color:var(--warning); display:flex; align-items:center; gap:8px;">🔑 Admin-Verifizierung</h3>
             <p style="color:var(--text-muted); font-size:12px; margin-bottom:16px;">Bitte verifiziere dich mit deinem Passwort, um das Dashboard zu öffnen.</p>
-            <label for="adminAuthPassInput">Admin-Passwort:</label>
-            <input type="password" id="adminAuthPassInput" autocomplete="current-password" placeholder="Passwort eingeben...">
-            <div style="display:flex; gap:10px; margin-top:20px;">
-                <button type="button" class="btn" style="background:var(--warning); color:#080c14; font-weight:800;" onclick="verifyAdminKeyPassword()">Freischalten 🔓</button>
-                <button type="button" class="btn" style="background:var(--text-muted);" onclick="closeAdminAuthModal()">Abbrechen</button>
-            </div>
+            <form onsubmit="event.preventDefault(); verifyAdminKeyPassword();">
+    <label for="adminAuthPassInput">Admin-Passwort:</label>
+    <input type="password" id="adminAuthPassInput" autocomplete="current-password" placeholder="Passwort eingeben...">
+    <div style="display:flex; gap:10px; margin-top:20px;">
+        <button type="button" class="btn" style="background:var(--warning); color:#080c14; font-weight:800;" onclick="verifyAdminKeyPassword()">Freischalten 🔓</button>
+        <button type="button" class="btn" style="background:var(--text-muted);" onclick="closeAdminAuthModal()">Abbrechen</button>
+    </div>
+</form>
         </div>
     </div>
 
