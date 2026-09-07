@@ -708,7 +708,7 @@ function baueMaterialUIAuf() {
     const keys = Object.keys(materialKatalog).filter(k => k !== 'mat_wasser'), half = Math.ceil(keys.length/2);
     keys.forEach(k => {
         const q = fallMaterial[k] || 0;
-        const h = `<label style="margin-top:4px;">${materialKatalog[k].name} ($${materialKatalog[k].preis})</label><div class="counter-group"><button class="counter-btn" onclick="stepMat('${k}',-1)">-</button><span class="counter-value" id="val_${k}">${q}</span><button class="counter-btn plus-main" onclick="stepMat('${k}',1)">+</button></div>`;
+        const h = `<div id="lbl_mat_${k}" class="material-label-title" style="margin-top:4px; font-size:12px; font-weight:800; color:var(--text-muted); text-transform:uppercase; margin-bottom:6px;">${materialKatalog[k].name} ($${materialKatalog[k].preis})</div><div class="counter-group" aria-labelledby="lbl_mat_${k}"><button type="button" class="counter-btn" onclick="stepMat('${k}',-1)" aria-label="Weniger">-</button><span class="counter-value" id="val_${k}">${q}</span><button type="button" class="counter-btn plus-main" onclick="stepMat('${k}',1)" aria-label="Mehr">+</button></div>`;
         if (cnt < half) hL += h; else hR += h; cnt++;
     });
     grid.innerHTML = hL + '</div>' + hR + '</div>';
@@ -721,7 +721,7 @@ function openPricesInlineModal() {
     if (!cont) return;
     cont.innerHTML = Object.keys(materialKatalog).map(k => `
         <div style="background:rgba(30,41,59,0.5);border:1px solid var(--border);border-radius:10px;padding:10px;display:flex;justify-content:space-between;align-items:center;">
-            <span style="font-weight:700;">📦 ${materialKatalog[k].name}</span>
+            <label for="inlinePrice_${k}" style="font-weight:700;margin:0;cursor:pointer;">📦 ${materialKatalog[k].name}</label>
             <div style="display:flex;align-items:center;gap:4px;">
                 <input type="number" id="inlinePrice_${k}" value="${materialKatalog[k].preis}" style="width:90px;padding:6px;">
                 <b style="color:var(--success);">$</b>
