@@ -1137,23 +1137,50 @@ function renderCommandsTab(obj) {
 function openCommandsInlineModal() {
     const cont = document.getElementById('commandsInlineEditorContainer');
     if (!cont) return;
-    cont.innerHTML = `
-        <div style="display:flex;flex-direction:column;gap:14px;">
-            <div style="background:rgba(15,23,42,0.6);padding:14px;border-radius:10px;border:1px solid var(--border);">
-                <h4 style="margin:0 0 10px 0;color:var(--success);">➕ Neuen Command hinzufügen</h4>
-                <div style="display:grid;grid-template-columns:1fr 2fr 1fr auto;gap:10px;">
-                    <input type="text" id="inlineNewCmdName" placeholder="Name (z.B. !funk)">
-                    <input type="text" id="inlineNewCmdDesc" placeholder="Beschreibung">
-                    <input type="text" id="inlineNewCmdKat" placeholder="Kategorie (z.B. Ausbildung)">
-                    <button class="btn" style="width:auto;margin:0;padding:8px 18px;" onclick="addCommandInline()">Hinzufügen</button>
+
+    db.ref('data/dienstCommands').once('value', snap => {
+        const cloudData = snap.val() || {};
+        const allCmds = Object.assign({}, defaultCommands, cloudData);
+        const eff = sessionUser ? getUserEffectivePermissions(sessionUser) : {};
+
+        let existingRowsHtml = Object.entries(allCmds).map(([k, c]) => `
+            <div style="background:rgba(30,41,59,0.4);border:1px solid var(--border);border-radius:10px;padding:10px;display:grid;grid-template-columns:1.5fr 2.5fr 1.5fr auto;gap:8px;align-items:center;margin-bottom:8px;">
+                <input type="text" id="cmd_name_${k}" value="${c.name || ''}" placeholder="Name">
+                <input type="text" id="cmd_desc_${k}" value="${c.desc || c.description || ''}" placeholder="Beschreibung">
+                <input type="text" id="cmd_kat_${k}" value="${c.kat || 'Allgemein'}" placeholder="Kategorie">
+                <div style="display:flex;gap:6px;">
+                    <button type="button" class="btn" style="width:auto;margin:0;padding:6px 12px;font-size:12px;background:var(--primary);color:#080c14;font-weight:800;" onclick="editCommandInline('${k}')">💾</button>
+                    ${eff.delCommands ? `<button type="button" class="btn-delete-row" onclick="deleteDienstCommand('${k}')">🗑️</button>` : ''}
                 </div>
             </div>
-            <div style="display:flex;justify-content:flex-end;">
-                <button class="btn" style="width:auto;background:var(--text-muted);" onclick="closeCommandsInlineModal()">Schließen</button>
+        `).join('');
+
+        cont.innerHTML = `
+            <div style="display:flex;flex-direction:column;gap:18px;">
+                <div style="background:rgba(15,23,42,0.6);padding:14px;border-radius:10px;border:1px solid var(--border);">
+                    <h4 style="margin:0 0 10px 0;color:var(--success);">➕ Neuen Command anlegen</h4>
+                    <div style="display:grid;grid-template-columns:1.5fr 2.5fr 1.5fr auto;gap:8px;">
+                        <input type="text" id="inlineNewCmdName" placeholder="Name (z.B. !funk)">
+                        <input type="text" id="inlineNewCmdDesc" placeholder="Beschreibung">
+                        <input type="text" id="inlineNewCmdKat" placeholder="Kategorie">
+                        <button type="button" class="btn" style="width:auto;margin:0;padding:8px 16px;" onclick="addCommandInline()">Hinzufügen</button>
+                    </div>
+                </div>
+
+                <div>
+                    <h4 style="margin:0 0 10px 0;color:var(--primary);">📋 Bestehende Commands bearbeiten</h4>
+                    <div style="max-height:55vh;overflow-y:auto;padding-right:4px;">
+                        ${existingRowsHtml || '<p style="color:var(--text-muted);">Keine Einträge vorhanden.</p>'}
+                    </div>
+                </div>
+
+                <div style="display:flex;justify-content:flex-end;">
+                    <button type="button" class="btn" style="width:auto;background:var(--text-muted);" onclick="closeCommandsInlineModal()">Schließen</button>
+                </div>
             </div>
-        </div>
-    `;
-    document.getElementById('commandsInlineModal').style.display = 'flex';
+        `;
+        document.getElementById('commandsInlineModal').style.display = 'flex';
+    });
 }
 function closeCommandsInlineModal() { document.getElementById('commandsInlineModal').style.display = 'none'; }
 
@@ -1167,6 +1194,20 @@ function addCommandInline() {
         closeCommandsInlineModal();
     });
 }
+
+function editCommandInline(k) {
+    const name = document.getElementById('cmd_name_' + k)?.value.trim();
+    const desc = document.getElementById('cmd_desc_' + k)?.value.trim();
+    const kat = document.getElementById('cmd_kat_' + k)?.value.trim() || 'Allgemein';
+
+    if (!name || !desc) { alert('Name und Beschreibung dürfen nicht leer sein!'); return; }
+
+    db.ref('data/dienstCommands/' + k).set({ name, desc, kat }).then(() => {
+        logAdminAudit('Command bearbeitet', `${sessionUser.vorname} ${sessionUser.nachname} hat Command "${name}" geändert.`);
+        alert('✅ Command erfolgreich gespeichert!');
+    });
+}
+
 function deleteDienstCommand(k) {
     if (!sessionUser || !getUserEffectivePermissions(sessionUser).delCommands) return;
     if (confirm('Command löschen?')) db.ref('data/dienstCommands/' + k).remove();
@@ -1201,26 +1242,58 @@ function renderLinksTab(obj) {
 function openLinksInlineModal() {
     const cont = document.getElementById('linksInlineEditorContainer');
     if (!cont) return;
-    cont.innerHTML = `
-        <div style="display:flex;flex-direction:column;gap:14px;">
-            <div style="background:rgba(15,23,42,0.6);padding:14px;border-radius:10px;border:1px solid var(--border);">
-                <h4 style="margin:0 0 10px 0;color:var(--primary);">➕ Neuen Dokumenten-Link anlegen</h4>
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px;">
-                    <input type="text" id="inlineNewLinkName" placeholder="Titel des Links">
-                    <input type="text" id="inlineNewLinkUrl" placeholder="https://docs.google.com/...">
+
+    db.ref('data/dienstLinks').once('value', snap => {
+        const cloudData = snap.val() || {};
+        const allLinks = Object.assign({}, defaultLinks, cloudData);
+        const eff = sessionUser ? getUserEffectivePermissions(sessionUser) : {};
+
+        let existingRowsHtml = Object.entries(allLinks).map(([k, l]) => `
+            <div style="background:rgba(30,41,59,0.4);border:1px solid var(--border);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:8px;margin-bottom:10px;">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                    <input type="text" id="link_name_${k}" value="${l.name || ''}" placeholder="Titel">
+                    <input type="text" id="link_url_${k}" value="${l.url || ''}" placeholder="https://...">
                 </div>
-                <div style="display:grid;grid-template-columns:2fr 1fr auto;gap:10px;">
-                    <input type="text" id="inlineNewLinkDesc" placeholder="Beschreibung">
-                    <input type="text" id="inlineNewLinkKat" placeholder="Kategorie (z.B. MD Intern)">
-                    <button class="btn" style="width:auto;margin:0;padding:8px 18px;" onclick="addLinkInline()">Hinzufügen</button>
+                <div style="display:grid;grid-template-columns:2fr 1fr auto;gap:8px;align-items:center;">
+                    <input type="text" id="link_desc_${k}" value="${l.desc || l.description || ''}" placeholder="Beschreibung">
+                    <input type="text" id="link_kat_${k}" value="${l.kat || l.thema || 'Allgemein'}" placeholder="Kategorie">
+                    <div style="display:flex;gap:6px;">
+                        <button type="button" class="btn" style="width:auto;margin:0;padding:6px 12px;font-size:12px;background:var(--primary);color:#080c14;font-weight:800;" onclick="editLinkInline('${k}')">💾</button>
+                        ${eff.delLinks ? `<button type="button" class="btn-delete-row" onclick="deleteDienstLink('${k}')">🗑️</button>` : ''}
+                    </div>
                 </div>
             </div>
-            <div style="display:flex;justify-content:flex-end;">
-                <button class="btn" style="width:auto;background:var(--text-muted);" onclick="closeLinksInlineModal()">Schließen</button>
+        `).join('');
+
+        cont.innerHTML = `
+            <div style="display:flex;flex-direction:column;gap:18px;">
+                <div style="background:rgba(15,23,42,0.6);padding:14px;border-radius:10px;border:1px solid var(--border);">
+                    <h4 style="margin:0 0 10px 0;color:var(--primary);">➕ Neuen Dokumenten-Link anlegen</h4>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+                        <input type="text" id="inlineNewLinkName" placeholder="Titel des Links">
+                        <input type="text" id="inlineNewLinkUrl" placeholder="https://docs.google.com/...">
+                    </div>
+                    <div style="display:grid;grid-template-columns:2fr 1fr auto;gap:8px;">
+                        <input type="text" id="inlineNewLinkDesc" placeholder="Beschreibung">
+                        <input type="text" id="inlineNewLinkKat" placeholder="Kategorie (z.B. MD Intern)">
+                        <button type="button" class="btn" style="width:auto;margin:0;padding:8px 16px;" onclick="addLinkInline()">Hinzufügen</button>
+                    </div>
+                </div>
+
+                <div>
+                    <h4 style="margin:0 0 10px 0;color:var(--primary);">📁 Bestehende Links bearbeiten</h4>
+                    <div style="max-height:55vh;overflow-y:auto;padding-right:4px;">
+                        ${existingRowsHtml || '<p style="color:var(--text-muted);">Keine Links vorhanden.</p>'}
+                    </div>
+                </div>
+
+                <div style="display:flex;justify-content:flex-end;">
+                    <button type="button" class="btn" style="width:auto;background:var(--text-muted);" onclick="closeLinksInlineModal()">Schließen</button>
+                </div>
             </div>
-        </div>
-    `;
-    document.getElementById('linksInlineModal').style.display = 'flex';
+        `;
+        document.getElementById('linksInlineModal').style.display = 'flex';
+    });
 }
 function closeLinksInlineModal() { document.getElementById('linksInlineModal').style.display = 'none'; }
 
@@ -1235,6 +1308,21 @@ function addLinkInline() {
         closeLinksInlineModal();
     });
 }
+
+function editLinkInline(k) {
+    const name = document.getElementById('link_name_' + k)?.value.trim();
+    const url = document.getElementById('link_url_' + k)?.value.trim();
+    const desc = document.getElementById('link_desc_' + k)?.value.trim();
+    const kat = document.getElementById('link_kat_' + k)?.value.trim() || 'Allgemein';
+
+    if (!name || !url) { alert('Name und URL dürfen nicht leer sein!'); return; }
+
+    db.ref('data/dienstLinks/' + k).set({ name, url, desc, kat }).then(() => {
+        logAdminAudit('Link bearbeitet', `${sessionUser.vorname} ${sessionUser.nachname} hat Link "${name}" geändert.`);
+        alert('✅ Link erfolgreich gespeichert!');
+    });
+}
+
 function deleteDienstLink(k) {
     if (!sessionUser || !getUserEffectivePermissions(sessionUser).delLinks) return;
     if (confirm('Link löschen?')) db.ref('data/dienstLinks/' + k).remove();
@@ -2247,3 +2335,5 @@ _w.openUserPermissionsModal = openUserPermissionsModal; _w.closeUserPermissionsM
 _w.neueRolleErstellen = neueRolleErstellen; _w.selectRole = selectRole; _w.updateRoleBadgePreview = updateRoleBadgePreview; _w.speichereRolle = speichereRolle; _w.loescheRolle = loescheRolle;
 _w.vollstaendigerReset = vollstaendigerReset; _w.renderAdminAuditLogs = renderAdminAuditLogs;
 _w.openAuditLogArchiveModal = openAuditLogArchiveModal; _w.closeAuditArchiveModal = closeAuditArchiveModal;
+_w.editCommandInline = editCommandInline;
+_w.editLinkInline = editLinkInline;
