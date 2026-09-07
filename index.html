@@ -10,7 +10,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
-    <link rel="stylesheet" href="style.css?v=3.0">
+    <link rel="stylesheet" href="style.css?v=3.1">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏥</text></svg>">
 </head>
 <body>
@@ -22,26 +22,26 @@
             <p style="color:var(--text-muted); font-size:11px; margin-bottom:20px; text-transform:uppercase; letter-spacing:0.5px;">Sicherheits-Zentralverwaltung</p>
             
             <div class="auth-tabs">
-                <button id="tabLoginBtn" class="auth-tab-btn active" onclick="toggleAuthTab('login')">Anmelden</button>
-                <button id="tabRegisterBtn" class="auth-tab-btn" onclick="toggleAuthTab('register')">Registrieren</button>
+                <button type="button" id="tabLoginBtn" class="auth-tab-btn active" onclick="toggleAuthTab('login')">Anmelden</button>
+                <button type="button" id="tabRegisterBtn" class="auth-tab-btn" onclick="toggleAuthTab('register')">Registrieren</button>
             </div>
 
             <div id="authForm">
-                <label>Vorname</label>
-                <input type="text" id="authVorname" placeholder="Vorname" name="authVorname" aria-label="Vorname">
+                <label for="authVorname">Vorname</label>
+                <input type="text" id="authVorname" placeholder="Vorname" name="authVorname" autocomplete="given-name">
                 
-                <label>Nachname</label>
-                <input type="text" id="authNachname" placeholder="Nachname" name="authNachname" aria-label="Nachname">
+                <label for="authNachname">Nachname</label>
+                <input type="text" id="authNachname" placeholder="Nachname" name="authNachname" autocomplete="family-name">
                 
-                <label>Passwort</label>
-                <form onsubmit="event.preventDefault();" style="margin:0; padding:0; width:100%;"><input type="password" id="authPassword" name="authPassword" autocomplete="current-password" placeholder="Passwort" aria-label="Passwort"></form>
+                <label for="authPassword">Passwort</label>
+                <input type="password" id="authPassword" name="authPassword" autocomplete="current-password" placeholder="Passwort">
                 
                 <div id="authDNContainer" style="display:none;">
-                    <label>Dienstnummer (DN)</label>
-                    <input type="text" id="authDN" placeholder="z.B. DN 42" name="authDN" aria-label="z.B. DN 42">
+                    <label for="authDN">Dienstnummer (DN)</label>
+                    <input type="text" id="authDN" placeholder="z.B. DN 42" name="authDN">
                 </div>
                 
-                <button class="btn" id="mainAuthActionBtn" onclick="handleAuthAction()" style="margin-top:20px;">Dienst antreten</button>
+                <button type="button" class="btn" id="mainAuthActionBtn" onclick="handleAuthAction()" style="margin-top:20px;">Dienst antreten</button>
             </div>
         </div>
     </div>
@@ -60,25 +60,25 @@
                     <span>Im Dienst: <span id="onlineMedicsList" style="color:var(--primary); font-weight:700;">Verbinde...</span></span>
                 </div>
                 <div class="date-display">📅 <span id="liveDateDisplay">--.--.----</span></div>
-                <button id="adminKeyBtn" class="btn-admin-key" style="display:none;" onclick="openAdminKeyModal()" title="Admin-Zentralverwaltung">🔑 Admin</button>
-                <button class="btn-logout" onclick="handleDienstEndeLogout()">Dienst beenden 🚪</button>
+                <button type="button" id="adminKeyBtn" class="btn-admin-key" style="display:none;" onclick="openAdminKeyModal()" title="Admin-Zentralverwaltung">🔑 Admin</button>
+                <button type="button" class="btn-logout" onclick="handleDienstEndeLogout()">Dienst beenden 🚪</button>
             </div>
         </div>
 
         <!-- HAUPT-NAVIGATION -->
         <div class="tab-nav">
-            <button class="tab-btn active" onclick="switchTab('docTab', this)">📝 Dokumentation & Einsatz</button>
-            <button class="tab-btn" onclick="switchTab('statsTab', this)">📊 Statistik & Archiv</button>
-            <button class="tab-btn" onclick="switchTab('hierarchieTab', this)">🌳 Hierarchie</button>
-            <button class="tab-btn" onclick="switchTab('guideTab', this)">📋 Funk & Codes</button>
-            <button class="tab-btn" onclick="switchTab('commandTab', this)">💻 Commands</button>
-            <button class="tab-btn" id="examTabNavBtn" onclick="switchTab('examTab', this)">🎓 Ausbildungsbereich</button>
-            <button class="tab-btn" id="linksTabBtn" onclick="switchTab('linksTab', this)">🔗 Links & Dokumente</button>
-            <button class="tab-btn btn-tab-news" id="newsTabBtn" onclick="switchTab('newsTab', this)">
+            <button type="button" class="tab-btn active" onclick="switchTab('docTab', this)">📝 Dokumentation & Einsatz</button>
+            <button type="button" class="tab-btn" onclick="switchTab('statsTab', this)">📊 Statistik & Archiv</button>
+            <button type="button" class="tab-btn" onclick="switchTab('hierarchieTab', this)">🌳 Hierarchie</button>
+            <button type="button" class="tab-btn" onclick="switchTab('guideTab', this)">📋 Funk & Codes</button>
+            <button type="button" class="tab-btn" onclick="switchTab('commandTab', this)">💻 Commands</button>
+            <button type="button" class="tab-btn" id="examTabNavBtn" onclick="switchTab('examTab', this)">🎓 Ausbildungsbereich</button>
+            <button type="button" class="tab-btn" id="linksTabBtn" onclick="switchTab('linksTab', this)">🔗 Links & Dokumente</button>
+            <button type="button" class="tab-btn btn-tab-news" id="newsTabBtn" onclick="switchTab('newsTab', this)">
                 📰 News <span id="newsUnreadBadge" class="unread-news-badge" style="display:none;">0</span>
             </button>
-            <button class="tab-btn" onclick="switchTab('miscTab', this)">💰 Gehaltstabelle</button>
-            <button class="tab-btn" id="adminMainTabHeader" onclick="settingsTabClick()">⚙️ Einstellungen / Diensttage</button>
+            <button type="button" class="tab-btn" onclick="switchTab('miscTab', this)">💰 Gehaltstabelle</button>
+            <button type="button" class="tab-btn" id="adminMainTabHeader" onclick="settingsTabClick()">⚙️ Einstellungen / Diensttage</button>
         </div>
 
         <!-- REITER 1: DOKUMENTATION & EINSATZ -->
@@ -90,11 +90,11 @@
                         <label for="pName">Patienten-Name (optional):</label>
                         <input type="text" id="pName" placeholder="Z.B. Max Mustermann" name="pName">
                         
-                        <label>Anzahl Verletzungen:</label>
-                        <div class="counter-group">
-                            <button class="counter-btn" onclick="stepVerletzungenAnzahl(-1)">-</button>
+                        <label id="lblVerletzungenAnzahl">Anzahl Verletzungen:</label>
+                        <div class="counter-group" aria-labelledby="lblVerletzungenAnzahl">
+                            <button type="button" class="counter-btn" onclick="stepVerletzungenAnzahl(-1)">-</button>
                             <span class="counter-value" id="val_pVerletzungenAnzahl">1</span>
-                            <button class="counter-btn plus-main" onclick="stepVerletzungenAnzahl(1)">+</button>
+                            <button type="button" class="counter-btn plus-main" onclick="stepVerletzungenAnzahl(1)">+</button>
                         </div>
                         
                         <label for="verletzungSelect">Szenario wählen:</label>
@@ -111,28 +111,28 @@
                     <div class="section" style="min-height: 200px;">
                         <h3>📋 Medizinischer Ablauf</h3>
                         <div id="checklisteContainer"><p style="color: var(--text-muted); font-size:12px;">Wähle links ein Szenario aus, um die Schritte zu sehen.</p></div>
-                        <button class="btn" style="margin-top:15px; width:100%; background:rgba(239,68,68,0.2); color:var(--danger); border:1px solid var(--danger); font-weight:700; border-radius:8px; padding:10px; cursor:pointer;" onclick="resetMedicalWorkflow()">🔄 Einsatz Zurücksetzen (nur Checkboxen)</button>
+                        <button type="button" class="btn" style="margin-top:15px; width:100%; background:rgba(239,68,68,0.2); color:var(--danger); border:1px solid var(--danger); font-weight:700; border-radius:8px; padding:10px; cursor:pointer;" onclick="resetMedicalWorkflow()">🔄 Einsatz Zurücksetzen (nur Checkboxen)</button>
                     </div>
                 </div>
                 <div>
                     <div class="section">
                         <div style="display:flex; justify-content:space-between; align-items:center; border-bottom: 1px solid var(--border); padding-bottom: 8px; margin-bottom: 12px;">
                             <h3 style="margin:0; border:none; padding:0;">📦 Verbrauch & Ausgaben</h3>
-                            <button id="btnEditPricesInline" class="btn-inline-edit" style="display:none;" onclick="openPricesInlineModal()" title="Preise & Szenarien vor Ort bearbeiten">✏️ Anpassen</button>
+                            <button type="button" id="btnEditPricesInline" class="btn-inline-edit" style="display:none;" onclick="openPricesInlineModal()" title="Preise & Szenarien vor Ort bearbeiten">✏️ Anpassen</button>
                         </div>
                         <div class="material-grid" id="dynamischerMaterialVerbrauchGrid"></div>
                         <div style="background: rgba(56, 189, 248, 0.05); padding: 12px; border-radius: 10px; border: 1px dashed rgba(56, 189, 248, 0.3); margin-top: 12px; text-align: center; font-weight: 600;">
                             💧 Wasser-Automatik (<span id="wasserPreisLabel">$200</span>): <span id="val_mat_wasser" style="font-weight:800; color:var(--primary);">0</span> Flasche(n) inklusive
                         </div>
-                        <label style="margin-top:16px;">Gesamtausgaben für diesen Fall ($)</label>
-                        <div class="counter-group" style="padding: 8px 12px; background: rgba(8, 12, 20, 0.6); border-color: rgba(16, 185, 129, 0.3);">
-                            <button class="counter-btn" style="width:40px;" onclick="stepKosten(-250)">-250</button>
-                            <button class="counter-btn" onclick="stepKosten(-50)">-50</button>
+                        <label id="lblGesamtausgaben" style="margin-top:16px;">Gesamtausgaben für diesen Fall ($)</label>
+                        <div class="counter-group" aria-labelledby="lblGesamtausgaben" style="padding: 8px 12px; background: rgba(8, 12, 20, 0.6); border-color: rgba(16, 185, 129, 0.3);">
+                            <button type="button" class="counter-btn" style="width:40px;" onclick="stepKosten(-250)">-250</button>
+                            <button type="button" class="counter-btn" onclick="stepKosten(-50)">-50</button>
                             <span id="val_pKosten" style="font-size:20px; font-weight:800; color:var(--success); text-shadow: 0 0 10px rgba(16,185,129,0.2);">$0</span>
-                            <button class="counter-btn plus-main" onclick="stepKosten(50)">+50</button>
-                            <button class="counter-btn plus-main" style="width:40px;" onclick="stepKosten(250)">+250</button>
+                            <button type="button" class="counter-btn plus-main" onclick="stepKosten(50)">+50</button>
+                            <button type="button" class="counter-btn plus-main" style="width:40px;" onclick="stepKosten(250)">+250</button>
                         </div>
-                        <button class="btn" onclick="patientHinzufuegen()">Eintrag live buchen</button>
+                        <button type="button" class="btn" onclick="patientHinzufuegen()">Eintrag live buchen</button>
                     </div>
                 </div>
             </div>
@@ -169,13 +169,13 @@
                 </div>
             </div>
 
-            <!-- SCHICHTEN-HISTORIE (AKTUELLE WOCHE + BUTTONS) -->
+            <!-- SCHICHTEN-HISTORIE -->
             <div class="theme-accordion-group" id="group-archiv" style="margin-top: 15px;">
                 <div class="theme-accordion-header" onclick="toggleGroupCollapse('group-archiv')">
                     <span>🗄️ Schichten der aktuellen Kalenderwoche</span>
                     <div style="display:flex; gap:8px; align-items:center;" onclick="event.stopPropagation();">
-                        <button id="btnOpenWeeklyArchive" class="btn-archive-view" style="display:none;" onclick="openWeeklyArchiveModal()">🗄️ Gesamt-Archiv (Wochenweise)</button>
-                        <button class="btn-export" onclick="exportArchivCSV()">📥 Schicht als CSV exportieren</button>
+                        <button type="button" id="btnOpenWeeklyArchive" class="btn-archive-view" style="display:none;" onclick="openWeeklyArchiveModal()">🗄️ Gesamt-Archiv (Wochenweise)</button>
+                        <button type="button" class="btn-export" onclick="exportArchivCSV()">📥 Schicht als CSV exportieren</button>
                     </div>
                 </div>
                 <div class="theme-accordion-content">
@@ -310,18 +310,17 @@
                 </div>
             </div>
 
-            <!-- MID COMMAND (VON UNTEN NACH OBEN: 1 UNTEN, 3 OBEN) -->
+            <!-- MID COMMAND -->
             <div style="margin-bottom: 24px;">
                 <div class="h-section-header">
                     <h3>🩺 Mid Command of SAMD</h3>
                 </div>
                 
                 <div class="guide-split-container">
-                    <!-- DOCTOR LAUFBAHN LINKS (1 UNTEN, 3 OBEN) -->
+                    <!-- DOCTOR LAUFBAHN LINKS -->
                     <div>
                         <h4 style="color:var(--primary); font-size:14px; text-transform:uppercase; margin-top:0; border-bottom:1px solid var(--border); padding-bottom:8px; text-align:center;">👨‍⚕️ Laufbahn: Doctor (Innendienst)</h4>
                         <div style="display:flex; flex-direction:column; gap:12px;">
-                            <!-- 3 OBEN -->
                             <div class="h-card">
                                 <div class="h-card-header">Attending of SAMD (Stufe 3)</div>
                                 <div class="h-card-body">
@@ -329,7 +328,6 @@
                                     <div class="h-row"><span class="h-label">Ausbildung:</span><span class="h-val" style="color:var(--success); font-weight:800;">Arzt 3</span></div>
                                 </div>
                             </div>
-                            <!-- 2 MITTE -->
                             <div class="h-card">
                                 <div class="h-card-header">Physician of SAMD (Stufe 2)</div>
                                 <div class="h-card-body">
@@ -337,7 +335,6 @@
                                     <div class="h-row"><span class="h-label">Ausbildung:</span><span class="h-val" style="color:var(--success); font-weight:800;">Arzt 2</span></div>
                                 </div>
                             </div>
-                            <!-- 1 UNTEN -->
                             <div class="h-card">
                                 <div class="h-card-header">Resident Physician of SAMD (Stufe 1)</div>
                                 <div class="h-card-body">
@@ -348,11 +345,10 @@
                         </div>
                     </div>
 
-                    <!-- PARAMEDIC LAUFBAHN RECHTS (1 UNTEN, 3 OBEN) -->
+                    <!-- PARAMEDIC LAUFBAHN RECHTS -->
                     <div>
                         <h4 style="color:var(--warning); font-size:14px; text-transform:uppercase; margin-top:0; border-bottom:1px solid var(--border); padding-bottom:8px; text-align:center;">🚑 Laufbahn: Paramedic (Außendienst)</h4>
                         <div style="display:flex; flex-direction:column; gap:12px;">
-                            <!-- 3 OBEN -->
                             <div class="h-card">
                                 <div class="h-card-header">Medical Supervisor of SAMD (Stufe 3)</div>
                                 <div class="h-card-body">
@@ -360,7 +356,6 @@
                                     <div class="h-row"><span class="h-label">Ausbildung:</span><span class="h-val" style="color:var(--success); font-weight:800;">Para 3</span></div>
                                 </div>
                             </div>
-                            <!-- 2 MITTE -->
                             <div class="h-card">
                                 <div class="h-card-header">Senior Paramedic of SAMD (Stufe 2)</div>
                                 <div class="h-card-body">
@@ -368,7 +363,6 @@
                                     <div class="h-row"><span class="h-label">Ausbildung:</span><span class="h-val" style="color:var(--success); font-weight:800;">Para 2</span></div>
                                 </div>
                             </div>
-                            <!-- 1 UNTEN -->
                             <div class="h-card">
                                 <div class="h-card-header">Paramedic of SAMD (Stufe 1)</div>
                                 <div class="h-card-body">
@@ -443,11 +437,11 @@
             </div>
         </div>
 
-        <!-- REITER 3: FUNK & CODES (INLINE STIFT) -->
+        <!-- REITER 3: FUNK & CODES -->
         <div id="guideTab" class="tab-content">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; flex-wrap:wrap; gap:10px;">
                 <h2 style="margin:0;">📋 Funk & Codes</h2>
-                <button id="btnEditGuideInline" class="btn-inline-edit" style="display:none;" onclick="openGuideInlineModal()">✏️ Vor Ort bearbeiten</button>
+                <button type="button" id="btnEditGuideInline" class="btn-inline-edit" style="display:none;" onclick="openGuideInlineModal()">✏️ Vor Ort bearbeiten</button>
             </div>
             <div class="guide-split-container">
                 <div class="section" style="padding:0; overflow:hidden;">
@@ -490,11 +484,11 @@
             </div>
         </div>
 
-        <!-- REITER: COMMANDS (INLINE STIFT & KEINE ZÄHLER) -->
+        <!-- REITER: COMMANDS -->
         <div id="commandTab" class="tab-content">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; flex-wrap:wrap; gap:10px;">
                 <h2 style="margin:0;">💻 Commands</h2>
-                <button id="btnEditCommandsInline" class="btn-inline-edit" style="display:none;" onclick="openCommandsInlineModal()">✏️ Commands verwalten</button>
+                <button type="button" id="btnEditCommandsInline" class="btn-inline-edit" style="display:none;" onclick="openCommandsInlineModal()">✏️ Commands verwalten</button>
             </div>
             <div style="background: rgba(15, 23, 42, 0.6); padding: 20px; border-radius: 14px; border: 1px solid var(--border);">
                 <div id="commandsAccordionContainer"></div>
@@ -529,8 +523,8 @@
                     </div>
                     <div id="activeExamQuestionsContainer"></div>
                     <div style="display:flex; justify-content:flex-end; gap:12px; margin-top:20px; border-top:1px solid var(--border); padding-top:16px;">
-                        <button class="btn" style="background:var(--danger); width:auto; padding:10px 20px;" onclick="cancelActiveExam()">Abbrechen</button>
-                        <button class="btn" style="background:var(--success); color:#080c14; font-weight:800; width:auto; padding:12px 30px;" onclick="submitActiveExam(this)">✅ Prüfung einreichen</button>
+                        <button type="button" class="btn" style="background:var(--danger); width:auto; padding:10px 20px;" onclick="cancelActiveExam()">Abbrechen</button>
+                        <button type="button" class="btn" style="background:var(--success); color:#080c14; font-weight:800; width:auto; padding:12px 30px;" onclick="submitActiveExam()">✅ Prüfung einreichen</button>
                     </div>
                 </div>
             </div>
@@ -545,16 +539,16 @@
 
                     <!-- SUB-TABS -->
                     <div class="admin-subtabs" style="margin-bottom:16px;">
-                        <button class="admin-tab-btn active" onclick="switchInstructorTab('instrTabUnlocks', this)">🔓 Prüfungen freischalten</button>
-                        <button class="admin-tab-btn" onclick="switchInstructorTab('instrTabResults', this)">📊 Absolvierte Prüfungen</button>
-                        <button class="admin-tab-btn" id="instrTabManageBtn" onclick="switchInstructorTab('instrTabManage', this)">📝 Prüfungen verwalten</button>
-                        <button class="admin-tab-btn" id="instrAllowedExamsTabBtn" onclick="switchInstructorTab('instrTabInstructorAllowedExams', this)">🎓 Ausbildungsleitung</button>
+                        <button type="button" class="admin-tab-btn active" onclick="switchInstructorTab('instrTabUnlocks', this)">🔓 Prüfungen freischalten</button>
+                        <button type="button" class="admin-tab-btn" onclick="switchInstructorTab('instrTabResults', this)">📊 Absolvierte Prüfungen</button>
+                        <button type="button" class="admin-tab-btn" id="instrTabManageBtn" onclick="switchInstructorTab('instrTabManage', this)">📝 Prüfungen verwalten</button>
+                        <button type="button" class="admin-tab-btn" id="instrAllowedExamsTabBtn" onclick="switchInstructorTab('instrTabInstructorAllowedExams', this)">🎓 Ausbildungsleitung</button>
                     </div>
 
                     <!-- 1. FREISCHALTUNGEN -->
                     <div id="instrTabUnlocks" class="admin-subtab-content active">
                         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:10px;">
-                            <input type="text" class="form-input" id="searchUnlocksUser" placeholder="🔍 Mitarbeiter nach Name oder DN suchen (A-Z)..." style="max-width:380px;" oninput="filterUnlocksTable()">
+                            <input type="text" class="form-input" id="searchUnlocksUser" placeholder="🔍 Mitarbeiter nach Name oder DN suchen (A-Z)..." style="max-width:380px;" oninput="filterUnlocksTable()" aria-label="Mitarbeiter nach Name oder DN suchen">
                             <span style="font-size:12px; color:var(--text-muted);">Echtzeit-Synchronisierung aktiv</span>
                         </div>
                         <div class="table-responsive">
@@ -580,7 +574,7 @@
                     <div id="instrTabManage" class="admin-subtab-content">
                         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:10px;">
                             <h4 style="margin:0; color:var(--primary);">📜 Alle vorhandenen Prüfungen in der Cloud</h4>
-                            <button class="btn" style="width:auto; margin:0; padding:10px 22px; background:var(--success); color:#080c14; font-weight:800;" onclick="openExamBuilderModal()">➕ Neue Prüfung erstellen</button>
+                            <button type="button" class="btn" style="width:auto; margin:0; padding:10px 22px; background:var(--success); color:#080c14; font-weight:800;" onclick="openExamBuilderModal()">➕ Neue Prüfung erstellen</button>
                         </div>
                         <div id="instructorExistingExamsList"></div>
                     </div>
@@ -608,7 +602,7 @@
         <div id="linksTab" class="tab-content">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; flex-wrap:wrap; gap:10px;">
                 <h2 style="margin:0;">🔗 Interne Dokumente & Lesezeichen-Cloud</h2>
-                <button id="btnEditLinksInline" class="btn-inline-edit" style="display:none;" onclick="openLinksInlineModal()">✏️ Links verwalten</button>
+                <button type="button" id="btnEditLinksInline" class="btn-inline-edit" style="display:none;" onclick="openLinksInlineModal()">✏️ Links verwalten</button>
             </div>
             <div style="background: rgba(15, 23, 42, 0.6); padding: 20px; border-radius: 14px; border: 1px solid var(--border);">
                 <div id="linksAccordionContainer"></div>
@@ -656,45 +650,51 @@
                     <p style="color: var(--text-muted); font-size: 13px; margin: 4px 0 0 0;">Dienstanweisungen und Ankündigungen der Klinikleitung.</p>
                 </div>
                 <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-                    <button id="btnProposeNews" class="btn" style="width:auto; margin:0; padding:8px 16px; background:rgba(56,189,248,0.15); color:var(--primary); border:1px solid var(--primary); font-weight:700;" onclick="toggleProposeNewsForm()">💡 News vorschlagen</button>
-                    <button id="btnOpenPostNews" class="btn" style="width: auto; margin: 0; padding: 8px 18px; background: var(--primary); color: #080c14; font-weight: 800; font-size: 13px; display: none;" onclick="togglePostNewsForm()">➕ Neue News posten</button>
+                    <button type="button" id="btnProposeNews" class="btn" style="width:auto; margin:0; padding:8px 16px; background:rgba(56,189,248,0.15); color:var(--primary); border:1px solid var(--primary); font-weight:700;" onclick="toggleProposeNewsForm()">💡 News vorschlagen</button>
+                    <button type="button" id="btnOpenPostNews" class="btn" style="width: auto; margin: 0; padding: 8px 18px; background: var(--primary); color: #080c14; font-weight: 800; font-size: 13px; display: none;" onclick="togglePostNewsForm()">➕ Neue News posten</button>
                 </div>
             </div>
 
-            <!-- NEWS VORSCHLAGEN FORMULAR -->
+            <!-- NEWS VORSCHLAGEN -->
             <div id="proposeNewsContainer" style="display:none; background:rgba(30,41,59,0.5); border:1px dashed var(--primary); border-radius:14px; padding:20px; margin-bottom:24px;">
-                <h3 style="margin-top:0; color:var(--primary); font-size:15px;">💡 News-Beitrag vorschlagen (wird vor Veröffentlichung geprüft)</h3>
+                <h3 style="margin-top:0; color:var(--primary); font-size:15px;">💡 News-Beitrag vorschlagen</h3>
+                <label for="propNewsTitle">Titel / Betreff:</label>
                 <input type="text" id="propNewsTitle" placeholder="Titel / Betreff" style="margin-bottom:10px;">
+                <label for="propNewsContent">Inhalt / Text:</label>
                 <textarea id="propNewsContent" rows="4" placeholder="Vollständigen Text eingeben..." style="margin-bottom:10px;"></textarea>
                 <div style="display:flex; gap:10px;">
-                    <button class="btn" style="width:auto; padding:8px 20px; background:var(--primary); color:#080c14; font-weight:800;" onclick="submitNewsProposal()">Vorschlag einreichen</button>
-                    <button class="btn" style="width:auto; padding:8px 16px; background:var(--text-muted);" onclick="toggleProposeNewsForm()">Abbrechen</button>
+                    <button type="button" class="btn" style="width:auto; padding:8px 20px; background:var(--primary); color:#080c14; font-weight:800;" onclick="submitNewsProposal()">Vorschlag einreichen</button>
+                    <button type="button" class="btn" style="width:auto; padding:8px 16px; background:var(--text-muted);" onclick="toggleProposeNewsForm()">Abbrechen</button>
                 </div>
             </div>
 
-            <!-- NEWS DIREKT POSTEN FORMULAR (FÜR BERECHTIGTE) -->
+            <!-- NEWS DIREKT POSTEN -->
             <div id="postNewsContainer" style="display: none; background: rgba(15, 23, 42, 0.7); border: 1px solid var(--primary); border-radius: 14px; padding: 20px; margin-bottom: 24px;">
                 <h3 style="margin-top: 0; color: var(--primary); font-size: 15px;">📝 Neuen News-Thread verfassen</h3>
                 <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 14px; margin-bottom: 12px;">
-                    <input type="text" id="newNewsTitle" placeholder="Titel / Betreff">
-                    <select id="newNewsCategory">
-                        <option value="Dienstanweisung">📌 Dienstanweisung</option>
-                        <option value="Regelwerk">⚖️ Regelwerk</option>
-                        <option value="Ankündigung">📢 Ankündigung</option>
-                        <option value="Allgemein">ℹ️ Allgemein</option>
-                    </select>
+                    <div>
+                        <label for="newNewsTitle">Titel / Betreff:</label>
+                        <input type="text" id="newNewsTitle" placeholder="Titel / Betreff">
+                    </div>
+                    <div>
+                        <label for="newNewsCategory">Kategorie:</label>
+                        <select id="newNewsCategory">
+                            <option value="Dienstanweisung">📌 Dienstanweisung</option>
+                            <option value="Regelwerk">⚖️ Regelwerk</option>
+                            <option value="Ankündigung">📢 Ankündigung</option>
+                            <option value="Allgemein">ℹ️ Allgemein</option>
+                        </select>
+                    </div>
                 </div>
+                <label for="newNewsContent">Inhalt / Text:</label>
                 <textarea id="newNewsContent" rows="5" placeholder="Vollständigen Text der News eingeben..." style="margin-bottom:12px;"></textarea>
                 <div style="display: flex; gap: 10px;">
-                    <button class="btn" style="width: auto; padding: 8px 20px; background: var(--success); color: #080c14; font-weight: 800;" onclick="speichereNeueNews()">📢 Veröffentlichen</button>
-                    <button class="btn" style="width: auto; padding: 8px 16px; background: var(--text-muted);" onclick="togglePostNewsForm()">Abbrechen</button>
+                    <button type="button" class="btn" style="width: auto; padding: 8px 20px; background: var(--success); color: #080c14; font-weight: 800;" onclick="speichereNeueNews()">📢 Veröffentlichen</button>
+                    <button type="button" class="btn" style="width: auto; padding: 8px 16px; background: var(--text-muted);" onclick="togglePostNewsForm()">Abbrechen</button>
                 </div>
             </div>
 
-            <!-- AUSSTEHENDE VORSCHLÄGE (NUR FÜR BERECHTIGTE) -->
             <div id="pendingNewsApprovalContainer" style="display:none; margin-bottom:24px;"></div>
-
-            <!-- NEWS FEED LIST -->
             <div id="newsFeedList" style="display: flex; flex-direction: column; gap: 16px;"></div>
         </div>
 
@@ -702,7 +702,6 @@
         <div id="settingsTab" class="tab-content">
             <h2>⚙️ Einstellungen / Diensttage</h2>
             <div class="settings-grid" style="grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap:20px;">
-                <!-- DIENSTTAGE RECHNER -->
                 <div class="section">
                     <h3>📅 Diensttage-Rechner</h3>
                     <div style="background: rgba(8, 12, 20, 0.5); padding: 18px; border-radius: 14px; border: 1px solid var(--border);">
@@ -717,27 +716,26 @@
                     </div>
                 </div>
 
-                <!-- PASSWORT ÄNDERN -->
                 <div class="section">
                     <h3>🔑 Eigenes Passwort ändern</h3>
                     <div style="background: rgba(8, 12, 20, 0.5); padding: 18px; border-radius: 14px; border: 1px solid var(--border);">
                         <label for="newPasswordInput">Neues Passwort:</label>
-                        <form onsubmit="event.preventDefault(); passwortAendern();" style="margin:0; display:flex; flex-direction:column; gap:12px;">
+                        <div style="margin:0; display:flex; flex-direction:column; gap:12px;">
                             <input type="password" id="newPasswordInput" name="newPasswordInput" autocomplete="new-password" placeholder="Neues Passwort eingeben">
-                            <button type="submit" class="btn" style="background:var(--primary); color:#080c14; font-weight:800;">Passwort speichern</button>
-                        </form>
+                            <button type="button" class="btn" style="background:var(--primary); color:#080c14; font-weight:800;" onclick="passwortAendern()">Passwort speichern</button>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- MODAL POPUP: GESAMT-ARCHIV (WOCHENWEISE) -->
+    <!-- MODAL POPUP: GESAMT-ARCHIV -->
     <div id="weeklyArchiveModal" class="modal-overlay">
         <div class="modal-card" style="max-width: 1200px; width: 95vw; max-height: 90vh; overflow-y: auto;">
             <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:14px; margin-bottom:16px;">
                 <h3 style="margin:0; color:var(--primary);">🗄️ Schichten-Archiv (Wochenweise)</h3>
-                <button class="btn-close" onclick="closeWeeklyArchiveModal()">✖</button>
+                <button type="button" class="btn-close" onclick="closeWeeklyArchiveModal()">✖</button>
             </div>
             <div id="weeklyArchiveContent">Lade Wochen-Archiv...</div>
         </div>
@@ -753,23 +751,23 @@
             <label for="editCount">Anzahl Verletzungen:</label><input type="number" id="editCount">
             <label for="editCash">Ausgaben ($):</label><input type="number" id="editCash">
             <div style="display:flex; gap:10px; margin-top:20px;">
-                <button class="btn" onclick="speicherePatientEdit()">Speichern</button>
-                <button class="btn" style="background:var(--text-muted);" onclick="closeEditModal()">Abbrechen</button>
+                <button type="button" class="btn" onclick="speicherePatientEdit()">Speichern</button>
+                <button type="button" class="btn" style="background:var(--text-muted);" onclick="closeEditModal()">Abbrechen</button>
             </div>
         </div>
     </div>
 
-    <!-- MODAL POPUP: PREISE & SZENARIEN VOR ORT (DOKUMENTATION & EINSATZ) -->
+    <!-- MODAL POPUP: PREISE & SZENARIEN VOR ORT -->
     <div id="pricesInlineModal" class="modal-overlay">
         <div class="modal-card" style="max-width: 800px; width: 95vw;">
             <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:12px; margin-bottom:16px;">
                 <h3 style="margin:0; color:var(--warning);">💰 Materialpreise vor Ort anpassen</h3>
-                <button class="btn-close" onclick="closePricesInlineModal()">✖</button>
+                <button type="button" class="btn-close" onclick="closePricesInlineModal()">✖</button>
             </div>
             <div id="pricesInlineContainer" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:10px; max-height:60vh; overflow-y:auto; padding:4px;"></div>
             <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:20px;">
-                <button class="btn" style="width:auto; background:var(--text-muted);" onclick="closePricesInlineModal()">Abbrechen</button>
-                <button class="btn" style="width:auto; background:var(--success); color:#080c14;" onclick="speicherePreiseInline()">💾 Preise speichern</button>
+                <button type="button" class="btn" style="width:auto; background:var(--text-muted);" onclick="closePricesInlineModal()">Abbrechen</button>
+                <button type="button" class="btn" style="width:auto; background:var(--success); color:#080c14;" onclick="speicherePreiseInline()">💾 Preise speichern</button>
             </div>
         </div>
     </div>
@@ -779,7 +777,7 @@
         <div class="modal-card" style="max-width: 1000px; width: 96vw; max-height: 90vh; overflow-y:auto;">
             <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:12px; margin-bottom:16px;">
                 <h3 style="margin:0; color:var(--primary);">✏️ Funk & Codes bearbeiten</h3>
-                <button class="btn-close" onclick="closeGuideInlineModal()">✖</button>
+                <button type="button" class="btn-close" onclick="closeGuideInlineModal()">✖</button>
             </div>
             <div id="guideInlineEditorContainer"></div>
         </div>
@@ -790,7 +788,7 @@
         <div class="modal-card" style="max-width: 900px; width: 95vw; max-height: 90vh; overflow-y:auto;">
             <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:12px; margin-bottom:16px;">
                 <h3 style="margin:0; color:var(--primary);">✏️ Commands verwalten</h3>
-                <button class="btn-close" onclick="closeCommandsInlineModal()">✖</button>
+                <button type="button" class="btn-close" onclick="closeCommandsInlineModal()">✖</button>
             </div>
             <div id="commandsInlineEditorContainer"></div>
         </div>
@@ -801,69 +799,68 @@
         <div class="modal-card" style="max-width: 900px; width: 95vw; max-height: 90vh; overflow-y:auto;">
             <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:12px; margin-bottom:16px;">
                 <h3 style="margin:0; color:var(--primary);">✏️ Links & Dokumente verwalten</h3>
-                <button class="btn-close" onclick="closeLinksInlineModal()">✖</button>
+                <button type="button" class="btn-close" onclick="closeLinksInlineModal()">✖</button>
             </div>
             <div id="linksInlineEditorContainer"></div>
         </div>
     </div>
 
-    <!-- MODAL POPUP: PRÜFUNGSERGEBNIS DETAILS (NUR AUSBILDER/LEITUNG/ADMIN) -->
+    <!-- MODAL POPUP: PRÜFUNGSERGEBNIS DETAILS -->
     <div id="examSubmissionDetailsModal" class="modal-overlay">
         <div class="modal-card" style="max-width: 800px; width: 95vw; max-height: 85vh; overflow-y:auto;">
             <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:12px; margin-bottom:16px;">
                 <h3 style="margin:0; color:var(--warning);" id="examSubDetailsTitle">📊 Prüfungsprotokoll & Korrekturbogen</h3>
-                <button class="btn-close" onclick="closeExamSubmissionDetailsModal()">✖</button>
+                <button type="button" class="btn-close" onclick="closeExamSubmissionDetailsModal()">✖</button>
             </div>
             <div id="examSubDetailsContent"></div>
         </div>
     </div>
 
-    <!-- MODAL POPUP: NEUE PRÜFUNG ERSTELLEN (PRÜFUNGS-EDITOR) -->
+    <!-- MODAL POPUP: NEUE PRÜFUNG ERSTELLEN -->
     <div id="examBuilderModal" class="modal-overlay">
         <div class="modal-card" style="max-width: 1100px; width: 96vw; max-height: 92vh; overflow-y:auto;">
             <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:12px; margin-bottom:16px;">
                 <h3 style="margin:0; color:var(--success);" id="examBuilderModalHeading">📝 Prüfung erstellen / bearbeiten</h3>
-                <button class="btn-close" onclick="closeExamBuilderModal()">✖</button>
+                <button type="button" class="btn-close" onclick="closeExamBuilderModal()">✖</button>
             </div>
             <input type="hidden" id="editingExamId" value="">
             <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:12px; margin-bottom:16px;">
-                <div><label>Prüfungstitel:</label><input type="text" id="newExamTitle" placeholder="Z.B. Grundausbildung 1 (GA1)"></div>
-                <div><label>Kategorie / Thema:</label><input type="text" id="newExamKat" placeholder="Z.B. Grundausbildung"></div>
-                <div><label>Dauer (Minuten):</label><input type="number" id="newExamTime" value="30" min="1"></div>
-                <div><label>Mindestquote (%):</label><input type="number" id="newExamPassRate" value="60" min="1" max="100"></div>
+                <div><label for="newExamTitle">Prüfungstitel:</label><input type="text" id="newExamTitle" placeholder="Z.B. Grundausbildung 1 (GA1)"></div>
+                <div><label for="newExamKat">Kategorie / Thema:</label><input type="text" id="newExamKat" placeholder="Z.B. Grundausbildung"></div>
+                <div><label for="newExamTime">Dauer (Minuten):</label><input type="number" id="newExamTime" value="30" min="1"></div>
+                <div><label for="newExamPassRate">Mindestquote (%):</label><input type="number" id="newExamPassRate" value="60" min="1" max="100"></div>
             </div>
             <div style="margin-bottom:16px;">
-                <label>Einleitungstext / Begrüßung:</label>
+                <label for="newExamIntroText">Einleitungstext / Begrüßung:</label>
                 <textarea id="newExamIntroText" rows="2" placeholder="Willkommen zur Prüfung..."></textarea>
             </div>
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
                 <h4 style="margin:0; color:var(--text-main);">❓ Fragen-Katalog (<span id="examQuestionsCountDisplay">0</span> Fragen)</h4>
-                <button class="btn" style="width:auto; padding:6px 14px; font-size:12px; background:var(--primary); color:#080c14;" onclick="addExamQuestionRow()">➕ Frage hinzufügen</button>
+                <button type="button" class="btn" style="width:auto; padding:6px 14px; font-size:12px; background:var(--primary); color:#080c14;" onclick="addExamQuestionRow()">➕ Frage hinzufügen</button>
             </div>
             <div id="examQuestionsListBuilder" style="display:flex; flex-direction:column; gap:12px; margin-bottom:20px;"></div>
             <div style="display:flex; justify-content:flex-end; gap:12px; border-top:1px solid var(--border); padding-top:16px;">
-                <button class="btn" style="background:var(--text-muted); width:auto;" onclick="closeExamBuilderModal()">Abbrechen</button>
-                <button class="btn" style="background:var(--success); color:#080c14; font-weight:800; width:auto; padding:12px 30px;" onclick="neuePruefungSpeichern()">💾 Prüfung in Cloud speichern</button>
+                <button type="button" class="btn" style="background:var(--text-muted); width:auto;" onclick="closeExamBuilderModal()">Abbrechen</button>
+                <button type="button" class="btn" style="background:var(--success); color:#080c14; font-weight:800; width:auto; padding:12px 30px;" onclick="neuePruefungSpeichern()">💾 Prüfung in Cloud speichern</button>
             </div>
         </div>
     </div>
 
-    <!-- ADMIN AUTHENTIFIZIERUNGS-MODAL (SCHLÜSSEL) -->
+    <!-- ADMIN AUTHENTIFIZIERUNGS-MODAL -->
     <div id="adminAuthModal" class="modal-overlay">
         <div class="modal-card">
             <h3 style="margin-top:0; color:var(--warning); display:flex; align-items:center; gap:8px;">🔑 Admin-Verifizierung</h3>
             <p style="color:var(--text-muted); font-size:12px; margin-bottom:16px;">Bitte verifiziere dich mit deinem Passwort, um das Dashboard zu öffnen.</p>
-            <form onsubmit="event.preventDefault(); verifyAdminKeyPassword();" style="margin:0;">
-                <input type="password" id="adminAuthPassInput" autocomplete="current-password" placeholder="Passwort eingeben...">
-            </form>
+            <label for="adminAuthPassInput">Admin-Passwort:</label>
+            <input type="password" id="adminAuthPassInput" autocomplete="current-password" placeholder="Passwort eingeben...">
             <div style="display:flex; gap:10px; margin-top:20px;">
-                <button class="btn" style="background:var(--warning); color:#080c14; font-weight:800;" onclick="verifyAdminKeyPassword()">Freischalten 🔓</button>
-                <button class="btn" style="background:var(--text-muted);" onclick="closeAdminAuthModal()">Abbrechen</button>
+                <button type="button" class="btn" style="background:var(--warning); color:#080c14; font-weight:800;" onclick="verifyAdminKeyPassword()">Freischalten 🔓</button>
+                <button type="button" class="btn" style="background:var(--text-muted);" onclick="closeAdminAuthModal()">Abbrechen</button>
             </div>
         </div>
     </div>
 
-    <!-- ADMIN MANAGEMENT VERWALTUNGS-MODAL (BEREINIGT) -->
+    <!-- ADMIN MANAGEMENT VERWALTUNGS-MODAL -->
     <div id="adminManagementModal" class="modal-overlay">
         <div class="modal-card" style="max-width: 1550px; width: 98vw; max-height: 94vh; overflow-y: auto; padding: 26px 36px; border-radius: 20px;">
             <!-- HEADER -->
@@ -875,27 +872,26 @@
                         <span style="font-size:12px; color:var(--text-muted);">Zentrale System- und Mitarbeiterkonfiguration</span>
                     </div>
                 </div>
-                <button class="btn-close" onclick="closeAdminManagementModal()">✖</button>
+                <button type="button" class="btn-close" onclick="closeAdminManagementModal()">✖</button>
             </div>
 
-            <!-- SUB-TABS BEREINIGT: 1. MITARBEITER & ROLLEN, 2. HIERARCHIE, 3. BACKUP, 4. PROTOKOLL -->
+            <!-- SUB-TABS -->
             <div class="admin-subtabs">
-                <button class="admin-tab-btn active" id="btnAdminSubUsers" onclick="switchAdminTab('adminSubTabUsers', this)">👥 Mitarbeiter, Rollen & Rechte</button>
-                <button class="admin-tab-btn" id="btnAdminSubHierarchy" onclick="switchAdminTab('adminSubTabHierarchy', this)">🌳 Hierarchie</button>
-                <button class="admin-tab-btn" id="btnAdminSubSystem" onclick="switchAdminTab('adminSubTabSystem', this)">💾 Backup & Wiederherstellung</button>
-                <button class="admin-tab-btn" id="btnAdminSubAudit" onclick="switchAdminTab('adminSubTabAudit', this)">📋 System-Protokoll (Heute)</button>
+                <button type="button" class="admin-tab-btn active" id="btnAdminSubUsers" onclick="switchAdminTab('adminSubTabUsers', this)">👥 Mitarbeiter, Rollen & Rechte</button>
+                <button type="button" class="admin-tab-btn" id="btnAdminSubHierarchy" onclick="switchAdminTab('adminSubTabHierarchy', this)">🌳 Hierarchie</button>
+                <button type="button" class="admin-tab-btn" id="btnAdminSubSystem" onclick="switchAdminTab('adminSubTabSystem', this)">💾 Backup & Wiederherstellung</button>
+                <button type="button" class="admin-tab-btn" id="btnAdminSubAudit" onclick="switchAdminTab('adminSubTabAudit', this)">📋 System-Protokoll (Heute)</button>
             </div>
 
-            <!-- SUB-TAB 1: MITARBEITER, ROLLEN & RECHTE (KOMPLETTE ZENTRALE) -->
+            <!-- SUB-TAB 1: MITARBEITER, ROLLEN & RECHTE -->
             <div id="adminSubTabUsers" class="admin-subtab-content active">
-                <!-- MITARBEITER VERWALTEN -->
                 <div style="background:rgba(15, 23, 42, 0.7); padding:20px 24px; border-radius:16px; border:1px solid var(--border); margin-bottom:24px;">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:12px;">
                         <div>
                             <h3 style="margin:0; color:var(--warning); font-size:16px;">👤 Mitarbeiter-Kartei</h3>
                             <span style="color:var(--text-muted); font-size:12px;">Kontoverwaltung, Zugangsdaten, Status und Berechtigungen</span>
                         </div>
-                        <input type="text" class="form-input" id="searchAdminUsers" placeholder="🔍 Mitarbeiter suchen..." style="max-width:300px;" oninput="filterAdminUserTable()">
+                        <input type="text" class="form-input" id="searchAdminUsers" placeholder="🔍 Mitarbeiter suchen..." style="max-width:300px;" oninput="filterAdminUserTable()" aria-label="Mitarbeiter suchen">
                     </div>
                     <div class="table-responsive">
                         <table>
@@ -913,14 +909,13 @@
                     </div>
                 </div>
 
-                <!-- DISCORD-ARTIGER ROLLEN-MANAGER MIT DETAILLIERTEN ERKLÄRTEXTEN -->
                 <div style="background:rgba(15, 23, 42, 0.7); padding:20px 24px; border-radius:16px; border:1px solid var(--border);">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:12px;">
                         <div>
                             <h3 style="margin:0; color:var(--primary); font-size:16px;">🎭 Rollen & Berechtigungs-Matrix</h3>
                             <span style="color:var(--text-muted); font-size:12px;">Erstelle Rollen und bestimme millimetergenau, welche Module sichtbar sind und wer was löschen darf.</span>
                         </div>
-                        <button class="btn" style="width:auto; margin:0; padding:8px 18px; background:var(--success); color:#080c14; font-weight:800;" onclick="neueRolleErstellen()">➕ Neue Rolle erstellen</button>
+                        <button type="button" class="btn" style="width:auto; margin:0; padding:8px 18px; background:var(--success); color:#080c14; font-weight:800;" onclick="neueRolleErstellen()">➕ Neue Rolle erstellen</button>
                     </div>
 
                     <div style="display:grid; grid-template-columns: 280px 1fr; gap:20px;">
@@ -933,86 +928,85 @@
                                 </h4>
                             </div>
                             <div style="display:grid; grid-template-columns: 2fr 1fr 1fr; gap:12px;">
-                                <div><label>Rollen-Name:</label><input type="text" id="roleEditName" placeholder="z.B. Notarzt" oninput="updateRoleBadgePreview()"></div>
-                                <div><label>Farbe:</label><input type="color" id="roleEditColor" value="#38bdf8" style="height:40px;" onchange="updateRoleBadgePreview()"></div>
-                                <div><label>Icon:</label><input type="text" id="roleEditIcon" placeholder="z.B. 🩺" oninput="updateRoleBadgePreview()"></div>
+                                <div><label for="roleEditName">Rollen-Name:</label><input type="text" id="roleEditName" placeholder="z.B. Notarzt" oninput="updateRoleBadgePreview()"></div>
+                                <div><label for="roleEditColor">Farbe:</label><input type="color" id="roleEditColor" value="#38bdf8" style="height:40px;" onchange="updateRoleBadgePreview()"></div>
+                                <div><label for="roleEditIcon">Icon:</label><input type="text" id="roleEditIcon" placeholder="z.B. 🩺" oninput="updateRoleBadgePreview()"></div>
                             </div>
 
-                            <!-- DETAILLIERTE PRIVILEGIEN MIT ERKLÄRTEXTEN -->
                             <div style="background:rgba(15,23,42,0.7); padding:16px; border-radius:12px; border:1px solid var(--border);">
                                 <h5 style="margin:0 0 12px 0; color:var(--primary); font-size:13px; text-transform:uppercase;">⚙️ Granulare Rechte & Modul-Steuerung</h5>
                                 
                                 <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:12px;">
                                     <div class="role-perm-box">
-                                        <label class="perm-check"><input type="checkbox" id="roleFlagAdmin"> <b>🛡️ Admin-Zugang</b></label>
+                                        <label for="roleFlagAdmin" class="perm-check"><input type="checkbox" id="roleFlagAdmin"> <b>🛡️ Admin-Zugang</b></label>
                                         <span class="perm-desc">Darf das Admin-Zentralmenü öffnen.</span>
                                     </div>
                                     <div class="role-perm-box">
-                                        <label class="perm-check"><input type="checkbox" id="roleFlagMasterAdmin"> <b>👑 Master-Admin</b></label>
+                                        <label for="roleFlagMasterAdmin" class="perm-check"><input type="checkbox" id="roleFlagMasterAdmin"> <b>👑 Master-Admin</b></label>
                                         <span class="perm-desc">Vollzugriff inklusive Backup und Rollen-Konfiguration.</span>
                                     </div>
                                     <div class="role-perm-box">
-                                        <label class="perm-check"><input type="checkbox" id="roleFlagArchive"> <b>🗄️ Schicht-Archiv</b></label>
+                                        <label for="roleFlagArchive" class="perm-check"><input type="checkbox" id="roleFlagArchive"> <b>🗄️ Schicht-Archiv</b></label>
                                         <span class="perm-desc">Darf das Gesamt-Archiv aller vergangenen Schichten einsehen.</span>
                                     </div>
                                     <div class="role-perm-box">
-                                        <label class="perm-check"><input type="checkbox" id="roleFlagInstructor"> <b>🎓 Ausbilder</b></label>
+                                        <label for="roleFlagInstructor" class="perm-check"><input type="checkbox" id="roleFlagInstructor"> <b>🎓 Ausbilder</b></label>
                                         <span class="perm-desc">Prüfungen freischalten (nur selbst bestandene).</span>
                                     </div>
                                     <div class="role-perm-box">
-                                        <label class="perm-check"><input type="checkbox" id="roleFlagManageInstructors"> <b>⚙️ Ausbildungsleitung</b></label>
+                                        <label for="roleFlagManageInstructors" class="perm-check"><input type="checkbox" id="roleFlagManageInstructors"> <b>⚙️ Ausbildungsleitung</b></label>
                                         <span class="perm-desc">Voller Ausbildungs-Zugriff & Ausbilder-Rollen vergeben.</span>
                                     </div>
                                     <div class="role-perm-box">
-                                        <label class="perm-check"><input type="checkbox" id="roleFlagManageExams"> <b>📝 Prüfungen anlegen/bearbeiten</b></label>
+                                        <label for="roleFlagManageExams" class="perm-check"><input type="checkbox" id="roleFlagManageExams"> <b>📝 Prüfungen anlegen/bearbeiten</b></label>
                                         <span class="perm-desc">Darf neue Prüfungen erstellen und Fragen bearbeiten.</span>
                                     </div>
                                     <div class="role-perm-box">
-                                        <label class="perm-check"><input type="checkbox" id="roleFlagPostNews"> <b>📢 News direkt posten</b></label>
+                                        <label for="roleFlagPostNews" class="perm-check"><input type="checkbox" id="roleFlagPostNews"> <b>📢 News direkt posten</b></label>
                                         <span class="perm-desc">Darf Mitteilungen sofort ohne Prüfung veröffentlichen.</span>
                                     </div>
                                     <div class="role-perm-box">
-                                        <label class="perm-check"><input type="checkbox" id="roleFlagApproveNews"> <b>✅ News-Vorschläge freigeben</b></label>
+                                        <label for="roleFlagApproveNews" class="perm-check"><input type="checkbox" id="roleFlagApproveNews"> <b>✅ News-Vorschläge freigeben</b></label>
                                         <span class="perm-desc">Darf eingereichte Vorschläge von Mitarbeitern annehmen.</span>
                                     </div>
                                     <div class="role-perm-box">
-                                        <label class="perm-check"><input type="checkbox" id="roleFlagViewNewsRead"> <b>👁️ News-Leserliste einsehen</b></label>
+                                        <label for="roleFlagViewNewsRead" class="perm-check"><input type="checkbox" id="roleFlagViewNewsRead"> <b>👁️ News-Leserliste einsehen</b></label>
                                         <span class="perm-desc">Sieht genau, welche Mitarbeiter die News gelesen haben.</span>
                                     </div>
                                     <div class="role-perm-box">
-                                        <label class="perm-check"><input type="checkbox" id="roleFlagEditPrices"> <b>✏️ Preise vor Ort anpassen</b></label>
+                                        <label for="roleFlagEditPrices" class="perm-check"><input type="checkbox" id="roleFlagEditPrices"> <b>✏️ Preise vor Ort anpassen</b></label>
                                         <span class="perm-desc">Sieht den Stift bei Dokumentation & Einsatz.</span>
                                     </div>
                                     <div class="role-perm-box">
-                                        <label class="perm-check"><input type="checkbox" id="roleFlagEditGuide"> <b>✏️ Funk & Codes bearbeiten</b></label>
+                                        <label for="roleFlagEditGuide" class="perm-check"><input type="checkbox" id="roleFlagEditGuide"> <b>✏️ Funk & Codes bearbeiten</b></label>
                                         <span class="perm-desc">Darf Funkcodes und Streifen vor Ort editieren.</span>
                                     </div>
                                     <div class="role-perm-box">
-                                        <label class="perm-check"><input type="checkbox" id="roleFlagEditCommands"> <b>✏️ Commands bearbeiten</b></label>
+                                        <label for="roleFlagEditCommands" class="perm-check"><input type="checkbox" id="roleFlagEditCommands"> <b>✏️ Commands bearbeiten</b></label>
                                         <span class="perm-desc">Darf Commands vor Ort anlegen und ändern.</span>
                                     </div>
                                     <div class="role-perm-box">
-                                        <label class="perm-check"><input type="checkbox" id="roleFlagEditLinks"> <b>✏️ Links bearbeiten</b></label>
+                                        <label for="roleFlagEditLinks" class="perm-check"><input type="checkbox" id="roleFlagEditLinks"> <b>✏️ Links bearbeiten</b></label>
                                         <span class="perm-desc">Darf Cloud-Links vor Ort hinzufügen und pflegen.</span>
                                     </div>
                                 </div>
 
                                 <h5 style="margin:16px 0 10px 0; color:var(--danger); font-size:13px; text-transform:uppercase;">🗑️ Modul-Spezifische Löschrechte</h5>
                                 <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:10px;">
-                                    <label class="perm-check"><input type="checkbox" id="delFlagPatient"> 🗑️ Protokoll-Einträge</label>
-                                    <label class="perm-check"><input type="checkbox" id="delFlagArchiv"> 🗑️ Schicht-Archive</label>
-                                    <label class="perm-check"><input type="checkbox" id="delFlagGuide"> 🗑️ Funk & Codes</label>
-                                    <label class="perm-check"><input type="checkbox" id="delFlagCommands"> 🗑️ Commands</label>
-                                    <label class="perm-check"><input type="checkbox" id="delFlagLinks"> 🗑️ Dienst-Links</label>
-                                    <label class="perm-check"><input type="checkbox" id="delFlagNews"> 🗑️ News</label>
-                                    <label class="perm-check"><input type="checkbox" id="delFlagExams"> 🗑️ Prüfungen / Ergebnisse</label>
-                                    <label class="perm-check"><input type="checkbox" id="delFlagUsers"> 🗑️ Mitarbeiter-Accounts</label>
+                                    <label for="delFlagPatient" class="perm-check"><input type="checkbox" id="delFlagPatient"> 🗑️ Protokoll-Einträge</label>
+                                    <label for="delFlagArchiv" class="perm-check"><input type="checkbox" id="delFlagArchiv"> 🗑️ Schicht-Archive</label>
+                                    <label for="delFlagGuide" class="perm-check"><input type="checkbox" id="delFlagGuide"> 🗑️ Funk & Codes</label>
+                                    <label for="delFlagCommands" class="perm-check"><input type="checkbox" id="delFlagCommands"> 🗑️ Commands</label>
+                                    <label for="delFlagLinks" class="perm-check"><input type="checkbox" id="delFlagLinks"> 🗑️ Dienst-Links</label>
+                                    <label for="delFlagNews" class="perm-check"><input type="checkbox" id="delFlagNews"> 🗑️ News</label>
+                                    <label for="delFlagExams" class="perm-check"><input type="checkbox" id="delFlagExams"> 🗑️ Prüfungen / Ergebnisse</label>
+                                    <label for="delFlagUsers" class="perm-check"><input type="checkbox" id="delFlagUsers"> 🗑️ Mitarbeiter-Accounts</label>
                                 </div>
                             </div>
 
                             <div style="display:flex; justify-content:space-between; margin-top:10px;">
-                                <button class="btn" style="background:var(--success); color:#080c14; width:auto; padding:10px 24px;" onclick="speichereRolle()">💾 Rolle speichern</button>
-                                <button id="btnDeleteRole" class="btn" style="background:rgba(244,63,94,0.15); color:var(--danger); width:auto; padding:10px 24px;" onclick="loescheRolle()">🗑️ Rolle löschen</button>
+                                <button type="button" class="btn" style="background:var(--success); color:#080c14; width:auto; padding:10px 24px;" onclick="speichereRolle()">💾 Rolle speichern</button>
+                                <button type="button" id="btnDeleteRole" class="btn" style="background:rgba(244,63,94,0.15); color:var(--danger); width:auto; padding:10px 24px;" onclick="loescheRolle()">🗑️ Rolle löschen</button>
                             </div>
                         </div>
                     </div>
@@ -1026,12 +1020,12 @@
                     <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap:14px; margin-bottom:18px;">
                         <div style="background:rgba(15,23,42,0.6); padding:14px; border-radius:10px; border:1px solid var(--border);">
                             <h4 style="margin:0 0 10px 0; color:var(--primary);">Chiefebene</h4>
-                            <label>Chief 1</label><input type="text" id="inp_h_chief_01">
-                            <label>Chief 2</label><input type="text" id="inp_h_chief_02">
-                            <label>Chief 3</label><input type="text" id="inp_h_chief_03">
+                            <label for="inp_h_chief_01">Chief 1</label><input type="text" id="inp_h_chief_01">
+                            <label for="inp_h_chief_02">Chief 2</label><input type="text" id="inp_h_chief_02">
+                            <label for="inp_h_chief_03">Chief 3</label><input type="text" id="inp_h_chief_03">
                         </div>
                     </div>
-                    <button class="btn" style="width:auto; padding:10px 24px; background:var(--primary); color:#080c14;" onclick="speichereHierarchieDaten()">💾 Hierarchie speichern</button>
+                    <button type="button" class="btn" style="width:auto; padding:10px 24px; background:var(--primary); color:#080c14;" onclick="speichereHierarchieDaten()">💾 Hierarchie speichern</button>
                 </div>
             </div>
 
@@ -1043,8 +1037,8 @@
                         Lade eine vollständige Sicherung aller Systemdaten als JSON herunter oder spiele ein früheres Backup ein.
                     </p>
                     <div style="display:flex; gap:14px; flex-wrap:wrap; align-items:center;">
-                        <button class="btn" style="width:auto; padding:10px 20px; background:var(--primary); color:#080c14;" onclick="downloadSystemBackup()">📥 Backup herunterladen (JSON)</button>
-                        <label class="btn" style="width:auto; padding:10px 20px; background:rgba(56,189,248,0.15); color:var(--primary); border:1px solid var(--primary); cursor:pointer;">
+                        <button type="button" class="btn" style="width:auto; padding:10px 20px; background:var(--primary); color:#080c14;" onclick="downloadSystemBackup()">📥 Backup herunterladen (JSON)</button>
+                        <label for="backupFileInput" class="btn" style="width:auto; padding:10px 20px; background:rgba(56,189,248,0.15); color:var(--primary); border:1px solid var(--primary); cursor:pointer;">
                             <span>📤 Backup einspielen</span>
                             <input type="file" id="backupFileInput" accept=".json" style="display:none;" onchange="restoreSystemBackupFromFile(event)">
                         </label>
@@ -1054,11 +1048,11 @@
                 <div style="background:rgba(244, 63, 94, 0.06); padding:20px; border-radius:16px; border:1px solid rgba(244, 63, 94, 0.25);">
                     <h3 style="margin:0 0 8px 0; color:var(--danger);">⚠️ Notfall-Reset</h3>
                     <p style="color:var(--text-muted); font-size:12px; margin-top:0;">Nur für den Master-Admin verfügbar. Löscht die gesamte Datenbank unwiderruflich.</p>
-                    <button class="btn-full-reset" style="width:auto; padding:10px 20px;" onclick="vollstaendigerReset()">Komplett-Reset durchführen</button>
+                    <button type="button" class="btn-full-reset" style="width:auto; padding:10px 20px;" onclick="vollstaendigerReset()">Komplett-Reset durchführen</button>
                 </div>
             </div>
 
-            <!-- SUB-TAB 4: SYSTEM-PROTOKOLL (TAGES-LOG & ARCHIV-BUTTON) -->
+            <!-- SUB-TAB 4: SYSTEM-PROTOKOLL -->
             <div id="adminSubTabAudit" class="admin-subtab-content">
                 <div style="background:rgba(15, 23, 42, 0.7); padding:20px; border-radius:16px; border:1px solid var(--border);">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:10px;">
@@ -1067,8 +1061,8 @@
                             <span style="font-size:12px; color:var(--text-muted);">Protokolle vor 00:00 Uhr werden automatisch ins Archiv verschoben.</span>
                         </div>
                         <div style="display:flex; gap:8px;">
-                            <button class="btn-archive-view" onclick="openAuditLogArchiveModal()">🗄️ Protokoll-Archiv</button>
-                            <button class="btn" style="width:auto; margin:0; padding:8px 16px; font-size:12px;" onclick="renderAdminAuditLogs()">🔄 Aktualisieren</button>
+                            <button type="button" class="btn-archive-view" onclick="openAuditLogArchiveModal()">🗄️ Protokoll-Archiv</button>
+                            <button type="button" class="btn" style="width:auto; margin:0; padding:8px 16px; font-size:12px;" onclick="renderAdminAuditLogs()">🔄 Aktualisieren</button>
                         </div>
                     </div>
                     <div class="table-responsive">
@@ -1087,29 +1081,29 @@
         <div class="modal-card" style="max-width: 1000px; width: 95vw; max-height: 85vh; overflow-y:auto;">
             <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:12px; margin-bottom:16px;">
                 <h3 style="margin:0; color:var(--primary);">🗄️ Historisches System-Protokoll</h3>
-                <button class="btn-close" onclick="closeAuditArchiveModal()">✖</button>
+                <button type="button" class="btn-close" onclick="closeAuditArchiveModal()">✖</button>
             </div>
             <div id="auditArchiveContent">Lade Protokoll-Archiv...</div>
         </div>
     </div>
 
-    <!-- MODAL: MITARBEITER EDITIEREN (ADMIN) -->
+    <!-- MODAL: MITARBEITER EDITIEREN -->
     <div id="userPermissionsModal" class="modal-overlay">
         <div class="modal-card" style="max-width: 550px;">
             <h3 style="margin-top:0; color:var(--primary);">👤 Mitarbeiter bearbeiten</h3>
             <input type="hidden" id="permUserId">
-            <label>Vorname</label><input type="text" id="permVorname">
-            <label>Nachname</label><input type="text" id="permNachname">
-            <label>Dienstnummer (DN)</label><input type="text" id="permDN">
-            <label>Passwort</label><input type="text" id="permPassword">
-            <label>Status</label>
+            <label for="permVorname">Vorname</label><input type="text" id="permVorname">
+            <label for="permNachname">Nachname</label><input type="text" id="permNachname">
+            <label for="permDN">Dienstnummer (DN)</label><input type="text" id="permDN">
+            <label for="permPassword">Passwort</label><input type="text" id="permPassword">
+            <label for="permStatus">Status</label>
             <select id="permStatus">
                 <option value="approved">Zugelassen (Aktiv)</option>
                 <option value="pending">Gesperrt / Ausstehend</option>
             </select>
             <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:20px;">
-                <button class="btn" style="width:auto; background:var(--text-muted);" onclick="closeUserPermissionsModal()">Abbrechen</button>
-                <button class="btn" style="width:auto; background:var(--success); color:#080c14; font-weight:800;" onclick="saveUserPermissions()">💾 Speichern</button>
+                <button type="button" class="btn" style="width:auto; background:var(--text-muted);" onclick="closeUserPermissionsModal()">Abbrechen</button>
+                <button type="button" class="btn" style="width:auto; background:var(--success); color:#080c14; font-weight:800;" onclick="saveUserPermissions()">💾 Speichern</button>
             </div>
         </div>
     </div>
@@ -1122,23 +1116,23 @@
             <p style="margin-top:0;">Mitarbeiter: <b id="assignRoleUserName" style="color:var(--text-main);">--</b></p>
             <div id="assignRolesContainer" style="max-height:320px; overflow-y:auto; display:flex; flex-direction:column; gap:8px;"></div>
             <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:20px;">
-                <button class="btn" style="width:auto; background:var(--text-muted);" onclick="closeAssignRolesModal()">Abbrechen</button>
-                <button class="btn" style="width:auto; background:var(--success); color:#080c14; font-weight:800;" onclick="saveAssignedRoles()">💾 Speichern</button>
+                <button type="button" class="btn" style="width:auto; background:var(--text-muted);" onclick="closeAssignRolesModal()">Abbrechen</button>
+                <button type="button" class="btn" style="width:auto; background:var(--success); color:#080c14; font-weight:800;" onclick="saveAssignedRoles()">💾 Speichern</button>
             </div>
         </div>
     </div>
 
-    <!-- MODAL: LESER-LISTE FÜR NEWS (NUR BERECHTIGTE) -->
+    <!-- MODAL: LESER-LISTE NEWS -->
     <div id="newsReadersModal" class="modal-overlay">
         <div class="modal-card" style="max-width: 500px;">
             <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:10px; margin-bottom:14px;">
                 <h3 style="margin:0; color:var(--primary);">👁️ Gelesen von Mitarbeitern</h3>
-                <button class="btn-close" onclick="closeNewsReadersModal()">✖</button>
+                <button type="button" class="btn-close" onclick="closeNewsReadersModal()">✖</button>
             </div>
             <div id="newsReadersListContainer" style="max-height:300px; overflow-y:auto;"></div>
         </div>
     </div>
 
-    <script src="app.js?v=3.0"></script>
+    <script src="app.js?v=4.0"></script>
 </body>
 </html>
