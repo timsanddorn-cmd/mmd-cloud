@@ -744,6 +744,7 @@
                     <h3>🔑 Eigenes Passwort ändern</h3>
                     <div style="background: rgba(8, 12, 20, 0.5); padding: 18px; border-radius: 14px; border: 1px solid var(--border);">
                         <form onsubmit="event.preventDefault(); passwortAendern();" style="margin:0; display:flex; flex-direction:column; gap:12px;">
+    <input type="text" name="username" autocomplete="username" style="display:none;" aria-hidden="true">
     <label for="newPasswordInput">Neues Passwort:</label>
     <input type="password" id="newPasswordInput" name="newPasswordInput" autocomplete="new-password" placeholder="Neues Passwort eingeben">
     <button type="button" class="btn" style="background:var(--primary); color:#080c14; font-weight:800;" onclick="passwortAendern()">Passwort speichern</button>
@@ -876,6 +877,7 @@
             <h3 style="margin-top:0; color:var(--warning); display:flex; align-items:center; gap:8px;">🔑 Admin-Verifizierung</h3>
             <p style="color:var(--text-muted); font-size:12px; margin-bottom:16px;">Bitte verifiziere dich mit deinem Passwort, um das Dashboard zu öffnen.</p>
             <form onsubmit="event.preventDefault(); verifyAdminKeyPassword();">
+    <input type="text" name="username" autocomplete="username" style="display:none;" aria-hidden="true">
     <label for="adminAuthPassInput">Admin-Passwort:</label>
     <input type="password" id="adminAuthPassInput" autocomplete="current-password" placeholder="Passwort eingeben...">
     <div style="display:flex; gap:10px; margin-top:20px;">
