@@ -1769,26 +1769,61 @@ function renderInstructorSubmissions(subs) {
 }
 
 function openExamSubmissionDetailsModal(subId) {
-    const sub = cachedSubmissions[subId]; if (!sub) return;
+    const sub = cachedSubmissions[subId]; 
+    if (!sub) return;
+    
     const cont = document.getElementById('examSubDetailsContent');
     const modal = document.getElementById('examSubmissionDetailsModal');
     if (!cont || !modal) return;
 
+    // Fängt sowohl Arrays als auch Firebase-Objekt-Strukturen ab
+    let answersList = [];
+    if (Array.isArray(sub.answers)) {
+        answersList = sub.answers;
+    } else if (sub.answers && typeof sub.answers === 'object') {
+        answersList = Object.values(sub.answers);
+    }
+
+    let answersHtml = '';
+    if (answersList.length === 0) {
+        answersHtml = `
+            <div style="background:rgba(15,23,42,0.6);padding:14px;border-radius:8px;color:var(--text-muted);text-align:center;">
+                ℹ️ Für diesen älteren Eintrag wurden noch keine detaillierten Frage-Antwort-Protokolle gespeichert.
+            </div>
+        `;
+    } else {
+        answersHtml = answersList.map((ans, idx) => {
+            const isCorrect = !!ans.isCorrect;
+            const qText = ans.questionText || `Frage ${idx + 1}`;
+            const chosen = ans.chosenAnswerText || 'Keine Antwort ausgewählt';
+            
+            return `
+                <div style="background:rgba(15,23,42,0.7);padding:12px;border-radius:8px;border-left:4px solid ${isCorrect ? 'var(--success)' : 'var(--danger)'};">
+                    <div style="font-weight:700;font-size:13px;color:var(--text-main);">Frage ${idx + 1}: ${qText}</div>
+                    <div style="font-size:12px;margin-top:4px;color:${isCorrect ? 'var(--success)' : 'var(--danger)'};font-weight:700;">
+                        Ausgewählt: <span style="color:var(--text-main);font-weight:normal;">${chosen}</span> ${isCorrect ? '✅ (Richtig)' : '❌ (Falsch)'}
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
     cont.innerHTML = `
-        <div style="background:rgba(30,41,59,0.5);padding:14px;border-radius:10px;margin-bottom:14px;">
-            <p style="margin:0;"><b>Prüfling:</b> ${sub.userName} (DN: ${sub.userDN})</p>
-            <p style="margin:4px 0 0 0;"><b>Prüfung:</b> ${sub.examTitle} • <b>Ergebnis:</b> ${sub.percentage}% (${sub.passed ? 'Bestanden' : 'Nicht bestanden'})</p>
+        <div style="background:rgba(30,41,59,0.5);padding:14px;border-radius:10px;margin-bottom:14px;border:1px solid var(--border);">
+            <p style="margin:0;"><b>Prüfling:</b> ${sub.userName || '--'} <span style="color:var(--primary);font-weight:700;">(DN: ${sub.userDN || '--'})</span></p>
+            <p style="margin:6px 0 0 0;">
+                <b>Prüfung:</b> ${sub.examTitle || '--'} • 
+                <b>Ergebnis:</b> <b style="color:${sub.passed ? 'var(--success)' : 'var(--danger)'};">${sub.percentage || 0}%</b> 
+                (${sub.passed ? '✅ Bestanden' : '⛔ Nicht bestanden'}) • 
+                <b>Dauer:</b> ${sub.durationFormatted || '--'}
+            </p>
         </div>
         <h4 style="margin:0 0 10px 0;color:var(--primary);">Antwort-Korrekturbogen:</h4>
         <div style="display:flex;flex-direction:column;gap:8px;">
-            ${(sub.answers || []).map((ans, idx) => `
-                <div style="background:rgba(15,23,42,0.7);padding:10px;border-radius:8px;border-left:4px solid ${ans.isCorrect ? 'var(--success)' : 'var(--danger)'};">
-                    <div style="font-weight:700;">Frage ${idx+1}: ${ans.questionText}</div>
-                    <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">Gegebene Antwort: <b>${ans.chosenAnswerText}</b> ${ans.isCorrect ? '✅' : '❌'}</div>
-                </div>
-            `).join('')}
+            ${answersHtml}
         </div>
     `;
+
     modal.style.display = 'flex';
 }
 function closeExamSubmissionDetailsModal() { document.getElementById('examSubmissionDetailsModal').style.display = 'none'; }
