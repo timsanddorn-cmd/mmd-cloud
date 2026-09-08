@@ -2342,7 +2342,7 @@ function renderRoleCategoryCheckboxes(containerId, allItems, selectedList = []) 
     }
     cont.innerHTML = kats.map(k => `
         <label style="display:inline-flex;align-items:center;gap:6px;background:rgba(30,41,59,0.5);padding:4px 10px;border-radius:6px;font-size:12px;cursor:pointer;">
-            <input type="checkbox" class="${containerId}_check" value="${k}" ${selectedList.includes(k) ? 'checked' : ''}>
+            <input type="checkbox" class="cat-checkbox-item ${containerId}_check" value="${k}" ${selectedList.includes(k) ? 'checked' : ''}>
             <span>${k}</span>
         </label>
     `).join('');
@@ -2366,11 +2366,14 @@ function refreshOpenRoleCategoryCheckboxes() {
 
 // Wird aufgerufen, wenn du links eine bestehende Rolle anklickst
 function selectRole(roleId) {
-    const r = cachedRoles[roleId]; if (!r) return;
+    const r = cachedRoles[roleId] || defaultRoles[roleId]; if (!r) return;
     document.getElementById('editingRoleId').value = roleId;
     document.getElementById('roleEditName').value = r.name || '';
     document.getElementById('roleEditColor').value = r.color || '#38bdf8';
     document.getElementById('roleEditIcon').value = r.icon || '';
+
+    // Master-Admin erzwingt immer volle Berechtigungen in der UI
+    const isMaster = (roleId === 'masteradmin');
 
     // Alle Berechtigungs-Checkboxen abgleichen
     const fields = [
@@ -2384,7 +2387,13 @@ function selectRole(roleId) {
         const prop = fId.replace('roleFlag', '').replace('delFlag', 'del');
         const key = prop.charAt(0).toLowerCase() + prop.slice(1);
         const chk = document.getElementById(fId);
-        if (chk) chk.checked = !!r[key];
+        if (chk) {
+            if (isMaster) {
+                chk.checked = true;
+            } else {
+                chk.checked = !!r[key];
+            }
+        }
     });
 
     // Lösch-Button sperren, falls es eine geschützte System-Rolle ist
@@ -2398,16 +2407,18 @@ function selectRole(roleId) {
         }
     }
 
-    // Kategorien für Commands laden und Haken setzen
+    // Kategorien für Commands laden und Haken setzen (Master-Admin bekommt alle Kategorien)
     db.ref('data/dienstCommands').once('value', sCmd => {
         const allCmds = Object.assign({}, defaultCommands, sCmd.val() || {});
-        renderRoleCategoryCheckboxes('roleCommandsCategoriesContainer', allCmds, r.allowedCmdKats || []);
+        const allCmdKats = isMaster ? Object.values(allCmds).map(c => c.kat || 'Allgemein') : (r.allowedCmdKats || []);
+        renderRoleCategoryCheckboxes('roleCommandsCategoriesContainer', allCmds, allCmdKats);
     });
 
     // Kategorien für Links & Dokumente laden und Haken setzen
     db.ref('data/dienstLinks').once('value', sLnk => {
         const allLnks = Object.assign({}, defaultLinks, sLnk.val() || {});
-        renderRoleCategoryCheckboxes('roleLinksCategoriesContainer', allLnks, r.allowedLinkKats || []);
+        const allLinkKats = isMaster ? Object.values(allLnks).map(l => l.kat || l.thema || 'Allgemein') : (r.allowedLinkKats || []);
+        renderRoleCategoryCheckboxes('roleLinksCategoriesContainer', allLnks, allLinkKats);
     });
 
     updateRoleBadgePreview();
@@ -2454,6 +2465,9 @@ function neueRolleErstellen() {
 function speichereRolle() {
     const id = document.getElementById('editingRoleId')?.value; if (!id) return;
 
+    // Master-Admin erzwingt immer absolute Admin-Rechte beim Speichern, egal was angehakt ist
+    const isMaster = (id === 'masteradmin');
+
     // Sammelt alle angehakten Commands-Kategorien ein
     const allowedCmds = [];
     document.querySelectorAll('.roleCommandsCategoriesContainer_check:checked').forEach(c => allowedCmds.push(c.value));
@@ -2467,27 +2481,27 @@ function speichereRolle() {
         name: document.getElementById('roleEditName')?.value.trim() || id,
         color: document.getElementById('roleEditColor')?.value || '#38bdf8',
         icon: document.getElementById('roleEditIcon')?.value.trim() || '🎭',
-        isAdmin: !!document.getElementById('roleFlagAdmin')?.checked,
-        isMasterAdmin: !!document.getElementById('roleFlagMasterAdmin')?.checked,
-        canViewArchive: !!document.getElementById('roleFlagArchive')?.checked,
-        isInstructor: !!document.getElementById('roleFlagInstructor')?.checked,
-        canManageInstructors: !!document.getElementById('roleFlagManageInstructors')?.checked,
-        canManageExams: !!document.getElementById('roleFlagManageExams')?.checked,
-        canPostNews: !!document.getElementById('roleFlagPostNews')?.checked,
-        canApproveNews: !!document.getElementById('roleFlagApproveNews')?.checked,
-        canViewNewsRead: !!document.getElementById('roleFlagViewNewsRead')?.checked,
-        canEditPrices: !!document.getElementById('roleFlagEditPrices')?.checked,
-        canEditGuide: !!document.getElementById('roleFlagEditGuide')?.checked,
-        canEditCommands: !!document.getElementById('roleFlagEditCommands')?.checked,
-        canEditLinks: !!document.getElementById('roleFlagEditLinks')?.checked,
-        delPatient: !!document.getElementById('delFlagPatient')?.checked,
-        delArchiv: !!document.getElementById('delFlagArchiv')?.checked,
-        delGuide: !!document.getElementById('delFlagGuide')?.checked,
-        delCommands: !!document.getElementById('delFlagCommands')?.checked,
-        delLinks: !!document.getElementById('delFlagLinks')?.checked,
-        delNews: !!document.getElementById('delFlagNews')?.checked,
-        delExams: !!document.getElementById('delFlagExams')?.checked,
-        delUsers: !!document.getElementById('delFlagUsers')?.checked,
+        isAdmin: isMaster ? true : !!document.getElementById('roleFlagAdmin')?.checked,
+        isMasterAdmin: isMaster ? true : !!document.getElementById('roleFlagMasterAdmin')?.checked,
+        canViewArchive: isMaster ? true : !!document.getElementById('roleFlagArchive')?.checked,
+        isInstructor: isMaster ? true : !!document.getElementById('roleFlagInstructor')?.checked,
+        canManageInstructors: isMaster ? true : !!document.getElementById('roleFlagManageInstructors')?.checked,
+        canManageExams: isMaster ? true : !!document.getElementById('roleFlagManageExams')?.checked,
+        canPostNews: isMaster ? true : !!document.getElementById('roleFlagPostNews')?.checked,
+        canApproveNews: isMaster ? true : !!document.getElementById('roleFlagApproveNews')?.checked,
+        canViewNewsRead: isMaster ? true : !!document.getElementById('roleFlagViewNewsRead')?.checked,
+        canEditPrices: isMaster ? true : !!document.getElementById('roleFlagEditPrices')?.checked,
+        canEditGuide: isMaster ? true : !!document.getElementById('roleFlagEditGuide')?.checked,
+        canEditCommands: isMaster ? true : !!document.getElementById('roleFlagEditCommands')?.checked,
+        canEditLinks: isMaster ? true : !!document.getElementById('roleFlagEditLinks')?.checked,
+        delPatient: isMaster ? true : !!document.getElementById('delFlagPatient')?.checked,
+        delArchiv: isMaster ? true : !!document.getElementById('delFlagArchiv')?.checked,
+        delGuide: isMaster ? true : !!document.getElementById('delFlagGuide')?.checked,
+        delCommands: isMaster ? true : !!document.getElementById('delFlagCommands')?.checked,
+        delLinks: isMaster ? true : !!document.getElementById('delFlagLinks')?.checked,
+        delNews: isMaster ? true : !!document.getElementById('delFlagNews')?.checked,
+        delExams: isMaster ? true : !!document.getElementById('delFlagExams')?.checked,
+        delUsers: isMaster ? true : !!document.getElementById('delFlagUsers')?.checked,
         allowedCmdKats: allowedCmds,
         allowedLinkKats: allowedLnks
     };
