@@ -2372,10 +2372,8 @@ function selectRole(roleId) {
     document.getElementById('roleEditColor').value = r.color || '#38bdf8';
     document.getElementById('roleEditIcon').value = r.icon || '';
 
-    // Master-Admin erzwingt immer volle Berechtigungen in der UI
     const isMaster = (roleId === 'masteradmin');
 
-    // Alle Berechtigungs-Checkboxen abgleichen
     const fields = [
         'roleFlagAdmin','roleFlagMasterAdmin','roleFlagArchive',
         'roleFlagInstructor','roleFlagManageInstructors','roleFlagManageExams',
@@ -2396,7 +2394,6 @@ function selectRole(roleId) {
         }
     });
 
-    // Lösch-Button sperren, falls es eine geschützte System-Rolle ist
     const btnDel = document.getElementById('btnDeleteRole');
     const protectedRoles = ['masteradmin', 'admin', 'mitarbeiter', 'ausbilder', 'ausbildungsleitung'];
     if (btnDel) {
@@ -2407,14 +2404,12 @@ function selectRole(roleId) {
         }
     }
 
-    // Kategorien für Commands laden und Haken setzen (Master-Admin bekommt alle Kategorien)
     db.ref('data/dienstCommands').once('value', sCmd => {
         const allCmds = Object.assign({}, defaultCommands, sCmd.val() || {});
         const allCmdKats = isMaster ? Object.values(allCmds).map(c => c.kat || 'Allgemein') : (r.allowedCmdKats || []);
         renderRoleCategoryCheckboxes('roleCommandsCategoriesContainer', allCmds, allCmdKats);
     });
 
-    // Kategorien für Links & Dokumente laden und Haken setzen
     db.ref('data/dienstLinks').once('value', sLnk => {
         const allLnks = Object.assign({}, defaultLinks, sLnk.val() || {});
         const allLinkKats = isMaster ? Object.values(allLnks).map(l => l.kat || l.thema || 'Allgemein') : (r.allowedLinkKats || []);
@@ -2422,6 +2417,7 @@ function selectRole(roleId) {
     });
 
     updateRoleBadgePreview();
+    attachAutoSaveListeners();
 }
 
 function updateRoleBadgePreview() {
@@ -2444,10 +2440,8 @@ function neueRolleErstellen() {
     const btnDel = document.getElementById('btnDeleteRole');
     if (btnDel) btnDel.style.display = 'none';
     
-    // Alle Checkboxen leeren
     document.querySelectorAll('#adminRoleEditorCard input[type="checkbox"]').forEach(c => c.checked = false);
 
-    // Kategorien-Listen ohne Haken rendern
     db.ref('data/dienstCommands').once('value', sCmd => {
         const allCmds = Object.assign({}, defaultCommands, sCmd.val() || {});
         renderRoleCategoryCheckboxes('roleCommandsCategoriesContainer', allCmds, []);
@@ -2459,20 +2453,18 @@ function neueRolleErstellen() {
     });
 
     updateRoleBadgePreview();
+    attachAutoSaveListeners();
 }
 
-// Speichert alle Daten inklusive der angehakten Kategorien in Firebase
+// Speichert alle Daten automatisch im Hintergrund
 function speichereRolle() {
     const id = document.getElementById('editingRoleId')?.value; if (!id) return;
 
-    // Master-Admin erzwingt immer absolute Admin-Rechte beim Speichern, egal was angehakt ist
     const isMaster = (id === 'masteradmin');
 
-    // Sammelt alle angehakten Commands-Kategorien ein
     const allowedCmds = [];
     document.querySelectorAll('.roleCommandsCategoriesContainer_check:checked').forEach(c => allowedCmds.push(c.value));
 
-    // Sammelt alle angehakten Links-Kategorien ein
     const allowedLnks = [];
     document.querySelectorAll('.roleLinksCategoriesContainer_check:checked').forEach(c => allowedLnks.push(c.value));
 
@@ -2509,7 +2501,30 @@ function speichereRolle() {
     db.ref('data/roles/' + id).set(r).then(() => {
         cachedRoles[id] = r;
         renderAdminRolesList();
-        alert('✅ Rolle erfolgreich gespeichert!');
+    });
+}
+
+// Überwacht Änderungen für das automatische Speichern
+function attachAutoSaveListeners() {
+    const editorCard = document.getElementById('adminRoleEditorCard');
+    if (!editorCard || editorCard.dataset.autoSaveAttached === 'true') return;
+    editorCard.dataset.autoSaveAttached = 'true';
+
+    editorCard.addEventListener('change', (e) => {
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') {
+            speichereRolle();
+        }
+    });
+
+    let typingTimer;
+    editorCard.addEventListener('input', (e) => {
+        if (e.target.type === 'text' || e.target.type === 'color') {
+            updateRoleBadgePreview();
+            clearTimeout(typingTimer);
+            typingTimer = setTimeout(() => {
+                speichereRolle();
+            }, 600);
+        }
     });
 }
 
