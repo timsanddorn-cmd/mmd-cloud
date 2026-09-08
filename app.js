@@ -994,100 +994,6 @@ function renderArchiv(obj) {
     }
 }
 
-function openWeeklyArchiveModal() {
-    const modal = document.getElementById('weeklyArchiveModal');
-    const cont = document.getElementById('weeklyArchiveContent');
-    if (!modal || !cont) return;
-
-    modal.style.display = 'flex';
-    cont.innerHTML = '<p style="color:var(--text-muted);text-align:center;padding:20px;">Lade Gesamt-Archiv...</p>';
-
-    db.ref('data/archiv').once('value', snapshot => {
-        try {
-            const archivData = snapshot.val() || cachedArchiv || {};
-            const eff = sessionUser ? getUserEffectivePermissions(sessionUser) : {};
-            const grouped = {};
-
-            Object.entries(archivData).forEach(([k, item]) => {
-                if (!item) return;
-
-                let d;
-                if (item.ts) {
-                    d = new Date(item.ts);
-                } else if (item.datum && item.datum.includes('.')) {
-                    const parts = item.datum.split('.');
-                    d = new Date(parts[2], parts[1] - 1, parts[0]);
-                } else {
-                    d = new Date();
-                }
-
-                const wInfo = getWeekNumber(d);
-                const wKey = `${wInfo[0]} – Kalenderwoche ${wInfo[1]}`;
-                if (!grouped[wKey]) grouped[wKey] = [];
-                grouped[wKey].push({ key: k, item });
-            });
-
-            const groupKeys = Object.keys(grouped);
-            if (!groupKeys.length) {
-                cont.innerHTML = '<p style="color:var(--text-muted);text-align:center;padding:20px;">📭 Bisher sind keine Schichten im Gesamt-Archiv vorhanden.</p>';
-                return;
-            }
-
-            cont.innerHTML = groupKeys.sort().reverse().map((wName, idx) => {
-                const schichten = grouped[wName];
-                let wP = 0, wV = 0, wCash = 0;
-                
-                schichten.forEach(s => {
-                    wP += Number(s.item.patienten ?? s.item.p ?? 0);
-                    wV += Number(s.item.verletzungen ?? s.item.v ?? 0);
-                    wCash += Number(s.item.ausgaben ?? s.item.cash ?? s.item.kosten ?? 0);
-                });
-
-                const rows = schichten.map(s => {
-                    const sp = Number(s.item.patienten ?? s.item.p ?? 0);
-                    const sv = Number(s.item.verletzungen ?? s.item.v ?? 0);
-                    const scash = Number(s.item.ausgaben ?? s.item.cash ?? s.item.kosten ?? 0);
-                    const sDatum = s.item.datum || (s.item.ts ? new Date(s.item.ts).toLocaleDateString('de-DE') : 'Schicht');
-
-                    return `
-                        <tr>
-                            <td><b>${sDatum}</b></td>
-                            <td>${sp}</td>
-                            <td>${sv}</td>
-                            <td style="color:var(--success);font-weight:800;">$${scash.toLocaleString('de-DE')}</td>
-                            <td>${eff.delArchiv ? `<button class="btn-delete-row" onclick="deleteArchivSchicht('${s.key}')">🗑️</button>` : '--'}</td>
-                        </tr>
-                    `;
-                }).join('');
-
-                const gId = 'week_acc_' + idx;
-                return `
-                    <div class="theme-accordion-group" id="${gId}" style="margin-bottom:12px;">
-                        <div class="theme-accordion-header" onclick="toggleGroupCollapse('${gId}')">
-                            <span>🗓️ ${wName} (${schichten.length} Schichten) – Gesamt: ${wP} Patienten</span>
-                            <span style="color:var(--success);font-family:monospace;font-weight:800;">$${wCash.toLocaleString('de-DE')}</span>
-                        </div>
-                        <div class="theme-accordion-content">
-                            <div class="table-responsive" style="margin:0;border:none;">
-                                <table>
-                                    <thead><tr><th>Datum</th><th>Patienten</th><th>Verletzungen</th><th>Ausgaben</th><th>Aktion</th></tr></thead>
-                                    <tbody>${rows}</tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-
-        } catch (err) {
-            console.error("Fehler im Gesamt-Archiv:", err);
-            cont.innerHTML = `<p style="color:var(--danger);text-align:center;padding:20px;">Fehler: ${err.message}</p>`;
-        }
-    }, error => {
-        cont.innerHTML = `<p style="color:var(--danger);text-align:center;padding:20px;">Verbindungsfehler: ${error.message}</p>`;
-    });
-}
-
 function manualTriggerArchive() {
     if (!sessionUser) return;
     const eff = getUserEffectivePermissions(sessionUser);
@@ -1154,30 +1060,6 @@ function deleteArchivSchicht(k) {
             alert('Fehler beim Löschen: ' + err.message);
         });
     }
-}
-
-function closeWeeklyArchiveModal() { 
-    const modal = document.getElementById('weeklyArchiveModal');
-    if (modal) modal.style.display = 'none'; 
-}
-
-function finalizeCurrentWeekArchive() {
-    if (!sessionUser) return;
-    const eff = getUserEffectivePermissions(sessionUser);
-    if (!eff.isAdmin && !eff.isMasterAdmin) {
-        alert('Keine Berechtigung für diese Aktion!');
-        return;
-    }
-    if (!confirm('Möchtest du die Schichten der aktuellen Kalenderwoche final in das Gesamt-Archiv (Wochenweise) verschieben und die Wochenansicht zurücksetzen?')) return;
-
-    db.ref('data/archiv').once('value', s => {
-        const archivData = s.val() || {};
-        if (!Object.keys(archivData).length) {
-            alert('⚠️ Keine Schichten in der aktuellen Woche vorhanden.');
-            return;
-        }
-        alert('✅ Die Schichten der aktuellen Woche sind nun dauerhaft im Gesamt-Archiv (Wochenweise) erfasst!');
-    });
 }
 
 function openEditModal(key) {
@@ -2819,7 +2701,6 @@ _w.handleDienstEndeLogout = handleDienstEndeLogout; _w.berechneDienstTage = bere
 _w.toggleGroupCollapse = toggleGroupCollapse; _w.stepVerletzungenAnzahl = stepVerletzungenAnzahl; _w.stepKosten = stepKosten; _w.stepMat = stepMat; _w.ladeCheckliste = ladeCheckliste; _w.patientHinzufuegen = patientHinzufuegen; _w.toggleTodo = toggleTodo;
 _w.resetMedicalWorkflow = resetMedicalWorkflow; _w.openEditModal = openEditModal; _w.closeEditModal = closeEditModal; _w.speicherePatientEdit = speicherePatientEdit;
 _w.deletePatient = deletePatient; _w.deleteArchivSchicht = deleteArchivSchicht; _w.deleteDienstLink = deleteDienstLink; _w.deleteDienstCommand = deleteDienstCommand; _w.exportArchivCSV = exportArchivCSV;
-_w.openWeeklyArchiveModal = openWeeklyArchiveModal; _w.closeWeeklyArchiveModal = closeWeeklyArchiveModal;
 _w.openPricesInlineModal = openPricesInlineModal; _w.closePricesInlineModal = closePricesInlineModal; _w.speicherePreiseInline = speicherePreiseInline;
 _w.openGuideInlineModal = openGuideInlineModal; _w.closeGuideInlineModal = closeGuideInlineModal; _w.addGuideRow = addGuideRow; _w.removeGuideRow = removeGuideRow; _w.saveGuideInline = saveGuideInline;
 _w.openCommandsInlineModal = openCommandsInlineModal; _w.closeCommandsInlineModal = closeCommandsInlineModal; _w.addCommandInline = addCommandInline;
@@ -2846,5 +2727,3 @@ _w.openHierarchieInlineModal = openHierarchieInlineModal;
 _w.closeHierarchieInlineModal = closeHierarchieInlineModal;
 _w.saveHierarchieInline = saveHierarchieInline;
 _w.deleteArchivSchicht = deleteArchivSchicht;
-_w.closeWeeklyArchiveModal = closeWeeklyArchiveModal;
-_w.finalizeCurrentWeekArchive = finalizeCurrentWeekArchive;

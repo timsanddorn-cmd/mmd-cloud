@@ -180,10 +180,6 @@
                 <div class="theme-accordion-header" onclick="toggleGroupCollapse('group-archiv')">
                     <span>🗄️ Schichten der aktuellen Kalenderwoche</span>
                     <div style="display:flex; gap:8px; align-items:center;" onclick="event.stopPropagation();">
-                        <button type="button" id="btnOpenWeeklyArchive" class="btn-archive-view" style="display:none;" onclick="openWeeklyArchiveModal()">🗄️ Gesamt-Archiv (Wochenweise)</button>
-                        
-                        <!-- ERSTER BUTTON HIER EINGEFÜGT -->
-                        <button type="button" id="btnManualArchive" class="btn" style="display:none; width:auto; padding:6px 12px; background:var(--success); color:#080c14; font-weight:800;" onclick="manualTriggerArchive()">📥 Schicht jetzt archivieren</button>
                         
                         <button type="button" class="btn-export" onclick="exportArchivCSV()">📥 Schicht als CSV exportieren</button>
                     </div>
@@ -760,17 +756,6 @@
                     </div>
                 </div>
             </div>
-        </div>
-    </div>
-
-    <!-- MODAL POPUP: GESAMT-ARCHIV -->
-    <div id="weeklyArchiveModal" class="modal-overlay">
-        <div class="modal-card" style="max-width: 1200px; width: 95vw; max-height: 90vh; overflow-y: auto;">
-            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:14px; margin-bottom:16px;">
-                <h3 style="margin:0; color:var(--primary);">🗄️ Schichten-Archiv (Wochenweise)</h3>
-                <button type="button" class="btn-close" onclick="closeWeeklyArchiveModal()">✖</button>
-            </div>
-            <div id="weeklyArchiveContent">Lade Wochen-Archiv...</div>
         </div>
     </div>
 
