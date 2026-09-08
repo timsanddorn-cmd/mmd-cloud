@@ -1156,6 +1156,11 @@ function deleteArchivSchicht(k) {
     }
 }
 
+function closeWeeklyArchiveModal() { 
+    const modal = document.getElementById('weeklyArchiveModal');
+    if (modal) modal.style.display = 'none'; 
+}
+
 function finalizeCurrentWeekArchive() {
     if (!sessionUser) return;
     const eff = getUserEffectivePermissions(sessionUser);
@@ -2841,3 +2846,5 @@ _w.openHierarchieInlineModal = openHierarchieInlineModal;
 _w.closeHierarchieInlineModal = closeHierarchieInlineModal;
 _w.saveHierarchieInline = saveHierarchieInline;
 _w.deleteArchivSchicht = deleteArchivSchicht;
+_w.closeWeeklyArchiveModal = closeWeeklyArchiveModal;
+_w.finalizeCurrentWeekArchive = finalizeCurrentWeekArchive;
