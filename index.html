@@ -84,7 +84,7 @@
             <button type="button" class="tab-btn" id="adminMainTabHeader" onclick="settingsTabClick()">⚙️ Einstellungen / Diensttage</button>
         </div>
 
-        <!-- REITER 1: DOKUMENTATION & EINSATZ -->
+<!-- REITER 1: DOKUMENTATION & EINSATZ -->
         <div id="docTab" class="tab-content active">
             <div class="action-grid">
                 <div>
@@ -166,7 +166,6 @@
                     <div class="theme-accordion-header" onclick="toggleGroupCollapse('group-protokoll')">📜 Patientenprotokoll (Heute)</div>
                     <div class="theme-accordion-content">
                         
-                        <!-- ZWEITER BUTTON (Hier eingefügt) -->
                         <button type="button" id="btnManualProtArchive" class="btn" style="display:none; width:auto; padding:6px 12px; background:var(--success); color:#080c14; font-weight:800; margin-bottom:10px;" onclick="manualTriggerArchive()">📥 Protokoll archivieren & zurücksetzen</button>
 
                         <div class="table-responsive" style="margin:0; border:none;">
@@ -174,13 +173,13 @@
                         </div>
                     </div>
                 </div>
+            </div>
 
             <!-- SCHICHTEN-HISTORIE -->
             <div class="theme-accordion-group" id="group-archiv" style="margin-top: 15px;">
                 <div class="theme-accordion-header" onclick="toggleGroupCollapse('group-archiv')">
                     <span>🗄️ Schichten der aktuellen Kalenderwoche</span>
                     <div style="display:flex; gap:8px; align-items:center;" onclick="event.stopPropagation();">
-                        
                         <button type="button" class="btn-export" onclick="exportArchivCSV()">📥 Schicht als CSV exportieren</button>
                     </div>
                 </div>
@@ -190,6 +189,7 @@
                     </div>
                 </div>
             </div>
+        </div>
 
         <!-- REITER: HIERARCHIE BOARD -->
         <div id="hierarchieTab" class="tab-content">
@@ -393,7 +393,6 @@
                     <h3>Low Command of SAMD</h3>
                 </div>
                 <div class="h-card-grid">
-                    <!-- LINKS: WAHL DER LAUFBAHN & WAHL DER ABTEILUNG -->
                     <div style="display:flex; flex-direction:column; gap:12px;">
                         <div class="h-card" style="text-align: center; padding: 14px;">
                             <div style="font-weight: 700; font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Wahl der Laufbahn:</div>
@@ -411,7 +410,6 @@
                         </div>
                     </div>
 
-                    <!-- MITTE: A-EMT & EMT MIT ANZAHL DER BELEGUNG -->
                     <div style="display:flex; flex-direction:column; gap:12px;">
                         <div class="h-card">
                             <div class="h-card-header">A-EMT of SAMD</div>
@@ -431,7 +429,6 @@
                         </div>
                     </div>
 
-                    <!-- RECHTS: PARAMEDIC LAUFBAHN -->
                     <div>
                         <div class="h-card" style="text-align: center; padding: 14px;">
                             <div style="font-weight: 700; font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Wahl der Laufbahn:</div>
@@ -523,11 +520,10 @@
             </div>
         </div>
 
-        <!-- REITER: AUSBILDUNGS- & PRÜFUNGSBEREICH -->
+        <!-- REITER: AUSBILDUNGSBEREICH -->
         <div id="examTab" class="tab-content">
             <h2>🎓 Ausbildungs- & Prüfungsbereich</h2>
             
-            <!-- PRÜFLINGS-BEREICH -->
             <div id="examStudentView">
                 <div style="background: rgba(15, 23, 42, 0.6); padding: 18px 20px; border-radius: 14px; border: 1px solid var(--border); margin-bottom: 20px;">
                     <h4 style="margin:0 0 6px 0; color:var(--primary); font-size:15px;">📋 Deine freigeschalteten Prüfungen</h4>
@@ -537,7 +533,6 @@
                     <div id="studentUnlockedExamsContainer" class="exam-grid-compact"></div>
                 </div>
 
-                <!-- AKTIVER PRÜFUNGSLAUF -->
                 <div id="activeExamContainer" style="display:none; background: rgba(15, 23, 42, 0.95); border: 2px solid var(--primary); border-radius: 16px; padding: 24px; margin-bottom: 24px;">
                     <div class="exam-timer-sticky">
                         <div>
@@ -557,7 +552,6 @@
                 </div>
             </div>
 
-            <!-- AUSBILDER-BEREICH -->
             <div id="examInstructorView" style="display:none; margin-top:24px; border-top:2px dashed var(--primary); padding-top:24px;">
                 <div style="background: rgba(168, 85, 247, 0.04); padding: 20px; border-radius: 14px; border: 1px solid rgba(168, 85, 247, 0.25);">
                     <h3 style="margin-top:0; color:#a855f7; display:flex; justify-content:space-between; align-items:center;">
@@ -565,7 +559,6 @@
                         <span style="font-size:11px; background:rgba(168, 85, 247, 0.2); color:#a855f7; padding:4px 10px; border-radius:20px;">AUSBILDER MODUS</span>
                     </h3>
 
-                    <!-- SUB-TABS -->
                     <div class="admin-subtabs" style="margin-bottom:16px;">
                         <button type="button" class="admin-tab-btn active" onclick="switchInstructorTab('instrTabUnlocks', this)">🔓 Prüfungen freischalten</button>
                         <button type="button" class="admin-tab-btn" onclick="switchInstructorTab('instrTabResults', this)">📊 Absolvierte Prüfungen</button>
@@ -573,7 +566,6 @@
                         <button type="button" class="admin-tab-btn" id="instrAllowedExamsTabBtn" onclick="switchInstructorTab('instrTabInstructorAllowedExams', this)">🎓 Ausbildungsleitung</button>
                     </div>
 
-                    <!-- 1. FREISCHALTUNGEN -->
                     <div id="instrTabUnlocks" class="admin-subtab-content active">
                         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:10px;">
                             <input type="text" class="form-input" id="searchUnlocksUser" placeholder="🔍 Mitarbeiter nach Name oder DN suchen (A-Z)..." style="max-width:380px;" oninput="filterUnlocksTable()" aria-label="Mitarbeiter nach Name oder DN suchen">
@@ -587,7 +579,6 @@
                         </div>
                     </div>
 
-                    <!-- 2. ERGEBNISSE -->
                     <div id="instrTabResults" class="admin-subtab-content">
                         <h4 style="margin:0 0 12px 0; color:var(--warning);">📊 Prüfungsergebnisse</h4>
                         <div class="table-responsive">
@@ -598,7 +589,6 @@
                         </div>
                     </div>
 
-                    <!-- 3. PRÜFUNGEN MANAGEN -->
                     <div id="instrTabManage" class="admin-subtab-content">
                         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:10px;">
                             <h4 style="margin:0; color:var(--primary);">📜 Alle vorhandenen Prüfungen in der Cloud</h4>
@@ -607,7 +597,6 @@
                         <div id="instructorExistingExamsList"></div>
                     </div>
 
-                    <!-- 4. AUSBILDUNGSLEITUNG -->
                     <div id="instrTabInstructorAllowedExams" class="admin-subtab-content">
                         <h4 style="margin:0 0 8px 0; color:#a855f7;">🎓 Ausbildungsleitung: Mitglieder-Freigabe & Ausbilder-Rollen</h4>
                         <p style="color:var(--text-muted); font-size:12px; margin-top:0;">
@@ -626,7 +615,7 @@
             </div>
         </div>
 
-        <!-- REITER 4: LINKS & DOKUMENTE -->
+        <!-- REITER: LINKS & DOKUMENTE -->
         <div id="linksTab" class="tab-content">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; flex-wrap:wrap; gap:10px;">
                 <h2 style="margin:0;">🔗 Interne Dokumente & Lesezeichen-Cloud</h2>
@@ -637,7 +626,7 @@
             </div>
         </div>
 
-        <!-- REITER 5: GEHALTSTABELLE -->
+        <!-- REITER: GEHALTSTABELLE -->
         <div id="miscTab" class="tab-content">
             <h2>💰 Gehaltstabelle (SAMD)</h2>
             <div class="theme-accordion-group" id="group-gehalt" style="margin-top:14px;">
@@ -726,7 +715,7 @@
             <div id="newsFeedList" style="display: flex; flex-direction: column; gap: 16px;"></div>
         </div>
 
-        <!-- REITER 6: EINSTELLUNGEN / DIENSTTAGE -->
+        <!-- REITER: EINSTELLUNGEN / DIENSTTAGE -->
         <div id="settingsTab" class="tab-content">
             <h2>⚙️ Einstellungen / Diensttage</h2>
             <div class="settings-grid" style="grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap:20px;">
@@ -743,6 +732,21 @@
                         </div>
                     </div>
                 </div>
+
+                <div class="section">
+                    <h3>🔑 Eigenes Passwort ändern</h3>
+                    <div style="background: rgba(8, 12, 20, 0.5); padding: 18px; border-radius: 14px; border: 1px solid var(--border);">
+                        <form onsubmit="event.preventDefault(); passwortAendern();" style="margin:0; display:flex; flex-direction:column; gap:12px;">
+    <input type="text" name="username" autocomplete="username" style="display:none;" aria-hidden="true">
+    <label for="newPasswordInput">Neues Passwort:</label>
+    <input type="password" id="newPasswordInput" name="newPasswordInput" autocomplete="new-password" placeholder="Neues Passwort eingeben">
+    <button type="button" class="btn" style="background:var(--primary); color:#080c14; font-weight:800;" onclick="passwortAendern()">Passwort speichern</button>
+</form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
                 <div class="section">
                     <h3>🔑 Eigenes Passwort ändern</h3>
