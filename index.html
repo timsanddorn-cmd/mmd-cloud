@@ -81,7 +81,7 @@
                 📰 News <span id="newsUnreadBadge" class="unread-news-badge" style="display:none;">0</span>
             </button>
             <button type="button" class="tab-btn" onclick="switchTab('miscTab', this)">💰 Gehaltstabelle</button>
-            <button type="button" class="tab-btn" id="adminMainTabHeader" onclick="settingsTabClick()">⚙️ Einstellungen / Diensttage</button>
+           <button type="button" class="tab-btn" id="adminMainTabHeader" onclick="settingsTabClick()">⚙️ Diensttage / Passwort ändern</button>
         </div>
 
 <!-- REITER 1: DOKUMENTATION & EINSATZ -->
@@ -715,9 +715,9 @@
             <div id="newsFeedList" style="display: flex; flex-direction: column; gap: 16px;"></div>
         </div>
 
-        <!-- REITER: EINSTELLUNGEN / DIENSTTAGE -->
+       <!-- REITER: EINSTELLUNGEN / DIENSTTAGE -->
         <div id="settingsTab" class="tab-content">
-            <h2>⚙️ Einstellungen / Diensttage</h2>
+            <h2>⚙️ Diensttage / Passwort ändern</h2>
             <div class="settings-grid" style="grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap:20px;">
                 <div class="section">
                     <h3>📅 Diensttage-Rechner</h3>
@@ -737,16 +737,15 @@
                     <h3>🔑 Eigenes Passwort ändern</h3>
                     <div style="background: rgba(8, 12, 20, 0.5); padding: 18px; border-radius: 14px; border: 1px solid var(--border);">
                         <form onsubmit="event.preventDefault(); passwortAendern();" style="margin:0; display:flex; flex-direction:column; gap:12px;">
-    <input type="text" name="username" autocomplete="username" style="display:none;" aria-hidden="true">
-    <label for="newPasswordInput">Neues Passwort:</label>
-    <input type="password" id="newPasswordInput" name="newPasswordInput" autocomplete="new-password" placeholder="Neues Passwort eingeben">
-    <button type="button" class="btn" style="background:var(--primary); color:#080c14; font-weight:800;" onclick="passwortAendern()">Passwort speichern</button>
-</form>
+                            <input type="text" name="username" autocomplete="username" style="display:none;" aria-hidden="true">
+                            <label for="newPasswordInput">Neues Passwort:</label>
+                            <input type="password" id="newPasswordInput" name="newPasswordInput" autocomplete="new-password" placeholder="Neues Passwort eingeben">
+                            <button type="button" class="btn" style="background:var(--primary); color:#080c14; font-weight:800;" onclick="passwortAendern()">Passwort speichern</button>
+                        </form>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
 
                 <div class="section">
                     <h3>🔑 Eigenes Passwort ändern</h3>
