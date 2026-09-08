@@ -1,5 +1,5 @@
 // ============================================================
-//  MMD CLOUD – Medical Center Web-App  |  app.js  v4.0
+//  MMD CLOUD – Medical Center Web-App  |  app.js  v4.1
 //  Firebase Realtime Database (Compat SDK v10)
 // ============================================================
 
@@ -450,7 +450,7 @@ function applyUserPermissions(user) {
     const lEdit = document.getElementById('btnEditLinksInline');
     if (lEdit) lEdit.style.display = eff.canEditLinks ? 'inline-block' : 'none';
 
-const hEdit = document.getElementById('btnEditHierarchieInline');
+    const hEdit = document.getElementById('btnEditHierarchieInline');
     if (hEdit) hEdit.style.display = (eff.isAdmin || eff.isMasterAdmin) ? 'inline-block' : 'none';
 
     const aBtn = document.getElementById('btnOpenWeeklyArchive');
@@ -470,17 +470,13 @@ const hEdit = document.getElementById('btnEditHierarchieInline');
 
     document.querySelectorAll('.admin-action-th').forEach(el => {
         el.style.display = eff.delArchiv ? 'table-cell' : 'none';
-
-    document.querySelectorAll('.admin-action-th').forEach(el => {
-    el.style.display = eff.delArchiv ? 'table-cell' : 'none';
-});
-
-const manualArchBtn = document.getElementById('btnManualArchive');
-if (manualArchBtn) manualArchBtn.style.display = (eff.isAdmin || eff.isMasterAdmin) ? 'inline-block' : 'none';
-
-const manualProtArchBtn = document.getElementById('btnManualProtArchive');
-if (manualProtArchBtn) manualProtArchBtn.style.display = (eff.isAdmin || eff.isMasterAdmin) ? 'inline-block' : 'none';
     });
+
+    const manualArchBtn = document.getElementById('btnManualArchive');
+    if (manualArchBtn) manualArchBtn.style.display = (eff.isAdmin || eff.isMasterAdmin) ? 'inline-block' : 'none';
+
+    const manualProtArchBtn = document.getElementById('btnManualProtArchive');
+    if (manualProtArchBtn) manualProtArchBtn.style.display = (eff.isAdmin || eff.isMasterAdmin) ? 'inline-block' : 'none';
 }
 
 function initDienstEintritt(user) {
@@ -523,9 +519,8 @@ function setupMidnightScheduler() {
 
 function checkMidnightAutoArchive() {
     const now = new Date();
-    const todayFormatted = now.toLocaleDateString('de-DE'); // z.B. "08.09.2026"
+    const todayFormatted = now.toLocaleDateString('de-DE');
     
-    // Cloud-Flag prüfen, damit nur ein Client den Tagesabschluss ausführt
     db.ref('data/systemStatus/lastArchiveDate').once('value', snap => {
         const lastArchived = snap.val();
         if (!lastArchived) {
@@ -533,7 +528,6 @@ function checkMidnightAutoArchive() {
             return;
         }
 
-        // Neuer Tag angebrochen
         if (lastArchived !== todayFormatted) {
             db.ref('data/systemStatus/lastArchiveDate').set(todayFormatted).then(() => {
                 executeMidnightArchive(lastArchived);
@@ -545,7 +539,6 @@ function checkMidnightAutoArchive() {
 function executeMidnightArchive(archivedDateLabel) {
     const archiveTimestamp = Date.now();
 
-    // 1. Patientenprotokoll archivieren & heute leeren
     db.ref('data/protokoll').once('value', s => {
         const p = s.val() || {};
         const entries = Object.values(p);
@@ -578,7 +571,6 @@ function executeMidnightArchive(archivedDateLabel) {
         }
     });
 
-    // 2. Audit-Logs archivieren & heute leeren
     db.ref('data/auditLogs').once('value', s => {
         const logs = s.val() || {};
         if (Object.keys(logs).length > 0) {
@@ -673,7 +665,6 @@ function stepVerletzungenAnzahl(d) {
     const el = document.getElementById('val_pVerletzungenAnzahl'); 
     if (el) el.textContent = anzahlVerletzungenFall;
 
-    // Falls ein Szenario gewählt ist, Verbrauch automatisch mit der Anzahl skalieren
     const sz = document.getElementById('verletzungSelect')?.value;
     if (sz && szenarioTemplates[sz]) {
         const tpl = szenarioTemplates[sz];
@@ -686,12 +677,10 @@ function stepVerletzungenAnzahl(d) {
         });
     }
 
-    // Wasser-Automatik anpassen
     fallMaterial['mat_wasser'] = anzahlVerletzungenFall;
     const we = document.getElementById('val_mat_wasser');
     if (we) we.textContent = anzahlVerletzungenFall;
 
-    // Gesamtausgaben live neu berechnen
     let total = 0;
     Object.keys(fallMaterial).forEach(k => {
         if (materialKatalog[k]) total += fallMaterial[k] * materialKatalog[k].preis;
@@ -700,10 +689,12 @@ function stepVerletzungenAnzahl(d) {
     const ke = document.getElementById('val_pKosten');
     if (ke) ke.textContent = '$' + total;
 }
+
 function stepKosten(d) {
     aktuellerFallKosten = Math.max(0, aktuellerFallKosten + d);
     const el = document.getElementById('val_pKosten'); if (el) el.textContent = '$' + aktuellerFallKosten;
 }
+
 function stepMat(key, d) {
     fallMaterial[key] = Math.max(0, (fallMaterial[key]||0) + d);
     const el = document.getElementById('val_' + key); if (el) el.textContent = fallMaterial[key];
@@ -904,7 +895,6 @@ function renderArchiv(obj) {
     let totalP = 0, totalV = 0, totalCash = 0, totalMatObj = {};
     const allEntries = Object.entries(obj).sort((a, b) => (b[1].ts || 0) - (a[1].ts || 0));
 
-    // Müll-Einträge (0 Patienten, 0 Ausgaben) automatisch herausfiltern
     const cleanEntries = allEntries.filter(([, item]) => {
         const p = Number(item.patienten ?? item.p ?? 0);
         const cash = Number(item.ausgaben ?? item.cash ?? item.kosten ?? 0);
@@ -1029,7 +1019,6 @@ function manualTriggerArchive() {
             });
         });
 
-        // 1. Schicht in die aktuelle Kalenderwoche schreiben ('data/archiv')
         db.ref('data/archiv').push({
             datum: todayFormatted,
             patienten: tP,
@@ -1039,7 +1028,6 @@ function manualTriggerArchive() {
             ts: archiveTimestamp,
             isManualProtArchived: true
         }).then(() => {
-            // 2. Tagesprotokoll danach leeren
             db.ref('data/protokoll').remove().then(() => {
                 logAdminAudit('Tagesprotokoll als Schicht übernommen', `${sessionUser.vorname} ${sessionUser.nachname} hat das Tagesprotokoll in die aktuelle Woche übernommen.`);
                 alert('✅ Tagesprotokoll wurde als Schicht in die aktuelle Kalenderwoche übernommen und zurückgesetzt!');
@@ -1222,7 +1210,6 @@ function _renderGuideKeineRechnung() {
 function openGuideInlineModal() {
     const cont = document.getElementById('guideInlineEditorContainer');
     if (!cont) return;
-    const eff = sessionUser ? getUserEffectivePermissions(sessionUser) : {};
     
     cont.innerHTML = `
         <div style="display:flex;flex-direction:column;gap:18px;">
@@ -1300,7 +1287,6 @@ function renderCommandsTab(obj) {
     let kats = [...new Set(Object.values(all).map(c => c.kat || 'Allgemein'))].sort();
     const eff = sessionUser ? getUserEffectivePermissions(sessionUser) : {};
 
-    // Filter nach Rollenberechtigung (wenn leer definiert = alle sichtbar, außer Master-Admin sieht immer alles)
     if (!eff.isMasterAdmin && eff.allowedCmdKats && eff.allowedCmdKats.length > 0) {
         kats = kats.filter(k => eff.allowedCmdKats.includes(k));
     }
@@ -1411,7 +1397,6 @@ function renderLinksTab(obj) {
     let kats = [...new Set(Object.values(allLinks).map(l => l.kat || l.thema || 'Allgemein'))].sort();
     const eff = sessionUser ? getUserEffectivePermissions(sessionUser) : {};
 
-    // Filter nach Rollenberechtigung (wenn leer definiert = alle sichtbar, außer Master-Admin sieht immer alles)
     if (!eff.isMasterAdmin && eff.allowedLinkKats && eff.allowedLinkKats.length > 0) {
         kats = kats.filter(k => eff.allowedLinkKats.includes(k));
     }
@@ -1898,7 +1883,6 @@ function openExamSubmissionDetailsModal(subId) {
     const modal = document.getElementById('examSubmissionDetailsModal');
     if (!cont || !modal) return;
 
-    // Fängt sowohl Arrays als auch Firebase-Objekt-Strukturen ab
     let answersList = [];
     if (Array.isArray(sub.answers)) {
         answersList = sub.answers;
@@ -2351,7 +2335,6 @@ function renderAdminRolesList() {
     `).join('');
 }
 
-// Hilfsfunktion: Baut dynamisch Checkboxen für alle existierenden Kategorien auf
 function renderRoleCategoryCheckboxes(containerId, allItems, selectedList = []) {
     const cont = document.getElementById(containerId);
     if (!cont) return;
@@ -2384,7 +2367,6 @@ function refreshOpenRoleCategoryCheckboxes() {
     });
 }
 
-// Wird aufgerufen, wenn du links eine bestehende Rolle anklickst
 function selectRole(roleId) {
     const r = cachedRoles[roleId] || defaultRoles[roleId]; if (!r) return;
     document.getElementById('editingRoleId').value = roleId;
@@ -2449,7 +2431,6 @@ function updateRoleBadgePreview() {
     p.style.color = c; p.style.background = c + '22'; p.style.border = `1px solid ${c}44`;
 }
 
-// Setzt die Maske zurück, wenn du auf "➕ Neue Rolle erstellen" klickst
 function neueRolleErstellen() {
     const newId = 'role_' + Date.now();
     document.getElementById('editingRoleId').value = newId;
@@ -2476,7 +2457,6 @@ function neueRolleErstellen() {
     attachAutoSaveListeners();
 }
 
-// Speichert alle Daten automatisch im Hintergrund
 function speichereRolle() {
     const id = document.getElementById('editingRoleId')?.value; if (!id) return;
 
@@ -2524,7 +2504,6 @@ function speichereRolle() {
     });
 }
 
-// Überwacht Änderungen für das automatische Speichern
 function attachAutoSaveListeners() {
     const editorCard = document.getElementById('adminRoleEditorCard');
     if (!editorCard || editorCard.dataset.autoSaveAttached === 'true') return;
@@ -2550,14 +2529,9 @@ function attachAutoSaveListeners() {
 
 function loescheRolle() {
     const id = document.getElementById('editingRoleId')?.value;
-    if (!id) {
-        alert('Keine Rolle ausgewählt!');
-        return;
-    }
+    if (!id) { alert('Keine Rolle ausgewählt!'); return; }
 
     const role = cachedRoles[id] || defaultRoles[id];
-    
-    // System-Rollen vor versehentlichem Löschen schützen
     const protectedSystemRoles = ['masteradmin', 'admin', 'mitarbeiter', 'ausbilder', 'ausbildungsleitung'];
     if (protectedSystemRoles.includes(id) || role?.isSystem) {
         alert(`⛔ Die Standard-Systemrolle "${role?.name || id}" kann nicht gelöscht werden!`);
@@ -2565,11 +2539,9 @@ function loescheRolle() {
     }
 
     if (confirm(`Möchtest du die Rolle "${role?.name || id}" wirklich dauerhaft löschen?\n\nHinweis: Sie wird auch automatisch bei allen Mitarbeitern entfernt.`)) {
-        // 1. Aus der Rollen-Datenbank entfernen
         db.ref('data/roles/' + id).remove().then(() => {
             delete cachedRoles[id];
 
-            // 2. Rolle bei allen betroffenen Nutzern abziehen
             db.ref('data/users').once('value', snap => {
                 const users = snap.val() || {};
                 Object.keys(users).forEach(uId => {
@@ -2579,7 +2551,6 @@ function loescheRolle() {
                 });
             });
 
-            // 3. UI aktualisieren & Formular zurücksetzen
             renderAdminRolesList();
             neueRolleErstellen();
             logAdminAudit('Rolle gelöscht', `${sessionUser.vorname} ${sessionUser.nachname} hat die Rolle "${role?.name || id}" gelöscht.`);
@@ -2595,6 +2566,7 @@ function downloadSystemBackup() {
         el.href = URL.createObjectURL(b); el.download = 'MMD_Backup_' + new Date().toISOString().split('T')[0] + '.json'; el.click();
     });
 }
+
 function restoreSystemBackupFromFile(event) {
     const file = event.target.files && event.target.files[0]; if (!file) return;
     const reader = new FileReader();
@@ -2609,6 +2581,7 @@ function restoreSystemBackupFromFile(event) {
     };
     reader.readAsText(file);
 }
+
 function vollstaendigerReset() {
     if (sessionUser && getUserEffectivePermissions(sessionUser).isMasterAdmin && confirm('ACHTUNG: Wirklich das KOMPLETTE System leeren?') && confirm('ALLE Einsätze, Nutzer und Prüfungen werden gelöscht! Fortfahren?')) {
         db.ref('data').remove().then(() => location.reload());
@@ -2618,6 +2591,7 @@ function vollstaendigerReset() {
 function renderAdminAuditLogs() {
     db.ref('data/auditLogs').once('value', s => renderAdminAuditLogsData(s.val() || {}));
 }
+
 function renderAdminAuditLogsData(logsObj) {
     const tbody = document.getElementById('adminAuditLogTableBody'); if (!tbody) return;
     const entries = Object.entries(logsObj).sort((a,b) => (b[1].ts||0) - (a[1].ts||0));
@@ -2685,7 +2659,7 @@ function switchInstructorTab(tabId, btnEl) {
 }
 function toggleGroupCollapse(gId) { const g = document.getElementById(gId); if (g) g.classList.toggle('collapsed'); }
 
-/* ── DOM Ready & Exports ───────────────────────────────────── */
+/* ── DOM Ready & Exports ────────────────────────────────     */
 document.addEventListener('DOMContentLoaded', () => {
     updateLiveDate(); setInterval(updateLiveDate, 60000);
     renderGuideTab(); renderHierarchieBoard(hierarchieDaten); baueMaterialUIAuf();

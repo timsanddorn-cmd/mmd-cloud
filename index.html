@@ -26,26 +26,24 @@
                 <button type="button" id="tabRegisterBtn" class="auth-tab-btn" onclick="toggleAuthTab('register')">Registrieren</button>
             </div>
 
-            <!-- NACHHER -->
-<!-- NACHHER -->
-<form id="authForm" onsubmit="event.preventDefault(); handleAuthAction();">
-    <input type="text" name="username" autocomplete="username" style="display:none;" aria-hidden="true">
-    <label for="authVorname">Vorname</label>
-    <input type="text" id="authVorname" placeholder="Vorname" name="authVorname" autocomplete="given-name">
-    
-    <label for="authNachname">Nachname</label>
-    <input type="text" id="authNachname" placeholder="Nachname" name="authNachname" autocomplete="family-name">
-    
-    <label for="authPassword">Passwort</label>
-    <input type="password" id="authPassword" name="authPassword" autocomplete="current-password" placeholder="Passwort">
-    
-    <div id="authDNContainer" style="display:none;">
-        <label for="authDN">Dienstnummer (DN)</label>
-        <input type="text" id="authDN" placeholder="z.B. DN 42" name="authDN">
-    </div>
-    
-    <button type="button" class="btn" id="mainAuthActionBtn" onclick="handleAuthAction()" style="margin-top:20px;">Dienst antreten</button>
-</form>
+            <form id="authForm" onsubmit="event.preventDefault(); handleAuthAction();">
+                <input type="text" name="username" autocomplete="username" style="display:none;" aria-hidden="true">
+                <label for="authVorname">Vorname</label>
+                <input type="text" id="authVorname" placeholder="Vorname" name="authVorname" autocomplete="given-name">
+                
+                <label for="authNachname">Nachname</label>
+                <input type="text" id="authNachname" placeholder="Nachname" name="authNachname" autocomplete="family-name">
+                
+                <label for="authPassword">Passwort</label>
+                <input type="password" id="authPassword" name="authPassword" autocomplete="current-password" placeholder="Passwort">
+                
+                <div id="authDNContainer" style="display:none;">
+                    <label for="authDN">Dienstnummer (DN)</label>
+                    <input type="text" id="authDN" placeholder="z.B. DN 42" name="authDN">
+                </div>
+                
+                <button type="button" class="btn" id="mainAuthActionBtn" onclick="handleAuthAction()" style="margin-top:20px;">Dienst antreten</button>
+            </form>
         </div>
     </div>
 
@@ -81,10 +79,10 @@
                 📰 News <span id="newsUnreadBadge" class="unread-news-badge" style="display:none;">0</span>
             </button>
             <button type="button" class="tab-btn" onclick="switchTab('miscTab', this)">💰 Gehaltstabelle</button>
-           <button type="button" class="tab-btn" id="adminMainTabHeader" onclick="settingsTabClick()">⚙️ Diensttage / Passwort ändern</button>
+            <button type="button" class="tab-btn" id="adminMainTabHeader" onclick="settingsTabClick()">⚙️ Diensttage / Passwort ändern</button>
         </div>
 
-<!-- REITER 1: DOKUMENTATION & EINSATZ -->
+        <!-- REITER 1: DOKUMENTATION & EINSATZ -->
         <div id="docTab" class="tab-content active">
             <div class="action-grid">
                 <div>
@@ -93,12 +91,12 @@
                         <label for="pName">Patienten-Name (optional):</label>
                         <input type="text" id="pName" placeholder="Z.B. Max Mustermann" name="pName">
                         
-                      <div class="counter-title">Anzahl Verletzungen:</div>
-<div class="counter-group" role="group" aria-label="Anzahl Verletzungen">
-    <button type="button" class="counter-btn" onclick="stepVerletzungenAnzahl(-1)" aria-label="Eine Verletzung weniger">-</button>
-    <span class="counter-value" id="val_pVerletzungenAnzahl">1</span>
-    <button type="button" class="counter-btn plus-main" onclick="stepVerletzungenAnzahl(1)" aria-label="Eine Verletzung mehr">+</button>
-</div>
+                        <div class="counter-title">Anzahl Verletzungen:</div>
+                        <div class="counter-group" role="group" aria-label="Anzahl Verletzungen">
+                            <button type="button" class="counter-btn" onclick="stepVerletzungenAnzahl(-1)" aria-label="Eine Verletzung weniger">-</button>
+                            <span class="counter-value" id="val_pVerletzungenAnzahl">1</span>
+                            <button type="button" class="counter-btn plus-main" onclick="stepVerletzungenAnzahl(1)" aria-label="Eine Verletzung mehr">+</button>
+                        </div>
                         
                         <label for="verletzungSelect">Szenario wählen:</label>
                         <select id="verletzungSelect" onchange="ladeCheckliste()" name="verletzungSelect">
@@ -127,8 +125,8 @@
                         <div style="background: rgba(56, 189, 248, 0.05); padding: 12px; border-radius: 10px; border: 1px dashed rgba(56, 189, 248, 0.3); margin-top: 12px; text-align: center; font-weight: 600;">
                             💧 Wasser-Automatik (<span id="wasserPreisLabel">$200</span>): <span id="val_mat_wasser" style="font-weight:800; color:var(--primary);">0</span> Flasche(n) inklusive
                         </div>
-<div class="counter-title" style="margin-top:16px;">Gesamtausgaben für diesen Fall ($)</div>
-<div class="counter-group" role="group" aria-label="Gesamtausgaben für diesen Fall in Dollar" style="padding: 8px 12px; background: rgba(8, 12, 20, 0.6); border-color: rgba(16, 185, 129, 0.3);">
+                        <div class="counter-title" style="margin-top:16px;">Gesamtausgaben für diesen Fall ($)</div>
+                        <div class="counter-group" role="group" aria-label="Gesamtausgaben für diesen Fall in Dollar" style="padding: 8px 12px; background: rgba(8, 12, 20, 0.6); border-color: rgba(16, 185, 129, 0.3);">
                             <button type="button" class="counter-btn" style="width:40px;" onclick="stepKosten(-250)">-250</button>
                             <button type="button" class="counter-btn" onclick="stepKosten(-50)">-50</button>
                             <span id="val_pKosten" style="font-size:20px; font-weight:800; color:var(--success); text-shadow: 0 0 10px rgba(16,185,129,0.2);">$0</span>
@@ -165,9 +163,7 @@
                 <div class="theme-accordion-group" id="group-protokoll">
                     <div class="theme-accordion-header" onclick="toggleGroupCollapse('group-protokoll')">📜 Patientenprotokoll (Heute)</div>
                     <div class="theme-accordion-content">
-                        
                         <button type="button" id="btnManualProtArchive" class="btn" style="display:none; width:auto; padding:6px 12px; background:var(--success); color:#080c14; font-weight:800; margin-bottom:10px;" onclick="manualTriggerArchive()">📥 Protokoll archivieren & zurücksetzen</button>
-
                         <div class="table-responsive" style="margin:0; border:none;">
                             <table><thead><tr><th>Patient</th><th>Szenario</th><th>Verletzungen</th><th>Ausgaben</th><th>Eingetragen von</th><th style="width:70px;">Aktion</th></tr></thead><tbody id="logTableBody"></tbody></table>
                         </div>
@@ -200,9 +196,7 @@
             
             <!-- CHIEFEBENE -->
             <div style="margin-bottom: 24px;">
-                <div class="h-section-header">
-                    <h3>⭐ Chiefebene of SAMD</h3>
-                </div>
+                <div class="h-section-header"><h3>⭐ Chiefebene of SAMD</h3></div>
                 <div class="h-card-grid">
                     <div class="h-card">
                         <div class="h-card-header">Chief of SAMD</div>
@@ -230,9 +224,7 @@
 
             <!-- ABTEILUNGEN -->
             <div style="margin-bottom: 24px;">
-                <div class="h-section-header">
-                    <h3>🏢 Abteilungen of SAMD</h3>
-                </div>
+                <div class="h-section-header"><h3>🏢 Abteilungen of SAMD</h3></div>
                 <div class="h-card-grid">
                     <div class="h-card">
                         <div class="h-card-header">Psychologie of SAMD</div>
@@ -271,9 +263,7 @@
 
             <!-- HIGH COMMAND -->
             <div style="margin-bottom: 24px;">
-                <div class="h-section-header">
-                    <h3>🎖️ High Command of SAMD</h3>
-                </div>
+                <div class="h-section-header"><h3>🎖️ High Command of SAMD</h3></div>
                 <div class="h-card-grid">
                     <div class="h-card">
                         <div class="h-card-header">D.o.M.O of SAMD</div>
@@ -320,12 +310,8 @@
 
             <!-- MID COMMAND -->
             <div style="margin-bottom: 24px;">
-                <div class="h-section-header">
-                    <h3>🩺 Mid Command of SAMD</h3>
-                </div>
-                
+                <div class="h-section-header"><h3>🩺 Mid Command of SAMD</h3></div>
                 <div class="guide-split-container">
-                    <!-- DOCTOR LAUFBAHN LINKS -->
                     <div>
                         <h4 style="color:var(--primary); font-size:14px; text-transform:uppercase; margin-top:0; border-bottom:1px solid var(--border); padding-bottom:8px; text-align:center;">👨‍⚕️ Laufbahn: Doctor (Innendienst)</h4>
                         <div style="display:flex; flex-direction:column; gap:12px;">
@@ -352,8 +338,6 @@
                             </div>
                         </div>
                     </div>
-
-                    <!-- PARAMEDIC LAUFBAHN RECHTS -->
                     <div>
                         <h4 style="color:var(--warning); font-size:14px; text-transform:uppercase; margin-top:0; border-bottom:1px solid var(--border); padding-bottom:8px; text-align:center;">🚑 Laufbahn: Paramedic (Außendienst)</h4>
                         <div style="display:flex; flex-direction:column; gap:12px;">
@@ -381,17 +365,11 @@
                         </div>
                     </div>
                 </div>
-
-                <p style="background: rgba(56, 189, 248, 0.06); padding: 14px; border-radius: 12px; border: 1px dashed rgba(56, 189, 248, 0.3); margin-top: 16px; font-size: 13px; font-weight: 600; text-align: center; color: var(--text-main);">
-                    ℹ️ <b>Hinweis:</b> Ab dem Mid Command (Physician bzw. Senior Paramedic) besteht die Chance, die Stellvertretende Leitung der jeweiligen Abteilungen zu besetzen.
-                </p>
             </div>
 
-           <!-- LOW COMMAND -->
+            <!-- LOW COMMAND -->
             <div style="margin-bottom: 24px;">
-                <div class="h-section-header">
-                    <h3>Low Command of SAMD</h3>
-                </div>
+                <div class="h-section-header"><h3>Low Command of SAMD</h3></div>
                 <div class="h-card-grid">
                     <div style="display:flex; flex-direction:column; gap:12px;">
                         <div class="h-card" style="text-align: center; padding: 14px;">
@@ -399,17 +377,11 @@
                             <div style="font-weight: 800; font-size: 15px; color: var(--primary); margin: 4px 0;">Doctor:</div>
                             <div style="font-size: 12px; color: var(--text-main);">Alles im Bereich des Innendienst.</div>
                         </div>
-
                         <div class="h-card" style="text-align: center; padding: 14px;">
                             <div style="font-weight: 700; font-size: 11px; color: var(--text-muted); text-transform: uppercase; margin-bottom: 6px;">Wahl der Abteilung:</div>
-                            <div style="font-size: 12px; color: #38bdf8; font-weight: 700; line-height: 1.6;">
-                                • Psychologie<br>
-                                • Personalabteilung<br>
-                                • Ausbildungsabteilung
-                            </div>
+                            <div style="font-size: 12px; color: #38bdf8; font-weight: 700; line-height: 1.6;">• Psychologie<br>• Personalabteilung<br>• Ausbildungsabteilung</div>
                         </div>
                     </div>
-
                     <div style="display:flex; flex-direction:column; gap:12px;">
                         <div class="h-card">
                             <div class="h-card-header">A-EMT of SAMD</div>
@@ -428,7 +400,6 @@
                             </div>
                         </div>
                     </div>
-
                     <div>
                         <div class="h-card" style="text-align: center; padding: 14px;">
                             <div style="font-weight: 700; font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Wahl der Laufbahn:</div>
@@ -441,9 +412,7 @@
 
             <!-- TRAINEE -->
             <div style="margin-bottom: 24px;">
-                <div class="h-section-header">
-                    <h3>Trainee of SAMD</h3>
-                </div>
+                <div class="h-section-header"><h3>Trainee of SAMD</h3></div>
                 <div style="display: flex; flex-direction: column; align-items: center; gap: 12px;">
                     <div class="h-card" style="width: 100%; max-width: 440px;">
                         <div class="h-card-header">Solo Trainee of SAMD</div>
@@ -523,13 +492,10 @@
         <!-- REITER: AUSBILDUNGSBEREICH -->
         <div id="examTab" class="tab-content">
             <h2>🎓 Ausbildungs- & Prüfungsbereich</h2>
-            
             <div id="examStudentView">
                 <div style="background: rgba(15, 23, 42, 0.6); padding: 18px 20px; border-radius: 14px; border: 1px solid var(--border); margin-bottom: 20px;">
                     <h4 style="margin:0 0 6px 0; color:var(--primary); font-size:15px;">📋 Deine freigeschalteten Prüfungen</h4>
-                    <p style="color:var(--text-muted); font-size:12px; margin:0 0 14px 0;">
-                        Hier findest du alle Prüfungen, die von der <b>Ausbildungsabteilung</b> für dich autorisiert wurden.
-                    </p>
+                    <p style="color:var(--text-muted); font-size:12px; margin:0 0 14px 0;">Hier findest du alle Prüfungen, die von der <b>Ausbildungsabteilung</b> für dich autorisiert wurden.</p>
                     <div id="studentUnlockedExamsContainer" class="exam-grid-compact"></div>
                 </div>
 
@@ -539,10 +505,7 @@
                             <h3 id="activeExamTitle" style="margin:0; color:var(--primary); font-size:20px;">Prüfung</h3>
                             <span id="activeExamSubtitle" style="font-size:12px; color:var(--text-muted);">Echtzeit-Prüfungslauf</span>
                         </div>
-                        <div class="exam-timer-label">
-                            ⏱️ <span>Zeit:</span>
-                            <span id="activeExamTimerDisplay" class="exam-timer-text">00:00</span>
-                        </div>
+                        <div class="exam-timer-label">⏱️ <span>Zeit:</span><span id="activeExamTimerDisplay" class="exam-timer-text">00:00</span></div>
                     </div>
                     <div id="activeExamQuestionsContainer"></div>
                     <div style="display:flex; justify-content:flex-end; gap:12px; margin-top:20px; border-top:1px solid var(--border); padding-top:16px;">
@@ -599,14 +562,10 @@
 
                     <div id="instrTabInstructorAllowedExams" class="admin-subtab-content">
                         <h4 style="margin:0 0 8px 0; color:#a855f7;">🎓 Ausbildungsleitung: Mitglieder-Freigabe & Ausbilder-Rollen</h4>
-                        <p style="color:var(--text-muted); font-size:12px; margin-top:0;">
-                            Schalte neue Fraktionsmitglieder frei oder sperre den Zugriff. Rollenvergabe beschränkt auf Ausbildungs-relevante Rollen.
-                        </p>
+                        <p style="color:var(--text-muted); font-size:12px; margin-top:0;">Schalte neue Fraktionsmitglieder frei oder sperre den Zugriff. Rollenvergabe beschränkt auf Ausbildungs-relevante Rollen.</p>
                         <div class="table-responsive">
                             <table>
-                                <thead>
-                                    <tr><th>Mitarbeiter Name</th><th>DN</th><th>Rollen</th><th>Status</th><th style="text-align:right;">Aktion</th></tr>
-                                </thead>
+                                <thead><tr><th>Mitarbeiter Name</th><th>DN</th><th>Rollen</th><th>Status</th><th style="text-align:right;">Aktion</th></tr></thead>
                                 <tbody id="instructorMembersApprovalTableBody"></tbody>
                             </table>
                         </div>
@@ -633,9 +592,7 @@
                 <div class="theme-accordion-content" style="display:block;">
                     <div class="table-responsive" style="margin:0; border:none;">
                         <table class="guide-table">
-                            <thead>
-                                <tr><th class="sub-head">IC Rang</th><th class="sub-head">Rang-Name</th><th class="sub-head">Command</th><th class="sub-head">pro 15 Min.</th><th class="sub-head">volle Stunde</th></tr>
-                            </thead>
+                            <thead><tr><th class="sub-head">IC Rang</th><th class="sub-head">Rang-Name</th><th class="sub-head">Command</th><th class="sub-head">pro 15 Min.</th><th class="sub-head">volle Stunde</th></tr></thead>
                             <tbody>
                                 <tr style="background-color: var(--rank-trainee);"><td style="font-weight:bold;">Rang 1</td><td style="font-weight:bold;">Trainee</td><td>SAMD Trainee</td><td>5.500k</td><td>22.000k</td></tr>
                                 <tr style="background-color: var(--rank-trainee);"><td style="font-weight:bold;">Rang 2</td><td style="font-weight:bold;">Solo Trainee</td><td>SAMD Trainee</td><td>7.000k</td><td>28.000k</td></tr>
@@ -715,7 +672,7 @@
             <div id="newsFeedList" style="display: flex; flex-direction: column; gap: 16px;"></div>
         </div>
 
-       <!-- REITER: EINSTELLUNGEN / DIENSTTAGE -->
+        <!-- REITER: EINSTELLUNGEN / DIENSTTAGE -->
         <div id="settingsTab" class="tab-content">
             <h2>⚙️ Diensttage / Passwort ändern</h2>
             <div class="settings-grid" style="grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap:20px;">
@@ -742,20 +699,6 @@
                             <input type="password" id="newPasswordInput" name="newPasswordInput" autocomplete="new-password" placeholder="Neues Passwort eingeben">
                             <button type="button" class="btn" style="background:var(--primary); color:#080c14; font-weight:800;" onclick="passwortAendern()">Passwort speichern</button>
                         </form>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-                <div class="section">
-                    <h3>🔑 Eigenes Passwort ändern</h3>
-                    <div style="background: rgba(8, 12, 20, 0.5); padding: 18px; border-radius: 14px; border: 1px solid var(--border);">
-                        <form onsubmit="event.preventDefault(); passwortAendern();" style="margin:0; display:flex; flex-direction:column; gap:12px;">
-    <input type="text" name="username" autocomplete="username" style="display:none;" aria-hidden="true">
-    <label for="newPasswordInput">Neues Passwort:</label>
-    <input type="password" id="newPasswordInput" name="newPasswordInput" autocomplete="new-password" placeholder="Neues Passwort eingeben">
-    <button type="button" class="btn" style="background:var(--primary); color:#080c14; font-weight:800;" onclick="passwortAendern()">Passwort speichern</button>
-</form>
                     </div>
                 </div>
             </div>
@@ -873,14 +816,14 @@
             <h3 style="margin-top:0; color:var(--warning); display:flex; align-items:center; gap:8px;">🔑 Admin-Verifizierung</h3>
             <p style="color:var(--text-muted); font-size:12px; margin-bottom:16px;">Bitte verifiziere dich mit deinem Passwort, um das Dashboard zu öffnen.</p>
             <form onsubmit="event.preventDefault(); verifyAdminKeyPassword();">
-    <input type="text" name="username" autocomplete="username" style="display:none;" aria-hidden="true">
-    <label for="adminAuthPassInput">Admin-Passwort:</label>
-    <input type="password" id="adminAuthPassInput" autocomplete="current-password" placeholder="Passwort eingeben...">
-    <div style="display:flex; gap:10px; margin-top:20px;">
-        <button type="button" class="btn" style="background:var(--warning); color:#080c14; font-weight:800;" onclick="verifyAdminKeyPassword()">Freischalten 🔓</button>
-        <button type="button" class="btn" style="background:var(--text-muted);" onclick="closeAdminAuthModal()">Abbrechen</button>
-    </div>
-</form>
+                <input type="text" name="username" autocomplete="username" style="display:none;" aria-hidden="true">
+                <label for="adminAuthPassInput">Admin-Passwort:</label>
+                <input type="password" id="adminAuthPassInput" autocomplete="current-password" placeholder="Passwort eingeben...">
+                <div style="display:flex; gap:10px; margin-top:20px;">
+                    <button type="button" class="btn" style="background:var(--warning); color:#080c14; font-weight:800;" onclick="verifyAdminKeyPassword()">Freischalten 🔓</button>
+                    <button type="button" class="btn" style="background:var(--text-muted);" onclick="closeAdminAuthModal()">Abbrechen</button>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -898,7 +841,6 @@
     <!-- ADMIN MANAGEMENT VERWALTUNGS-MODAL -->
     <div id="adminManagementModal" class="modal-overlay">
         <div class="modal-card" style="max-width: 1550px; width: 98vw; max-height: 94vh; overflow-y: auto; padding: 26px 36px; border-radius: 20px;">
-            <!-- HEADER -->
             <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:16px; margin-bottom:20px;">
                 <div style="display:flex; align-items:center; gap:12px;">
                     <div style="font-size:24px;">🔑</div>
@@ -910,7 +852,6 @@
                 <button type="button" class="btn-close" onclick="closeAdminManagementModal()">✖</button>
             </div>
 
-            <!-- SUB-TABS -->
             <div class="admin-subtabs">
                 <button type="button" class="admin-tab-btn active" id="btnAdminSubUsers" onclick="switchAdminTab('adminSubTabUsers', this)">👥 Mitarbeiter-Kartei</button>
                 <button type="button" class="admin-tab-btn" id="btnAdminSubRoles" onclick="switchAdminTab('adminSubTabRoles', this)">🎭 Rollen & Berechtigungs-Matrix</button>
@@ -973,8 +914,6 @@
                             </div>
 
                             <div style="background:rgba(15,23,42,0.7); padding:16px; border-radius:12px; border:1px solid var(--border); display:flex; flex-direction:column; gap:16px;">
-                                
-                                <!-- THEMA: SYSTEM & ADMIN -->
                                 <div>
                                     <h5 style="margin:0 0 10px 0; color:var(--warning); font-size:13px; text-transform:uppercase;">🛡️ System & Administration</h5>
                                     <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:10px;">
@@ -984,7 +923,6 @@
                                     </div>
                                 </div>
 
-                                <!-- THEMA: EINSATZ & ARCHIV -->
                                 <div>
                                     <h5 style="margin:0 0 10px 0; color:var(--primary); font-size:13px; text-transform:uppercase;">📝 Einsatz, Preise & Archiv</h5>
                                     <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:10px;">
@@ -995,7 +933,6 @@
                                     </div>
                                 </div>
 
-                                <!-- THEMA: NEWS -->
                                 <div>
                                     <h5 style="margin:0 0 10px 0; color:var(--success); font-size:13px; text-transform:uppercase;">📢 News & Schwarzes Brett</h5>
                                     <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:10px;">
@@ -1006,7 +943,6 @@
                                     </div>
                                 </div>
 
-                                <!-- THEMA: AUSBILDUNG -->
                                 <div>
                                     <h5 style="margin:0 0 10px 0; color:#c084fc; font-size:13px; text-transform:uppercase;">🎓 Ausbildung & Prüfungen</h5>
                                     <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:10px;">
@@ -1017,7 +953,6 @@
                                     </div>
                                 </div>
 
-                                <!-- THEMA: FUNK & CODES -->
                                 <div>
                                     <h5 style="margin:0 0 10px 0; color:var(--text-main); font-size:13px; text-transform:uppercase;">📋 Funk & Codes</h5>
                                     <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:10px;">
@@ -1026,7 +961,6 @@
                                     </div>
                                 </div>
 
-                                <!-- THEMA: COMMANDS KATEGORIEN & RECHTE -->
                                 <div>
                                     <h5 style="margin:0 0 10px 0; color:var(--primary); font-size:13px; text-transform:uppercase;">💻 Commands (Verwaltung & Sichtbare Kategorien)</h5>
                                     <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:10px; margin-bottom:10px;">
@@ -1037,7 +971,6 @@
                                     <div id="roleCommandsCategoriesContainer" style="display:flex; flex-wrap:wrap; gap:8px; background:rgba(8,12,20,0.5); padding:10px; border-radius:8px; border:1px solid var(--border);"></div>
                                 </div>
 
-                                <!-- THEMA: LINKS KATEGORIEN & RECHTE -->
                                 <div>
                                     <h5 style="margin:0 0 10px 0; color:var(--primary); font-size:13px; text-transform:uppercase;">🔗 Links & Dokumente (Verwaltung & Sichtbare Kategorien)</h5>
                                     <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:10px; margin-bottom:10px;">
@@ -1047,7 +980,6 @@
                                     <span style="font-size:12px; font-weight:700; color:var(--text-muted); display:block; margin-bottom:6px;">Sichtbare Kategorien für diese Rolle (Leer lassen = Alle Kategorien sichtbar):</span>
                                     <div id="roleLinksCategoriesContainer" style="display:flex; flex-wrap:wrap; gap:8px; background:rgba(8,12,20,0.5); padding:10px; border-radius:8px; border:1px solid var(--border);"></div>
                                 </div>
-
                             </div>
 
                             <div style="display:flex; justify-content:space-between; margin-top:10px;">
@@ -1063,13 +995,11 @@
             <div id="adminSubTabSystem" class="admin-subtab-content">
                 <div style="background:rgba(56, 189, 248, 0.05); padding:20px; border-radius:16px; border:1px solid rgba(56, 189, 248, 0.25); margin-bottom:20px;">
                     <h3 style="margin:0 0 10px 0; color:var(--primary);">💾 Cloud-Backup & Wiederherstellung</h3>
-                    <p style="color:var(--text-muted); font-size:12px; margin-top:0;">
-                        Lade eine vollständige Sicherung aller Systemdaten als JSON herunter oder spiele ein früheres Backup ein.
-                    </p>
+                    <p style="color:var(--text-muted); font-size:12px; margin-top:0;">Lade eine vollständige Sicherung aller Systemdaten als JSON herunter oder spiele ein früheres Backup ein.</p>
                     <div style="display:flex; gap:14px; flex-wrap:wrap; align-items:center;">
                         <button type="button" class="btn" style="width:auto; padding:10px 20px; background:var(--primary); color:#080c14;" onclick="downloadSystemBackup()">📥 Backup herunterladen (JSON)</button>
                         <label for="backupFileInput" class="btn" style="width:auto; padding:10px 20px; background:rgba(56,189,248,0.15); color:var(--primary); border:1px solid var(--primary); cursor:pointer;">📤 Backup einspielen</label>
-<input type="file" id="backupFileInput" accept=".json" style="display:none;" onchange="restoreSystemBackupFromFile(event)">
+                        <input type="file" id="backupFileInput" accept=".json" style="display:none;" onchange="restoreSystemBackupFromFile(event)">
                     </div>
                 </div>
 
