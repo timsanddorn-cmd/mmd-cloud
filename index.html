@@ -165,12 +165,15 @@
                 <div class="theme-accordion-group" id="group-protokoll">
                     <div class="theme-accordion-header" onclick="toggleGroupCollapse('group-protokoll')">📜 Patientenprotokoll (Heute)</div>
                     <div class="theme-accordion-content">
+                        
+                        <!-- ZWEITER BUTTON (Hier eingefügt) -->
+                        <button type="button" id="btnManualProtArchive" class="btn" style="display:none; width:auto; padding:6px 12px; background:var(--success); color:#080c14; font-weight:800; margin-bottom:10px;" onclick="manualTriggerArchive()">📥 Protokoll archivieren & zurücksetzen</button>
+
                         <div class="table-responsive" style="margin:0; border:none;">
                             <table><thead><tr><th>Patient</th><th>Szenario</th><th>Verletzungen</th><th>Ausgaben</th><th>Eingetragen von</th><th style="width:70px;">Aktion</th></tr></thead><tbody id="logTableBody"></tbody></table>
                         </div>
                     </div>
                 </div>
-            </div>
 
             <!-- SCHICHTEN-HISTORIE -->
             <div class="theme-accordion-group" id="group-archiv" style="margin-top: 15px;">
@@ -178,6 +181,10 @@
                     <span>🗄️ Schichten der aktuellen Kalenderwoche</span>
                     <div style="display:flex; gap:8px; align-items:center;" onclick="event.stopPropagation();">
                         <button type="button" id="btnOpenWeeklyArchive" class="btn-archive-view" style="display:none;" onclick="openWeeklyArchiveModal()">🗄️ Gesamt-Archiv (Wochenweise)</button>
+                        
+                        <!-- ERSTER BUTTON HIER EINGEFÜGT -->
+                        <button type="button" id="btnManualArchive" class="btn" style="display:none; width:auto; padding:6px 12px; background:var(--success); color:#080c14; font-weight:800;" onclick="manualTriggerArchive()">📥 Schicht jetzt archivieren</button>
+                        
                         <button type="button" class="btn-export" onclick="exportArchivCSV()">📥 Schicht als CSV exportieren</button>
                     </div>
                 </div>
@@ -187,7 +194,6 @@
                     </div>
                 </div>
             </div>
-        </div>
 
         <!-- REITER: HIERARCHIE BOARD -->
         <div id="hierarchieTab" class="tab-content">

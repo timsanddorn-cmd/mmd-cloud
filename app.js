@@ -470,6 +470,16 @@ const hEdit = document.getElementById('btnEditHierarchieInline');
 
     document.querySelectorAll('.admin-action-th').forEach(el => {
         el.style.display = eff.delArchiv ? 'table-cell' : 'none';
+
+    document.querySelectorAll('.admin-action-th').forEach(el => {
+    el.style.display = eff.delArchiv ? 'table-cell' : 'none';
+});
+
+const manualArchBtn = document.getElementById('btnManualArchive');
+if (manualArchBtn) manualArchBtn.style.display = (eff.isAdmin || eff.isMasterAdmin) ? 'inline-block' : 'none';
+
+const manualProtArchBtn = document.getElementById('btnManualProtArchive');
+if (manualProtArchBtn) manualProtArchBtn.style.display = (eff.isAdmin || eff.isMasterAdmin) ? 'inline-block' : 'none';
     });
 }
 
@@ -833,16 +843,22 @@ function renderProtokoll(obj) {
     const entries = Object.entries(obj).sort((a,b) => (b[1].ts||0) - (a[1].ts||0));
     
     tbody.innerHTML = entries.length === 0
-        ? '<tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:24px;">📋 Noch keine Patienten für die laufende Schicht dokumentiert.</td></tr>'
-        : entries.map(([k,v]) => `<tr>
-            <td>${v.name||'-'}</td><td>${v.szenario||'-'}</td><td>${v.verletzungen||0}</td>
-            <td style="color:var(--success);font-weight:800;">$${v.kosten||0}</td>
-            <td>${v.medic||'-'}</td>
-            <td>
-                <button class="btn-edit-row" onclick="openEditModal('${k}')">✏️</button>
-                ${eff.delPatient ? `<button class="btn-delete-row" onclick="deletePatient('${k}')">🗑️</button>` : ''}
-            </td>
-          </tr>`).join('');
+        ? '<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:24px;">📋 Noch keine Patienten für die laufende Schicht dokumentiert.</td></tr>'
+        : entries.map(([k,v]) => {
+            const dateStr = v.ts ? new Date(v.ts).toLocaleDateString('de-DE') : '-';
+            return `<tr>
+                <td>${v.name||'-'}</td>
+                <td>${v.szenario||'-'}</td>
+                <td>${v.verletzungen||0}</td>
+                <td style="color:var(--success);font-weight:800;">$${v.kosten||0}</td>
+                <td>${v.medic||'-'}</td>
+                <td style="font-size:12px;color:var(--text-muted);">${dateStr}</td>
+                <td>
+                    <button class="btn-edit-row" onclick="openEditModal('${k}')">✏️</button>
+                    ${eff.delPatient ? `<button class="btn-delete-row" onclick="deletePatient('${k}')">🗑️</button>` : ''}
+                </td>
+              </tr>`;
+          }).join('');
 
     let tP = 0, tV = 0, tA = 0;
     entries.forEach(([,v]) => { tP++; tV += v.verletzungen||0; tA += v.kosten||0; });
@@ -888,8 +904,15 @@ function renderArchiv(obj) {
     let totalP = 0, totalV = 0, totalCash = 0, totalMatObj = {};
     const allEntries = Object.entries(obj).sort((a, b) => (b[1].ts || 0) - (a[1].ts || 0));
 
-    // Alle Einträge der aktuellen Kalenderwoche ermitteln
-    const weekEntries = allEntries.filter(([, item]) => {
+    // Müll-Einträge (0 Patienten, 0 Ausgaben, kein echtes Datum) automatisch herausfiltern
+    const cleanEntries = allEntries.filter(([, item]) => {
+        const p = Number(item.patienten ?? item.p ?? 0);
+        const cash = Number(item.ausgaben ?? item.cash ?? item.kosten ?? 0);
+        if (p === 0 && cash === 0 && (!item.datum || item.datum === 'Schicht')) return false;
+        return true;
+    });
+
+    const weekEntries = cleanEntries.filter(([, item]) => {
         let d;
         if (item.ts) {
             d = new Date(item.ts);
@@ -905,7 +928,7 @@ function renderArchiv(obj) {
     });
 
     if (!weekEntries.length) {
-        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:24px;">📥 In der aktuellen Woche (${currentWeekKey}) liegen noch keine archivierten Schichten vor.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:24px;">📥 In der aktuellen Woche (${currentWeekKey}) liegen noch keine gültigen archivierten Schichten vor.</td></tr>`;
         if (tfoot) tfoot.innerHTML = '';
         return;
     }
@@ -1040,6 +1063,52 @@ function deleteArchivSchicht(k) {
     if (confirm('Soll dieser archivierte Schichteintrag gelöscht werden?')) {
         db.ref('data/archiv/' + k).remove();
     }
+}
+
+function manualTriggerArchive() {
+    if (!sessionUser) return;
+    const eff = getUserEffectivePermissions(sessionUser);
+    if (!eff.isAdmin && !eff.isMasterAdmin) {
+        alert('Keine Berechtigung für diese Aktion!');
+        return;
+    }
+    if (!confirm('Möchtest du das aktuelle Patientenprotokoll jetzt manuell als Schicht archivieren und für den neuen Tag zurücksetzen?')) return;
+
+    db.ref('data/protokoll').once('value', s => {
+        const p = s.val() || {};
+        const entries = Object.values(p);
+        const todayFormatted = new Date().toLocaleDateString('de-DE');
+        const archiveTimestamp = Date.now();
+
+        let tP = entries.length;
+        let tV = 0;
+        let tA = 0;
+        let tm = {};
+
+        entries.forEach(x => {
+            tV += Number(x.verletzungen) || 0;
+            tA += Number(x.kosten) || 0;
+            const mObj = x.material || {};
+            Object.keys(mObj).forEach(k => {
+                tm[k] = (tm[k] || 0) + (Number(mObj[k]) || 0);
+            });
+        });
+
+        db.ref('data/archiv').push({
+            datum: todayFormatted,
+            patienten: tP,
+            verletzungen: tV,
+            ausgaben: tA,
+            material: tm,
+            ts: archiveTimestamp,
+            isManualArchived: true
+        }).then(() => {
+            db.ref('data/protokoll').remove().then(() => {
+                logAdminAudit('Manuelle Schicht-Archivierung', `${sessionUser.vorname} ${sessionUser.nachname} hat das Protokoll manuell archiviert.`);
+                alert('✅ Schicht erfolgreich archiviert und Protokoll für den neuen Tag zurückgesetzt!');
+            });
+        });
+    });
 }
 
 function openEditModal(key) {
