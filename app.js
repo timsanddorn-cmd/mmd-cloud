@@ -1142,6 +1142,20 @@ function manualTriggerArchive() {
     });
 }
 
+function deleteArchivSchicht(k) {
+    if (!sessionUser || !getUserEffectivePermissions(sessionUser).delArchiv) {
+        alert('Keine Berechtigung zum Löschen von Archiven!');
+        return;
+    }
+    if (confirm('Soll dieser archivierte Schichteintrag wirklich gelöscht werden?')) {
+        db.ref('data/archiv/' + k).remove().then(() => {
+            alert('✅ Schichteintrag erfolgreich gelöscht!');
+        }).catch(err => {
+            alert('Fehler beim Löschen: ' + err.message);
+        });
+    }
+}
+
 function finalizeCurrentWeekArchive() {
     if (!sessionUser) return;
     const eff = getUserEffectivePermissions(sessionUser);
@@ -2826,3 +2840,4 @@ _w.editLinkInline = editLinkInline;
 _w.openHierarchieInlineModal = openHierarchieInlineModal;
 _w.closeHierarchieInlineModal = closeHierarchieInlineModal;
 _w.saveHierarchieInline = saveHierarchieInline;
+_w.deleteArchivSchicht = deleteArchivSchicht;
