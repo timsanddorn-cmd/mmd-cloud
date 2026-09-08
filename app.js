@@ -508,49 +508,72 @@ function updateLiveDate() {
 /* ── Automatische Mitternachts-Archivierung (00:00 Uhr) ────── */
 function setupMidnightScheduler() {
     checkMidnightAutoArchive();
-    setInterval(checkMidnightAutoArchive, 30000);
+    setInterval(checkMidnightAutoArchive, 15000);
 }
 
 function checkMidnightAutoArchive() {
-    const lastDate = localStorage.getItem('mmd_last_midnight_check_date');
-    const todayStr = new Date().toISOString().split('T')[0];
-    if (!lastDate) {
-        localStorage.setItem('mmd_last_midnight_check_date', todayStr);
-        return;
-    }
-    if (lastDate !== todayStr) {
-        localStorage.setItem('mmd_last_midnight_check_date', todayStr);
-        executeMidnightArchive(lastDate);
-    }
+    const now = new Date();
+    const todayFormatted = now.toLocaleDateString('de-DE'); // z.B. "08.09.2026"
+    
+    // Cloud-Flag prüfen, damit nur ein Client den Tagesabschluss ausführt
+    db.ref('data/systemStatus/lastArchiveDate').once('value', snap => {
+        const lastArchived = snap.val();
+        if (!lastArchived) {
+            db.ref('data/systemStatus/lastArchiveDate').set(todayFormatted);
+            return;
+        }
+
+        // Neuer Tag angebrochen
+        if (lastArchived !== todayFormatted) {
+            db.ref('data/systemStatus/lastArchiveDate').set(todayFormatted).then(() => {
+                executeMidnightArchive(lastArchived);
+            });
+        }
+    });
 }
 
-function executeMidnightArchive(yesterdayDateStr) {
+function executeMidnightArchive(archivedDateLabel) {
+    const archiveTimestamp = Date.now();
+
+    // 1. Patientenprotokoll archivieren & heute leeren
     db.ref('data/protokoll').once('value', s => {
         const p = s.val() || {};
         const entries = Object.values(p);
         if (entries.length > 0) {
-            let tP = entries.length, tV = 0, tA = 0, tm = {};
+            let tP = entries.length;
+            let tV = 0;
+            let tA = 0;
+            let tm = {};
+
             entries.forEach(x => {
-                tV += x.verletzungen || 0;
-                tA += x.kosten || 0;
-                Object.keys(x.material || {}).forEach(k => {
-                    tm[k] = (tm[k] || 0) + (x.material[k] || 0);
+                tV += Number(x.verletzungen) || 0;
+                tA += Number(x.kosten) || 0;
+                const mObj = x.material || {};
+                Object.keys(mObj).forEach(k => {
+                    tm[k] = (tm[k] || 0) + (Number(mObj[k]) || 0);
                 });
             });
+
             db.ref('data/archiv').push({
-                datum: yesterdayDateStr,
-                patienten: tP, verletzungen: tV, ausgaben: tA, material: tm,
-                ts: Date.now(), isAutoArchived: true
+                datum: archivedDateLabel,
+                patienten: tP,
+                verletzungen: tV,
+                ausgaben: tA,
+                material: tm,
+                ts: archiveTimestamp,
+                isAutoArchived: true
             }).then(() => {
                 db.ref('data/protokoll').remove();
             });
         }
     });
 
+    // 2. Audit-Logs archivieren & heute leeren
     db.ref('data/auditLogs').once('value', s => {
         const logs = s.val() || {};
         if (Object.keys(logs).length > 0) {
-            db.ref('data/auditLogsArchiv/' + yesterdayDateStr).set(logs).then(() => {
+            const dateKeySafe = archivedDateLabel.replace(/\./g, '-');
+            db.ref('data/auditLogsArchiv/' + dateKeySafe).set(logs).then(() => {
                 db.ref('data/auditLogs').remove();
             });
         }
@@ -863,10 +886,19 @@ function renderArchiv(obj) {
     const currentWeekKey = `${currentWeekInfo[0]}-KW${currentWeekInfo[1].toString().padStart(2, '0')}`;
 
     let totalP = 0, totalV = 0, totalCash = 0, totalMatObj = {};
-    const allEntries = Object.entries(obj).reverse();
+    const allEntries = Object.entries(obj).sort((a, b) => (b[1].ts || 0) - (a[1].ts || 0));
 
+    // Alle Einträge der aktuellen Kalenderwoche ermitteln
     const weekEntries = allEntries.filter(([, item]) => {
-        const d = item.ts ? new Date(item.ts) : new Date();
+        let d;
+        if (item.ts) {
+            d = new Date(item.ts);
+        } else if (item.datum && item.datum.includes('.')) {
+            const parts = item.datum.split('.');
+            d = new Date(parts[2], parts[1] - 1, parts[0]);
+        } else {
+            d = new Date();
+        }
         const wInfo = getWeekNumber(d);
         const wKey = `${wInfo[0]}-KW${wInfo[1].toString().padStart(2, '0')}`;
         return wKey === currentWeekKey;
@@ -879,21 +911,25 @@ function renderArchiv(obj) {
     }
 
     tbody.innerHTML = weekEntries.map(([k, i]) => {
-        const p = Number(i.patienten || i.p || 0);
-        const v = Number(i.verletzungen || i.v || 0);
-        const cash = Number(i.ausgaben || i.cash || i.kosten || 0);
-        const tagLabel = i.datum || i.tag || 'Schicht';
+        const p = Number(i.patienten ?? i.p ?? 0);
+        const v = Number(i.verletzungen ?? i.v ?? 0);
+        const cash = Number(i.ausgaben ?? i.cash ?? i.kosten ?? 0);
+        const tagLabel = i.datum || (i.ts ? new Date(i.ts).toLocaleDateString('de-DE') : 'Schicht');
 
-        totalP += p; totalV += v; totalCash += cash;
+        totalP += p; 
+        totalV += v; 
+        totalCash += cash;
 
         let mHtml = '<ul class="archiv-details-list" style="margin:0;padding-left:14px;color:var(--text-muted);font-size:11px;list-style-type:square;">';
         const matObj = i.material || i.matDetailsObj || {};
-        if (Object.keys(matObj).length > 0) {
-            Object.keys(matObj).forEach(m => {
-                let qty = Number(matObj[m]) || 0;
+        const matKeys = Object.keys(matObj);
+        
+        if (matKeys.length > 0) {
+            matKeys.forEach(m => {
+                const qty = Number(matObj[m]) || 0;
                 if (qty > 0) {
                     const dispName = materialKatalog[m] ? materialKatalog[m].name : m;
-                    mHtml += `<li>${dispName}: <b>${qty}</b></li>`;
+                    mHtml += `<li>${dispName}: <b>${qty}x</b></li>`;
                     totalMatObj[dispName] = (totalMatObj[dispName] || 0) + qty;
                 }
             });
@@ -905,7 +941,7 @@ function renderArchiv(obj) {
         return `<tr>
             <td style="font-weight:700;color:var(--text-main);">${tagLabel}</td>
             <td style="font-weight:700;">${p}</td>
-            <td>${v}</td>
+            <td style="color:var(--warning);font-weight:700;">${v}</td>
             <td style="color:var(--success);font-weight:800;font-family:monospace;font-size:13px;">$${cash.toLocaleString('de-DE')}</td>
             <td>${mHtml}</td>
             <td style="text-align:right;">${eff.delArchiv ? `<button class="btn-delete-row" onclick="deleteArchivSchicht('${k}')" title="Schicht löschen">🗑️</button>` : '--'}</td>
@@ -914,9 +950,14 @@ function renderArchiv(obj) {
 
     if (tfoot) {
         let totalMatHtml = '<ul class="archiv-details-list" style="margin:0;padding-left:14px;color:var(--text-muted);font-size:11px;list-style-type:square;">';
-        Object.keys(totalMatObj).sort().forEach(m => {
-            totalMatHtml += `<li>${m}: <b style="color:var(--primary);">${totalMatObj[m]}</b></li>`;
-        });
+        const totalKeys = Object.keys(totalMatObj);
+        if (totalKeys.length > 0) {
+            totalKeys.sort().forEach(m => {
+                totalMatHtml += `<li>${m}: <b style="color:var(--primary);">${totalMatObj[m]}x</b></li>`;
+            });
+        } else {
+            totalMatHtml += '<li>Kein Verbrauch</li>';
+        }
         totalMatHtml += '</ul>';
 
         tfoot.innerHTML = `<tr style="background:rgba(56,189,248,0.08);font-weight:800;border-top:2px solid var(--primary);">
@@ -2547,15 +2588,17 @@ function openAuditLogArchiveModal() {
 
     db.ref('data/auditLogsArchiv').once('value', s => {
         const raw = s.val() || {};
-        if (!Object.keys(raw).length) {
+        const keys = Object.keys(raw);
+        if (!keys.length) {
             cont.innerHTML = '<p style="color:var(--text-muted);text-align:center;">Noch keine archivierten Tage vorhanden.</p>';
         } else {
-            cont.innerHTML = Object.keys(raw).sort().reverse().map(dateKey => {
-                const logs = Object.values(raw[dateKey]);
+            cont.innerHTML = keys.sort().reverse().map(dateKey => {
+                const logs = Object.values(raw[dateKey] || {});
+                const displayDate = dateKey.replace(/-/g, '.');
                 return `
                     <div class="theme-accordion-group" id="audit_${dateKey}" style="margin-bottom:10px;">
                         <div class="theme-accordion-header" onclick="toggleGroupCollapse('audit_${dateKey}')">
-                            <span>📅 Tag: ${dateKey}</span>
+                            <span>📅 Tag: ${displayDate}</span>
                             <span>${logs.length} Einträge</span>
                         </div>
                         <div class="theme-accordion-content">
@@ -2563,7 +2606,7 @@ function openAuditLogArchiveModal() {
                                 <table>
                                     <thead><tr><th>Uhrzeit</th><th>Admin</th><th>Aktion</th><th>Details</th></tr></thead>
                                     <tbody>
-                                        ${logs.map(l => `<tr><td>${new Date(l.ts).toLocaleTimeString('de-DE')}</td><td><b>${l.admin}</b></td><td>${l.action}</td><td>${l.details}</td></tr>`).join('')}
+                                        ${logs.map(l => `<tr><td>${l.ts ? new Date(l.ts).toLocaleTimeString('de-DE') : '--:--'}</td><td><b>${l.admin || 'System'}</b></td><td>${l.action || '--'}</td><td>${l.details || '--'}</td></tr>`).join('')}
                                     </tbody>
                                 </table>
                             </div>
