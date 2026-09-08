@@ -999,66 +999,92 @@ function openWeeklyArchiveModal() {
     const cont = document.getElementById('weeklyArchiveContent');
     if (!modal || !cont) return;
 
-    const eff = sessionUser ? getUserEffectivePermissions(sessionUser) : {};
-    const grouped = {};
+    // Direkt anzeigen, damit der Nutzer sofort Feedback sieht
+    modal.style.display = 'flex';
+    cont.innerHTML = '<p style="color:var(--text-muted);text-align:center;padding:20px;">Lade Wochen-Archiv...</p>';
 
-    Object.entries(cachedArchiv).forEach(([k, item]) => {
-        const p = Number(item.patienten ?? item.p ?? 0);
-        const cash = Number(item.ausgaben ?? item.cash ?? item.kosten ?? 0);
-        if (p === 0 && cash === 0) return; // Null-Einträge überspringen
+    try {
+        const eff = sessionUser ? getUserEffectivePermissions(sessionUser) : {};
+        const grouped = {};
+        const archivData = cachedArchiv || {};
 
-        const d = item.ts ? new Date(item.ts) : new Date();
-        const wInfo = getWeekNumber(d);
-        const wKey = `${wInfo[0]} – Kalenderwoche ${wInfo[1]}`;
-        if (!grouped[wKey]) grouped[wKey] = [];
-        grouped[wKey].push({ key: k, item });
-    });
+        Object.entries(archivData).forEach(([k, item]) => {
+            if (!item) return;
+            const p = Number(item.patienten ?? item.p ?? 0);
+            const cash = Number(item.ausgaben ?? item.cash ?? item.kosten ?? 0);
+            if (p === 0 && cash === 0) return; // Null-Einträge überspringen
 
-    if (!Object.keys(grouped).length) {
-        cont.innerHTML = '<p style="color:var(--text-muted);text-align:center;padding:20px;">Keine gültigen archivierten Wochen vorhanden.</p>';
-        modal.style.display = 'flex';
-        return;
-    }
+            let d;
+            if (item.ts) {
+                d = new Date(item.ts);
+            } else if (item.datum && item.datum.includes('.')) {
+                const parts = item.datum.split('.');
+                d = new Date(parts[2], parts[1] - 1, parts[0]);
+            } else {
+                d = new Date();
+            }
 
-    cont.innerHTML = Object.keys(grouped).sort().reverse().map((wName, idx) => {
-        const schichten = grouped[wName];
-        let wP = 0, wV = 0, wCash = 0;
-        schichten.forEach(s => {
-            wP += Number(s.item.patienten || s.item.p || 0);
-            wV += Number(s.item.verletzungen || s.item.v || 0);
-            wCash += Number(s.item.ausgaben || s.item.cash || s.item.kosten || 0);
+            const wInfo = getWeekNumber(d);
+            const wKey = `${wInfo[0]} – Kalenderwoche ${wInfo[1]}`;
+            if (!grouped[wKey]) grouped[wKey] = [];
+            grouped[wKey].push({ key: k, item });
         });
 
-        const rows = schichten.map(s => `
-            <tr>
-                <td><b>${s.item.datum || 'Schicht'}</b></td>
-                <td>${s.item.patienten || s.item.p || 0}</td>
-                <td>${s.item.verletzungen || s.item.v || 0}</td>
-                <td style="color:var(--success);font-weight:800;">$${(Number(s.item.ausgaben || s.item.cash || s.item.kosten || 0)).toLocaleString('de-DE')}</td>
-                <td>${eff.delArchiv ? `<button class="btn-delete-row" onclick="deleteArchivSchicht('${s.key}')">🗑️</button>` : '--'}</td>
-            </tr>
-        `).join('');
+        const groupKeys = Object.keys(grouped);
+        if (!groupKeys.length) {
+            cont.innerHTML = '<p style="color:var(--text-muted);text-align:center;padding:20px;">Keine gültigen archivierten Wochen vorhanden.</p>';
+            return;
+        }
 
-        const gId = 'week_acc_' + idx;
-        return `
-            <div class="theme-accordion-group" id="${gId}" style="margin-bottom:12px;">
-                <div class="theme-accordion-header" onclick="toggleGroupCollapse('${gId}')">
-                    <span>🗓️ ${wName} (${schichten.length} Schichten)</span>
-                    <span style="color:var(--success);font-family:monospace;font-weight:800;">$${wCash.toLocaleString('de-DE')}</span>
-                </div>
-                <div class="theme-accordion-content">
-                    <div class="table-responsive" style="margin:0;border:none;">
-                        <table>
-                            <thead><tr><th>Datum</th><th>Patienten</th><th>Verletzungen</th><th>Ausgaben</th><th>Aktion</th></tr></thead>
-                            <tbody>${rows}</tbody>
-                        </table>
+        cont.innerHTML = groupKeys.sort().reverse().map((wName, idx) => {
+            const schichten = grouped[wName];
+            let wP = 0, wV = 0, wCash = 0;
+            schichten.forEach(s => {
+                wP += Number(s.item.patienten ?? s.item.p ?? 0);
+                wV += Number(s.item.verletzungen ?? s.item.v ?? 0);
+                wCash += Number(s.item.ausgaben ?? s.item.cash ?? s.item.kosten ?? 0);
+            });
+
+            const rows = schichten.map(s => {
+                const sp = Number(s.item.patienten ?? s.item.p ?? 0);
+                const sv = Number(s.item.verletzungen ?? s.item.v ?? 0);
+                const scash = Number(s.item.ausgaben ?? s.item.cash ?? s.item.kosten ?? 0);
+                const sDatum = s.item.datum || (s.item.ts ? new Date(s.item.ts).toLocaleDateString('de-DE') : 'Schicht');
+
+                return `
+                    <tr>
+                        <td><b>${sDatum}</b></td>
+                        <td>${sp}</td>
+                        <td>${sv}</td>
+                        <td style="color:var(--success);font-weight:800;">$${scash.toLocaleString('de-DE')}</td>
+                        <td>${eff.delArchiv ? `<button class="btn-delete-row" onclick="deleteArchivSchicht('${s.key}')">🗑️</button>` : '--'}</td>
+                    </tr>
+                `;
+            }).join('');
+
+            const gId = 'week_acc_' + idx;
+            return `
+                <div class="theme-accordion-group" id="${gId}" style="margin-bottom:12px;">
+                    <div class="theme-accordion-header" onclick="toggleGroupCollapse('${gId}')">
+                        <span>🗓️ ${wName} (${schichten.length} Schichten)</span>
+                        <span style="color:var(--success);font-family:monospace;font-weight:800;">$${wCash.toLocaleString('de-DE')}</span>
+                    </div>
+                    <div class="theme-accordion-content">
+                        <div class="table-responsive" style="margin:0;border:none;">
+                            <table>
+                                <thead><tr><th>Datum</th><th>Patienten</th><th>Verletzungen</th><th>Ausgaben</th><th>Aktion</th></tr></thead>
+                               <tbody>${rows}</tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
-            </div>
-        `;
-    }).join('');
+            `;
+        }).join('');
 
-    modal.style.display = 'flex';
+    } catch (err) {
+        console.error("Fehler beim Laden des Wochen-Archivs:", err);
+        cont.innerHTML = `<p style="color:var(--danger);text-align:center;padding:20px;">Fehler beim Laden: ${err.message}</p>`;
+    }
 }
 function closeWeeklyArchiveModal() { document.getElementById('weeklyArchiveModal').style.display = 'none'; }
 
