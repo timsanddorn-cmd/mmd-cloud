@@ -904,11 +904,11 @@ function renderArchiv(obj) {
     let totalP = 0, totalV = 0, totalCash = 0, totalMatObj = {};
     const allEntries = Object.entries(obj).sort((a, b) => (b[1].ts || 0) - (a[1].ts || 0));
 
-    // Müll-Einträge (0 Patienten, 0 Ausgaben, kein echtes Datum) automatisch herausfiltern
+    // Müll-Einträge (0 Patienten, 0 Ausgaben) automatisch herausfiltern
     const cleanEntries = allEntries.filter(([, item]) => {
         const p = Number(item.patienten ?? item.p ?? 0);
         const cash = Number(item.ausgaben ?? item.cash ?? item.kosten ?? 0);
-        if (p === 0 && cash === 0 && (!item.datum || item.datum === 'Schicht')) return false;
+        if (p === 0 && cash === 0) return false;
         return true;
     });
 
@@ -1003,6 +1003,10 @@ function openWeeklyArchiveModal() {
     const grouped = {};
 
     Object.entries(cachedArchiv).forEach(([k, item]) => {
+        const p = Number(item.patienten ?? item.p ?? 0);
+        const cash = Number(item.ausgaben ?? item.cash ?? item.kosten ?? 0);
+        if (p === 0 && cash === 0) return; // Null-Einträge überspringen
+
         const d = item.ts ? new Date(item.ts) : new Date();
         const wInfo = getWeekNumber(d);
         const wKey = `${wInfo[0]} – Kalenderwoche ${wInfo[1]}`;
@@ -1011,7 +1015,7 @@ function openWeeklyArchiveModal() {
     });
 
     if (!Object.keys(grouped).length) {
-        cont.innerHTML = '<p style="color:var(--text-muted);text-align:center;padding:20px;">Keine archivierten Wochen vorhanden.</p>';
+        cont.innerHTML = '<p style="color:var(--text-muted);text-align:center;padding:20px;">Keine gültigen archivierten Wochen vorhanden.</p>';
         modal.style.display = 'flex';
         return;
     }
@@ -1028,9 +1032,9 @@ function openWeeklyArchiveModal() {
         const rows = schichten.map(s => `
             <tr>
                 <td><b>${s.item.datum || 'Schicht'}</b></td>
-                <td>${s.item.patienten || 0}</td>
-                <td>${s.item.verletzungen || 0}</td>
-                <td style="color:var(--success);font-weight:800;">$${(s.item.ausgaben || 0).toLocaleString('de-DE')}</td>
+                <td>${s.item.patienten || s.item.p || 0}</td>
+                <td>${s.item.verletzungen || s.item.v || 0}</td>
+                <td style="color:var(--success);font-weight:800;">$${(Number(s.item.ausgaben || s.item.cash || s.item.kosten || 0)).toLocaleString('de-DE')}</td>
                 <td>${eff.delArchiv ? `<button class="btn-delete-row" onclick="deleteArchivSchicht('${s.key}')">🗑️</button>` : '--'}</td>
             </tr>
         `).join('');
@@ -1077,6 +1081,12 @@ function manualTriggerArchive() {
     db.ref('data/protokoll').once('value', s => {
         const p = s.val() || {};
         const entries = Object.values(p);
+        
+        if (entries.length === 0) {
+            alert('⚠️ Das Protokoll ist leer. Es gibt nichts zu archivieren.');
+            return;
+        }
+
         const todayFormatted = new Date().toLocaleDateString('de-DE');
         const archiveTimestamp = Date.now();
 
