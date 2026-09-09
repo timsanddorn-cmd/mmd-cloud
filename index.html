@@ -10,7 +10,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
-    <link rel="stylesheet" href="style.css?v=5.1">
+    <link rel="stylesheet" href="style.css?v=5.2">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏥</text></svg>">
 </head>
 <body>
@@ -167,7 +167,7 @@
                     <div class="theme-accordion-content">
                         <button type="button" id="btnManualProtArchive" class="btn" style="display:none; width:auto; padding:6px 12px; background:var(--success); color:#080c14; font-weight:800; margin-bottom:10px;" onclick="manualTriggerArchive()">📥 Protokoll archivieren & zurücksetzen</button>
                         <div class="table-responsive" style="margin:0; border:none;">
-                            <table><thead><tr><th>Patient</th><th>Szenario</th><th>Verletzungen</th><th>Ausgaben</th><th>Eingetragen von</th><th style="width:70px;">Aktion</th></tr></thead><tbody id="logTableBody"></tbody></table>
+                            <table><thead><tr><th>Patient</th><th>Szenario</th><th>Verletzungen</th><th>Ausgaben</th><th>Eingetragen von</th><th>Datum</th><th style="width:70px;">Aktion</th></tr></thead><tbody id="logTableBody"></tbody></table>
                         </div>
                     </div>
                 </div>
@@ -183,7 +183,7 @@
                 </div>
                 <div class="theme-accordion-content">
                     <div class="table-responsive" style="margin:0; border:none;">
-                        <table><thead><tr><th>Schicht</th><th>Patienten</th><th>Verletzungen</th><th>Ausgaben</th><th>Detaillierter Verbrauch</th><th style="width:40px; display:none;" class="admin-action-th">Aktion</th></tr></thead><tbody id="archivTableBody"></tbody><tfoot id="archivTableFoot"></tfoot></table>
+                        <table><thead><tr><th>Schicht</th><th>Patienten</th><th>Verletzungen</th><th>Ausgaben</th><th>Detaillierter Verbrauch</th><th style="width:60px; text-align:right;" class="admin-action-th">Aktion</th></tr></thead><tbody id="archivTableBody"></tbody><tfoot id="archivTableFoot"></tfoot></table>
                     </div>
                 </div>
             </div>
@@ -218,8 +218,8 @@
                     <h2 style="margin:0; color:var(--primary);">👥 Mitarbeiter-Kartei des SAMD</h2>
                     <p style="margin:4px 0 0 0; color:var(--text-muted); font-size:13px;">Offizielle Übersicht aller registrierten und aktiven Mitarbeiter im Dienst.</p>
                 </div>
-                <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
-                    <input type="text" id="searchStaffInput" class="form-input" placeholder="🔍 Suchen nach DN, Name..." oninput="filterStaffDirectory()" style="max-width:240px;">
+                <div class="staff-toolbar-actions">
+                    <input type="text" id="searchStaffInput" class="form-input" placeholder="🔍 Nach DN oder Name suchen..." oninput="filterStaffDirectory()">
                     <button type="button" class="btn" style="width:auto; margin:0; padding:8px 16px; background:var(--primary); color:#080c14; font-weight:800;" onclick="openStaffPhotoUploadModal()">📷 Foto einreichen</button>
                     <button type="button" id="btnOpenPhotoAdminModal" class="btn" style="width:auto; margin:0; padding:8px 16px; background:rgba(245,158,11,0.15); color:var(--warning); border:1px solid var(--warning); font-weight:800; display:none;" onclick="openStaffPhotoAdminModal()">📁 Foto-Ordner (Bearbeitung)</button>
                 </div>
@@ -1273,6 +1273,6 @@
         </div>
     </div>
 
-    <script src="app.js?v=5.1"></script>
+    <script src="app.js?v=5.2"></script>
 </body>
 </html>

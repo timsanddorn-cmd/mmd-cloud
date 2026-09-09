@@ -1,7 +1,10 @@
 // ============================================================
-//  MMD CLOUD – Medical Center Web-App  |  app.js  v5.1
+//  MMD CLOUD – Medical Center Web-App  |  app.js  v5.2
 //  Firebase Realtime Database (Compat SDK v10)
 // ============================================================
+
+/* ── Fallback Icon (Inline SVG, verhindert Endlosschleifen & Blinken) ── */
+const DEFAULT_MD_LOGO_FALLBACK = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%230f172a'/><path d='M42 20h16v22h22v16H58v22H42V58H20V42h22V20z' fill='%2338bdf8'/><circle cx='50' cy='50' r='46' fill='none' stroke='%2338bdf8' stroke-width='4'/></svg>";
 
 /* ── Firebase Init ─────────────────────────────────────────── */
 const FIREBASE_DB_URL = "https://mmd-live-default-rtdb.europe-west1.firebasedatabase.app";
@@ -1492,7 +1495,7 @@ function renderStaffDirectory() {
     const badge = document.getElementById('staffCountBadge');
     if (!grid) return;
 
-    const q = (document.getElementById('searchStaffInput')?.value || '').toLowerCase();
+    const q = (document.getElementById('searchStaffInput')?.value || '').trim().toLowerCase();
     const canManagePhotos = canUserManageEmployeePhotos();
 
     const staffList = Object.entries(cachedUsers || {}).filter(([, u]) => {
@@ -1509,7 +1512,11 @@ function renderStaffDirectory() {
     });
 
     const filtered = staffList.filter(([uId, u]) => {
-        const fullText = `${u.dn || ''} ${u.vorname || ''} ${u.nachname || ''}`.toLowerCase();
+        if (!q) return true;
+        const dnClean = (u.dn || '').toString().toLowerCase();
+        const vClean = (u.vorname || '').toLowerCase();
+        const nClean = (u.nachname || '').toLowerCase();
+        const fullText = `${dnClean} ${vClean} ${nClean} ${vClean} ${nClean}`;
         return fullText.includes(q);
     });
 
@@ -1519,14 +1526,19 @@ function renderStaffDirectory() {
     }
 
     grid.innerHTML = filtered.map(([uId, u]) => {
-        const photoSrc = u.photoUrl || 'mdlogo.png';
-        const isDefaultLogo = (photoSrc === 'mdlogo.png');
+        const rawPhoto = (u.photoUrl || '').trim();
+        const isCustomPhoto = rawPhoto && !rawPhoto.includes('mdlogo') && rawPhoto !== DEFAULT_MD_LOGO_FALLBACK;
+        const photoSrc = isCustomPhoto ? rawPhoto : 'mdlogo.png';
+        const isLogo = !isCustomPhoto;
         const dnFormatted = u.dn ? `DN ${u.dn.toString().replace(/[^0-9]/g, '') || u.dn}` : 'Keine DN';
 
         return `
             <div class="staff-card">
                 <div class="staff-photo-wrapper">
-                    <img src="${photoSrc}" alt="${u.vorname} ${u.nachname}" class="staff-portrait-img ${isDefaultLogo ? 'is-logo' : ''}" onerror="this.src='mdlogo.png'">
+                    <img src="${photoSrc}" 
+                         alt="${u.vorname} ${u.nachname}" 
+                         class="staff-portrait-img ${isLogo ? 'is-logo' : ''}" 
+                         onerror="this.onerror=null; this.src='${DEFAULT_MD_LOGO_FALLBACK}'; this.classList.add('is-logo');">
                 </div>
                 <div class="staff-card-content">
                     <div class="staff-dn-pill">${dnFormatted}</div>
@@ -1538,7 +1550,7 @@ function renderStaffDirectory() {
                                 🎨 Foto einstellen
                                 <input type="file" accept="image/*" style="display:none;" onchange="uploadProcessedStaffPhoto(event, '${uId}')">
                             </label>
-                            ${!isDefaultLogo ? `
+                            ${isCustomPhoto ? `
                                 <button type="button" class="btn-staff-quick-action btn-reset" onclick="resetStaffPhotoToDefault('${uId}')" title="Auf Standard-Logo zurücksetzen">🔄 Logo</button>
                             ` : ''}
                         </div>
@@ -1677,7 +1689,10 @@ function renderStaffPhotoAdminList() {
     c.innerHTML = entries.map(([uId, p]) => `
         <div class="staff-admin-photo-card">
             <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px;">Eingereicht: ${p.date || '--'}</div>
-            <img src="${p.rawPhoto}" alt="${p.userName}" class="staff-admin-photo-preview">
+            <img src="${p.rawPhoto}" 
+                 alt="${p.userName}" 
+                 class="staff-admin-photo-preview"
+                 onerror="this.onerror=null; this.src='${DEFAULT_MD_LOGO_FALLBACK}';">
             <div style="margin-top:8px;text-align:center;">
                 <b style="font-size:14px;color:var(--text-main);">${p.userName}</b><br>
                 <span style="color:var(--primary);font-weight:700;font-size:12px;">DN: ${p.userDN}</span>

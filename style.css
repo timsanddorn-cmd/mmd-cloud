@@ -398,7 +398,7 @@ body {
 }
 
 /* ══════════════════════════════════════════════════════════════
-   MITARBEITER-KARTEI (MAX. 4 PRO REIHE, LOGO & FOTO-STYLES)
+   MITARBEITER-KARTEI (EINHEITLICHE KACHELN & SAUBERE LEISTE)
 ══════════════════════════════════════════════════════════════ */
 .staff-header-toolbar {
     display: flex;
@@ -413,10 +413,23 @@ body {
     margin-bottom: 16px;
 }
 
+.staff-toolbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.staff-toolbar-actions input[type="text"] {
+    max-width: 250px;
+    margin: 0;
+}
+
 .staff-cards-grid {
     display: grid;
     grid-template-columns: repeat(1, 1fr);
     gap: 18px;
+    align-items: stretch; /* Garantiert gleiche Höhe pro Zeile */
 }
 @media (min-width: 600px) {
     .staff-cards-grid {
@@ -442,6 +455,7 @@ body {
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.35);
     display: flex;
     flex-direction: column;
+    height: 100%; /* Volle Zeilenhöhe ausfüllen */
     transition: transform 0.2s ease, border-color 0.2s ease;
 }
 .staff-card:hover {
@@ -451,7 +465,8 @@ body {
 
 .staff-photo-wrapper {
     width: 100%;
-    height: 230px;
+    height: 220px;
+    min-height: 220px;
     background: radial-gradient(circle at center, rgba(30, 41, 59, 0.7), rgba(8, 12, 20, 0.95));
     overflow: hidden;
     position: relative;
@@ -467,6 +482,7 @@ body {
     object-fit: cover;
     object-position: top center;
     transition: transform 0.3s ease;
+    display: block;
 }
 
 .staff-portrait-img.is-logo {
@@ -485,7 +501,7 @@ body {
     display: flex;
     flex-direction: column;
     gap: 6px;
-    flex: 1;
+    flex: 1; /* Füllt den Raum vollständig */
 }
 
 .staff-dn-pill {
@@ -507,33 +523,39 @@ body {
     font-weight: 800;
     color: var(--text-main);
     line-height: 1.3;
+    min-height: 22px;
 }
 
 .staff-roles-container {
     display: flex;
     flex-wrap: wrap;
+    align-content: flex-start;
     gap: 4px;
     margin-top: 4px;
+    min-height: 54px; /* Feste Mindesthöhe für 1-2 Rollenzeilen */
 }
 
 .staff-card-admin-actions {
     display: flex;
     gap: 6px;
-    margin-top: 10px;
+    margin-top: auto; /* Drückt die Buttons immer an den unteren Rand */
     border-top: 1px solid rgba(255, 255, 255, 0.05);
-    padding-top: 8px;
+    padding-top: 10px;
 }
 
 .btn-staff-quick-action {
     flex: 1;
     text-align: center;
-    padding: 5px 8px;
+    padding: 7px 8px;
     border-radius: 6px;
     font-size: 11px;
     font-weight: 800;
     cursor: pointer;
     border: none;
     transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 .btn-staff-quick-action.btn-upload {
     background: rgba(56, 189, 248, 0.12);
@@ -549,7 +571,7 @@ body {
     color: var(--danger);
     border: 1px solid rgba(244, 63, 94, 0.3);
     flex: 0 0 auto;
-    padding: 5px 10px;
+    padding: 7px 10px;
 }
 .btn-staff-quick-action.btn-reset:hover {
     background: var(--danger);
