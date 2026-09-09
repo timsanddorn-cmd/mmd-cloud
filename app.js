@@ -1,5 +1,5 @@
 // ============================================================
-//  MMD CLOUD – Medical Center Web-App  |  app.js  v4.1
+//  MMD CLOUD – Medical Center Web-App  |  app.js  v4.6
 //  Firebase Realtime Database (Compat SDK v10)
 // ============================================================
 
@@ -22,15 +22,22 @@ let cachedSubmissions = {};
 let cachedNews        = {};
 let cachedArchiv      = {};
 let cachedAuditLogs   = {};
+let cachedCalendar    = {};
 let activeExam        = null;
 let activeExamTimerInterval = null;
 let activeExamSecondsElapsed = 0;
 
+/* ── Kalender State ────────────────────────────────────────── */
+let currentCalYear  = new Date().getFullYear();
+let currentCalMonth = new Date().getMonth(); // 0-11
+let activeDetailEventId = null;
+
 /* ── Standard-Rollen & granulare Berechtigungen ───────────── */
-let defaultRoles = {
+const defaultRoles = {
     masteradmin: {
         id:'masteradmin', name:'Master-Admin', color:'#eab308', icon:'👑', isSystem:true,
         isAdmin:true, isMasterAdmin:true, canViewArchive:true,
+        canCreateCalendar:true, delCalendar:true,
         isInstructor:true, canManageInstructors:true, canManageExams:true,
         canPostNews:true, canApproveNews:true, canViewNewsRead:true,
         canEditPrices:true, canEditGuide:true, canEditCommands:true, canEditLinks:true,
@@ -39,6 +46,7 @@ let defaultRoles = {
     admin: {
         id:'admin', name:'Admin', color:'#f59e0b', icon:'🛡️', isSystem:true,
         isAdmin:true, isMasterAdmin:false, canViewArchive:true,
+        canCreateCalendar:true, delCalendar:true,
         isInstructor:true, canManageInstructors:true, canManageExams:true,
         canPostNews:true, canApproveNews:true, canViewNewsRead:true,
         canEditPrices:true, canEditGuide:true, canEditCommands:true, canEditLinks:true,
@@ -47,6 +55,7 @@ let defaultRoles = {
     ausbildungsleitung: {
         id:'ausbildungsleitung', name:'Ausbildungsleitung', color:'#c084fc', icon:'⚙️', isSystem:true,
         isAdmin:false, isMasterAdmin:false, canViewArchive:false,
+        canCreateCalendar:true, delCalendar:false,
         isInstructor:true, canManageInstructors:true, canManageExams:true,
         canPostNews:true, canApproveNews:true, canViewNewsRead:true,
         canEditPrices:false, canEditGuide:false, canEditCommands:true, canEditLinks:true,
@@ -55,6 +64,7 @@ let defaultRoles = {
     ausbilder: {
         id:'ausbilder', name:'Ausbilder', color:'#8b5cf6', icon:'🎓', isSystem:true,
         isAdmin:false, isMasterAdmin:false, canViewArchive:false,
+        canCreateCalendar:true, delCalendar:false,
         isInstructor:true, canManageInstructors:false, canManageExams:false,
         canPostNews:false, canApproveNews:false, canViewNewsRead:false,
         canEditPrices:false, canEditGuide:false, canEditCommands:false, canEditLinks:false,
@@ -63,6 +73,7 @@ let defaultRoles = {
     cls: {
         id:'cls', name:'CLS-Ausbilder', color:'#06b6d4', icon:'💉', isSystem:true,
         isAdmin:false, isMasterAdmin:false, canViewArchive:false,
+        canCreateCalendar:false, delCalendar:false,
         isInstructor:true, canManageInstructors:false, canManageExams:false,
         canPostNews:false, canApproveNews:false, canViewNewsRead:false,
         canEditPrices:false, canEditGuide:false, canEditCommands:false, canEditLinks:false,
@@ -71,6 +82,7 @@ let defaultRoles = {
     ehk: {
         id:'ehk', name:'EHK-Ausbilder', color:'#10b981', icon:'🩺', isSystem:true,
         isAdmin:false, isMasterAdmin:false, canViewArchive:false,
+        canCreateCalendar:false, delCalendar:false,
         isInstructor:true, canManageInstructors:false, canManageExams:false,
         canPostNews:false, canApproveNews:false, canViewNewsRead:false,
         canEditPrices:false, canEditGuide:false, canEditCommands:false, canEditLinks:false,
@@ -79,6 +91,7 @@ let defaultRoles = {
     luftrettung: {
         id:'luftrettung', name:'Luftrettung', color:'#0284c7', icon:'🚁', isSystem:true,
         isAdmin:false, isMasterAdmin:false, canViewArchive:false,
+        canCreateCalendar:false, delCalendar:false,
         isInstructor:false, canManageInstructors:false, canManageExams:false,
         canPostNews:false, canApproveNews:false, canViewNewsRead:false,
         canEditPrices:false, canEditGuide:false, canEditCommands:false, canEditLinks:false,
@@ -87,6 +100,7 @@ let defaultRoles = {
     mitarbeiter: {
         id:'mitarbeiter', name:'Mitarbeiter', color:'#64748b', icon:'👨‍⚕️', isSystem:true,
         isAdmin:false, isMasterAdmin:false, canViewArchive:false,
+        canCreateCalendar:false, delCalendar:false,
         isInstructor:false, canManageInstructors:false, canManageExams:false,
         canPostNews:false, canApproveNews:false, canViewNewsRead:false,
         canEditPrices:false, canEditGuide:false, canEditCommands:false, canEditLinks:false,
@@ -94,6 +108,33 @@ let defaultRoles = {
     }
 };
 let cachedRoles = Object.assign({}, defaultRoles);
+
+/* Rollen-Checkbox Mapping zur fehlerfreien Speicherung & Anzeige */
+const ROLE_PROPERTY_MAP = {
+    roleFlagAdmin: 'isAdmin',
+    roleFlagMasterAdmin: 'isMasterAdmin',
+    delFlagUsers: 'delUsers',
+    roleFlagEditPrices: 'canEditPrices',
+    roleFlagArchive: 'canViewArchive',
+    delFlagPatient: 'delPatient',
+    delFlagArchiv: 'delArchiv',
+    roleFlagCreateCalendar: 'canCreateCalendar',
+    delFlagCalendar: 'delCalendar',
+    roleFlagPostNews: 'canPostNews',
+    roleFlagApproveNews: 'canApproveNews',
+    roleFlagViewNewsRead: 'canViewNewsRead',
+    delFlagNews: 'delNews',
+    roleFlagInstructor: 'isInstructor',
+    roleFlagManageInstructors: 'canManageInstructors',
+    roleFlagManageExams: 'canManageExams',
+    delFlagExams: 'delExams',
+    roleFlagEditGuide: 'canEditGuide',
+    delFlagGuide: 'delGuide',
+    roleFlagEditCommands: 'canEditCommands',
+    delFlagCommands: 'delCommands',
+    roleFlagEditLinks: 'canEditLinks',
+    delFlagLinks: 'delLinks'
+};
 
 /* ── Standard-Guide-Daten ───────────────────────────────────── */
 let defaultGuideData = {
@@ -306,6 +347,7 @@ function getUserRolesList(user) {
 function getUserEffectivePermissions(user) {
     const eff = {
         isAdmin:false, isMasterAdmin:false, canViewArchive:false,
+        canCreateCalendar:false, delCalendar:false,
         isInstructor:false, canManageInstructors:false, canManageExams:false,
         canPostNews:false, canApproveNews:false, canViewNewsRead:false,
         canEditPrices:false, canEditGuide:false, canEditCommands:false, canEditLinks:false,
@@ -459,6 +501,9 @@ function applyUserPermissions(user) {
     const npBtn = document.getElementById('btnOpenPostNews');
     if (npBtn) npBtn.style.display = eff.canPostNews ? 'inline-block' : 'none';
 
+    const btnCal = document.getElementById('btnCreateCalendarEvent');
+    if (btnCal) btnCal.style.display = (eff.canCreateCalendar || eff.isAdmin || eff.isMasterAdmin) ? 'inline-block' : 'none';
+
     const instrView = document.getElementById('examInstructorView');
     if (instrView) instrView.style.display = isUserInstructor() ? 'block' : 'none';
 
@@ -471,9 +516,6 @@ function applyUserPermissions(user) {
     document.querySelectorAll('.admin-action-th').forEach(el => {
         el.style.display = eff.delArchiv ? 'table-cell' : 'none';
     });
-
-    const manualArchBtn = document.getElementById('btnManualArchive');
-    if (manualArchBtn) manualArchBtn.style.display = (eff.isAdmin || eff.isMasterAdmin) ? 'inline-block' : 'none';
 
     const manualProtArchBtn = document.getElementById('btnManualProtArchive');
     if (manualProtArchBtn) manualProtArchBtn.style.display = (eff.isAdmin || eff.isMasterAdmin) ? 'inline-block' : 'none';
@@ -500,6 +542,7 @@ function initDienstEintritt(user) {
     baueMaterialUIAuf();
     startFirebaseListeners();
     setupMidnightScheduler();
+    ensureSystemChangelogNews();
 
     const gDatum = localStorage.getItem('mmd_einstellungsdatum_' + user.vorname + '_' + user.nachname);
     const eDatumEl = document.getElementById('einstellungsDatum');
@@ -582,6 +625,33 @@ function executeMidnightArchive(archivedDateLabel) {
     });
 }
 
+/* ── Changelog Post Helper ─────────────────────────────────── */
+function ensureSystemChangelogNews() {
+    db.ref('data/systemStatus/changelogV46Posted').once('value', snap => {
+        if (!snap.val()) {
+            const changelogText = 
+`• Rollen- & Berechtigungs-Matrix: Speicherproblem behoben (Checkboxen & Zuweisungen werden nun dauerhaft fehlerfrei gespeichert)
+• Neuer Bereich: Integrierter Monatskalender im Windows-Stil mit Monatsnavigation & 'Heute'-Sprung
+• Termine erstellen & filtern: Sichtbarkeit nach Abteilungen und Rollen steuerbar
+• Kalender-Berechtigungen: Neue Flags 'Termine erstellen' & 'Termine löschen' in der Berechtigungsmatrix
+• Ersteller-Auswahl: Individuelle Auswahl zwischen eigenem Medic-Namen (inkl. Dienstnummer) oder Fachabteilungen (Psychologie, Ausbildung, CLS, EHK, etc.)
+• Rollen-Farbcodierung: Kalendereinträge spiegeln die Farbe der zugeordneten Rolle/Abteilung wider
+• Allgemeine Systembereinigung & Verknüpfung aller Inline-Speicherfunktionen`;
+
+            db.ref('data/news').push({
+                title: '🚀 System-Update: Kalender-System & Berechtigungs-Fixes',
+                content: changelogText,
+                category: 'Ankündigung',
+                author: 'Klinikleitung (System)',
+                status: 'published',
+                ts: Date.now()
+            }).then(() => {
+                db.ref('data/systemStatus/changelogV46Posted').set(true);
+            });
+        }
+    });
+}
+
 /* ── Firebase Listeners ────────────────────────────────────── */
 function startFirebaseListeners() {
     db.ref('data/protokoll').on('value', s => renderProtokoll(s.val() || {}));
@@ -602,6 +672,7 @@ function startFirebaseListeners() {
     db.ref('data/roles').on('value', s => {
         cachedRoles = s.val() ? Object.assign({}, defaultRoles, s.val()) : Object.assign({}, defaultRoles);
         if (sessionUser) applyUserPermissions(sessionUser);
+        renderCalendarMonth();
     });
     db.ref('data/users').on('value', s => {
         cachedUsers = s.val() || {};
@@ -614,6 +685,7 @@ function startFirebaseListeners() {
         }
         renderExamTab();
         renderAdminUserTable(cachedUsers);
+        renderCalendarMonth();
     });
     db.ref('data/exams').on('value', s => {
         const raw = s.val() || {};
@@ -634,6 +706,10 @@ function startFirebaseListeners() {
     db.ref('data/news').on('value', s => {
         cachedNews = s.val() || {};
         renderNewsFeedData(cachedNews);
+    });
+    db.ref('data/calendar').on('value', s => {
+        cachedCalendar = s.val() || {};
+        renderCalendarMonth();
     });
     db.ref('data/auditLogs').on('value', s => {
         cachedAuditLogs = s.val() || {};
@@ -1086,6 +1162,292 @@ function exportArchivCSV() {
     });
 }
 
+/* ══════════════════════════════════════════════════════════════
+   NEUER REITER: KALENDER & MONATSANSICHT (WINDOWS STYLE)
+══════════════════════════════════════════════════════════════ */
+const MONTH_NAMES_DE = ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"];
+
+function changeCalendarMonth(delta) {
+    currentCalMonth += delta;
+    if (currentCalMonth > 11) { currentCalMonth = 0; currentCalYear++; }
+    else if (currentCalMonth < 0) { currentCalMonth = 11; currentCalYear--; }
+    renderCalendarMonth();
+}
+
+function resetCalendarToToday() {
+    const n = new Date();
+    currentCalYear = n.getFullYear();
+    currentCalMonth = n.getMonth();
+    renderCalendarMonth();
+}
+
+function renderCalendarMonth() {
+    const lbl = document.getElementById('calendarCurrentMonthYear');
+    const grid = document.getElementById('calendarMonthGrid');
+    if (!lbl || !grid) return;
+
+    lbl.textContent = `${MONTH_NAMES_DE[currentCalMonth]} ${currentCalYear}`;
+
+    const myRoleIds = sessionUser ? getUserRolesList(sessionUser) : [];
+    const eff = sessionUser ? getUserEffectivePermissions(sessionUser) : {};
+    const isSpecialAdmin = eff.isAdmin || eff.isMasterAdmin;
+
+    // Filter Events by visible roles
+    const eventsList = Object.entries(cachedCalendar || {}).map(([id, ev]) => {
+        return Object.assign({ id }, ev);
+    }).filter(ev => {
+        if (ev.deleted) return false;
+        if (isSpecialAdmin) return true;
+        if (!ev.targetRoles || !ev.targetRoles.length) return true;
+        return ev.targetRoles.some(r => myRoleIds.includes(r));
+    });
+
+    const firstDayOfMonth = new Date(currentCalYear, currentCalMonth, 1);
+    const lastDayOfMonth  = new Date(currentCalYear, currentCalMonth + 1, 0);
+    const totalDaysInMonth = lastDayOfMonth.getDate();
+
+    // Monday = 0, Sunday = 6
+    let startDayOfWeek = firstDayOfMonth.getDay() - 1;
+    if (startDayOfWeek === -1) startDayOfWeek = 6;
+
+    const prevMonthLastDay = new Date(currentCalYear, currentCalMonth, 0).getDate();
+    const today = new Date();
+    const isCurrentActualMonth = (today.getFullYear() === currentCalYear && today.getMonth() === currentCalMonth);
+    const todayDateNumber = today.getDate();
+
+    let html = '';
+
+    // Leading days from previous month
+    for (let i = startDayOfWeek - 1; i >= 0; i--) {
+        const dayNum = prevMonthLastDay - i;
+        html += `<div class="calendar-day-cell is-other-month"><div class="cal-day-num">${dayNum}</div></div>`;
+    }
+
+    // Days in current month
+    for (let d = 1; d <= totalDaysInMonth; d++) {
+        const isToday = isCurrentActualMonth && (d === todayDateNumber);
+        const yStr = currentCalYear;
+        const mStr = String(currentCalMonth + 1).padStart(2, '0');
+        const dStr = String(d).padStart(2, '0');
+        const dateKey = `${yStr}-${mStr}-${dStr}`;
+
+        const dayEvents = eventsList.filter(e => e.date === dateKey).sort((a, b) => (a.time || '').localeCompare(b.time || ''));
+
+        let eventsHtml = '';
+        dayEvents.forEach(ev => {
+            const color = ev.roleColor || '#38bdf8';
+            eventsHtml += `
+                <div class="cal-event-pill" style="border-left:3px solid ${color}; background:${color}18;" onclick="event.stopPropagation(); openCalendarEventDetailsModal('${ev.id}')">
+                    <span class="cal-event-time">${ev.time || '--:--'}</span>
+                    <span class="cal-event-title-text">${ev.title || 'Termin'}</span>
+                </div>
+            `;
+        });
+
+        html += `
+            <div class="calendar-day-cell ${isToday ? 'is-today' : ''}" onclick="onCalendarCellClick('${dateKey}')">
+                <div class="cal-day-num">${d}</div>
+                <div class="cal-day-events-wrapper">${eventsHtml}</div>
+            </div>
+        `;
+    }
+
+    // Trailing days from next month to complete 7-column rows
+    const totalCellsSoFar = startDayOfWeek + totalDaysInMonth;
+    const trailingDays = (7 - (totalCellsSoFar % 7)) % 7;
+    for (let j = 1; j <= trailingDays; j++) {
+        html += `<div class="calendar-day-cell is-other-month"><div class="cal-day-num">${j}</div></div>`;
+    }
+
+    grid.innerHTML = html;
+}
+
+function onCalendarCellClick(dateKey) {
+    if (!sessionUser) return;
+    const eff = getUserEffectivePermissions(sessionUser);
+    if (!eff.canCreateCalendar && !eff.isAdmin && !eff.isMasterAdmin) return;
+    openCreateEventModal(dateKey);
+}
+
+function openCreateEventModal(prefillDate = null) {
+    const modal = document.getElementById('calendarEventModal');
+    if (!modal) return;
+
+    const dateInp = document.getElementById('calEventDate');
+    const timeInp = document.getElementById('calEventTime');
+    const titleInp = document.getElementById('calEventTitle');
+    const descInp = document.getElementById('calEventDesc');
+    const selCreator = document.getElementById('calEventCreatorSelection');
+    const targetRolesContainer = document.getElementById('calEventRolesSelectionContainer');
+
+    if (prefillDate && dateInp) {
+        dateInp.value = prefillDate;
+    } else if (dateInp) {
+        const today = new Date();
+        const y = today.getFullYear();
+        const m = String(today.getMonth() + 1).padStart(2, '0');
+        const d = String(today.getDate()).padStart(2, '0');
+        dateInp.value = `${y}-${m}-${d}`;
+    }
+
+    if (timeInp) timeInp.value = '20:00';
+    if (titleInp) titleInp.value = '';
+    if (descInp) descInp.value = '';
+
+    // Eigener Spieler & Bereiche zur Auswahl aufbauen
+    if (selCreator) {
+        const playerName = `${sessionUser.vorname} ${sessionUser.nachname}` + (sessionUser.dn ? ` (${sessionUser.dn})` : '');
+        
+        const depts = [
+            { label: `👤 ${playerName}`, val: playerName, color: '#38bdf8' },
+            { label: '🎓 Bereich Ausbildung', val: 'Ausbildung', color: '#8b5cf6' },
+            { label: '💉 CLS Ausbilder', val: 'CLS Ausbilder', color: '#06b6d4' },
+            { label: '🩺 EHK Ausbilder', val: 'EHK Ausbilder', color: '#10b981' },
+            { label: '🚁 Luftrettung', val: 'Luftrettung', color: '#0284c7' },
+            { label: '🧠 Psychologie', val: 'Psychologie', color: '#f59e0b' },
+            { label: '💼 Personalabteilung', val: 'Personalabteilung', color: '#ec4899' },
+            { label: '⚙️ Abteilungsleitung', val: 'Abteilungsleitung', color: '#c084fc' },
+            { label: '👨‍⚕️ Mitarbeiter', val: 'Mitarbeiter', color: '#64748b' }
+        ];
+
+        selCreator.innerHTML = depts.map(d => {
+            return `<option value="${d.val}" data-color="${d.color}">${d.label}</option>`;
+        }).join('');
+    }
+
+    // Sichtbare Ziel-Rollen Checkboxen
+    if (targetRolesContainer) {
+        targetRolesContainer.innerHTML = Object.values(cachedRoles).map(r => `
+            <label style="display:flex;align-items:center;gap:6px;padding:4px 8px;cursor:pointer;background:rgba(30,41,59,0.4);border-radius:6px;font-size:12px;">
+                <input type="checkbox" class="cal-target-role-cb" value="${r.id}">
+                <span style="color:${r.color||'#38bdf8'};font-weight:700;">${r.icon?r.icon+' ':''}${r.name}</span>
+            </label>
+        `).join('');
+    }
+
+    modal.style.display = 'flex';
+}
+
+function closeCalendarEventModal() {
+    const modal = document.getElementById('calendarEventModal');
+    if (modal) modal.style.display = 'none';
+}
+
+function saveCalendarEvent() {
+    if (!sessionUser) return;
+    const eff = getUserEffectivePermissions(sessionUser);
+    if (!eff.canCreateCalendar && !eff.isAdmin && !eff.isMasterAdmin) {
+        alert('Keine Berechtigung zum Erstellen von Terminen!');
+        return;
+    }
+
+    const date = document.getElementById('calEventDate')?.value;
+    const time = document.getElementById('calEventTime')?.value;
+    const title = document.getElementById('calEventTitle')?.value.trim();
+    const desc = document.getElementById('calEventDesc')?.value.trim() || '';
+    
+    const selCreatorEl = document.getElementById('calEventCreatorSelection');
+    const creatorDisplay = selCreatorEl ? selCreatorEl.value : `${sessionUser.vorname} ${sessionUser.nachname}`;
+    const selectedOption = selCreatorEl ? selCreatorEl.options[selCreatorEl.selectedIndex] : null;
+    const roleColor = selectedOption ? selectedOption.getAttribute('data-color') : '#38bdf8';
+
+    if (!date || !time || !title) {
+        alert('Bitte Datum, Uhrzeit und Titel angeben!');
+        return;
+    }
+
+    const targetRoles = [];
+    document.querySelectorAll('.cal-target-role-cb:checked').forEach(cb => targetRoles.push(cb.value));
+
+    const newEvent = {
+        date,
+        time,
+        title,
+        desc,
+        creatorDisplay,
+        roleColor,
+        targetRoles,
+        enteredBy: sessionUser.vorname + ' ' + sessionUser.nachname,
+        enteredByDN: sessionUser.dn || '--',
+        ts: Date.now()
+    };
+
+    db.ref('data/calendar').push(newEvent).then(() => {
+        closeCalendarEventModal();
+        logAdminAudit('Kalendertermin angelegt', `${creatorDisplay}: ${title} (${date} ${time})`);
+        alert('✅ Kalender-Termin erfolgreich gespeichert!');
+    });
+}
+
+function openCalendarEventDetailsModal(eventId) {
+    const ev = cachedCalendar[eventId];
+    if (!ev) return;
+    activeDetailEventId = eventId;
+
+    const modal = document.getElementById('calendarEventDetailsModal');
+    const titleEl = document.getElementById('calDetailsTitle');
+    const bodyEl = document.getElementById('calDetailsBody');
+    const delBtn = document.getElementById('btnDeleteCalendarEvent');
+    if (!modal || !bodyEl) return;
+
+    const color = ev.roleColor || '#38bdf8';
+    if (titleEl) titleEl.textContent = ev.title || 'Termin';
+
+    const targetRoleNames = (ev.targetRoles && ev.targetRoles.length)
+        ? ev.targetRoles.map(rid => (cachedRoles[rid]?.name || defaultRoles[rid]?.name || rid)).join(', ')
+        : 'Alle Abteilungen / Öffentlich';
+
+    bodyEl.innerHTML = `
+        <div style="background:rgba(30,41,59,0.5);border-left:4px solid ${color};padding:12px 16px;border-radius:8px;margin-bottom:14px;">
+            <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+                <span>📅 <b>Datum:</b> ${ev.date}</span>
+                <span>⏰ <b>Uhrzeit:</b> ${ev.time} Uhr</span>
+            </div>
+            <div style="margin-top:6px;font-size:12px;color:var(--text-muted);">
+                Ersteller / Bereich: <b style="color:${color};">${ev.creatorDisplay || ev.creator || 'SAMD'}</b>
+                <br>Eingetragen von: <span style="color:var(--text-main);">${ev.enteredBy || ev.creator || 'System'} (${ev.enteredByDN || '--'})</span>
+            </div>
+        </div>
+        <div style="margin-bottom:14px;">
+            <label style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">Freigegeben für:</label>
+            <div style="font-size:13px;color:var(--primary);font-weight:700;">${targetRoleNames}</div>
+        </div>
+        <div>
+            <label style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">Beschreibung / Notizen:</label>
+            <div style="background:rgba(8,12,20,0.6);border:1px solid var(--border);border-radius:8px;padding:12px;white-space:pre-wrap;color:var(--text-main);font-size:13px;min-height:60px;">${ev.desc || 'Keine weitere Beschreibung vorhanden.'}</div>
+        </div>
+    `;
+
+    const eff = sessionUser ? getUserEffectivePermissions(sessionUser) : {};
+    const canDelete = eff.delCalendar || eff.isAdmin || eff.isMasterAdmin;
+    if (delBtn) delBtn.style.display = canDelete ? 'inline-block' : 'none';
+
+    modal.style.display = 'flex';
+}
+
+function closeCalendarEventDetailsModal() {
+    const modal = document.getElementById('calendarEventDetailsModal');
+    if (modal) modal.style.display = 'none';
+    activeDetailEventId = null;
+}
+
+function deleteCalendarEventAction() {
+    if (!activeDetailEventId) return;
+    const eff = sessionUser ? getUserEffectivePermissions(sessionUser) : {};
+    if (!eff.delCalendar && !eff.isAdmin && !eff.isMasterAdmin) {
+        alert('Keine Berechtigung zum Löschen von Terminen!');
+        return;
+    }
+
+    if (confirm('Möchtest du diesen Termin wirklich dauerhaft aus dem Kalender entfernen?')) {
+        db.ref('data/calendar/' + activeDetailEventId).remove().then(() => {
+            logAdminAudit('Kalendertermin gelöscht', `Termin ID ${activeDetailEventId} entfernt von ${sessionUser.vorname} ${sessionUser.nachname}`);
+            closeCalendarEventDetailsModal();
+            alert('✅ Termin erfolgreich gelöscht!');
+        });
+    }
+}
+
 /* ── REITER: HIERARCHIE BOARD ──────────────────────────────── */
 function renderHierarchieBoard(hData) {
     if (!hData) return;
@@ -1280,7 +1642,7 @@ function saveGuideInline() {
     });
 }
 
-/* ── REITER: COMMANDS (INLINE EDIT & KEINE ZÄHLER) ────────── */
+/* ── REITER: COMMANDS ──────────────────────────────────────── */
 function renderCommandsTab(obj) {
     const cont = document.getElementById('commandsAccordionContainer'); if (!cont) return;
     const all = Object.assign({}, defaultCommands, obj || {});
@@ -1390,7 +1752,7 @@ function deleteDienstCommand(k) {
     if (confirm('Command löschen?')) db.ref('data/dienstCommands/' + k).remove();
 }
 
-/* ── REITER 4: LINKS & DOKUMENTE (INLINE EDIT & KEINE ZÄHLER) */
+/* ── REITER 4: LINKS & DOKUMENTE ──────────────────────────── */
 function renderLinksTab(obj) {
     const cont = document.getElementById('linksAccordionContainer'); if (!cont) return;
     const allLinks = Object.assign({}, defaultLinks, obj || {});
@@ -1431,11 +1793,11 @@ function openLinksInlineModal() {
 
         let existingRowsHtml = Object.entries(allLinks).map(([k, l]) => `
             <div style="background:rgba(30,41,59,0.4);border:1px solid var(--border);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:8px;margin-bottom:10px;">
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                <div style="grid-template-columns:1fr 1fr;gap:8px;display:grid;">
                     <input type="text" id="link_name_${k}" value="${l.name || ''}" placeholder="Titel">
                     <input type="text" id="link_url_${k}" value="${l.url || ''}" placeholder="https://...">
                 </div>
-                <div style="display:grid;grid-template-columns:2fr 1fr auto;gap:8px;align-items:center;">
+                <div style="grid-template-columns:2fr 1fr auto;gap:8px;align-items:center;display:grid;">
                     <input type="text" id="link_desc_${k}" value="${l.desc || l.description || ''}" placeholder="Beschreibung">
                     <input type="text" id="link_kat_${k}" value="${l.kat || l.thema || 'Allgemein'}" placeholder="Kategorie">
                     <div style="display:flex;gap:6px;">
@@ -1706,7 +2068,7 @@ function handleDienstEndeLogout() {
 }
 
 /* ══════════════════════════════════════════════════════════════
-   AUSBILDUNGS- & PRÜFUNGSBEREICH (HERZSTÜCK)
+   AUSBILDUNGS- & PRÜFUNGSBEREICH
 ══════════════════════════════════════════════════════════════ */
 const STRICT_EXAM_ORDER = ['exam_ga1', 'exam_ga2', 'exam_dv', 'exam_para1', 'exam_para2', 'exam_arzt1', 'exam_arzt2'];
 
@@ -2367,31 +2729,27 @@ function refreshOpenRoleCategoryCheckboxes() {
     });
 }
 
+/* ── KORRIGIERTE SELECT- & SPEICHERLOGIK FÜR ROLLEN ─────────── */
 function selectRole(roleId) {
-    const r = cachedRoles[roleId] || defaultRoles[roleId]; if (!r) return;
+    const r = cachedRoles[roleId] || defaultRoles[roleId]; 
+    if (!r) return;
+    
     document.getElementById('editingRoleId').value = roleId;
     document.getElementById('roleEditName').value = r.name || '';
     document.getElementById('roleEditColor').value = r.color || '#38bdf8';
-    document.getElementById('roleEditIcon').value = r.icon || '';
+    document.getElementById('roleEditIcon').value = r.icon || '🎭';
 
     const isMaster = (roleId === 'masteradmin');
 
-    const fields = [
-        'roleFlagAdmin','roleFlagMasterAdmin','roleFlagArchive',
-        'roleFlagInstructor','roleFlagManageInstructors','roleFlagManageExams',
-        'roleFlagPostNews','roleFlagApproveNews','roleFlagViewNewsRead',
-        'roleFlagEditPrices','roleFlagEditGuide','roleFlagEditCommands','roleFlagEditLinks',
-        'delFlagPatient','delFlagArchiv','delFlagGuide','delFlagCommands','delFlagLinks','delFlagNews','delFlagExams','delFlagUsers'
-    ];
-    fields.forEach(fId => {
-        const prop = fId.replace('roleFlag', '').replace('delFlag', 'del');
-        const key = prop.charAt(0).toLowerCase() + prop.slice(1);
-        const chk = document.getElementById(fId);
+    // Zuverlässiges Mapping aller Berechtigungen
+    Object.keys(ROLE_PROPERTY_MAP).forEach(elementId => {
+        const propName = ROLE_PROPERTY_MAP[elementId];
+        const chk = document.getElementById(elementId);
         if (chk) {
             if (isMaster) {
                 chk.checked = true;
             } else {
-                chk.checked = !!r[key];
+                chk.checked = !!r[propName];
             }
         }
     });
@@ -2419,7 +2777,6 @@ function selectRole(roleId) {
     });
 
     updateRoleBadgePreview();
-    attachAutoSaveListeners();
 }
 
 function updateRoleBadgePreview() {
@@ -2454,11 +2811,14 @@ function neueRolleErstellen() {
     });
 
     updateRoleBadgePreview();
-    attachAutoSaveListeners();
 }
 
 function speichereRolle() {
-    const id = document.getElementById('editingRoleId')?.value; if (!id) return;
+    const id = document.getElementById('editingRoleId')?.value; 
+    if (!id) {
+        alert('Bitte wähle zuerst eine Rolle aus oder klicke auf "Neue Rolle erstellen"!');
+        return;
+    }
 
     const isMaster = (id === 'masteradmin');
 
@@ -2473,57 +2833,24 @@ function speichereRolle() {
         name: document.getElementById('roleEditName')?.value.trim() || id,
         color: document.getElementById('roleEditColor')?.value || '#38bdf8',
         icon: document.getElementById('roleEditIcon')?.value.trim() || '🎭',
-        isAdmin: isMaster ? true : !!document.getElementById('roleFlagAdmin')?.checked,
-        isMasterAdmin: isMaster ? true : !!document.getElementById('roleFlagMasterAdmin')?.checked,
-        canViewArchive: isMaster ? true : !!document.getElementById('roleFlagArchive')?.checked,
-        isInstructor: isMaster ? true : !!document.getElementById('roleFlagInstructor')?.checked,
-        canManageInstructors: isMaster ? true : !!document.getElementById('roleFlagManageInstructors')?.checked,
-        canManageExams: isMaster ? true : !!document.getElementById('roleFlagManageExams')?.checked,
-        canPostNews: isMaster ? true : !!document.getElementById('roleFlagPostNews')?.checked,
-        canApproveNews: isMaster ? true : !!document.getElementById('roleFlagApproveNews')?.checked,
-        canViewNewsRead: isMaster ? true : !!document.getElementById('roleFlagViewNewsRead')?.checked,
-        canEditPrices: isMaster ? true : !!document.getElementById('roleFlagEditPrices')?.checked,
-        canEditGuide: isMaster ? true : !!document.getElementById('roleFlagEditGuide')?.checked,
-        canEditCommands: isMaster ? true : !!document.getElementById('roleFlagEditCommands')?.checked,
-        canEditLinks: isMaster ? true : !!document.getElementById('roleFlagEditLinks')?.checked,
-        delPatient: isMaster ? true : !!document.getElementById('delFlagPatient')?.checked,
-        delArchiv: isMaster ? true : !!document.getElementById('delFlagArchiv')?.checked,
-        delGuide: isMaster ? true : !!document.getElementById('delFlagGuide')?.checked,
-        delCommands: isMaster ? true : !!document.getElementById('delFlagCommands')?.checked,
-        delLinks: isMaster ? true : !!document.getElementById('delFlagLinks')?.checked,
-        delNews: isMaster ? true : !!document.getElementById('delFlagNews')?.checked,
-        delExams: isMaster ? true : !!document.getElementById('delFlagExams')?.checked,
-        delUsers: isMaster ? true : !!document.getElementById('delFlagUsers')?.checked,
         allowedCmdKats: allowedCmds,
         allowedLinkKats: allowedLnks
     };
 
+    // Dynamisch alle Berechtigungen aus dem Mapping auslesen
+    Object.keys(ROLE_PROPERTY_MAP).forEach(elementId => {
+        const propName = ROLE_PROPERTY_MAP[elementId];
+        const el = document.getElementById(elementId);
+        r[propName] = isMaster ? true : !!(el && el.checked);
+    });
+
     db.ref('data/roles/' + id).set(r).then(() => {
         cachedRoles[id] = r;
         renderAdminRolesList();
-    });
-}
-
-function attachAutoSaveListeners() {
-    const editorCard = document.getElementById('adminRoleEditorCard');
-    if (!editorCard || editorCard.dataset.autoSaveAttached === 'true') return;
-    editorCard.dataset.autoSaveAttached = 'true';
-
-    editorCard.addEventListener('change', (e) => {
-        if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') {
-            speichereRolle();
-        }
-    });
-
-    let typingTimer;
-    editorCard.addEventListener('input', (e) => {
-        if (e.target.type === 'text' || e.target.type === 'color') {
-            updateRoleBadgePreview();
-            clearTimeout(typingTimer);
-            typingTimer = setTimeout(() => {
-                speichereRolle();
-            }, 600);
-        }
+        logAdminAudit('Rolle gespeichert', `${sessionUser.vorname} ${sessionUser.nachname} hat Rolle "${r.name}" gespeichert.`);
+        alert(`✅ Rolle "${r.name}" erfolgreich gespeichert!`);
+    }).catch(err => {
+        alert('Fehler beim Speichern der Rolle: ' + err.message);
     });
 }
 
@@ -2649,6 +2976,7 @@ function switchTab(tabId, btn) {
     document.querySelectorAll('.tab-btn').forEach(e => e.classList.remove('active'));
     const t = document.getElementById(tabId); if (t) t.classList.add('active');
     if (btn) btn.classList.add('active');
+    if (tabId === 'calendarTab') renderCalendarMonth();
 }
 function settingsTabClick() { switchTab('settingsTab', document.getElementById('adminMainTabHeader')); }
 function switchInstructorTab(tabId, btnEl) {
@@ -2659,7 +2987,7 @@ function switchInstructorTab(tabId, btnEl) {
 }
 function toggleGroupCollapse(gId) { const g = document.getElementById(gId); if (g) g.classList.toggle('collapsed'); }
 
-/* ── DOM Ready & Exports ────────────────────────────────     */
+/* ── DOM Ready & Exports ───────────────────────────────────── */
 document.addEventListener('DOMContentLoaded', () => {
     updateLiveDate(); setInterval(updateLiveDate, 60000);
     renderGuideTab(); renderHierarchieBoard(hierarchieDaten); baueMaterialUIAuf();
@@ -2701,3 +3029,13 @@ _w.openHierarchieInlineModal = openHierarchieInlineModal;
 _w.closeHierarchieInlineModal = closeHierarchieInlineModal;
 _w.saveHierarchieInline = saveHierarchieInline;
 _w.deleteArchivSchicht = deleteArchivSchicht;
+_w.changeCalendarMonth = changeCalendarMonth;
+_w.resetCalendarToToday = resetCalendarToToday;
+_w.renderCalendarMonth = renderCalendarMonth;
+_w.onCalendarCellClick = onCalendarCellClick;
+_w.openCreateEventModal = openCreateEventModal;
+_w.closeCalendarEventModal = closeCalendarEventModal;
+_w.saveCalendarEvent = saveCalendarEvent;
+_w.openCalendarEventDetailsModal = openCalendarEventDetailsModal;
+_w.closeCalendarEventDetailsModal = closeCalendarEventDetailsModal;
+_w.deleteCalendarEventAction = deleteCalendarEventAction;
