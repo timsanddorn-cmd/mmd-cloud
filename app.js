@@ -1,5 +1,5 @@
 // ============================================================
-//  MMD CLOUD – Medical Center Web-App  |  app.js  v4.6
+//  MMD CLOUD – Medical Center Web-App  |  app.js  v5.1
 //  Firebase Realtime Database (Compat SDK v10)
 // ============================================================
 
@@ -23,13 +23,14 @@ let cachedNews        = {};
 let cachedArchiv      = {};
 let cachedAuditLogs   = {};
 let cachedCalendar    = {};
+let cachedPhotos      = {};
 let activeExam        = null;
 let activeExamTimerInterval = null;
 let activeExamSecondsElapsed = 0;
 
 /* ── Kalender State ────────────────────────────────────────── */
 let currentCalYear  = new Date().getFullYear();
-let currentCalMonth = new Date().getMonth(); // 0-11
+let currentCalMonth = new Date().getMonth();
 let activeDetailEventId = null;
 
 /* ── Standard-Rollen & granulare Berechtigungen ───────────── */
@@ -37,7 +38,7 @@ const defaultRoles = {
     masteradmin: {
         id:'masteradmin', name:'Master-Admin', color:'#eab308', icon:'👑', isSystem:true,
         isAdmin:true, isMasterAdmin:true, canViewArchive:true,
-        canCreateCalendar:true, delCalendar:true,
+        canCreateCalendar:true, delCalendar:true, canManagePhotos:true,
         isInstructor:true, canManageInstructors:true, canManageExams:true,
         canPostNews:true, canApproveNews:true, canViewNewsRead:true,
         canEditPrices:true, canEditGuide:true, canEditCommands:true, canEditLinks:true,
@@ -46,7 +47,7 @@ const defaultRoles = {
     admin: {
         id:'admin', name:'Admin', color:'#f59e0b', icon:'🛡️', isSystem:true,
         isAdmin:true, isMasterAdmin:false, canViewArchive:true,
-        canCreateCalendar:true, delCalendar:true,
+        canCreateCalendar:true, delCalendar:true, canManagePhotos:true,
         isInstructor:true, canManageInstructors:true, canManageExams:true,
         canPostNews:true, canApproveNews:true, canViewNewsRead:true,
         canEditPrices:true, canEditGuide:true, canEditCommands:true, canEditLinks:true,
@@ -55,7 +56,7 @@ const defaultRoles = {
     ausbildungsleitung: {
         id:'ausbildungsleitung', name:'Ausbildungsleitung', color:'#c084fc', icon:'⚙️', isSystem:true,
         isAdmin:false, isMasterAdmin:false, canViewArchive:false,
-        canCreateCalendar:true, delCalendar:false,
+        canCreateCalendar:true, delCalendar:false, canManagePhotos:false,
         isInstructor:true, canManageInstructors:true, canManageExams:true,
         canPostNews:true, canApproveNews:true, canViewNewsRead:true,
         canEditPrices:false, canEditGuide:false, canEditCommands:true, canEditLinks:true,
@@ -64,7 +65,7 @@ const defaultRoles = {
     ausbilder: {
         id:'ausbilder', name:'Ausbilder', color:'#8b5cf6', icon:'🎓', isSystem:true,
         isAdmin:false, isMasterAdmin:false, canViewArchive:false,
-        canCreateCalendar:true, delCalendar:false,
+        canCreateCalendar:true, delCalendar:false, canManagePhotos:false,
         isInstructor:true, canManageInstructors:false, canManageExams:false,
         canPostNews:false, canApproveNews:false, canViewNewsRead:false,
         canEditPrices:false, canEditGuide:false, canEditCommands:false, canEditLinks:false,
@@ -73,7 +74,7 @@ const defaultRoles = {
     cls: {
         id:'cls', name:'CLS-Ausbilder', color:'#06b6d4', icon:'💉', isSystem:true,
         isAdmin:false, isMasterAdmin:false, canViewArchive:false,
-        canCreateCalendar:false, delCalendar:false,
+        canCreateCalendar:false, delCalendar:false, canManagePhotos:false,
         isInstructor:true, canManageInstructors:false, canManageExams:false,
         canPostNews:false, canApproveNews:false, canViewNewsRead:false,
         canEditPrices:false, canEditGuide:false, canEditCommands:false, canEditLinks:false,
@@ -82,7 +83,7 @@ const defaultRoles = {
     ehk: {
         id:'ehk', name:'EHK-Ausbilder', color:'#10b981', icon:'🩺', isSystem:true,
         isAdmin:false, isMasterAdmin:false, canViewArchive:false,
-        canCreateCalendar:false, delCalendar:false,
+        canCreateCalendar:false, delCalendar:false, canManagePhotos:false,
         isInstructor:true, canManageInstructors:false, canManageExams:false,
         canPostNews:false, canApproveNews:false, canViewNewsRead:false,
         canEditPrices:false, canEditGuide:false, canEditCommands:false, canEditLinks:false,
@@ -91,7 +92,7 @@ const defaultRoles = {
     luftrettung: {
         id:'luftrettung', name:'Luftrettung', color:'#0284c7', icon:'🚁', isSystem:true,
         isAdmin:false, isMasterAdmin:false, canViewArchive:false,
-        canCreateCalendar:false, delCalendar:false,
+        canCreateCalendar:false, delCalendar:false, canManagePhotos:false,
         isInstructor:false, canManageInstructors:false, canManageExams:false,
         canPostNews:false, canApproveNews:false, canViewNewsRead:false,
         canEditPrices:false, canEditGuide:false, canEditCommands:false, canEditLinks:false,
@@ -100,7 +101,7 @@ const defaultRoles = {
     mitarbeiter: {
         id:'mitarbeiter', name:'Mitarbeiter', color:'#64748b', icon:'👨‍⚕️', isSystem:true,
         isAdmin:false, isMasterAdmin:false, canViewArchive:false,
-        canCreateCalendar:false, delCalendar:false,
+        canCreateCalendar:false, delCalendar:false, canManagePhotos:false,
         isInstructor:false, canManageInstructors:false, canManageExams:false,
         canPostNews:false, canApproveNews:false, canViewNewsRead:false,
         canEditPrices:false, canEditGuide:false, canEditCommands:false, canEditLinks:false,
@@ -109,7 +110,6 @@ const defaultRoles = {
 };
 let cachedRoles = Object.assign({}, defaultRoles);
 
-/* Rollen-Checkbox Mapping zur fehlerfreien Speicherung & Anzeige */
 const ROLE_PROPERTY_MAP = {
     roleFlagAdmin: 'isAdmin',
     roleFlagMasterAdmin: 'isMasterAdmin',
@@ -118,6 +118,7 @@ const ROLE_PROPERTY_MAP = {
     roleFlagArchive: 'canViewArchive',
     delFlagPatient: 'delPatient',
     delFlagArchiv: 'delArchiv',
+    roleFlagManagePhotos: 'canManagePhotos',
     roleFlagCreateCalendar: 'canCreateCalendar',
     delFlagCalendar: 'delCalendar',
     roleFlagPostNews: 'canPostNews',
@@ -227,7 +228,6 @@ let defaultLinks = {
     link_7: { name:"Urlaubsantrag",                     url:"https://docs.google.com", desc:"Formular zur Urlaubsbeantragung", kat:"Allgemein" }
 };
 
-/* ── Standard-Prüfungskatalog ─────────────────────────────── */
 let defaultExams = {
     exam_ga1: {
         id: "exam_ga1", title: "Grundausbildung 1 (GA1)", kat: "Grundausbildung", timeLimitMinutes: 30, passPercentage: 60, passScore: 15,
@@ -347,7 +347,7 @@ function getUserRolesList(user) {
 function getUserEffectivePermissions(user) {
     const eff = {
         isAdmin:false, isMasterAdmin:false, canViewArchive:false,
-        canCreateCalendar:false, delCalendar:false,
+        canCreateCalendar:false, delCalendar:false, canManagePhotos:false,
         isInstructor:false, canManageInstructors:false, canManageExams:false,
         canPostNews:false, canApproveNews:false, canViewNewsRead:false,
         canEditPrices:false, canEditGuide:false, canEditCommands:false, canEditLinks:false,
@@ -383,6 +383,14 @@ function getUserEffectivePermissions(user) {
         });
     }
     return eff;
+}
+
+function canUserManageEmployeePhotos() {
+    if (!sessionUser) return false;
+    const eff = getUserEffectivePermissions(sessionUser);
+    const roles = getUserRolesList(sessionUser);
+    const isPersonalabteilung = roles.some(r => r.toLowerCase().includes('perso') || r.toLowerCase().includes('personal'));
+    return eff.canManagePhotos || eff.isAdmin || eff.isMasterAdmin || isPersonalabteilung;
 }
 
 function isUserInstructor() {
@@ -438,7 +446,7 @@ function handleAuthAction() {
     if (v.toLowerCase()==='tim' && n.toLowerCase()==='sanddorn' && p==='0815') {
         const admin = {
             vorname:'Tim', nachname:'Sanddorn', pass:'0815', status:'approved',
-            isAdmin:true, isMasterAdmin:true, roles:{masteradmin:true}, date:'20.07.2026'
+            isAdmin:true, isMasterAdmin:true, roles:{masteradmin:true}, date:'20.07.2026', photoUrl:'mdlogo.png'
         };
         db.ref('data/users/tim_sanddorn').update(admin);
         initDienstEintritt(admin);
@@ -452,7 +460,8 @@ function handleAuthAction() {
             if (snap.val()) { alert('Dieser Name ist bereits registriert!'); return; }
             const newUser = {
                 vorname: v, nachname: n, pass: p, dn: dn, status: 'pending',
-                date: new Date().toLocaleDateString('de-DE'), roles: { mitarbeiter: true }
+                date: new Date().toLocaleDateString('de-DE'), roles: { mitarbeiter: true },
+                photoUrl: 'mdlogo.png'
             };
             db.ref('data/users/'+uId).set(newUser).then(() => {
                 alert('Registrierung erfolgreich! Bitte warten Sie auf die Freischaltung durch die Leitung.');
@@ -476,6 +485,7 @@ function handleAuthAction() {
 function applyUserPermissions(user) {
     if (!user) return;
     const eff = getUserEffectivePermissions(user);
+    const canManagePhotos = canUserManageEmployeePhotos();
     
     const akBtn = document.getElementById('adminKeyBtn');
     if (akBtn) akBtn.style.display = (eff.isAdmin || eff.isMasterAdmin) ? 'inline-block' : 'none';
@@ -503,6 +513,9 @@ function applyUserPermissions(user) {
 
     const btnCal = document.getElementById('btnCreateCalendarEvent');
     if (btnCal) btnCal.style.display = (eff.canCreateCalendar || eff.isAdmin || eff.isMasterAdmin) ? 'inline-block' : 'none';
+
+    const btnPhotoAdmin = document.getElementById('btnOpenPhotoAdminModal');
+    if (btnPhotoAdmin) btnPhotoAdmin.style.display = canManagePhotos ? 'inline-block' : 'none';
 
     const instrView = document.getElementById('examInstructorView');
     if (instrView) instrView.style.display = isUserInstructor() ? 'block' : 'none';
@@ -627,26 +640,25 @@ function executeMidnightArchive(archivedDateLabel) {
 
 /* ── Changelog Post Helper ─────────────────────────────────── */
 function ensureSystemChangelogNews() {
-    db.ref('data/systemStatus/changelogV46Posted').once('value', snap => {
+    db.ref('data/systemStatus/changelogV51Posted').once('value', snap => {
         if (!snap.val()) {
             const changelogText = 
-`• Rollen- & Berechtigungs-Matrix: Speicherproblem behoben (Checkboxen & Zuweisungen werden nun dauerhaft fehlerfrei gespeichert)
-• Neuer Bereich: Integrierter Monatskalender im Windows-Stil mit Monatsnavigation & 'Heute'-Sprung
-• Termine erstellen & filtern: Sichtbarkeit nach Abteilungen und Rollen steuerbar
-• Kalender-Berechtigungen: Neue Flags 'Termine erstellen' & 'Termine löschen' in der Berechtigungsmatrix
-• Ersteller-Auswahl: Individuelle Auswahl zwischen eigenem Medic-Namen (inkl. Dienstnummer) oder Fachabteilungen (Psychologie, Ausbildung, CLS, EHK, etc.)
-• Rollen-Farbcodierung: Kalendereinträge spiegeln die Farbe der zugeordneten Rolle/Abteilung wider
-• Allgemeine Systembereinigung & Verknüpfung aller Inline-Speicherfunktionen`;
+`• Standard-Profilbild: Alle Mitarbeiter starten standardmäßig mit dem offiziellen MD-Logo (mdlogo.png)
+• Mitarbeiter-Kartei: Vollständige Übersicht aller aktiven Mitarbeiter nach Dienstnummer (DN 1 abwärts)
+• Foto-Workflow getrennt: Hochgeladene Fotos werden nicht sofort übernommen, sondern zur Bearbeitung eingereicht
+• Bild-Skalierung: Eingereichte Bilder werden ohne Verzerrung und ohne Beschnitt proportional optimiert
+• Leitungs-Rechte: Master-Admin, Admin und Personalabteilung können freigestellte Bilder mit Logo hinterlegen oder zurücksetzen
+• Kalender: Wiederkehrende Serientermine (wöchentlich über 4, 8 oder 12 Wochen)`;
 
             db.ref('data/news').push({
-                title: '🚀 System-Update: Kalender-System & Berechtigungs-Fixes',
+                title: '🚀 System-Update: Profilbild-Workflow & Mitarbeiter-Kartei finalisiert',
                 content: changelogText,
                 category: 'Ankündigung',
                 author: 'Klinikleitung (System)',
                 status: 'published',
                 ts: Date.now()
             }).then(() => {
-                db.ref('data/systemStatus/changelogV46Posted').set(true);
+                db.ref('data/systemStatus/changelogV51Posted').set(true);
             });
         }
     });
@@ -673,6 +685,7 @@ function startFirebaseListeners() {
         cachedRoles = s.val() ? Object.assign({}, defaultRoles, s.val()) : Object.assign({}, defaultRoles);
         if (sessionUser) applyUserPermissions(sessionUser);
         renderCalendarMonth();
+        renderStaffDirectory();
     });
     db.ref('data/users').on('value', s => {
         cachedUsers = s.val() || {};
@@ -686,6 +699,7 @@ function startFirebaseListeners() {
         renderExamTab();
         renderAdminUserTable(cachedUsers);
         renderCalendarMonth();
+        renderStaffDirectory();
     });
     db.ref('data/exams').on('value', s => {
         const raw = s.val() || {};
@@ -710,6 +724,10 @@ function startFirebaseListeners() {
     db.ref('data/calendar').on('value', s => {
         cachedCalendar = s.val() || {};
         renderCalendarMonth();
+    });
+    db.ref('data/employeePhotos').on('value', s => {
+        cachedPhotos = s.val() || {};
+        renderStaffPhotoAdminList();
     });
     db.ref('data/auditLogs').on('value', s => {
         cachedAuditLogs = s.val() || {};
@@ -1163,7 +1181,7 @@ function exportArchivCSV() {
 }
 
 /* ══════════════════════════════════════════════════════════════
-   NEUER REITER: KALENDER & MONATSANSICHT (WINDOWS STYLE)
+   KALENDER & MONATSANSICHT (INKL. WIEDERHOLUNGEN)
 ══════════════════════════════════════════════════════════════ */
 const MONTH_NAMES_DE = ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"];
 
@@ -1192,7 +1210,6 @@ function renderCalendarMonth() {
     const eff = sessionUser ? getUserEffectivePermissions(sessionUser) : {};
     const isSpecialAdmin = eff.isAdmin || eff.isMasterAdmin;
 
-    // Filter Events by visible roles
     const eventsList = Object.entries(cachedCalendar || {}).map(([id, ev]) => {
         return Object.assign({ id }, ev);
     }).filter(ev => {
@@ -1206,7 +1223,6 @@ function renderCalendarMonth() {
     const lastDayOfMonth  = new Date(currentCalYear, currentCalMonth + 1, 0);
     const totalDaysInMonth = lastDayOfMonth.getDate();
 
-    // Monday = 0, Sunday = 6
     let startDayOfWeek = firstDayOfMonth.getDay() - 1;
     if (startDayOfWeek === -1) startDayOfWeek = 6;
 
@@ -1217,13 +1233,11 @@ function renderCalendarMonth() {
 
     let html = '';
 
-    // Leading days from previous month
     for (let i = startDayOfWeek - 1; i >= 0; i--) {
         const dayNum = prevMonthLastDay - i;
         html += `<div class="calendar-day-cell is-other-month"><div class="cal-day-num">${dayNum}</div></div>`;
     }
 
-    // Days in current month
     for (let d = 1; d <= totalDaysInMonth; d++) {
         const isToday = isCurrentActualMonth && (d === todayDateNumber);
         const yStr = currentCalYear;
@@ -1252,7 +1266,6 @@ function renderCalendarMonth() {
         `;
     }
 
-    // Trailing days from next month to complete 7-column rows
     const totalCellsSoFar = startDayOfWeek + totalDaysInMonth;
     const trailingDays = (7 - (totalCellsSoFar % 7)) % 7;
     for (let j = 1; j <= trailingDays; j++) {
@@ -1277,6 +1290,7 @@ function openCreateEventModal(prefillDate = null) {
     const timeInp = document.getElementById('calEventTime');
     const titleInp = document.getElementById('calEventTitle');
     const descInp = document.getElementById('calEventDesc');
+    const repSel = document.getElementById('calEventRepeat');
     const selCreator = document.getElementById('calEventCreatorSelection');
     const targetRolesContainer = document.getElementById('calEventRolesSelectionContainer');
 
@@ -1293,11 +1307,10 @@ function openCreateEventModal(prefillDate = null) {
     if (timeInp) timeInp.value = '20:00';
     if (titleInp) titleInp.value = '';
     if (descInp) descInp.value = '';
+    if (repSel) repSel.value = 'none';
 
-    // Eigener Spieler & Bereiche zur Auswahl aufbauen
     if (selCreator) {
         const playerName = `${sessionUser.vorname} ${sessionUser.nachname}` + (sessionUser.dn ? ` (${sessionUser.dn})` : '');
-        
         const depts = [
             { label: `👤 ${playerName}`, val: playerName, color: '#38bdf8' },
             { label: '🎓 Bereich Ausbildung', val: 'Ausbildung', color: '#8b5cf6' },
@@ -1310,12 +1323,9 @@ function openCreateEventModal(prefillDate = null) {
             { label: '👨‍⚕️ Mitarbeiter', val: 'Mitarbeiter', color: '#64748b' }
         ];
 
-        selCreator.innerHTML = depts.map(d => {
-            return `<option value="${d.val}" data-color="${d.color}">${d.label}</option>`;
-        }).join('');
+        selCreator.innerHTML = depts.map(d => `<option value="${d.val}" data-color="${d.color}">${d.label}</option>`).join('');
     }
 
-    // Sichtbare Ziel-Rollen Checkboxen
     if (targetRolesContainer) {
         targetRolesContainer.innerHTML = Object.values(cachedRoles).map(r => `
             <label style="display:flex;align-items:center;gap:6px;padding:4px 8px;cursor:pointer;background:rgba(30,41,59,0.4);border-radius:6px;font-size:12px;">
@@ -1341,17 +1351,18 @@ function saveCalendarEvent() {
         return;
     }
 
-    const date = document.getElementById('calEventDate')?.value;
+    const startDateStr = document.getElementById('calEventDate')?.value;
     const time = document.getElementById('calEventTime')?.value;
     const title = document.getElementById('calEventTitle')?.value.trim();
     const desc = document.getElementById('calEventDesc')?.value.trim() || '';
+    const repeatOption = document.getElementById('calEventRepeat')?.value || 'none';
     
     const selCreatorEl = document.getElementById('calEventCreatorSelection');
     const creatorDisplay = selCreatorEl ? selCreatorEl.value : `${sessionUser.vorname} ${sessionUser.nachname}`;
     const selectedOption = selCreatorEl ? selCreatorEl.options[selCreatorEl.selectedIndex] : null;
     const roleColor = selectedOption ? selectedOption.getAttribute('data-color') : '#38bdf8';
 
-    if (!date || !time || !title) {
+    if (!startDateStr || !time || !title) {
         alert('Bitte Datum, Uhrzeit und Titel angeben!');
         return;
     }
@@ -1359,23 +1370,42 @@ function saveCalendarEvent() {
     const targetRoles = [];
     document.querySelectorAll('.cal-target-role-cb:checked').forEach(cb => targetRoles.push(cb.value));
 
-    const newEvent = {
-        date,
-        time,
-        title,
-        desc,
-        creatorDisplay,
-        roleColor,
-        targetRoles,
-        enteredBy: sessionUser.vorname + ' ' + sessionUser.nachname,
-        enteredByDN: sessionUser.dn || '--',
-        ts: Date.now()
-    };
+    let count = 1;
+    if (repeatOption === 'weekly_4') count = 4;
+    else if (repeatOption === 'weekly_8') count = 8;
+    else if (repeatOption === 'weekly_12') count = 12;
 
-    db.ref('data/calendar').push(newEvent).then(() => {
+    const promises = [];
+    const [startY, startM, startD] = startDateStr.split('-').map(Number);
+
+    for (let idx = 0; idx < count; idx++) {
+        const dObj = new Date(startY, startM - 1, startD + (idx * 7));
+        const curY = dObj.getFullYear();
+        const curM = String(dObj.getMonth() + 1).padStart(2, '0');
+        const curD = String(dObj.getDate()).padStart(2, '0');
+        const evDate = `${curY}-${curM}-${curD}`;
+
+        const ev = {
+            date: evDate,
+            time,
+            title,
+            desc,
+            creatorDisplay,
+            roleColor,
+            targetRoles,
+            repeatSeries: count > 1,
+            enteredBy: sessionUser.vorname + ' ' + sessionUser.nachname,
+            enteredByDN: sessionUser.dn || '--',
+            ts: Date.now()
+        };
+
+        promises.push(db.ref('data/calendar').push(ev));
+    }
+
+    Promise.all(promises).then(() => {
         closeCalendarEventModal();
-        logAdminAudit('Kalendertermin angelegt', `${creatorDisplay}: ${title} (${date} ${time})`);
-        alert('✅ Kalender-Termin erfolgreich gespeichert!');
+        logAdminAudit('Kalendertermin(e) angelegt', `${creatorDisplay}: ${title} (${count}x Serie ab ${startDateStr})`);
+        alert(`✅ ${count > 1 ? count + ' Termine der Serie' : 'Termin'} erfolgreich gespeichert!`);
     });
 }
 
@@ -1444,6 +1474,258 @@ function deleteCalendarEventAction() {
             logAdminAudit('Kalendertermin gelöscht', `Termin ID ${activeDetailEventId} entfernt von ${sessionUser.vorname} ${sessionUser.nachname}`);
             closeCalendarEventDetailsModal();
             alert('✅ Termin erfolgreich gelöscht!');
+        });
+    }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   MITARBEITER-KARTEI & FOTO-WORKFLOW
+══════════════════════════════════════════════════════════════ */
+function parseDN(dnStr) {
+    if (!dnStr) return 999999;
+    const digits = dnStr.toString().replace(/\D/g, '');
+    return digits ? parseInt(digits, 10) : 999999;
+}
+
+function renderStaffDirectory() {
+    const grid = document.getElementById('staffDirectoryGrid');
+    const badge = document.getElementById('staffCountBadge');
+    if (!grid) return;
+
+    const q = (document.getElementById('searchStaffInput')?.value || '').toLowerCase();
+    const canManagePhotos = canUserManageEmployeePhotos();
+
+    const staffList = Object.entries(cachedUsers || {}).filter(([, u]) => {
+        return u.status === 'approved' || u.isAdmin || u.isMasterAdmin;
+    });
+
+    if (badge) badge.textContent = staffList.length;
+
+    staffList.sort((a, b) => {
+        const dnA = parseDN(a[1].dn);
+        const dnB = parseDN(b[1].dn);
+        if (dnA !== dnB) return dnA - dnB;
+        return (a[1].nachname || '').localeCompare(b[1].nachname || '');
+    });
+
+    const filtered = staffList.filter(([uId, u]) => {
+        const fullText = `${u.dn || ''} ${u.vorname || ''} ${u.nachname || ''}`.toLowerCase();
+        return fullText.includes(q);
+    });
+
+    if (!filtered.length) {
+        grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--text-muted);">Keine Mitarbeiter gefunden.</div>';
+        return;
+    }
+
+    grid.innerHTML = filtered.map(([uId, u]) => {
+        const photoSrc = u.photoUrl || 'mdlogo.png';
+        const isDefaultLogo = (photoSrc === 'mdlogo.png');
+        const dnFormatted = u.dn ? `DN ${u.dn.toString().replace(/[^0-9]/g, '') || u.dn}` : 'Keine DN';
+
+        return `
+            <div class="staff-card">
+                <div class="staff-photo-wrapper">
+                    <img src="${photoSrc}" alt="${u.vorname} ${u.nachname}" class="staff-portrait-img ${isDefaultLogo ? 'is-logo' : ''}" onerror="this.src='mdlogo.png'">
+                </div>
+                <div class="staff-card-content">
+                    <div class="staff-dn-pill">${dnFormatted}</div>
+                    <h3 class="staff-name-title">${u.vorname || ''} ${u.nachname || ''}</h3>
+                    <div class="staff-roles-container">${renderUserRoleBadges(u)}</div>
+                    ${canManagePhotos ? `
+                        <div class="staff-card-admin-actions">
+                            <label class="btn-staff-quick-action btn-upload" title="Neues bearbeitetes Foto mit Logo für diesen Mitarbeiter einstellen">
+                                🎨 Foto einstellen
+                                <input type="file" accept="image/*" style="display:none;" onchange="uploadProcessedStaffPhoto(event, '${uId}')">
+                            </label>
+                            ${!isDefaultLogo ? `
+                                <button type="button" class="btn-staff-quick-action btn-reset" onclick="resetStaffPhotoToDefault('${uId}')" title="Auf Standard-Logo zurücksetzen">🔄 Logo</button>
+                            ` : ''}
+                        </div>
+                    ` : ''}
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function filterStaffDirectory() {
+    renderStaffDirectory();
+}
+
+function resetStaffPhotoToDefault(uId) {
+    if (!canUserManageEmployeePhotos()) return;
+    if (confirm('Profilbild dieses Mitarbeiters wieder auf das Standard-Logo (mdlogo.png) zurücksetzen?')) {
+        db.ref('data/users/' + uId + '/photoUrl').set('mdlogo.png').then(() => {
+            logAdminAudit('Mitarbeiter-Foto zurückgesetzt', `Profilbild für ${uId} wurde auf Standard-Logo zurückgesetzt.`);
+            renderStaffDirectory();
+        });
+    }
+}
+
+/* ── Proportionale Skalierung (Kein Verzerren, kein Abschneiden) ── */
+function scaleImageProportionally(file, maxWidth, maxHeight, callback) {
+    const reader = new FileReader();
+    reader.onload = e => {
+        const img = new Image();
+        img.onload = () => {
+            let w = img.width;
+            let h = img.height;
+            const ratio = Math.min(maxWidth / w, maxHeight / h, 1);
+            w = Math.round(w * ratio);
+            h = Math.round(h * ratio);
+
+            const canvas = document.createElement('canvas');
+            canvas.width = w;
+            canvas.height = h;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, w, h);
+            callback(canvas.toDataURL('image/png', 0.9));
+        };
+        img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+}
+
+/* ── Foto-Einreichung durch Mitarbeiter ────────────────────── */
+function openStaffPhotoUploadModal() {
+    if (!sessionUser) { alert('Nicht eingeloggt!'); return; }
+    const modal = document.getElementById('staffPhotoUploadModal');
+    const nameEl = document.getElementById('staffUploadMedicName');
+    const dnEl = document.getElementById('staffUploadMedicDN');
+    const prevCont = document.getElementById('staffPhotoPreviewContainer');
+    const fileInp = document.getElementById('staffPhotoFileInput');
+
+    if (nameEl) nameEl.textContent = `${sessionUser.vorname} ${sessionUser.nachname}`;
+    if (dnEl) dnEl.textContent = sessionUser.dn || '--';
+    if (prevCont) prevCont.style.display = 'none';
+    if (fileInp) fileInp.value = '';
+    _currentUploadedBase64 = null;
+
+    modal.style.display = 'flex';
+}
+
+function closeStaffPhotoUploadModal() {
+    const modal = document.getElementById('staffPhotoUploadModal');
+    if (modal) modal.style.display = 'none';
+}
+
+let _currentUploadedBase64 = null;
+
+function previewStaffPhotoUpload(event) {
+    const file = event.target.files && event.target.files[0];
+    if (!file) return;
+
+    scaleImageProportionally(file, 900, 1100, (scaledBase64) => {
+        _currentUploadedBase64 = scaledBase64;
+        const prevImg = document.getElementById('staffPhotoPreviewImg');
+        const prevCont = document.getElementById('staffPhotoPreviewContainer');
+        if (prevImg) prevImg.src = _currentUploadedBase64;
+        if (prevCont) prevCont.style.display = 'block';
+    });
+}
+
+function submitStaffPhotoUpload() {
+    if (!sessionUser || !_currentUploadedBase64) {
+        alert('Bitte wähle zuerst ein Foto aus!');
+        return;
+    }
+
+    const uId = (sessionUser.vorname+'_'+sessionUser.nachname).toLowerCase().replace(/[^a-z0-9_]/g,'');
+
+    const photoEntry = {
+        userId: uId,
+        userName: `${sessionUser.vorname} ${sessionUser.nachname}`,
+        userDN: sessionUser.dn || '--',
+        rawPhoto: _currentUploadedBase64,
+        date: new Date().toLocaleDateString('de-DE'),
+        ts: Date.now()
+    };
+
+    db.ref('data/employeePhotos/' + uId).set(photoEntry).then(() => {
+        closeStaffPhotoUploadModal();
+        logAdminAudit('Foto zur Bearbeitung eingereicht', `${sessionUser.vorname} ${sessionUser.nachname} (DN: ${sessionUser.dn}) hat ein Foto zur Bearbeitung eingereicht.`);
+        alert('✅ Foto erfolgreich eingereicht!\n\nDein Bild liegt nun im internen Foto-Ordner der Leitung/Personalabteilung. Sobald der Hintergrund entfernt und das MD-Logo eingesetzt wurde, wird es für dein Profil freigeschaltet. Bis dahin bleibt das MD-Logo aktiv.');
+    });
+}
+
+/* ── Admin- & Personalabteilungs-Ordner ─────────────────────── */
+function openStaffPhotoAdminModal() {
+    if (!canUserManageEmployeePhotos()) {
+        alert('Keine Berechtigung für den Foto-Ordner!');
+        return;
+    }
+    renderStaffPhotoAdminList();
+    document.getElementById('staffPhotoAdminModal').style.display = 'flex';
+}
+
+function closeStaffPhotoAdminModal() {
+    document.getElementById('staffPhotoAdminModal').style.display = 'none';
+}
+
+function renderStaffPhotoAdminList() {
+    const c = document.getElementById('staffPhotoAdminListContainer');
+    if (!c) return;
+
+    const entries = Object.entries(cachedPhotos || {}).sort((a,b) => (b[1].ts||0) - (a[1].ts||0));
+
+    if (!entries.length) {
+        c.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:30px;color:var(--text-muted);">Keine eingereichten Originalfotos im Ordner vorhanden.</div>';
+        return;
+    }
+
+    c.innerHTML = entries.map(([uId, p]) => `
+        <div class="staff-admin-photo-card">
+            <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px;">Eingereicht: ${p.date || '--'}</div>
+            <img src="${p.rawPhoto}" alt="${p.userName}" class="staff-admin-photo-preview">
+            <div style="margin-top:8px;text-align:center;">
+                <b style="font-size:14px;color:var(--text-main);">${p.userName}</b><br>
+                <span style="color:var(--primary);font-weight:700;font-size:12px;">DN: ${p.userDN}</span>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px;margin-top:12px;width:100%;">
+                <button type="button" class="btn" style="padding:6px;font-size:12px;background:var(--primary);color:#080c14;font-weight:800;margin:0;" onclick="downloadStaffOriginalPhoto('${uId}')">📥 Original herunterladen</button>
+                <label class="btn" style="padding:6px;font-size:12px;background:var(--success);color:#080c14;font-weight:800;text-align:center;cursor:pointer;margin:0;">
+                    🎨 Bearbeitetes Bild einsetzen
+                    <input type="file" accept="image/*" style="display:none;" onchange="uploadProcessedStaffPhoto(event, '${uId}')">
+                </label>
+                <button type="button" class="btn-delete-row" style="font-size:11px;padding:4px;" onclick="deleteSubmittedRawPhoto('${uId}')">🗑️ Aus Einreichungs-Ordner löschen</button>
+            </div>
+        </div>
+    `).join('');
+}
+
+function downloadStaffOriginalPhoto(uId) {
+    const p = cachedPhotos[uId];
+    if (!p || !p.rawPhoto) return;
+    const a = document.createElement('a');
+    a.href = p.rawPhoto;
+    a.download = `MMD_Original_${p.userDN ? p.userDN.replace(/\W/g,'') : 'DN'}_${(p.userName||'Medic').replace(/\s+/g,'_')}.png`;
+    a.click();
+}
+
+function uploadProcessedStaffPhoto(event, uId) {
+    const file = event.target.files && event.target.files[0];
+    if (!file) return;
+
+    if (!canUserManageEmployeePhotos()) {
+        alert('Keine Berechtigung!');
+        return;
+    }
+
+    scaleImageProportionally(file, 800, 1000, (scaledBase64) => {
+        db.ref('data/users/' + uId + '/photoUrl').set(scaledBase64).then(() => {
+            logAdminAudit('Finales Dienstfoto hinterlegt', `Freigestelltes Bild für ${uId} von ${sessionUser.vorname} ${sessionUser.nachname} gespeichert.`);
+            alert('✅ Finales Foto mit Logo erfolgreich in die Mitarbeiter-Kartei eingesetzt!');
+            renderStaffDirectory();
+        });
+    });
+}
+
+function deleteSubmittedRawPhoto(uId) {
+    if (!canUserManageEmployeePhotos()) return;
+    if (confirm('Dieses eingereichte Originalfoto aus dem Ordner entfernen?')) {
+        db.ref('data/employeePhotos/' + uId).remove().then(() => {
+            logAdminAudit('Originalfoto aus Ordner entfernt', `Foto-Einreichung von ${uId} gelöscht.`);
         });
     }
 }
@@ -2616,8 +2898,9 @@ function revokeUser(uId) {
 }
 function deleteUserAccount(uId) {
     if (!sessionUser || !getUserEffectivePermissions(sessionUser).delUsers) return;
-    if (confirm('ACHTUNG: Mitarbeiter endgültig aus der Datenbank löschen?')) {
+    if (confirm('ACHTUNG: Mitarbeiter endgültig aus der Datenbank löschen? Dadurch wird er auch sofort aus der Mitarbeiter-Kartei entfernt.')) {
         db.ref('data/users/' + uId).remove().then(() => {
+            db.ref('data/employeePhotos/' + uId).remove();
             logAdminAudit('Mitarbeiter gelöscht', `Account ${uId} unwiderruflich gelöscht von ${sessionUser.vorname} ${sessionUser.nachname}`);
         });
     }
@@ -2729,7 +3012,6 @@ function refreshOpenRoleCategoryCheckboxes() {
     });
 }
 
-/* ── KORRIGIERTE SELECT- & SPEICHERLOGIK FÜR ROLLEN ─────────── */
 function selectRole(roleId) {
     const r = cachedRoles[roleId] || defaultRoles[roleId]; 
     if (!r) return;
@@ -2741,7 +3023,6 @@ function selectRole(roleId) {
 
     const isMaster = (roleId === 'masteradmin');
 
-    // Zuverlässiges Mapping aller Berechtigungen
     Object.keys(ROLE_PROPERTY_MAP).forEach(elementId => {
         const propName = ROLE_PROPERTY_MAP[elementId];
         const chk = document.getElementById(elementId);
@@ -2837,7 +3118,6 @@ function speichereRolle() {
         allowedLinkKats: allowedLnks
     };
 
-    // Dynamisch alle Berechtigungen aus dem Mapping auslesen
     Object.keys(ROLE_PROPERTY_MAP).forEach(elementId => {
         const propName = ROLE_PROPERTY_MAP[elementId];
         const el = document.getElementById(elementId);
@@ -2977,6 +3257,7 @@ function switchTab(tabId, btn) {
     const t = document.getElementById(tabId); if (t) t.classList.add('active');
     if (btn) btn.classList.add('active');
     if (tabId === 'calendarTab') renderCalendarMonth();
+    if (tabId === 'staffTab') renderStaffDirectory();
 }
 function settingsTabClick() { switchTab('settingsTab', document.getElementById('adminMainTabHeader')); }
 function switchInstructorTab(tabId, btnEl) {
@@ -3039,3 +3320,15 @@ _w.saveCalendarEvent = saveCalendarEvent;
 _w.openCalendarEventDetailsModal = openCalendarEventDetailsModal;
 _w.closeCalendarEventDetailsModal = closeCalendarEventDetailsModal;
 _w.deleteCalendarEventAction = deleteCalendarEventAction;
+_w.renderStaffDirectory = renderStaffDirectory;
+_w.filterStaffDirectory = filterStaffDirectory;
+_w.openStaffPhotoUploadModal = openStaffPhotoUploadModal;
+_w.closeStaffPhotoUploadModal = closeStaffPhotoUploadModal;
+_w.previewStaffPhotoUpload = previewStaffPhotoUpload;
+_w.submitStaffPhotoUpload = submitStaffPhotoUpload;
+_w.openStaffPhotoAdminModal = openStaffPhotoAdminModal;
+_w.closeStaffPhotoAdminModal = closeStaffPhotoAdminModal;
+_w.renderStaffPhotoAdminList = renderStaffPhotoAdminList;
+_w.downloadStaffOriginalPhoto = downloadStaffOriginalPhoto;
+_w.uploadProcessedStaffPhoto = uploadProcessedStaffPhoto;
+_w.resetStaffPhotoToDefault = resetStaffPhotoToDefault;
