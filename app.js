@@ -1,5 +1,5 @@
 // ============================================================
-//  MMD CLOUD – Medical Center Web-App  |  app.js  v5.2
+//  MMD CLOUD – Medical Center Web-App  |  app.js  v5.3
 //  Firebase Realtime Database (Compat SDK v10)
 // ============================================================
 
@@ -37,6 +37,7 @@ let currentCalMonth = new Date().getMonth();
 let activeDetailEventId = null;
 
 /* ── Standard-Rollen & granulare Berechtigungen ───────────── */
+// Alle Rollen erhalten standardmäßig Kalender-Erstellrechte (canCreateCalendar: true)
 const defaultRoles = {
     masteradmin: {
         id:'masteradmin', name:'Master-Admin', color:'#eab308', icon:'👑', isSystem:true,
@@ -77,7 +78,7 @@ const defaultRoles = {
     cls: {
         id:'cls', name:'CLS-Ausbilder', color:'#06b6d4', icon:'💉', isSystem:true,
         isAdmin:false, isMasterAdmin:false, canViewArchive:false,
-        canCreateCalendar:false, delCalendar:false, canManagePhotos:false,
+        canCreateCalendar:true, delCalendar:false, canManagePhotos:false,
         isInstructor:true, canManageInstructors:false, canManageExams:false,
         canPostNews:false, canApproveNews:false, canViewNewsRead:false,
         canEditPrices:false, canEditGuide:false, canEditCommands:false, canEditLinks:false,
@@ -86,7 +87,7 @@ const defaultRoles = {
     ehk: {
         id:'ehk', name:'EHK-Ausbilder', color:'#10b981', icon:'🩺', isSystem:true,
         isAdmin:false, isMasterAdmin:false, canViewArchive:false,
-        canCreateCalendar:false, delCalendar:false, canManagePhotos:false,
+        canCreateCalendar:true, delCalendar:false, canManagePhotos:false,
         isInstructor:true, canManageInstructors:false, canManageExams:false,
         canPostNews:false, canApproveNews:false, canViewNewsRead:false,
         canEditPrices:false, canEditGuide:false, canEditCommands:false, canEditLinks:false,
@@ -95,7 +96,7 @@ const defaultRoles = {
     luftrettung: {
         id:'luftrettung', name:'Luftrettung', color:'#0284c7', icon:'🚁', isSystem:true,
         isAdmin:false, isMasterAdmin:false, canViewArchive:false,
-        canCreateCalendar:false, delCalendar:false, canManagePhotos:false,
+        canCreateCalendar:true, delCalendar:false, canManagePhotos:false,
         isInstructor:false, canManageInstructors:false, canManageExams:false,
         canPostNews:false, canApproveNews:false, canViewNewsRead:false,
         canEditPrices:false, canEditGuide:false, canEditCommands:false, canEditLinks:false,
@@ -104,7 +105,7 @@ const defaultRoles = {
     mitarbeiter: {
         id:'mitarbeiter', name:'Mitarbeiter', color:'#64748b', icon:'👨‍⚕️', isSystem:true,
         isAdmin:false, isMasterAdmin:false, canViewArchive:false,
-        canCreateCalendar:false, delCalendar:false, canManagePhotos:false,
+        canCreateCalendar:true, delCalendar:false, canManagePhotos:false,
         isInstructor:false, canManageInstructors:false, canManageExams:false,
         canPostNews:false, canApproveNews:false, canViewNewsRead:false,
         canEditPrices:false, canEditGuide:false, canEditCommands:false, canEditLinks:false,
@@ -350,7 +351,7 @@ function getUserRolesList(user) {
 function getUserEffectivePermissions(user) {
     const eff = {
         isAdmin:false, isMasterAdmin:false, canViewArchive:false,
-        canCreateCalendar:false, delCalendar:false, canManagePhotos:false,
+        canCreateCalendar:true, delCalendar:false, canManagePhotos:false, // Jeder darf Termine anlegen
         isInstructor:false, canManageInstructors:false, canManageExams:false,
         canPostNews:false, canApproveNews:false, canViewNewsRead:false,
         canEditPrices:false, canEditGuide:false, canEditCommands:false, canEditLinks:false,
@@ -514,8 +515,9 @@ function applyUserPermissions(user) {
     const npBtn = document.getElementById('btnOpenPostNews');
     if (npBtn) npBtn.style.display = eff.canPostNews ? 'inline-block' : 'none';
 
+    // Jeder authentifizierte Mitarbeiter darf Termine anlegen
     const btnCal = document.getElementById('btnCreateCalendarEvent');
-    if (btnCal) btnCal.style.display = (eff.canCreateCalendar || eff.isAdmin || eff.isMasterAdmin) ? 'inline-block' : 'none';
+    if (btnCal) btnCal.style.display = 'inline-block';
 
     const btnPhotoAdmin = document.getElementById('btnOpenPhotoAdminModal');
     if (btnPhotoAdmin) btnPhotoAdmin.style.display = canManagePhotos ? 'inline-block' : 'none';
@@ -558,7 +560,6 @@ function initDienstEintritt(user) {
     baueMaterialUIAuf();
     startFirebaseListeners();
     setupMidnightScheduler();
-    ensureSystemChangelogNews();
 
     const gDatum = localStorage.getItem('mmd_einstellungsdatum_' + user.vorname + '_' + user.nachname);
     const eDatumEl = document.getElementById('einstellungsDatum');
@@ -570,26 +571,34 @@ function updateLiveDate() {
     if (el) el.textContent = new Date().toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric' });
 }
 
-/* ── Automatische Mitternachts-Archivierung (00:00 Uhr) ────── */
+/* ── Automatische Mitternachts-Archivierung (Atomare Transaktion gegen doppeltes Feuern) ── */
 function setupMidnightScheduler() {
     checkMidnightAutoArchive();
-    setInterval(checkMidnightAutoArchive, 15000);
+    setInterval(checkMidnightAutoArchive, 20000);
 }
 
 function checkMidnightAutoArchive() {
     const now = new Date();
     const todayFormatted = now.toLocaleDateString('de-DE');
     
-    db.ref('data/systemStatus/lastArchiveDate').once('value', snap => {
-        const lastArchived = snap.val();
-        if (!lastArchived) {
-            db.ref('data/systemStatus/lastArchiveDate').set(todayFormatted);
-            return;
+    // Transaktion verhindert, dass mehrere Clients zeitgleich archivieren
+    const statusRef = db.ref('data/systemStatus/lastArchiveDate');
+    statusRef.transaction(currentValue => {
+        if (currentValue === null) {
+            return todayFormatted;
         }
-
-        if (lastArchived !== todayFormatted) {
-            db.ref('data/systemStatus/lastArchiveDate').set(todayFormatted).then(() => {
-                executeMidnightArchive(lastArchived);
+        if (currentValue !== todayFormatted) {
+            return todayFormatted;
+        }
+        return; // Nichts tun, wenn bereits heute archiviert
+    }, (error, committed, snapshot) => {
+        if (error) {
+            console.error('Transaktionsfehler beim Mitternachts-Archiv:', error);
+        } else if (committed && snapshot.val() === todayFormatted) {
+            db.ref('data/systemStatus/prevArchiveDate').once('value', sPrev => {
+                const prevDate = sPrev.val() || 'Vorheriger Tag';
+                db.ref('data/systemStatus/prevArchiveDate').set(todayFormatted);
+                executeMidnightArchive(prevDate);
             });
         }
     });
@@ -636,32 +645,6 @@ function executeMidnightArchive(archivedDateLabel) {
             const dateKeySafe = archivedDateLabel.replace(/\./g, '-');
             db.ref('data/auditLogsArchiv/' + dateKeySafe).set(logs).then(() => {
                 db.ref('data/auditLogs').remove();
-            });
-        }
-    });
-}
-
-/* ── Changelog Post Helper ─────────────────────────────────── */
-function ensureSystemChangelogNews() {
-    db.ref('data/systemStatus/changelogV51Posted').once('value', snap => {
-        if (!snap.val()) {
-            const changelogText = 
-`• Standard-Profilbild: Alle Mitarbeiter starten standardmäßig mit dem offiziellen MD-Logo (mdlogo.png)
-• Mitarbeiter-Kartei: Vollständige Übersicht aller aktiven Mitarbeiter nach Dienstnummer (DN 1 abwärts)
-• Foto-Workflow getrennt: Hochgeladene Fotos werden nicht sofort übernommen, sondern zur Bearbeitung eingereicht
-• Bild-Skalierung: Eingereichte Bilder werden ohne Verzerrung und ohne Beschnitt proportional optimiert
-• Leitungs-Rechte: Master-Admin, Admin und Personalabteilung können freigestellte Bilder mit Logo hinterlegen oder zurücksetzen
-• Kalender: Wiederkehrende Serientermine (wöchentlich über 4, 8 oder 12 Wochen)`;
-
-            db.ref('data/news').push({
-                title: '🚀 System-Update: Profilbild-Workflow & Mitarbeiter-Kartei finalisiert',
-                content: changelogText,
-                category: 'Ankündigung',
-                author: 'Klinikleitung (System)',
-                status: 'published',
-                ts: Date.now()
-            }).then(() => {
-                db.ref('data/systemStatus/changelogV51Posted').set(true);
             });
         }
     });
@@ -1023,7 +1006,7 @@ function renderArchiv(obj) {
     tbody.innerHTML = weekEntries.map(([k, i]) => {
         const p = Number(i.patienten ?? i.p ?? 0);
         const v = Number(i.verletzungen ?? i.v ?? 0);
-        const cash = Number(i.ausgaben ?? i.cash ?? i.kosten ?? 0);
+        const cash = Number(i.ausgaben ?? i.cash ?? itemCash(i));
         const tagLabel = i.datum || (i.ts ? new Date(i.ts).toLocaleDateString('de-DE') : 'Schicht');
 
         totalP += p; 
@@ -1079,6 +1062,10 @@ function renderArchiv(obj) {
             <td>--</td>
         </tr>`;
     }
+}
+
+function itemCash(i) {
+    return Number(i.ausgaben ?? i.cash ?? i.kosten ?? 0);
 }
 
 function manualTriggerArchive() {
@@ -1184,7 +1171,7 @@ function exportArchivCSV() {
 }
 
 /* ══════════════════════════════════════════════════════════════
-   KALENDER & MONATSANSICHT (INKL. WIEDERHOLUNGEN)
+   KALENDER & MONATSANSICHT (INKL. PRIVATE TERMINE & EDIT)
 ══════════════════════════════════════════════════════════════ */
 const MONTH_NAMES_DE = ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"];
 
@@ -1212,13 +1199,19 @@ function renderCalendarMonth() {
     const myRoleIds = sessionUser ? getUserRolesList(sessionUser) : [];
     const eff = sessionUser ? getUserEffectivePermissions(sessionUser) : {};
     const isSpecialAdmin = eff.isAdmin || eff.isMasterAdmin;
+    const myId = sessionUser ? (sessionUser.vorname+'_'+sessionUser.nachname).toLowerCase().replace(/[^a-z0-9_]/g,'') : '';
 
     const eventsList = Object.entries(cachedCalendar || {}).map(([id, ev]) => {
         return Object.assign({ id }, ev);
     }).filter(ev => {
         if (ev.deleted) return false;
+        // Privater Termin: Nur Ersteller darf ihn sehen!
+        if (ev.isPrivate) {
+            return (ev.creatorId === myId);
+        }
         if (isSpecialAdmin) return true;
-        if (!ev.targetRoles || !ev.targetRoles.length) return true;
+        // Wenn "all" oder keine Rollenbeschränkung hinterlegt ist -> für alle sichtbar
+        if (!ev.targetRoles || !ev.targetRoles.length || ev.targetRoles.includes('all')) return true;
         return ev.targetRoles.some(r => myRoleIds.includes(r));
     });
 
@@ -1253,10 +1246,11 @@ function renderCalendarMonth() {
         let eventsHtml = '';
         dayEvents.forEach(ev => {
             const color = ev.roleColor || '#38bdf8';
+            const privIcon = ev.isPrivate ? '🔒 ' : '';
             eventsHtml += `
                 <div class="cal-event-pill" style="border-left:3px solid ${color}; background:${color}18;" onclick="event.stopPropagation(); openCalendarEventDetailsModal('${ev.id}')">
                     <span class="cal-event-time">${ev.time || '--:--'}</span>
-                    <span class="cal-event-title-text">${ev.title || 'Termin'}</span>
+                    <span class="cal-event-title-text">${privIcon}${ev.title || 'Termin'}</span>
                 </div>
             `;
         });
@@ -1280,8 +1274,6 @@ function renderCalendarMonth() {
 
 function onCalendarCellClick(dateKey) {
     if (!sessionUser) return;
-    const eff = getUserEffectivePermissions(sessionUser);
-    if (!eff.canCreateCalendar && !eff.isAdmin && !eff.isMasterAdmin) return;
     openCreateEventModal(dateKey);
 }
 
@@ -1289,13 +1281,21 @@ function openCreateEventModal(prefillDate = null) {
     const modal = document.getElementById('calendarEventModal');
     if (!modal) return;
 
+    document.getElementById('editingCalendarEventId').value = '';
+    document.getElementById('calendarEventModalHeading').textContent = '📅 Neuen Kalender Termin eintragen';
+
     const dateInp = document.getElementById('calEventDate');
     const timeInp = document.getElementById('calEventTime');
     const titleInp = document.getElementById('calEventTitle');
     const descInp = document.getElementById('calEventDesc');
     const repSel = document.getElementById('calEventRepeat');
+    const repContainer = document.getElementById('calEventRepeatContainer');
     const selCreator = document.getElementById('calEventCreatorSelection');
+    const privateCb = document.getElementById('calEventIsPrivate');
+    const selectAllCb = document.getElementById('calSelectAllRolesCheckbox');
     const targetRolesContainer = document.getElementById('calEventRolesSelectionContainer');
+
+    if (repContainer) repContainer.style.display = 'block';
 
     if (prefillDate && dateInp) {
         dateInp.value = prefillDate;
@@ -1311,19 +1311,22 @@ function openCreateEventModal(prefillDate = null) {
     if (titleInp) titleInp.value = '';
     if (descInp) descInp.value = '';
     if (repSel) repSel.value = 'none';
+    if (privateCb) privateCb.checked = false;
+    if (selectAllCb) selectAllCb.checked = false;
+    togglePrivateEventOption(false);
 
+    // Ersteller-Auswahl: "Leitungsebene" hinzugefügt, "Abteilungsleitung" und "Mitarbeiter" entfernt
     if (selCreator) {
         const playerName = `${sessionUser.vorname} ${sessionUser.nachname}` + (sessionUser.dn ? ` (${sessionUser.dn})` : '');
         const depts = [
             { label: `👤 ${playerName}`, val: playerName, color: '#38bdf8' },
+            { label: '👑 Leitungsebene', val: 'Leitungsebene', color: '#eab308' },
             { label: '🎓 Bereich Ausbildung', val: 'Ausbildung', color: '#8b5cf6' },
             { label: '💉 CLS Ausbilder', val: 'CLS Ausbilder', color: '#06b6d4' },
             { label: '🩺 EHK Ausbilder', val: 'EHK Ausbilder', color: '#10b981' },
             { label: '🚁 Luftrettung', val: 'Luftrettung', color: '#0284c7' },
             { label: '🧠 Psychologie', val: 'Psychologie', color: '#f59e0b' },
-            { label: '💼 Personalabteilung', val: 'Personalabteilung', color: '#ec4899' },
-            { label: '⚙️ Abteilungsleitung', val: 'Abteilungsleitung', color: '#c084fc' },
-            { label: '👨‍⚕️ Mitarbeiter', val: 'Mitarbeiter', color: '#64748b' }
+            { label: '💼 Personalabteilung', val: 'Personalabteilung', color: '#ec4899' }
         ];
 
         selCreator.innerHTML = depts.map(d => `<option value="${d.val}" data-color="${d.color}">${d.label}</option>`).join('');
@@ -1341,6 +1344,20 @@ function openCreateEventModal(prefillDate = null) {
     modal.style.display = 'flex';
 }
 
+function togglePrivateEventOption(isPrivate) {
+    const rolesSec = document.getElementById('calEventRolesSection');
+    if (rolesSec) {
+        rolesSec.style.opacity = isPrivate ? '0.35' : '1';
+        rolesSec.style.pointerEvents = isPrivate ? 'none' : 'auto';
+    }
+}
+
+function toggleAllCalendarRoles(checkAll) {
+    document.querySelectorAll('.cal-target-role-cb').forEach(cb => {
+        cb.checked = checkAll;
+    });
+}
+
 function closeCalendarEventModal() {
     const modal = document.getElementById('calendarEventModal');
     if (modal) modal.style.display = 'none';
@@ -1348,17 +1365,14 @@ function closeCalendarEventModal() {
 
 function saveCalendarEvent() {
     if (!sessionUser) return;
-    const eff = getUserEffectivePermissions(sessionUser);
-    if (!eff.canCreateCalendar && !eff.isAdmin && !eff.isMasterAdmin) {
-        alert('Keine Berechtigung zum Erstellen von Terminen!');
-        return;
-    }
 
+    const editId = document.getElementById('editingCalendarEventId')?.value;
     const startDateStr = document.getElementById('calEventDate')?.value;
     const time = document.getElementById('calEventTime')?.value;
     const title = document.getElementById('calEventTitle')?.value.trim();
     const desc = document.getElementById('calEventDesc')?.value.trim() || '';
     const repeatOption = document.getElementById('calEventRepeat')?.value || 'none';
+    const isPrivate = !!document.getElementById('calEventIsPrivate')?.checked;
     
     const selCreatorEl = document.getElementById('calEventCreatorSelection');
     const creatorDisplay = selCreatorEl ? selCreatorEl.value : `${sessionUser.vorname} ${sessionUser.nachname}`;
@@ -1370,13 +1384,47 @@ function saveCalendarEvent() {
         return;
     }
 
-    const targetRoles = [];
-    document.querySelectorAll('.cal-target-role-cb:checked').forEach(cb => targetRoles.push(cb.value));
+    const myId = (sessionUser.vorname+'_'+sessionUser.nachname).toLowerCase().replace(/[^a-z0-9_]/g,'');
 
+    let targetRoles = [];
+    if (!isPrivate) {
+        const selectAllCb = document.getElementById('calSelectAllRolesCheckbox');
+        if (selectAllCb && selectAllCb.checked) {
+            targetRoles = ['all'];
+        } else {
+            document.querySelectorAll('.cal-target-role-cb:checked').forEach(cb => targetRoles.push(cb.value));
+        }
+    }
+
+    // Wenn ein bestehender Termin bearbeitet wird:
+    if (editId) {
+        const updateData = {
+            date: startDateStr,
+            time,
+            title,
+            desc,
+            creatorDisplay,
+            roleColor,
+            isPrivate,
+            targetRoles: isPrivate ? [] : targetRoles,
+            lastEditedBy: sessionUser.vorname + ' ' + sessionUser.nachname,
+            lastEditedTs: Date.now()
+        };
+
+        db.ref('data/calendar/' + editId).update(updateData).then(() => {
+            closeCalendarEventModal();
+            logAdminAudit('Kalendertermin bearbeitet', `${creatorDisplay}: ${title} (${startDateStr})`);
+            alert('✅ Kalendertermin erfolgreich aktualisiert!');
+        });
+        return;
+    }
+
+    // Neuer Termin (ggf. Serie: 1 Woche = 2 Termine, 2 Wochen = 3 Termine, 4, 8)
     let count = 1;
-    if (repeatOption === 'weekly_4') count = 4;
+    if (repeatOption === 'weekly_1') count = 2;
+    else if (repeatOption === 'weekly_2') count = 3;
+    else if (repeatOption === 'weekly_4') count = 4;
     else if (repeatOption === 'weekly_8') count = 8;
-    else if (repeatOption === 'weekly_12') count = 12;
 
     const promises = [];
     const [startY, startM, startD] = startDateStr.split('-').map(Number);
@@ -1395,7 +1443,9 @@ function saveCalendarEvent() {
             desc,
             creatorDisplay,
             roleColor,
-            targetRoles,
+            isPrivate,
+            targetRoles: isPrivate ? [] : targetRoles,
+            creatorId: myId,
             repeatSeries: count > 1,
             enteredBy: sessionUser.vorname + ' ' + sessionUser.nachname,
             enteredByDN: sessionUser.dn || '--',
@@ -1421,14 +1471,22 @@ function openCalendarEventDetailsModal(eventId) {
     const titleEl = document.getElementById('calDetailsTitle');
     const bodyEl = document.getElementById('calDetailsBody');
     const delBtn = document.getElementById('btnDeleteCalendarEvent');
+    const editBtn = document.getElementById('btnEditCalendarEvent');
     if (!modal || !bodyEl) return;
 
     const color = ev.roleColor || '#38bdf8';
-    if (titleEl) titleEl.textContent = ev.title || 'Termin';
+    if (titleEl) titleEl.textContent = (ev.isPrivate ? '🔒 ' : '') + (ev.title || 'Termin');
 
-    const targetRoleNames = (ev.targetRoles && ev.targetRoles.length)
-        ? ev.targetRoles.map(rid => (cachedRoles[rid]?.name || defaultRoles[rid]?.name || rid)).join(', ')
-        : 'Alle Abteilungen / Öffentlich';
+    let targetRoleNames = 'Alle Rollen / Öffentlich';
+    if (ev.isPrivate) {
+        targetRoleNames = '🔒 Nur für mich sichtbar (Privat)';
+    } else if (ev.targetRoles && ev.targetRoles.length) {
+        if (ev.targetRoles.includes('all')) {
+            targetRoleNames = 'Alle Rollen';
+        } else {
+            targetRoleNames = ev.targetRoles.map(rid => (cachedRoles[rid]?.name || defaultRoles[rid]?.name || rid)).join(', ');
+        }
+    }
 
     bodyEl.innerHTML = `
         <div style="background:rgba(30,41,59,0.5);border-left:4px solid ${color};padding:12px 16px;border-radius:8px;margin-bottom:14px;">
@@ -1442,8 +1500,8 @@ function openCalendarEventDetailsModal(eventId) {
             </div>
         </div>
         <div style="margin-bottom:14px;">
-            <label style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">Freigegeben für:</label>
-            <div style="font-size:13px;color:var(--primary);font-weight:700;">${targetRoleNames}</div>
+            <label style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">Sichtbarkeit / Freigabe:</label>
+            <div style="font-size:13px;color:${ev.isPrivate ? 'var(--warning)' : 'var(--primary)'};font-weight:700;">${targetRoleNames}</div>
         </div>
         <div>
             <label style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">Beschreibung / Notizen:</label>
@@ -1451,9 +1509,12 @@ function openCalendarEventDetailsModal(eventId) {
         </div>
     `;
 
+    const myId = sessionUser ? (sessionUser.vorname+'_'+sessionUser.nachname).toLowerCase().replace(/[^a-z0-9_]/g,'') : '';
     const eff = sessionUser ? getUserEffectivePermissions(sessionUser) : {};
-    const canDelete = eff.delCalendar || eff.isAdmin || eff.isMasterAdmin;
-    if (delBtn) delBtn.style.display = canDelete ? 'inline-block' : 'none';
+    const isOwnerOrAdmin = (ev.creatorId === myId) || eff.isAdmin || eff.isMasterAdmin;
+
+    if (delBtn) delBtn.style.display = (isOwnerOrAdmin || eff.delCalendar) ? 'inline-block' : 'none';
+    if (editBtn) editBtn.style.display = isOwnerOrAdmin ? 'inline-block' : 'none';
 
     modal.style.display = 'flex';
 }
@@ -1464,11 +1525,83 @@ function closeCalendarEventDetailsModal() {
     activeDetailEventId = null;
 }
 
+function editCalendarEventAction() {
+    if (!activeDetailEventId) return;
+    const ev = cachedCalendar[activeDetailEventId];
+    if (!ev) return;
+
+    const modal = document.getElementById('calendarEventModal');
+    if (!modal) return;
+
+    closeCalendarEventDetailsModal();
+
+    document.getElementById('editingCalendarEventId').value = activeDetailEventId;
+    document.getElementById('calendarEventModalHeading').textContent = '✏️ Kalender Termin bearbeiten';
+
+    const dateInp = document.getElementById('calEventDate');
+    const timeInp = document.getElementById('calEventTime');
+    const titleInp = document.getElementById('calEventTitle');
+    const descInp = document.getElementById('calEventDesc');
+    const repContainer = document.getElementById('calEventRepeatContainer');
+    const selCreator = document.getElementById('calEventCreatorSelection');
+    const privateCb = document.getElementById('calEventIsPrivate');
+    const selectAllCb = document.getElementById('calSelectAllRolesCheckbox');
+    const targetRolesContainer = document.getElementById('calEventRolesSelectionContainer');
+
+    if (repContainer) repContainer.style.display = 'none'; // Bei Einzelbearbeitung keine Serienauswahl
+
+    if (dateInp) dateInp.value = ev.date || '';
+    if (timeInp) timeInp.value = ev.time || '20:00';
+    if (titleInp) titleInp.value = ev.title || '';
+    if (descInp) descInp.value = ev.desc || '';
+    if (privateCb) privateCb.checked = !!ev.isPrivate;
+    togglePrivateEventOption(!!ev.isPrivate);
+
+    if (selCreator) {
+        const playerName = `${sessionUser.vorname} ${sessionUser.nachname}` + (sessionUser.dn ? ` (${sessionUser.dn})` : '');
+        const depts = [
+            { label: `👤 ${playerName}`, val: playerName, color: '#38bdf8' },
+            { label: '👑 Leitungsebene', val: 'Leitungsebene', color: '#eab308' },
+            { label: '🎓 Bereich Ausbildung', val: 'Ausbildung', color: '#8b5cf6' },
+            { label: '💉 CLS Ausbilder', val: 'CLS Ausbilder', color: '#06b6d4' },
+            { label: '🩺 EHK Ausbilder', val: 'EHK Ausbilder', color: '#10b981' },
+            { label: '🚁 Luftrettung', val: 'Luftrettung', color: '#0284c7' },
+            { label: '🧠 Psychologie', val: 'Psychologie', color: '#f59e0b' },
+            { label: '💼 Personalabteilung', val: 'Personalabteilung', color: '#ec4899' }
+        ];
+
+        selCreator.innerHTML = depts.map(d => `<option value="${d.val}" data-color="${d.color}" ${ev.creatorDisplay === d.val ? 'selected' : ''}>${d.label}</option>`).join('');
+    }
+
+    const hasAll = (ev.targetRoles && ev.targetRoles.includes('all'));
+    if (selectAllCb) selectAllCb.checked = hasAll;
+
+    if (targetRolesContainer) {
+        targetRolesContainer.innerHTML = Object.values(cachedRoles).map(r => {
+            const isChecked = hasAll || (ev.targetRoles && ev.targetRoles.includes(r.id));
+            return `
+                <label style="display:flex;align-items:center;gap:6px;padding:4px 8px;cursor:pointer;background:rgba(30,41,59,0.4);border-radius:6px;font-size:12px;">
+                    <input type="checkbox" class="cal-target-role-cb" value="${r.id}" ${isChecked ? 'checked' : ''}>
+                    <span style="color:${r.color||'#38bdf8'};font-weight:700;">${r.icon?r.icon+' ':''}${r.name}</span>
+                </label>
+            `;
+        }).join('');
+    }
+
+    modal.style.display = 'flex';
+}
+
 function deleteCalendarEventAction() {
     if (!activeDetailEventId) return;
+    const ev = cachedCalendar[activeDetailEventId];
+    if (!ev) return;
+
+    const myId = sessionUser ? (sessionUser.vorname+'_'+sessionUser.nachname).toLowerCase().replace(/[^a-z0-9_]/g,'') : '';
     const eff = sessionUser ? getUserEffectivePermissions(sessionUser) : {};
-    if (!eff.delCalendar && !eff.isAdmin && !eff.isMasterAdmin) {
-        alert('Keine Berechtigung zum Löschen von Terminen!');
+    const isOwnerOrAdmin = (ev.creatorId === myId) || eff.isAdmin || eff.isMasterAdmin || eff.delCalendar;
+
+    if (!isOwnerOrAdmin) {
+        alert('Keine Berechtigung zum Löschen dieses Termins!');
         return;
     }
 
@@ -1575,7 +1708,6 @@ function resetStaffPhotoToDefault(uId) {
     }
 }
 
-/* ── Proportionale Skalierung (Kein Verzerren, kein Abschneiden) ── */
 function scaleImageProportionally(file, maxWidth, maxHeight, callback) {
     const reader = new FileReader();
     reader.onload = e => {
@@ -2169,7 +2301,7 @@ function deleteDienstLink(k) {
     if (confirm('Link löschen?')) db.ref('data/dienstLinks/' + k).remove();
 }
 
-/* ── REITER: NEWS / SCHWARZES BRETT ────────────────────────── */
+/* ── REITER: NEWS / SCHWARZES BRETT (INKL. NACHTRÄGLICHER BEARBEITUNG) ── */
 function renderNewsFeedData(obj) {
     const c = document.getElementById('newsFeedList'); if (!c) return;
     const pendingCont = document.getElementById('pendingNewsApprovalContainer');
@@ -2177,7 +2309,9 @@ function renderNewsFeedData(obj) {
 
     const allNews = Object.entries(obj || {}).filter(([, n]) => !n.deleted);
     const eff = sessionUser ? getUserEffectivePermissions(sessionUser) : {};
-    const myKey = sessionUser ? (sessionUser.dn ? ('dn_' + sessionUser.dn) : (sessionUser.vorname + '_' + sessionUser.nachname).replace(/\W/g, '_')) : '';
+    const myName = sessionUser ? (sessionUser.vorname + ' ' + sessionUser.nachname) : '';
+    const myId = sessionUser ? (sessionUser.vorname+'_'+sessionUser.nachname).toLowerCase().replace(/[^a-z0-9_]/g,'') : '';
+    const myKey = sessionUser ? (sessionUser.dn ? ('dn_' + sessionUser.dn) : myId) : '';
 
     const approvedNews = allNews.filter(([, n]) => n.status !== 'pending_approval');
     let unreadCount = 0;
@@ -2237,18 +2371,25 @@ function renderNewsFeedData(obj) {
         const readBy = n.readBy || {};
         const hasRead = myKey && readBy[myKey];
         const readCount = Object.keys(readBy).length;
+        // Ersteller oder Leitung/Admin darf den Post nachträglich bearbeiten
+        const isAuthor = (n.authorId && n.authorId === myId) || (n.author === myName);
+        const canEditThisNews = isAuthor || eff.canPostNews || eff.isAdmin || eff.isMasterAdmin;
 
         return `
-            <div style="background:rgba(15,23,42,0.7);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:16px;">
+            <div class="news-feed-card" style="background:rgba(15,23,42,0.7);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:16px;">
                 <div style="padding:16px 20px;background:rgba(30,41,59,0.6);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
                     <div>
                         <span style="font-weight:800;font-size:16px;color:var(--primary);">${n.title}</span>
-                        <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">👤 <b>${n.author||'Klinikleitung'}</b> • 🏷️ ${n.category||'Allgemein'}</div>
+                        <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">
+                            👤 <b>${n.author||'Klinikleitung'}</b> • 🏷️ ${n.category||'Allgemein'}
+                            ${n.edited ? `<span style="color:var(--warning);margin-left:6px;">(Bearbeitet)</span>` : ''}
+                        </div>
                     </div>
                     <div style="display:flex;gap:8px;align-items:center;">
                         ${hasRead ? '<span style="color:var(--success);font-weight:800;font-size:11px;">✅ Gelesen</span>' : `<button class="btn" style="width:auto;margin:0;padding:5px 12px;font-size:11px;" onclick="markNewsAsRead('${k}')">👁️ Als gelesen markieren</button>`}
+                        ${canEditThisNews ? `<button class="btn-edit-row" onclick="openEditNewsModal('${k}')" title="Beitrag bearbeiten">✏️</button>` : ''}
                         ${eff.canViewNewsRead ? `<button class="btn" style="width:auto;margin:0;padding:5px 10px;font-size:11px;background:rgba(56,189,248,0.15);color:var(--primary);border:1px solid var(--primary);" onclick="openNewsReadersModal('${k}')">👥 Gelesen (${readCount})</button>` : ''}
-                        ${eff.delNews ? `<button class="btn-delete-row" onclick="deleteNews('${k}')">🗑️</button>` : ''}
+                        ${(eff.delNews || isAuthor) ? `<button class="btn-delete-row" onclick="deleteNews('${k}')">🗑️</button>` : ''}
                     </div>
                 </div>
                 <div style="padding:20px;white-space:pre-wrap;font-size:13px;line-height:1.6;">${n.content}</div>
@@ -2283,25 +2424,78 @@ function closeNewsReadersModal() { document.getElementById('newsReadersModal').s
 
 function togglePostNewsForm() {
     const e = document.getElementById('postNewsContainer');
-    if (e) e.style.display = e.style.display === 'none' ? 'block' : 'none';
+    if (!e) return;
+    const isHidden = (e.style.display === 'none' || !e.style.display);
+    if (isHidden) {
+        document.getElementById('editingNewsId').value = '';
+        document.getElementById('newNewsTitle').value = '';
+        document.getElementById('newNewsContent').value = '';
+        document.getElementById('postNewsFormHeading').textContent = '📝 Neuen News-Thread verfassen';
+        document.getElementById('btnSaveNewsSubmit').textContent = '📢 Veröffentlichen';
+        e.style.display = 'block';
+    } else {
+        e.style.display = 'none';
+    }
 }
+
 function toggleProposeNewsForm() {
     const e = document.getElementById('proposeNewsContainer');
     if (e) e.style.display = e.style.display === 'none' ? 'block' : 'none';
 }
 
+function openEditNewsModal(newsId) {
+    const n = cachedNews[newsId];
+    if (!n) return;
+
+    const e = document.getElementById('postNewsContainer');
+    if (!e) return;
+
+    document.getElementById('editingNewsId').value = newsId;
+    document.getElementById('newNewsTitle').value = n.title || '';
+    document.getElementById('newNewsContent').value = n.content || '';
+    if (document.getElementById('newNewsCategory')) {
+        document.getElementById('newNewsCategory').value = n.category || 'Allgemein';
+    }
+
+    document.getElementById('postNewsFormHeading').textContent = '✏️ News-Thread bearbeiten';
+    document.getElementById('btnSaveNewsSubmit').textContent = '💾 Änderungen speichern';
+    e.style.display = 'block';
+    e.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
 function speichereNeueNews() {
-    if (!sessionUser || !getUserEffectivePermissions(sessionUser).canPostNews) return;
+    if (!sessionUser) return;
     const t = document.getElementById('newNewsTitle')?.value.trim();
     const c = document.getElementById('newNewsContent')?.value.trim();
     const cat = document.getElementById('newNewsCategory')?.value || 'Allgemein';
+    const editId = document.getElementById('editingNewsId')?.value;
+    const myId = (sessionUser.vorname+'_'+sessionUser.nachname).toLowerCase().replace(/[^a-z0-9_]/g,'');
+
     if (!t || !c) { alert('Bitte Titel und Inhalt eingeben!'); return; }
+
+    if (editId) {
+        db.ref('data/news/' + editId).update({
+            title: t,
+            content: c,
+            category: cat,
+            edited: true,
+            editedTs: Date.now()
+        }).then(() => {
+            togglePostNewsForm();
+            logAdminAudit('News bearbeitet', `${sessionUser.vorname} ${sessionUser.nachname}: ${t}`);
+            alert('✅ News-Beitrag erfolgreich aktualisiert!');
+        });
+        return;
+    }
+
+    if (!getUserEffectivePermissions(sessionUser).canPostNews) return;
+
     db.ref('data/news').push({
         title: t, content: c, category: cat, status: 'published',
-        author: sessionUser.vorname + ' ' + sessionUser.nachname, ts: Date.now()
+        author: sessionUser.vorname + ' ' + sessionUser.nachname,
+        authorId: myId,
+        ts: Date.now()
     }).then(() => {
-        document.getElementById('newNewsTitle').value = '';
-        document.getElementById('newNewsContent').value = '';
         togglePostNewsForm();
         logAdminAudit('News veröffentlicht', `${sessionUser.vorname} ${sessionUser.nachname}: ${t}`);
     });
@@ -2311,10 +2505,14 @@ function submitNewsProposal() {
     if (!sessionUser) return;
     const t = document.getElementById('propNewsTitle')?.value.trim();
     const c = document.getElementById('propNewsContent')?.value.trim();
+    const myId = (sessionUser.vorname+'_'+sessionUser.nachname).toLowerCase().replace(/[^a-z0-9_]/g,'');
+
     if (!t || !c) { alert('Bitte Titel und Inhalt angeben!'); return; }
     db.ref('data/news').push({
         title: t, content: c, category: 'Vorschlag', status: 'pending_approval',
-        author: sessionUser.vorname + ' ' + sessionUser.nachname, ts: Date.now()
+        author: sessionUser.vorname + ' ' + sessionUser.nachname,
+        authorId: myId,
+        ts: Date.now()
     }).then(() => {
         document.getElementById('propNewsTitle').value = '';
         document.getElementById('propNewsContent').value = '';
@@ -2330,7 +2528,14 @@ function approveNewsProposal(newsId) {
 }
 
 function deleteNews(k) {
-    if (!sessionUser || !getUserEffectivePermissions(sessionUser).delNews) return;
+    if (!sessionUser) return;
+    const eff = getUserEffectivePermissions(sessionUser);
+    const n = cachedNews[k];
+    const myId = (sessionUser.vorname+'_'+sessionUser.nachname).toLowerCase().replace(/[^a-z0-9_]/g,'');
+    const isAuthor = n && ((n.authorId && n.authorId === myId) || n.author === (sessionUser.vorname + ' ' + sessionUser.nachname));
+
+    if (!eff.delNews && !isAuthor) return;
+
     if (confirm('Möchtest du diesen News-Beitrag wirklich löschen?')) {
         db.ref('data/news/' + k).remove().then(() => {
             logAdminAudit('News gelöscht', `ID ${k} gelöscht durch ${sessionUser.vorname} ${sessionUser.nachname}`);
@@ -3306,6 +3511,7 @@ _w.openLinksInlineModal = openLinksInlineModal; _w.closeLinksInlineModal = close
 _w.renderNewsFeed = () => renderNewsFeedData(cachedNews); _w.togglePostNewsForm = togglePostNewsForm; _w.speichereNeueNews = speichereNeueNews; _w.deleteNews = deleteNews;
 _w.toggleProposeNewsForm = toggleProposeNewsForm; _w.submitNewsProposal = submitNewsProposal; _w.approveNewsProposal = approveNewsProposal;
 _w.markNewsAsRead = markNewsAsRead; _w.openNewsReadersModal = openNewsReadersModal; _w.closeNewsReadersModal = closeNewsReadersModal;
+_w.openEditNewsModal = openEditNewsModal;
 _w.startExam = startExam; _w.cancelActiveExam = cancelActiveExam; _w.submitActiveExam = submitActiveExam;
 _w.addExamQuestionRow = addExamQuestionRow; _w.resetExamBuilderForm = resetExamBuilderForm; _w.neuePruefungSpeichern = neuePruefungSpeichern; _w.editExam = editExam; _w.deleteExam = deleteExam; _w.deleteExamSubmission = deleteExamSubmission;
 _w.openExamBuilderModal = openExamBuilderModal; _w.closeExamBuilderModal = closeExamBuilderModal;
@@ -3324,7 +3530,6 @@ _w.editLinkInline = editLinkInline;
 _w.openHierarchieInlineModal = openHierarchieInlineModal;
 _w.closeHierarchieInlineModal = closeHierarchieInlineModal;
 _w.saveHierarchieInline = saveHierarchieInline;
-_w.deleteArchivSchicht = deleteArchivSchicht;
 _w.changeCalendarMonth = changeCalendarMonth;
 _w.resetCalendarToToday = resetCalendarToToday;
 _w.renderCalendarMonth = renderCalendarMonth;
@@ -3334,7 +3539,10 @@ _w.closeCalendarEventModal = closeCalendarEventModal;
 _w.saveCalendarEvent = saveCalendarEvent;
 _w.openCalendarEventDetailsModal = openCalendarEventDetailsModal;
 _w.closeCalendarEventDetailsModal = closeCalendarEventDetailsModal;
+_w.editCalendarEventAction = editCalendarEventAction;
 _w.deleteCalendarEventAction = deleteCalendarEventAction;
+_w.togglePrivateEventOption = togglePrivateEventOption;
+_w.toggleAllCalendarRoles = toggleAllCalendarRoles;
 _w.renderStaffDirectory = renderStaffDirectory;
 _w.filterStaffDirectory = filterStaffDirectory;
 _w.openStaffPhotoUploadModal = openStaffPhotoUploadModal;

@@ -10,7 +10,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
-    <link rel="stylesheet" href="style.css?v=5.2">
+    <link rel="stylesheet" href="style.css?v=5.3">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏥</text></svg>">
 </head>
 <body>
@@ -71,7 +71,7 @@
             <button type="button" class="tab-btn active" onclick="switchTab('docTab', this)">📝 Dokumentation & Einsatz</button>
             <button type="button" class="tab-btn" onclick="switchTab('statsTab', this)">📊 Statistik & Archiv</button>
             <button type="button" class="tab-btn" id="calendarTabNavBtn" onclick="switchTab('calendarTab', this)">📅 Kalender</button>
-            <button type="button" class="tab-btn" id="staffTabNavBtn" onclick="switchTab('staffTab', this)">👥 Mitarbeiter-Kartei</button>
+            <button type="button" class="tab-btn" id="staffTabNavBtn" onclick="switchTab('staffTab', this)">👥 Mitarbeiter Kartei</button>
             <button type="button" class="tab-btn" onclick="switchTab('hierarchieTab', this)">🌳 Hierarchie</button>
             <button type="button" class="tab-btn" onclick="switchTab('guideTab', this)">📋 Funk & Codes</button>
             <button type="button" class="tab-btn" onclick="switchTab('commandTab', this)">💻 Commands</button>
@@ -199,7 +199,7 @@
                     <button type="button" class="btn-cal-today" onclick="resetCalendarToToday()">Heute</button>
                 </div>
                 <div>
-                    <button type="button" id="btnCreateCalendarEvent" class="btn" style="display:none; width:auto; margin:0; padding:8px 18px; background:var(--primary); color:#080c14; font-weight:800;" onclick="openCreateEventModal()">➕ Termin erstellen</button>
+                    <button type="button" id="btnCreateCalendarEvent" class="btn" style="width:auto; margin:0; padding:8px 18px; background:var(--primary); color:#080c14; font-weight:800;" onclick="openCreateEventModal()">➕ Termin erstellen</button>
                 </div>
             </div>
 
@@ -211,17 +211,19 @@
             </div>
         </div>
 
-        <!-- REITER: MITARBEITER-KARTEI -->
+        <!-- REITER: MITARBEITER KARTEI -->
         <div id="staffTab" class="tab-content">
             <div class="staff-header-toolbar">
                 <div>
-                    <h2 style="margin:0; color:var(--primary);">👥 Mitarbeiter-Kartei des SAMD</h2>
+                    <h2 style="margin:0; color:var(--primary);">👥 Mitarbeiter Kartei des SAMD</h2>
                     <p style="margin:4px 0 0 0; color:var(--text-muted); font-size:13px;">Offizielle Übersicht aller registrierten und aktiven Mitarbeiter im Dienst.</p>
                 </div>
                 <div class="staff-toolbar-actions">
                     <input type="text" id="searchStaffInput" class="form-input" placeholder="🔍 Nach DN oder Name suchen..." oninput="filterStaffDirectory()">
-                    <button type="button" class="btn" style="width:auto; margin:0; padding:8px 16px; background:var(--primary); color:#080c14; font-weight:800;" onclick="openStaffPhotoUploadModal()">📷 Foto einreichen</button>
-                    <button type="button" id="btnOpenPhotoAdminModal" class="btn" style="width:auto; margin:0; padding:8px 16px; background:rgba(245,158,11,0.15); color:var(--warning); border:1px solid var(--warning); font-weight:800; display:none;" onclick="openStaffPhotoAdminModal()">📁 Foto-Ordner (Bearbeitung)</button>
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <button type="button" class="btn" style="width:auto; margin:0; padding:8px 16px; background:var(--primary); color:#080c14; font-weight:800;" onclick="openStaffPhotoUploadModal()">📷 Foto einreichen</button>
+                        <button type="button" id="btnOpenPhotoAdminModal" class="btn" style="width:auto; margin:0; padding:8px 16px; background:rgba(245,158,11,0.15); color:var(--warning); border:1px solid var(--warning); font-weight:800; display:none;" onclick="openStaffPhotoAdminModal()">📁 Foto Ordner (Bearbeitung)</button>
+                    </div>
                 </div>
             </div>
 
@@ -666,7 +668,7 @@
         <div id="newsTab" class="tab-content">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; border-bottom: 1px solid var(--border); padding-bottom: 16px;">
                 <div>
-                    <h2 style="margin: 0; color: var(--primary);">📢 Schwarzes Brett & News-Feed</h2>
+                    <h2 style="margin: 0; color: var(--primary);">📢 Schwarzes Brett & News Feed</h2>
                     <p style="color: var(--text-muted); font-size: 13px; margin: 4px 0 0 0;">Dienstanweisungen und Ankündigungen der Klinikleitung.</p>
                 </div>
                 <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
@@ -688,9 +690,10 @@
                 </div>
             </div>
 
-            <!-- NEWS DIREKT POSTEN -->
+            <!-- NEWS DIREKT POSTEN / BEARBEITEN -->
             <div id="postNewsContainer" style="display: none; background: rgba(15, 23, 42, 0.7); border: 1px solid var(--primary); border-radius: 14px; padding: 20px; margin-bottom: 24px;">
-                <h3 style="margin-top: 0; color: var(--primary); font-size: 15px;">📝 Neuen News-Thread verfassen</h3>
+                <input type="hidden" id="editingNewsId" value="">
+                <h3 style="margin-top: 0; color: var(--primary); font-size: 15px;" id="postNewsFormHeading">📝 Neuen News-Thread verfassen</h3>
                 <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 14px; margin-bottom: 12px;">
                     <div>
                         <label for="newNewsTitle">Titel / Betreff:</label>
@@ -709,7 +712,7 @@
                 <label for="newNewsContent">Inhalt / Text:</label>
                 <textarea id="newNewsContent" rows="5" placeholder="Vollständigen Text der News eingeben..." style="margin-bottom:12px;"></textarea>
                 <div style="display: flex; gap: 10px;">
-                    <button type="button" class="btn" style="width: auto; padding: 8px 20px; background: var(--success); color: #080c14; font-weight: 800;" onclick="speichereNeueNews()">📢 Veröffentlichen</button>
+                    <button type="button" id="btnSaveNewsSubmit" class="btn" style="width: auto; padding: 8px 20px; background: var(--success); color: #080c14; font-weight: 800;" onclick="speichereNeueNews()">📢 Veröffentlichen</button>
                     <button type="button" class="btn" style="width: auto; padding: 8px 16px; background: var(--text-muted);" onclick="togglePostNewsForm()">Abbrechen</button>
                 </div>
             </div>
@@ -815,14 +818,16 @@
         </div>
     </div>
 
-    <!-- MODAL POPUP: KALENDER-TERMIN ERSTELLEN -->
+    <!-- MODAL POPUP: KALENDER-TERMIN ERSTELLEN / BEARBEITEN -->
     <div id="calendarEventModal" class="modal-overlay">
         <div class="modal-card" style="max-width: 600px; width: 95vw; max-height: 90vh; overflow-y:auto;">
             <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:12px; margin-bottom:16px;">
-                <h3 style="margin:0; color:var(--primary);">📅 Neuen Kalender-Termin eintragen</h3>
+                <h3 style="margin:0; color:var(--primary);" id="calendarEventModalHeading">📅 Neuen Kalender Termin eintragen</h3>
                 <button type="button" class="btn-close" onclick="closeCalendarEventModal()">✖</button>
             </div>
             <form onsubmit="event.preventDefault(); saveCalendarEvent();">
+                <input type="hidden" id="editingCalendarEventId" value="">
+                
                 <label for="calEventDate">Datum (Ersttermin):</label>
                 <input type="date" id="calEventDate" required>
 
@@ -837,13 +842,14 @@
                     </div>
                 </div>
 
-                <div style="margin-top:10px;">
+                <div id="calEventRepeatContainer" style="margin-top:10px;">
                     <label for="calEventRepeat">Termin-Wiederholung:</label>
                     <select id="calEventRepeat">
                         <option value="none">Einmaliger Termin (Keine Wiederholung)</option>
+                        <option value="weekly_1">Wöchentlich wiederholen (1 Woche lang)</option>
+                        <option value="weekly_2">Wöchentlich wiederholen (2 Wochen lang)</option>
                         <option value="weekly_4">Wöchentlich wiederholen (4 Wochen lang)</option>
                         <option value="weekly_8">Wöchentlich wiederholen (8 Wochen lang)</option>
-                        <option value="weekly_12">Wöchentlich wiederholen (12 Wochen lang)</option>
                     </select>
                 </div>
 
@@ -853,9 +859,27 @@
                 <label for="calEventDesc">Beschreibung / Details (optional):</label>
                 <textarea id="calEventDesc" rows="3" placeholder="Z.B. Treffpunkt Besprechungsraum, Anwesenheitspflicht..."></textarea>
 
-                <label style="margin-top:14px; margin-bottom:6px;">Sichtbar für folgende Rollen:</label>
-                <p style="color:var(--text-muted); font-size:11px; margin:0 0 8px 0;">Wähle aus, wer diesen Termin sehen darf (Leer / Alle gewählt = Für alle sichtbar).</p>
-                <div id="calEventRolesSelectionContainer" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:8px; background:rgba(8,12,20,0.5); padding:10px; border-radius:10px; border:1px solid var(--border); max-height:160px; overflow-y:auto;"></div>
+                <label style="margin-top:14px; margin-bottom:6px;">Sichtbarkeit des Termins:</label>
+                
+                <!-- Private Termin-Option -->
+                <div style="background:rgba(8,12,20,0.6); padding:10px; border-radius:10px; border:1px solid var(--border); margin-bottom:10px;">
+                    <label style="display:flex; align-items:center; gap:8px; cursor:pointer; margin:0; text-transform:none; font-size:13px;">
+                        <input type="checkbox" id="calEventIsPrivate" onchange="togglePrivateEventOption(this.checked)">
+                        <span style="color:var(--warning); font-weight:800;">🔒 Nur für mich sichtbar (Privater Kalendereintrag)</span>
+                    </label>
+                    <p style="color:var(--text-muted); font-size:11px; margin:4px 0 0 24px;">Wenn aktiviert, ist der Termin ausschließlich für deinen Account sichtbar.</p>
+                </div>
+
+                <div id="calEventRolesSection">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                        <span style="font-size:11px; color:var(--text-muted); font-weight:700; text-transform:uppercase;">Sichtbar für folgende Rollen:</span>
+                        <label style="font-size:11px; color:var(--primary); font-weight:800; cursor:pointer; display:flex; align-items:center; gap:4px; margin:0;">
+                            <input type="checkbox" id="calSelectAllRolesCheckbox" onchange="toggleAllCalendarRoles(this.checked)">
+                            <span>Alle Rollen</span>
+                        </label>
+                    </div>
+                    <div id="calEventRolesSelectionContainer" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:8px; background:rgba(8,12,20,0.5); padding:10px; border-radius:10px; border:1px solid var(--border); max-height:160px; overflow-y:auto;"></div>
+                </div>
 
                 <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:20px;">
                     <button type="button" class="btn" style="width:auto; background:var(--text-muted);" onclick="closeCalendarEventModal()">Abbrechen</button>
@@ -873,9 +897,12 @@
                 <button type="button" class="btn-close" onclick="closeCalendarEventDetailsModal()">✖</button>
             </div>
             <div id="calDetailsBody" style="font-size:14px; line-height:1.6;"></div>
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px; border-top:1px solid var(--border); padding-top:14px;">
-                <button type="button" id="btnDeleteCalendarEvent" class="btn-full-reset" style="padding:6px 14px; font-size:12px; display:none;" onclick="deleteCalendarEventAction()">🗑️ Termin löschen</button>
-                <button type="button" class="btn" style="width:auto; background:var(--primary); color:#080c14; font-weight:800;" onclick="closeCalendarEventDetailsModal()">Schließen</button>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px; border-top:1px solid var(--border); padding-top:14px; flex-wrap:wrap; gap:8px;">
+                <div style="display:flex; gap:8px;">
+                    <button type="button" id="btnEditCalendarEvent" class="btn" style="padding:6px 14px; font-size:12px; width:auto; margin:0; background:rgba(56,189,248,0.15); color:var(--primary); border:1px solid var(--primary); font-weight:800; display:none;" onclick="editCalendarEventAction()">✏️ Bearbeiten</button>
+                    <button type="button" id="btnDeleteCalendarEvent" class="btn-full-reset" style="padding:6px 14px; font-size:12px; display:none; margin:0;" onclick="deleteCalendarEventAction()">🗑️ Termin löschen</button>
+                </div>
+                <button type="button" class="btn" style="width:auto; background:var(--primary); color:#080c14; font-weight:800; margin:0; padding:6px 16px;" onclick="closeCalendarEventDetailsModal()">Schließen</button>
             </div>
         </div>
     </div>
@@ -926,7 +953,7 @@
         <div class="modal-card" style="max-width: 1150px; width: 96vw; max-height: 92vh; overflow-y:auto;">
             <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:12px; margin-bottom:16px;">
                 <div>
-                    <h3 style="margin:0; color:var(--warning);">📁 Mitarbeiter-Foto-Ordner (Admin & Personalabteilung)</h3>
+                    <h3 style="margin:0; color:var(--warning);">📁 Mitarbeiter Foto Ordner (Bearbeitung)</h3>
                     <p style="margin:4px 0 0 0; color:var(--text-muted); font-size:12px;">Hier findest du alle Originalfotos zum Download sowie die Funktion, das freigestellte Endprodukt mit Logo für jeden Mitarbeiter einzusetzen.</p>
                 </div>
                 <button type="button" class="btn-close" onclick="closeStaffPhotoAdminModal()">✖</button>
@@ -1020,18 +1047,18 @@
             </div>
 
             <div class="admin-subtabs">
-                <button type="button" class="admin-tab-btn active" id="btnAdminSubUsers" onclick="switchAdminTab('adminSubTabUsers', this)">👥 Mitarbeiter-Kartei</button>
+                <button type="button" class="admin-tab-btn active" id="btnAdminSubUsers" onclick="switchAdminTab('adminSubTabUsers', this)">👥 Mitarbeiter Kartei</button>
                 <button type="button" class="admin-tab-btn" id="btnAdminSubRoles" onclick="switchAdminTab('adminSubTabRoles', this)">🎭 Rollen & Berechtigungs-Matrix</button>
                 <button type="button" class="admin-tab-btn" id="btnAdminSubSystem" onclick="switchAdminTab('adminSubTabSystem', this)">💾 Backup & Wiederherstellung</button>
                 <button type="button" class="admin-tab-btn" id="btnAdminSubAudit" onclick="switchAdminTab('adminSubTabAudit', this)">📋 System-Protokoll (Heute)</button>
             </div>
 
-            <!-- SUB-TAB 1: MITARBEITER-KARTEI -->
+            <!-- SUB-TAB 1: MITARBEITER KARTEI -->
             <div id="adminSubTabUsers" class="admin-subtab-content active">
                 <div style="background:rgba(15, 23, 42, 0.7); padding:20px 24px; border-radius:16px; border:1px solid var(--border);">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:12px;">
                         <div>
-                            <h3 style="margin:0; color:var(--warning); font-size:16px;">👤 Mitarbeiter-Kartei</h3>
+                            <h3 style="margin:0; color:var(--warning); font-size:16px;">👤 Mitarbeiter Kartei</h3>
                             <span style="color:var(--text-muted); font-size:12px;">Kontoverwaltung, Zugangsdaten, Status und Berechtigungen</span>
                         </div>
                         <input type="text" class="form-input" id="searchAdminUsers" placeholder="🔍 Mitarbeiter suchen..." style="max-width:300px;" oninput="filterAdminUserTable()" aria-label="Mitarbeiter suchen">
@@ -1273,6 +1300,6 @@
         </div>
     </div>
 
-    <script src="app.js?v=5.2"></script>
+    <script src="app.js?v=5.3"></script>
 </body>
 </html>
