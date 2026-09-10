@@ -10,7 +10,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
-    <link rel="stylesheet" href="style.css?v=5.6">
+    <link rel="stylesheet" href="style.css?v=5.8">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏥</text></svg>">
 </head>
 <body>
@@ -165,7 +165,7 @@
                 <div class="theme-accordion-group" id="group-protokoll">
                     <div class="theme-accordion-header" onclick="toggleGroupCollapse('group-protokoll')">📜 Patientenprotokoll (Heute)</div>
                     <div class="theme-accordion-content">
-                        <button type="button" id="btnManualProtArchive" class="btn" style="display:none; width:auto; padding:6px 12px; background:var(--success); color:#080c14; font-weight:800; margin-bottom:10px;" onclick="manualTriggerArchive()">📥 Protokoll archivieren & zurücksetzen</button>
+                        <button type="button" id="btnManualProtArchive" class="btn" style="display:none; width:auto; padding:6px 12px; background:var(--success); color:#080c14; font-weight:800; margin-bottom:10px;" onclick="manualTriggerArchive()">📥 Protokoll archivieren, exportieren & zurücksetzen</button>
                         <div class="table-responsive" style="margin:0; border:none;">
                             <table><thead><tr><th>Patient</th><th>Szenario</th><th>Verletzungen</th><th>Ausgaben</th><th>Eingetragen von</th><th>Datum</th><th style="width:70px;">Aktion</th></tr></thead><tbody id="logTableBody"></tbody></table>
                         </div>
@@ -543,7 +543,7 @@
             <div id="examStudentView">
                 <div style="background: rgba(15, 23, 42, 0.6); padding: 18px 20px; border-radius: 14px; border: 1px solid var(--border); margin-bottom: 20px;">
                     <h4 style="margin:0 0 6px 0; color:var(--primary); font-size:15px;">📋 Deine freigeschalteten Prüfungen</h4>
-                    <p style="color:var(--text-muted); font-size:12px; margin:0 0 14px 0;">Hier findest du alle Prüfungen, die von der <b>Ausbildungsabteilung</b> für dich autorisiert wurden.</p>
+                    <p style="color:var(--text-muted); font-size:12px; margin:0 0 14px 0;">Hier findest du alle Prüfungen, die von der <b>Ausbildungsabteilung</b> für dich autorisiert wurden. <i>Hinweis: Prüfungen unterstützen Multiple-Choice (eine oder mehrere Antworten können zutreffen).</i></p>
                     <div id="studentUnlockedExamsContainer" class="exam-grid-compact"></div>
                 </div>
 
@@ -551,7 +551,7 @@
                     <div class="exam-timer-sticky">
                         <div>
                             <h3 id="activeExamTitle" style="margin:0; color:var(--primary); font-size:20px;">Prüfung</h3>
-                            <span id="activeExamSubtitle" style="font-size:12px; color:var(--text-muted);">Echtzeit-Prüfungslauf</span>
+                            <span id="activeExamSubtitle" style="font-size:12px; color:var(--text-muted);">Echtzeit-Prüfungslauf (Mehrfachauswahl möglich)</span>
                         </div>
                         <div class="exam-timer-label">⏱️ <span>Zeit:</span><span id="activeExamTimerDisplay" class="exam-timer-text">00:00</span></div>
                     </div>
@@ -660,6 +660,7 @@
                 </div>
                 <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
                     <button type="button" id="btnOpenChangelogModal" class="btn-changelog-trigger" onclick="openChangelogModal()">📜 Changelog</button>
+                    <button type="button" id="btnOpenChangelogWriter" class="btn-inline-edit" style="display:none;" onclick="openChangelogWriterModal()">✏️ Changelog eintragen</button>
                     <button type="button" id="btnProposeNews" class="btn" style="width:auto; margin:0; padding:8px 16px; background:rgba(56,189,248,0.15); color:var(--primary); border:1px solid var(--primary); font-weight:700;" onclick="toggleProposeNewsForm()">💡 News vorschlagen</button>
                     <button type="button" id="btnOpenPostNews" class="btn" style="width: auto; margin: 0; padding: 8px 18px; background: var(--primary); color: #080c14; font-weight: 800; font-size: 13px; display: none;" onclick="togglePostNewsForm()">➕ Neue News posten</button>
                 </div>
@@ -742,7 +743,7 @@
         </div>
     </div>
 
-    <!-- MODAL POPUP: CHANGELOG HISTORIE -->
+    <!-- MODAL POPUP: CHANGELOG HISTORIE & NO-CODE PFLEGE -->
     <div id="changelogModal" class="modal-overlay">
         <div class="modal-card" style="max-width: 900px; width: 95vw; max-height: 90vh; overflow-y:auto;">
             <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:12px; margin-bottom:16px;">
@@ -756,6 +757,48 @@
             <div style="display:flex; justify-content:flex-end; margin-top:20px;">
                 <button type="button" class="btn" style="width:auto; background:var(--primary); color:#080c14; font-weight:800;" onclick="closeChangelogModal()">Schließen</button>
             </div>
+        </div>
+    </div>
+
+    <!-- MODAL POPUP: NO-CODE CHANGELOG VERFASSEN (MASTER-ADMIN) -->
+    <div id="changelogWriterModal" class="modal-overlay">
+        <div class="modal-card" style="max-width: 700px; width: 95vw; max-height: 90vh; overflow-y:auto;">
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:12px; margin-bottom:16px;">
+                <div>
+                    <h3 style="margin:0; color:var(--warning);">✏️ Neuen Changelog-Eintrag verfassen</h3>
+                    <p style="margin:4px 0 0 0; color:var(--text-muted); font-size:12px;">Erstelle ohne Quellcode-Bearbeitung neue Hinweise für das gesamte MD-Team.</p>
+                </div>
+                <button type="button" class="btn-close" onclick="closeChangelogWriterModal()">✖</button>
+            </div>
+            <form onsubmit="event.preventDefault(); saveCustomChangelogEntry();">
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:12px;">
+                    <div>
+                        <label for="clNewVersion">Version (z.B. v5.8):</label>
+                        <input type="text" id="clNewVersion" placeholder="v5.8" required>
+                    </div>
+                    <div>
+                        <label for="clNewCategory">Kategorie:</label>
+                        <select id="clNewCategory">
+                            <option value="Update">Update</option>
+                            <option value="Neue Funktion">Neue Funktion</option>
+                            <option value="Änderung">Änderung</option>
+                            <option value="Bugfix">Bugfix</option>
+                            <option value="Design">Design</option>
+                            <option value="Technische Änderung">Technische Änderung</option>
+                        </select>
+                    </div>
+                </div>
+                <label for="clNewTitle">Titel / Zusammenfassung:</label>
+                <input type="text" id="clNewTitle" placeholder="z.B. Optimierung des Funkbereichs" required style="margin-bottom:12px;">
+
+                <label for="clNewChanges">Änderungspunkte (Jede Zeile = 1 Stichpunkt):</label>
+                <textarea id="clNewChanges" rows="6" placeholder="- Erste Neuerung&#10;- Zweite Verbesserung&#10;- Behobener Fehler" required style="margin-bottom:16px;"></textarea>
+
+                <div style="display:flex; justify-content:flex-end; gap:10px;">
+                    <button type="button" class="btn" style="width:auto; background:var(--text-muted);" onclick="closeChangelogWriterModal()">Abbrechen</button>
+                    <button type="submit" class="btn" style="width:auto; background:var(--success); color:#080c14; font-weight:800;">💾 Eintrag veröffentlichen</button>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -868,7 +911,7 @@
                     </div>
                 </div>
 
-                <!-- Dynamisches Ersteller-Unterfeld: Wer aus der Abteilung setzt den Termin an -->
+                <!-- Dynamisches Ersteller-Unterfeld -->
                 <div id="calEventSubCreatorContainer" style="display:none; margin-top:10px; background:rgba(30,41,59,0.35); border:1px solid var(--border); border-radius:10px; padding:10px;">
                     <label for="calEventSubCreatorName" style="margin-top:0; color:var(--primary);">👤 Ansprechpartner / Name des Erstellers:</label>
                     <input type="text" id="calEventSubCreatorName" placeholder="Z.B. Tim Sanddorn oder Vorname Nachname">
@@ -1007,7 +1050,7 @@
         </div>
     </div>
 
-    <!-- MODAL POPUP: NEUE PRÜFUNG ERSTELLEN -->
+    <!-- MODAL POPUP: NEUE PRÜFUNG ERSTELLEN / BEARBEITEN -->
     <div id="examBuilderModal" class="modal-overlay">
         <div class="modal-card" style="max-width: 1100px; width: 96vw; max-height: 92vh; overflow-y:auto;">
             <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:12px; margin-bottom:16px;">
@@ -1333,6 +1376,6 @@
         </div>
     </div>
 
-    <script src="app.js?v=5.6"></script>
+    <script src="app.js?v=5.8"></script>
 </body>
 </html>

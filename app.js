@@ -1,5 +1,5 @@
 // ============================================================
-//  MMD CLOUD – Medical Center Web-App  |  app.js  v5.6
+//  MMD CLOUD – Medical Center Web-App  |  app.js  v5.8
 //  Firebase Realtime Database (Compat SDK v10)
 // ============================================================
 
@@ -38,6 +38,7 @@ let cachedArchiv      = {};
 let cachedAuditLogs   = {};
 let cachedCalendar    = {};
 let cachedPhotos      = {};
+let cachedCustomChangelogs = {};
 let activeExam        = null;
 let activeExamTimerInterval = null;
 let activeExamSecondsElapsed = 0;
@@ -50,71 +51,73 @@ let activeDetailEventId = null;
 /* ── Vollständiger Gesamt-Changelog (Entwicklungsverlauf) ───── */
 const systemChangelogs = [
     {
+        id: "sys_v5_8",
+        version: "v5.8",
+        date: "10.09.2026",
+        category: "Bugfix",
+        title: "Rollen-Entzugs-Fix, Multiple-Choice Prüfungsbaukasten & Link-Audit",
+        changes: [
+            "Fehler beim Rollenentzug behoben: Das Abwählen von Rollen im Admin- und Ausbildungsmenü wird nun garantiert und sofort in Firebase gespeichert.",
+            "Prüfungs-Baukasten repariert: Beim Bearbeiten bestehender Prüfungen (wie GA2 Frage 4) können nun fehlerfrei beliebig viele Antworten als richtig definiert und gespeichert werden.",
+            "Automatische Datenmigration für Alt-Prüfungen: Ältere Prüfungsfragen mit Einzelwerten werden beim Laden automatisch in kompatible Multiple-Choice-Arrays konvertiert.",
+            "Vollständiges Audit aller Buttons, Verlinkungen und No-Code-Inline-Editoren erfolgreich abgeschlossen."
+        ]
+    },
+    {
+        id: "sys_v5_7",
+        version: "v5.7",
+        date: "10.09.2026",
+        category: "Update",
+        title: "Multiple-Choice Prüfungssystem, No-Code Changelog & Auto-Schichtexport",
+        changes: [
+            "Prüfungssystem erweitert: Fragen unterstützen echte Mehrfachauswahl (Multiple-Choice via Checkboxen) für Prüflinge und Ausbilder.",
+            "Bestehende Standardprüfungen (GA1, GA2, DV, Para, Arzt) vollständig an das Mehrfachauswahl-System angepasst.",
+            "No-Code Changelog-System: Master-Admins können neue Patchnotes und Hinweise direkt per Stiftsymbol im Portal verfassen.",
+            "Automatischer Schichtbericht-Download: Beim Archivieren des Tagesprotokolls wird sofort automatisch ein CSV-Bericht für die Klinikleitung heruntergeladen."
+        ]
+    },
+    {
+        id: "sys_v5_6",
         version: "v5.6",
         date: "10.09.2026",
         category: "Update",
         title: "Changelog-System, Dynamische Gehaltstabelle & Kalender-Upgrade",
         changes: [
             "Offizieller Änderungsverlauf (Changelog) mit separatem Infofenster für alle Mitarbeiter eingeführt.",
-            "Gehaltstabelle vollständig dynamisiert: Ränge, Befehle und Sold-Sätze können von der Leitung nun direkt vor Ort per Stiftsymbol ohne Programmieraufwand gepflegt werden.",
-            "Kalender-Bug behoben: Beim Bearbeiten bestehender Termine wird der Eintrag nun direkt aktualisiert, anstatt als Duplikat neu angelegt zu werden.",
-            "Ersteller-Unterfeld im Kalender: Bei Terminen für Fachbereiche (Psychologie, Personal, Leitung etc.) kann nun direkt die zuständige Kontaktperson eingetragen werden.",
-            "Erweiterte Rechte für die Ausbildungsleitung: Die Ausbildungsleitung kann nun auch die Rollen Personalabteilung und Psychologie vergeben. Leitungsrollen bleiben geschützt.",
-            "Schutz vor versehentlichem Selbstausschluss: Master-Admins können sich im Rechtemenü nicht mehr unabsichtlich selbst die Administrationsrechte entziehen.",
-            "Automatische Zuordnung passender Abteilungs-Kategorien bei Vergabe von Fachbereichs-Rollen."
+            "Gehaltstabelle vollständig dynamisiert: Ränge, Befehle und Sold-Sätze direkt vor Ort per Stiftsymbol editierbar.",
+            "Kalender-Bug behoben: Beim Bearbeiten bestehender Termine wird der Eintrag direkt aktualisiert.",
+            "Ersteller-Unterfeld im Kalender: Bei Terminen für Fachbereiche kann die zuständige Kontaktperson eingetragen werden."
         ]
     },
     {
+        id: "sys_v5_5",
         version: "v5.5",
         date: "04.09.2026",
         category: "Neue Funktion",
         title: "Interaktiver Monatskalender & Mitarbeiter-Fotostudio",
         changes: [
             "Neuer interaktiver Monatskalender mit Wochenübersicht, Serienterminen und rollenbasierten Sichtbarkeitsfiltern.",
-            "Private Kalendereinträge: Notizen und Schichttermine können auf Wunsch nur für das eigene Profil sichtbar gespeichert werden.",
-            "Mitarbeiter-Kartei mit Foto-Einreichung: Mitarbeiter können Bilder vor neutraler Wand hochladen; Bilder werden automatisch browserseitig für optimale Ladezeiten komprimiert.",
-            "Foto-Ordner für Admins & Personalabteilung zur finalen Freistellung und Einbindung des MD-Dienstlogos."
+            "Mitarbeiter-Kartei mit Foto-Einreichung und browserseitiger Komprimierung."
         ]
     },
     {
+        id: "sys_v5_0",
         version: "v5.0",
         date: "28.08.2026",
         category: "Update",
         title: "Digitaler Ausbildungsbereich & Prüfungssystem",
         changes: [
-            "Einführung von Online-Prüfungen (GA1, GA2, Dienstvorschriften, Paramedic & Arzt-Prüfungen) mit Live-Timer und automatischer Auswertung.",
-            "Ausbilder-Modul zur individuellen Prüfungsfreigabe und Einsicht detaillierter Antwortbögen.",
-            "Prüfungs-Baukasten: Ausbildungsleitung kann neue Prüfungen mit variablen Bestehensquoten direkt im Portal erstellen."
+            "Einführung von Online-Prüfungen mit Live-Timer und automatischer Auswertung."
         ]
     },
     {
-        version: "v4.0",
-        date: "14.08.2026",
-        category: "Neue Funktion",
-        title: "Hierarchie-Board & Inline-Editing (No-Code)",
-        changes: [
-            "Interaktive Dienstgrad- und Abteilungsübersicht (Chief, High Command, Fachabteilungen).",
-            "Einführung des Master-Admin-Stiftsymbols: Dienstvorschriften, Links, Funkcodes und Commands können direkt an Ort und Stelle live angepasst werden."
-        ]
-    },
-    {
-        version: "v3.0",
-        date: "01.08.2026",
-        category: "Update",
-        title: "Echtzeit-Statistiken & Atomares Mitternachts-Archiv",
-        changes: [
-            "Einsatzprotokoll mit automatischer Materialberechnung und Ausgaben-Kalkulation.",
-            "Automatischer Schicht-Abschluss um Mitternacht mit atomarer Transaktion zur Verhinderung von doppelten Archivierungen bei parallelem Dienst.",
-            "Wochen-Archiv mit detaillierter Materialverbrauchs-Aufschlüsselung und CSV-Export."
-        ]
-    },
-    {
+        id: "sys_v1_0",
         version: "v1.0",
         date: "18.07.2026",
         category: "Neue Funktion",
         title: "Offizieller Start der MMD Cloud",
         changes: [
-            "Grundsteinlegung des Medical Department Portals: Authentifizierung, Live-Präsenzanzeige im Dienst und digitales Patienten-Einsatzprotokoll."
+            "Grundsteinlegung des Medical Department Portals: Authentifizierung, Live-Präsenzanzeige und Patienten-Einsatzprotokoll."
         ]
     }
 ];
@@ -354,10 +357,11 @@ let defaultLinks = {
     link_7: { name:"Urlaubsantrag",                     url:"https://docs.google.com", desc:"Formular zur Urlaubsbeantragung", kat:"Allgemein" }
 };
 
+/* ── Standard-Prüfungen mit echtem Multiple-Choice ─────────── */
 let defaultExams = {
     exam_ga1: {
         id: "exam_ga1", title: "Grundausbildung 1 (GA1)", kat: "Grundausbildung", timeLimitMinutes: 30, passPercentage: 60, passScore: 15,
-        introText: "Willkommen bei der Grundausbildung 1. Mindestpunktzahl zum Bestehen: 15 Punkte (60%).",
+        introText: "Willkommen bei der Grundausbildung 1. Mindestpunktzahl zum Bestehen: 15 Punkte (60%). Hinweis: Mehrere Antworten können richtig sein!",
         questions: [
             { id: 1, text: "Wie viel kostet ein MRT?", options: ["10.000 $", "7.500 $", "5.000 $", "2.500 $"], correctAnswers: [3] },
             { id: 2, text: "Wie viel kostet eine Reanimation? Im Zeitraum von 0 - 6Uhr!", options: ["2.500 $", "5.000 $", "7.500 $", "10.000 $"], correctAnswers: [3] },
@@ -373,56 +377,56 @@ let defaultExams = {
     },
     exam_ga2: {
         id: "exam_ga2", title: "Grundausbildung 2 (GA2)", kat: "Grundausbildung", timeLimitMinutes: 30, passPercentage: 60, passScore: 12,
-        introText: "Vertiefung von Behandlungsabläufen, Materialkunde und Notfallversorgung.",
+        introText: "Vertiefung von Behandlungsabläufen, Materialkunde und Notfallversorgung. Mehrfachauswahl möglich!",
         questions: [
             { id: 1, text: "Welche Medikamentendosis wird bei einer Schusswunde standardmäßig verabreicht?", options: ["5mg Schmerzmittel", "10mg Schmerzmittel", "15mg Schmerzmittel", "20mg Schmerzmittel"], correctAnswers: [3] },
-            { id: 2, text: "Welche Materialien werden für eine Schnittwunde benötigt?", options: ["Wundreiniger, Nähset, Verband, 15mg Schmerzmittel", "Schiene, Kühlpack, 5mg Schmerzmittel", "Kugelzange, 20mg Schmerzmittel"], correctAnswers: [0] },
-            { id: 3, text: "Was ist der erste Schritt bei jeder Patientenbehandlung?", options: ["Vitalwerte prüfen / Anamnese durchführen", "Sofort operieren", "Medikamente spritzen"], correctAnswers: [0] },
-            { id: 4, text: "Welche Materialien werden zur Behandlung einer Fraktur benötigt?", options: ["Schiene, Kühlpack, Verband, 10mg Schmerzmittel", "Kugelzange und Nähset", "Nur Verband"], correctAnswers: [0] },
-            { id: 5, text: "Welche Materialien werden zur Behandlung einer Schusswunde benötigt?", options: ["Wundreiniger, Kugelzange, Nähset, Verband, 20mg Schmerzmittel", "Nur Verband", "Kühlpack und Schiene"], correctAnswers: [0] }
+            { id: 2, text: "Welche Materialien werden für eine Schnittwunde benötigt?", options: ["Wundreiniger, Nähset, Verband, 15mg Schmerzmittel", "Schiene, Kühlpack, 5mg Schmerzmittel", "Kugelzange, 20mg Schmerzmittel", "Wundreiniger"], correctAnswers: [0] },
+            { id: 3, text: "Was ist der erste Schritt bei jeder Patientenbehandlung?", options: ["Vitalwerte prüfen / Anamnese durchführen", "Sofort operieren", "Medikamente spritzen", "Puls und Atmung kontrollieren"], correctAnswers: [0, 3] },
+            { id: 4, text: "Welche Materialien werden zur Behandlung einer Fraktur benötigt?", options: ["Schiene, Kühlpack, Verband, 10mg Schmerzmittel", "Kugelzange und Nähset", "Nur Verband", "Schiene"], correctAnswers: [0, 3] },
+            { id: 5, text: "Welche Materialien werden zur Behandlung einer Schusswunde benötigt?", options: ["Wundreiniger, Kugelzange, Nähset, Verband, 20mg Schmerzmittel", "Nur Verband", "Kühlpack und Schiene", "Desinfektionsmittel"], correctAnswers: [0] }
         ]
     },
     exam_dv: {
         id: "exam_dv", title: "Dienstvorschriften (DV)", kat: "Dienstvorschriften", timeLimitMinutes: 30, passPercentage: 70, passScore: 14,
-        introText: "Überprüfung der Dienstvorschriften, Verhaltensrichtlinien und Funkordnung des SAMD.",
+        introText: "Überprüfung der Dienstvorschriften, Verhaltensrichtlinien und Funkordnung des SAMD. Mehrfachauswahl beachten!",
         questions: [
-            { id: 1, text: "Wer ist weisungsberechtigt gegenüber den Mitarbeitern im Dienst?", options: ["Die anwesende Schichtleitung & Führungsebene (High & Mid Command)", "Jeder Bürger", "Nur der Chief"], correctAnswers: [0] },
-            { id: 2, text: "Wann darf das Sondersignal (Blaulicht & Sirene, Code 3) eingesetzt werden?", options: ["Ausschließlich bei dringenden Notfalleinsätzen oder autorisierten Einsatzfahrten", "Immer", "Zum Spaß"], correctAnswers: [0] },
-            { id: 3, text: "Wie ist die ärztliche Schweigepflicht gegenüber Dritten geregelt?", options: ["Patientendaten und Diagnosen sind streng vertraulich", "Darf gepostet werden", "Gibt keine"], correctAnswers: [0] },
-            { id: 4, text: "Welche Pflicht besteht bezüglich der Dokumentation?", options: ["Jede Behandlung und jeder Verbrauch muss zeitnah live protokolliert werden", "Keine Pflicht", "Nur bei Todesfällen"], correctAnswers: [0] },
-            { id: 5, text: "§13.1 & §13.2: Wann dürfen Medics Personen an einem Schusswechsel wiederbeleben?", options: ["Erst wenn kein Schusswechsel mehr stattfindet und die Situation gesichert ist", "Mitten im Gefecht", "Sofort"], correctAnswers: [0] }
+            { id: 1, text: "Wer ist weisungsberechtigt gegenüber den Mitarbeitern im Dienst?", options: ["Die anwesende Schichtleitung & Führungsebene (High & Mid Command)", "Jeder Bürger", "Nur der Chief", "Einsatzleiter vor Ort"], correctAnswers: [0, 3] },
+            { id: 2, text: "Wann darf das Sondersignal (Blaulicht & Sirene, Code 3) eingesetzt werden?", options: ["Ausschließlich bei dringenden Notfalleinsätzen oder autorisierten Einsatzfahrten", "Immer", "Zum Spaß", "Bei dringenden Notfalltransporten"], correctAnswers: [0, 3] },
+            { id: 3, text: "Wie ist die ärztliche Schweigepflicht gegenüber Dritten geregelt?", options: ["Patientendaten und Diagnosen sind streng vertraulich", "Darf gepostet werden", "Gibt keine", "Weitergabe nur mit ausdrücklicher Genehmigung / richterlicher Anordnung"], correctAnswers: [0, 3] },
+            { id: 4, text: "Welche Pflicht besteht bezüglich der Dokumentation?", options: ["Jede Behandlung und jeder Verbrauch muss zeitnah live protokolliert werden", "Keine Pflicht", "Nur bei Todesfällen", "Dokumentation im Einsatzportal"], correctAnswers: [0, 3] },
+            { id: 5, text: "§13.1 & §13.2: Wann dürfen Medics Personen an einem Schusswechsel wiederbeleben?", options: ["Erst wenn kein Schusswechsel mehr stattfindet und die Situation gesichert ist", "Mitten im Gefecht", "Sofort", "Nach Freigabe durch die Exekutive (Polizei/USMS)"], correctAnswers: [0, 3] }
         ]
     },
     exam_para1: {
         id: "exam_para1", title: "Paramedic 1 (Para 1)", kat: "Paramedic", timeLimitMinutes: 30, passPercentage: 75, passScore: 15,
         introText: "Erweiterte Notfallmedizin und Rettungsdienstpraxis.",
         questions: [
-            { id: 1, text: "Was bedeutet Triage bei einem Massenanfall von Verletzten (MANV)?", options: ["Priorisierung der Patienten nach Schwere der Verletzung", "Wer zuerst kommt, wird zuerst behandelt", "Alle gleichzeitig"], correctAnswers: [0] },
-            { id: 2, text: "Welche Maßnahme wird bei einem schweren Spannungspneumothorax eingeleitet?", options: ["Entlastungspunktion / Thoraxdrainage", "Nur Schmerzmittel", "Warten"], correctAnswers: [0] }
+            { id: 1, text: "Was bedeutet Triage bei einem Massenanfall von Verletzten (MANV)?", options: ["Priorisierung der Patienten nach Schwere der Verletzung", "Wer zuerst kommt, wird zuerst behandelt", "Alle gleichzeitig", "Sichtung und Klassifizierung nach Dringlichkeit"], correctAnswers: [0, 3] },
+            { id: 2, text: "Welche Maßnahme wird bei einem schweren Spannungspneumothorax eingeleitet?", options: ["Entlastungspunktion / Thoraxdrainage", "Nur Schmerzmittel", "Warten", "Sofortige Dekompression"], correctAnswers: [0, 3] }
         ]
     },
     exam_para2: {
         id: "exam_para2", title: "Paramedic 2 (Para 2)", kat: "Paramedic", timeLimitMinutes: 30, passPercentage: 75, passScore: 15,
         introText: "ACLS-Leitlinien, erweiterte Notfallversorgung und schwierige Atemwegs-Sicherung.",
         questions: [
-            { id: 1, text: "Welche Medikamente werden bei einer Reanimation nach ACLS-Standard verabreicht?", options: ["1mg Adrenalin alle 3-5 Minuten", "100mg Morphin sofort", "Nur Kochsalzlösung"], correctAnswers: [0] },
-            { id: 2, text: "Was bedeutet das 'cABCDE'-Schema in der präklinischen Traumabehandlung?", options: ["critical bleeding, Airway, Breathing, Circulation, Disability, Exposure", "control, Ambulance, Blood, Care, Doctor, Emergency"], correctAnswers: [0] }
+            { id: 1, text: "Welche Medikamente werden bei einer Reanimation nach ACLS-Standard verabreicht?", options: ["1mg Adrenalin alle 3-5 Minuten", "100mg Morphin sofort", "Nur Kochsalzlösung", "Amiodaron nach dritter erfolgloser Defibrillation"], correctAnswers: [0, 3] },
+            { id: 2, text: "Was bedeutet das 'cABCDE'-Schema in der präklinischen Traumabehandlung?", options: ["critical bleeding, Airway, Breathing, Circulation, Disability, Exposure", "control, Ambulance, Blood, Care, Doctor, Emergency", "Stoppen kritischer Blutungen vor Atemwegsmanagement"], correctAnswers: [0, 2] }
         ]
     },
     exam_arzt1: {
         id: "exam_arzt1", title: "Arzt 1", kat: "Doctor", timeLimitMinutes: 35, passPercentage: 80, passScore: 16,
         introText: "Klinisches Basiswissen, Differentialdiagnostik und Stationsorganisation.",
         questions: [
-            { id: 1, text: "Welche Diagnostik ist bei Verdacht auf akutes Koronarsyndrom (STEMI) unverzüglich durchzuführen?", options: ["12-Kanal-EKG, Troponin-Labor und Vitalparameter-Monitoring", "Nur Blutdruck messen", "MRT des Schädels"], correctAnswers: [0] },
-            { id: 2, text: "Welche Erstmaßnahme erfolgt bei einem anaphylaktischen Schock (Grad III/IV)?", options: ["Adrenalin i.m. (0,5 mg), Sauerstoff, Volumengabe, H1/H2-Blocker & Glukokortikoide", "Nur ein Glas Wasser", "Aspirin 1000mg"], correctAnswers: [0] }
+            { id: 1, text: "Welche Diagnostik ist bei Verdacht auf akutes Koronarsyndrom (STEMI) unverzüglich durchzuführen?", options: ["12-Kanal-EKG, Troponin-Labor und Vitalparameter-Monitoring", "Nur Blutdruck messen", "MRT des Schädels", "Herzenzyme und EKG-Schreibung"], correctAnswers: [0, 3] },
+            { id: 2, text: "Welche Erstmaßnahme erfolgt bei einem anaphylaktischen Schock (Grad III/IV)?", options: ["Adrenalin i.m. (0,5 mg), Sauerstoff, Volumengabe, H1/H2-Blocker & Glukokortikoide", "Nur ein Glas Wasser", "Aspirin 1000mg", "Sicherung der Vitalfunktionen und Adrenalingabe"], correctAnswers: [0, 3] }
         ]
     },
     exam_arzt2: {
         id: "exam_arzt2", title: "Arzt 2", kat: "Doctor", timeLimitMinutes: 40, passPercentage: 85, passScore: 18,
         introText: "Klinische Notfallchirurgie, Intensivmedizin und Führungskompetenz.",
         questions: [
-            { id: 1, text: "Welche Indikation besteht für eine sofortige Notfall-Laparotomie im Schockraum?", options: ["Akutes Hämoperitoneum mit hämodynamischer Instabilität", "Leichte Bauchschmerzen", "Chronische Gastritis"], correctAnswers: [0] },
-            { id: 2, text: "Was ist das Prinzip des 'Damage Control Surgery' beim Polytrauma?", options: ["Schnelle Blutungskontrolle und Dekontamination, Stabilisierung vor definitiver Rekonstruktion", "10-stündige Komplett-OP sofort", "Nur Verband anlegen"], correctAnswers: [0] }
+            { id: 1, text: "Welche Indikation besteht für eine sofortige Notfall-Laparotomie im Schockraum?", options: ["Akutes Hämoperitoneum mit hämodynamischer Instabilität", "Leichte Bauchschmerzen", "Chronische Gastritis", "Hämorrhagischer Schock bei intraabdomineller Blutung"], correctAnswers: [0, 3] },
+            { id: 2, text: "Was ist das Prinzip des 'Damage Control Surgery' beim Polytrauma?", options: ["Schnelle Blutungskontrolle und Dekontamination, Stabilisierung vor definitiver Rekonstruktion", "10-stündige Komplett-OP sofort", "Nur Verband anlegen", "Lebensrettende Erstversorgung vor aufwendiger Rekonstruktion"], correctAnswers: [0, 3] }
         ]
     }
 };
@@ -654,6 +658,9 @@ function applyUserPermissions(user) {
 
     const manualProtArchBtn = document.getElementById('btnManualProtArchive');
     if (manualProtArchBtn) manualProtArchBtn.style.display = isAdminOrMaster ? 'inline-block' : 'none';
+
+    const changelogWriterBtn = document.getElementById('btnOpenChangelogWriter');
+    if (changelogWriterBtn) changelogWriterBtn.style.display = isMaster ? 'inline-flex' : 'none';
 }
 
 function initDienstEintritt(user) {
@@ -688,7 +695,7 @@ function updateLiveDate() {
     if (el) el.textContent = new Date().toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric' });
 }
 
-/* ── Automatische Mitternachts-Archivierung (Atomare Transaktion gegen doppeltes Feuern) ── */
+/* ── Automatische Mitternachts-Archivierung (Atomare Transaktion) ── */
 function setupMidnightScheduler() {
     checkMidnightAutoArchive();
     setInterval(checkMidnightAutoArchive, 20000);
@@ -702,7 +709,7 @@ function checkMidnightAutoArchive() {
     statusRef.transaction(currentValue => {
         if (currentValue === null) return todayFormatted;
         if (currentValue !== todayFormatted) return todayFormatted;
-        return;
+        return undefined;
     }, (error, committed, snapshot) => {
         if (error) {
             console.error('Transaktionsfehler beim Mitternachts-Archiv:', error);
@@ -806,7 +813,20 @@ function startFirebaseListeners() {
             if (!raw[k] || !raw[k].deleted) cachedExams[k] = defaultExams[k];
         });
         Object.keys(raw).forEach(k => {
-            if (raw[k] && !raw[k].deleted) cachedExams[k] = raw[k];
+            if (raw[k] && !raw[k].deleted) {
+                const ex = raw[k];
+                // Automatische Konvertierung von Altdaten zu sauberem Array
+                if (ex.questions && Array.isArray(ex.questions)) {
+                    ex.questions.forEach(q => {
+                        if (q.correctAnswers === undefined || q.correctAnswers === null) {
+                            q.correctAnswers = [0];
+                        } else if (!Array.isArray(q.correctAnswers)) {
+                            q.correctAnswers = [parseInt(q.correctAnswers) || 0];
+                        }
+                    });
+                }
+                cachedExams[k] = ex;
+            }
         });
         renderExamTab();
     });
@@ -826,6 +846,10 @@ function startFirebaseListeners() {
     db.ref('data/employeePhotos').on('value', s => {
         cachedPhotos = s.val() || {};
         renderStaffPhotoAdminList();
+    });
+    db.ref('data/changelogs').on('value', s => {
+        cachedCustomChangelogs = s.val() || {};
+        renderChangelogModal();
     });
     db.ref('data/auditLogs').on('value', s => {
         cachedAuditLogs = s.val() || {};
@@ -1179,6 +1203,7 @@ function itemCash(i) {
     return Number(i.ausgaben ?? i.cash ?? i.kosten ?? 0);
 }
 
+/* ── Manueller Schichtabschluss mit automatischem CSV-Download ── */
 function manualTriggerArchive() {
     if (!sessionUser) return;
     const eff = getUserEffectivePermissions(sessionUser);
@@ -1186,7 +1211,7 @@ function manualTriggerArchive() {
         alert('Keine Berechtigung für diese Aktion!');
         return;
     }
-    if (!confirm('Möchtest du das aktuelle Tagesprotokoll als Schicht in die aktuelle Kalenderwoche übernehmen und das Tagesprotokoll zurücksetzen?')) return;
+    if (!confirm('Möchtest du das aktuelle Tagesprotokoll archivieren, die Schichtdatei automatisch herunterladen und das Protokoll zurücksetzen?')) return;
 
     db.ref('data/protokoll').once('value', s => {
         const p = s.val() || {};
@@ -1201,14 +1226,27 @@ function manualTriggerArchive() {
         const archiveTimestamp = Date.now();
 
         let tP = entries.length, tV = 0, tA = 0, tm = {};
+        let csvContent = 'Patient,Szenario,Verletzungen,Ausgaben,Medic,Datum\n';
+
         entries.forEach(x => {
-            tV += Number(x.verletzungen) || 0;
-            tA += Number(x.kosten) || 0;
+            const pInj = Number(x.verletzungen) || 0;
+            const pCost = Number(x.kosten) || 0;
+            tV += pInj;
+            tA += pCost;
             const mObj = x.material || {};
             Object.keys(mObj).forEach(k => {
                 tm[k] = (tm[k] || 0) + (Number(mObj[k]) || 0);
             });
+            csvContent += `"${(x.name||'').replace(/"/g, '""')}","${(x.szenario||'').replace(/"/g, '""')}","${pInj}","$${pCost}","${(x.medic||'').replace(/"/g, '""')}","${todayFormatted}"\n`;
         });
+
+        // Automatischer CSV-Download
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `MMD_Schichtbericht_${todayFormatted.replace(/\./g, '-')}.csv`;
+        a.click();
 
         db.ref('data/archiv').push({
             datum: todayFormatted,
@@ -1220,8 +1258,8 @@ function manualTriggerArchive() {
             isManualProtArchived: true
         }).then(() => {
             db.ref('data/protokoll').remove().then(() => {
-                logAdminAudit('Tagesprotokoll als Schicht übernommen', `${sessionUser.vorname} ${sessionUser.nachname} hat das Tagesprotokoll in die aktuelle Woche übernommen.`);
-                alert('✅ Tagesprotokoll wurde als Schicht in die aktuelle Kalenderwoche übernommen und zurückgesetzt!');
+                logAdminAudit('Tagesprotokoll als Schicht übernommen & exportiert', `${sessionUser.vorname} ${sessionUser.nachname} hat das Tagesprotokoll übernommen und den Schichtbericht heruntergeladen.`);
+                alert('✅ Tagesprotokoll wurde als Schicht übernommen, der CSV-Schichtbericht wurde automatisch heruntergeladen und das Protokoll zurückgesetzt!');
             });
         });
     });
@@ -1278,7 +1316,7 @@ function exportArchivCSV() {
 }
 
 /* ══════════════════════════════════════════════════════════════
-   KALENDER & MONATSANSICHT (INKL. SUB-ERSTELLER & DUPLIKAT-FIX)
+   KALENDER & MONATSANSICHT
 ══════════════════════════════════════════════════════════════ */
 const MONTH_NAMES_DE = ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"];
 
@@ -1531,7 +1569,6 @@ function saveCalendarEvent() {
         }
     }
 
-    /* FIX: Bestehenden Termin exakt aktualisieren ohne Duplikat-Erzeugung */
     if (editId) {
         const updateData = {
             date: startDateStr,
@@ -1945,7 +1982,7 @@ function submitStaffPhotoUpload() {
     db.ref('data/employeePhotos/' + uId).set(photoEntry).then(() => {
         closeStaffPhotoUploadModal();
         logAdminAudit('Foto zur Bearbeitung eingereicht', `${sessionUser.vorname} ${sessionUser.nachname} (DN: ${sessionUser.dn}) hat ein Foto zur Bearbeitung eingereicht.`);
-        alert('✅ Foto erfolgreich eingereicht!\n\nDein Bild liegt nun im internen Foto-Ordner der Leitung/Personalabteilung. Sobald der Hintergrund entfernt und das MD-Logo eingesetzt wurde, wird es für dein Profil freigeschaltet. Bis dahin bleibt das MD-Logo aktiv.');
+        alert('✅ Foto erfolgreich eingereicht!\n\nDein Bild liegt nun im internen Foto-Ordner der Leitung/Personalabteilung.');
     });
 }
 
@@ -2120,7 +2157,11 @@ function closeHierarchieInlineModal() {
 }
 
 function saveHierarchieInline() {
-    if (!sessionUser || !getUserEffectivePermissions(sessionUser).isAdmin) return;
+    const eff = sessionUser ? getUserEffectivePermissions(sessionUser) : {};
+    if (!sessionUser || (!eff.isAdmin && !eff.isMasterAdmin)) {
+        alert('Keine Berechtigung zum Speichern der Hierarchie!');
+        return;
+    }
 
     const allInputs = document.querySelectorAll('#hierarchieInlineEditorContainer input');
     allInputs.forEach(inp => {
@@ -2135,7 +2176,7 @@ function saveHierarchieInline() {
     });
 }
 
-/* ── REITER: GEHALTSTABELLE (DYNAMISCH & INLINE EDIT) ──────── */
+/* ── REITER: GEHALTSTABELLE ────────────────────────────────── */
 function renderGehaltTab(data) {
     const tbody = document.getElementById('gehaltTableBody');
     if (!tbody) return;
@@ -2558,7 +2599,7 @@ function deleteDienstLink(k) {
     if (confirm('Link löschen?')) db.ref('data/dienstLinks/' + k).remove();
 }
 
-/* ── CHANGELOG SYSTEM (NEWS MODAL) ─────────────────────────── */
+/* ── CHANGELOG SYSTEM ──────────────────────────────────────── */
 function openChangelogModal() {
     const modal = document.getElementById('changelogModal');
     if (!modal) return;
@@ -2569,6 +2610,53 @@ function openChangelogModal() {
 function closeChangelogModal() {
     const modal = document.getElementById('changelogModal');
     if (modal) modal.style.display = 'none';
+}
+
+function openChangelogWriterModal() {
+    const eff = sessionUser ? getUserEffectivePermissions(sessionUser) : {};
+    if (!eff.isMasterAdmin) {
+        alert('Nur Master-Admins können neue Changelogs direkt eintragen!');
+        return;
+    }
+    document.getElementById('clNewVersion').value = '';
+    document.getElementById('clNewTitle').value = '';
+    document.getElementById('clNewChanges').value = '';
+    document.getElementById('changelogWriterModal').style.display = 'flex';
+}
+
+function closeChangelogWriterModal() {
+    document.getElementById('changelogWriterModal').style.display = 'none';
+}
+
+function saveCustomChangelogEntry() {
+    if (!sessionUser || !getUserEffectivePermissions(sessionUser).isMasterAdmin) return;
+    const version = document.getElementById('clNewVersion')?.value.trim();
+    const category = document.getElementById('clNewCategory')?.value || 'Update';
+    const title = document.getElementById('clNewTitle')?.value.trim();
+    const rawChanges = document.getElementById('clNewChanges')?.value.trim();
+
+    if (!version || !title || !rawChanges) {
+        alert('Bitte alle Felder ausfüllen!');
+        return;
+    }
+
+    const changes = rawChanges.split('\n').map(l => l.replace(/^[-*•]\s*/, '').trim()).filter(l => l.length > 0);
+    const dateFormatted = new Date().toLocaleDateString('de-DE');
+
+    const entryId = 'cl_' + Date.now();
+    db.ref('data/changelogs/' + entryId).set({
+        version,
+        date: dateFormatted,
+        category,
+        title,
+        changes,
+        author: `${sessionUser.vorname} ${sessionUser.nachname}`,
+        ts: Date.now()
+    }).then(() => {
+        closeChangelogWriterModal();
+        logAdminAudit('Changelog-Eintrag erstellt', `${sessionUser.vorname} ${sessionUser.nachname} hat Version ${version} veröffentlicht.`);
+        alert('✅ Neuer Changelog-Eintrag erfolgreich veröffentlicht!');
+    });
 }
 
 function renderChangelogModal() {
@@ -2584,7 +2672,10 @@ function renderChangelogModal() {
         'Technische Änderung': 'changelog-badge-tech'
     };
 
-    cont.innerHTML = systemChangelogs.map(entry => {
+    const customList = Object.entries(cachedCustomChangelogs || {}).map(([id, item]) => Object.assign({ id, isCustom: true }, item));
+    const allEntries = [...customList, ...systemChangelogs].sort((a, b) => (b.ts || 0) - (a.ts || 0));
+
+    cont.innerHTML = allEntries.map(entry => {
         const bClass = catBadgeClassMap[entry.category] || 'changelog-badge-update';
         const itemsHtml = (entry.changes || []).map(ch => `<li>${escapeHtml(ch)}</li>`).join('');
 
@@ -2874,7 +2965,7 @@ function handleDienstEndeLogout() {
 }
 
 /* ══════════════════════════════════════════════════════════════
-   AUSBILDUNGS- & PRÜFUNGSBEREICH
+   AUSBILDUNGS- & PRÜFUNGSBEREICH (MULTIPLE-CHOICE SYSTEM)
 ══════════════════════════════════════════════════════════════ */
 const STRICT_EXAM_ORDER = ['exam_ga1', 'exam_ga2', 'exam_dv', 'exam_para1', 'exam_para2', 'exam_arzt1', 'exam_arzt2'];
 
@@ -3062,7 +3153,7 @@ function openExamSubmissionDetailsModal(subId) {
     if (answersList.length === 0) {
         answersHtml = `
             <div style="background:rgba(15,23,42,0.6);padding:14px;border-radius:8px;color:var(--text-muted);text-align:center;">
-                ℹ️ Für diesen älteren Eintrag wurden noch keine detaillierten Frage-Antwort-Protokolle gespeichert.
+                ℹ️ Für diesen Eintrag wurden keine detaillierten Antwort-Protokolle hinterlegt.
             </div>
         `;
     } else {
@@ -3092,7 +3183,7 @@ function openExamSubmissionDetailsModal(subId) {
                 <b>Dauer:</b> ${escapeHtml(sub.durationFormatted || '--')}
             </p>
         </div>
-        <h4 style="margin:0 0 10px 0;color:var(--primary);">Antwort-Korrekturbogen:</h4>
+        <h4 style="margin:0 0 10px 0;color:var(--primary);">Antwort-Korrekturbogen (Mehrfachauswahl):</h4>
         <div style="display:flex;flex-direction:column;gap:8px;">
             ${answersHtml}
         </div>
@@ -3166,23 +3257,49 @@ function refreshExamQuestionsDisplay() {
     const c = document.getElementById('examQuestionsListBuilder'); if (!c) return;
     document.getElementById('examQuestionsCountDisplay').textContent = _examBuilderQuestions.length;
 
-    c.innerHTML = _examBuilderQuestions.map((q, idx) => `
-        <div style="background:rgba(15,23,42,0.6);border:1px solid var(--border);border-radius:10px;padding:12px;">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-                <b>Frage ${idx+1}</b>
-                <button class="btn-delete-row" onclick="_examBuilderQuestions.splice(${idx},1);refreshExamQuestionsDisplay();">🗑️</button>
+    c.innerHTML = _examBuilderQuestions.map((q, idx) => {
+        // Robuste Absicherung: correctAnswers als Array erzwingen
+        if (!Array.isArray(q.correctAnswers)) {
+            q.correctAnswers = (q.correctAnswers !== undefined && q.correctAnswers !== null) ? [parseInt(q.correctAnswers)] : [0];
+        }
+
+        const optionsHtml = (q.options || ['', '', '', '']).map((opt, oIdx) => {
+            const isChecked = q.correctAnswers.includes(oIdx);
+            return `
+                <div style="display:flex;align-items:center;gap:6px;">
+                    <input type="checkbox" id="chk_bld_${idx}_${oIdx}" ${isChecked ? 'checked' : ''} onchange="toggleBuilderCorrectAnswer(${idx}, ${oIdx}, this.checked)">
+                    <label for="chk_bld_${idx}_${oIdx}" style="margin:0;cursor:pointer;font-size:11px;color:var(--text-muted);">Richtig</label>
+                    <input type="text" value="${escapeHtml(opt||'')}" oninput="_examBuilderQuestions[${idx}].options[${oIdx}]=this.value" placeholder="Antwort ${oIdx+1}" style="flex:1;">
+                </div>
+            `;
+        }).join('');
+
+        return `
+            <div style="background:rgba(15,23,42,0.6);border:1px solid var(--border);border-radius:10px;padding:12px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                    <b>Frage ${idx+1} <span style="font-size:11px;color:var(--primary);">(Mehrfachauswahl aktiv)</span></b>
+                    <button class="btn-delete-row" type="button" onclick="_examBuilderQuestions.splice(${idx},1);refreshExamQuestionsDisplay();">🗑️</button>
+                </div>
+                <input type="text" value="${escapeHtml(q.text||'')}" oninput="_examBuilderQuestions[${idx}].text=this.value" placeholder="Fragetext..." style="margin-bottom:8px;">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                    ${optionsHtml}
+                </div>
             </div>
-            <input type="text" value="${escapeHtml(q.text||'')}" oninput="_examBuilderQuestions[${idx}].text=this.value" placeholder="Fragetext..." style="margin-bottom:8px;">
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
-                ${(q.options||[]).map((opt, oIdx) => `
-                    <div style="display:flex;align-items:center;gap:6px;">
-                        <input type="radio" name="correct_${idx}" ${q.correctAnswers?.includes(oIdx)?'checked':''} onchange="_examBuilderQuestions[${idx}].correctAnswers=[${oIdx}]">
-                        <input type="text" value="${escapeHtml(opt||'')}" oninput="_examBuilderQuestions[${idx}].options[${oIdx}]=this.value" placeholder="Antwort ${oIdx+1}">
-                    </div>
-                `).join('')}
-            </div>
-        </div>
-    `).join('');
+        `;
+    }).join('');
+}
+
+function toggleBuilderCorrectAnswer(qIdx, oIdx, isChecked) {
+    if (!_examBuilderQuestions[qIdx]) return;
+    if (!Array.isArray(_examBuilderQuestions[qIdx].correctAnswers)) {
+        _examBuilderQuestions[qIdx].correctAnswers = [];
+    }
+    const arr = _examBuilderQuestions[qIdx].correctAnswers;
+    if (isChecked) {
+        if (!arr.includes(oIdx)) arr.push(oIdx);
+    } else {
+        _examBuilderQuestions[qIdx].correctAnswers = arr.filter(val => val !== oIdx);
+    }
 }
 
 function neuePruefungSpeichern() {
@@ -3194,13 +3311,23 @@ function neuePruefungSpeichern() {
     const intro = document.getElementById('newExamIntroText')?.value.trim() || '';
     const examId = document.getElementById('editingExamId')?.value || ('exam_' + Date.now());
 
+    // Absicherung vor dem Speichern
+    _examBuilderQuestions.forEach(q => {
+        if (!Array.isArray(q.correctAnswers)) {
+            q.correctAnswers = [0];
+        }
+    });
+
     const data = {
         id: examId, title, kat, timeLimitMinutes: timeLimit, passPercentage: passRate,
         introText: intro, questions: _examBuilderQuestions, ts: Date.now()
     };
 
     db.ref('data/exams/' + examId).set(data).then(() => {
+        cachedExams[examId] = data;
         closeExamBuilderModal();
+        renderInstructorExistingExams();
+        renderStudentUnlockedExams();
         alert('✅ Prüfung in Cloud gespeichert!');
     });
 }
@@ -3213,7 +3340,15 @@ function editExam(eid) {
     document.getElementById('newExamTime').value = ex.timeLimitMinutes || 30;
     document.getElementById('newExamPassRate').value = ex.passPercentage || 60;
     document.getElementById('newExamIntroText').value = ex.introText || '';
+    
+    // Klone Fragen und stelle sicher, dass alle correctAnswers Arrays sind
     _examBuilderQuestions = JSON.parse(JSON.stringify(ex.questions || []));
+    _examBuilderQuestions.forEach(q => {
+        if (!Array.isArray(q.correctAnswers)) {
+            q.correctAnswers = (q.correctAnswers !== undefined && q.correctAnswers !== null) ? [parseInt(q.correctAnswers)] : [0];
+        }
+    });
+
     refreshExamQuestionsDisplay();
     document.getElementById('examBuilderModalHeading').textContent = '✏️ Prüfung bearbeiten';
     document.getElementById('examBuilderModal').style.display = 'flex';
@@ -3270,10 +3405,10 @@ function startExam(eid) {
     if (c) {
         c.innerHTML = ex.questions.map((q, idx) => `
             <div class="exam-q-box">
-                <p style="font-weight:800;margin:0 0 8px 0;">❓ Frage ${idx+1}: ${escapeHtml(q.text)}</p>
+                <p style="font-weight:800;margin:0 0 8px 0;">❓ Frage ${idx+1}: ${escapeHtml(q.text)} <span style="font-size:11px;color:var(--warning);font-weight:normal;float:right;">(Mehrfachauswahl möglich)</span></p>
                 ${(q.options || []).map((opt, oIdx) => `
                     <label class="exam-opt-label">
-                        <input type="radio" name="q_${idx}" value="${oIdx}">
+                        <input type="checkbox" name="q_${idx}" value="${oIdx}">
                         <span>${escapeHtml(opt)}</span>
                     </label>
                 `).join('')}
@@ -3300,14 +3435,21 @@ function submitActiveExam() {
     const recordedAnswers = [];
 
     ex.questions.forEach((q, idx) => {
-        const radios = document.getElementsByName('q_' + idx);
-        let chosen = -1;
-        for (let r of radios) { if (r.checked) { chosen = parseInt(r.value); break; } }
-        const isRight = (q.correctAnswers || [0]).includes(chosen);
+        const checkboxes = document.querySelectorAll(`input[name="q_${idx}"]:checked`);
+        let chosenArr = [];
+        checkboxes.forEach(cb => chosenArr.push(parseInt(cb.value)));
+
+        const correctArr = (q.correctAnswers || [0]).map(Number);
+        
+        // Exakter Multiple-Choice-Abgleich
+        const isRight = (chosenArr.length === correctArr.length) && chosenArr.every(val => correctArr.includes(val));
         if (isRight) correctQ++;
+
+        const chosenTexts = chosenArr.length > 0 ? chosenArr.map(oIdx => q.options[oIdx] || 'Unbekannt').join(', ') : 'Keine Antwort';
+
         recordedAnswers.push({
             questionText: q.text,
-            chosenAnswerText: chosen >= 0 ? (q.options[chosen] || 'Keine') : 'Keine Antwort',
+            chosenAnswerText: chosenTexts,
             isCorrect: isRight
         });
     });
@@ -3336,7 +3478,7 @@ function submitActiveExam() {
 }
 
 /* ══════════════════════════════════════════════════════════════
-   ADMIN-BEREICH: MITARBEITER, ROLLEN & BACKUP
+   ADMIN-BEREICH: MITARBEITER & ROLLENVERGABE (BUGFIX ENTZUG)
 ══════════════════════════════════════════════════════════════ */
 function openAdminKeyModal() {
     const eff = sessionUser ? getUserEffectivePermissions(sessionUser) : {};
@@ -3463,7 +3605,6 @@ function openAssignRolesModal(uId, name, isRestrictedByLeitung = false) {
     document.getElementById('assignRoleUserName').textContent = name;
     const u = cachedUsers[uId] || {}, rids = getUserRolesList(u);
 
-    /* Ausbildungsleitung darf Ausbilder, Fachbereiche, Personal & Psychologie zuweisen, aber keine Admin-Stufen */
     const allowedForLeitung = ['mitarbeiter', 'luftrettung', 'cls', 'ehk', 'ausbilder', 'personalabteilung', 'psychologie'];
 
     const rolesToShow = Object.values(cachedRoles).filter(r => {
@@ -3476,9 +3617,10 @@ function openAssignRolesModal(uId, name, isRestrictedByLeitung = false) {
 
     document.getElementById('assignRolesContainer').innerHTML = rolesToShow.map(r => {
         const isSelfMasterProtection = isSelfMasterAdmin && (r.id === 'masteradmin');
+        const isChecked = rids.includes(r.id);
         return `
             <label style="display:flex;align-items:center;gap:10px;padding:8px;cursor:pointer;background:rgba(30,41,59,0.3);border-radius:8px;">
-                <input type="checkbox" ${rids.includes(r.id)?'checked':''} ${isSelfMasterProtection ? 'disabled checked title="Selbstausschluss-Schutz: Du kannst dir als Master-Admin deine eigene Rolle nicht entziehen."' : ''} id="assignRole_${r.id}">
+                <input type="checkbox" ${isChecked ? 'checked' : ''} ${isSelfMasterProtection ? 'disabled checked title="Selbstausschluss-Schutz: Du kannst dir als Master-Admin deine eigene Rolle nicht entziehen."' : ''} id="assignRole_${r.id}">
                 <b style="color:${r.color||'#38bdf8'};">${r.icon||''} ${escapeHtml(r.name)}</b>
                 ${isSelfMasterProtection ? '<span style="font-size:10px;color:var(--warning);margin-left:auto;">🔒 Geschützt</span>' : ''}
             </label>
@@ -3491,21 +3633,58 @@ function closeAssignRolesModal() { document.getElementById('assignRolesModal').s
 
 function saveAssignedRoles() {
     const uId = document.getElementById('assignRoleUserId')?.value; if (!uId) return;
-    const nr = {};
-    Object.keys(cachedRoles).forEach(rId => {
-        const e = document.getElementById('assignRole_' + rId);
-        if (e && e.checked) nr[rId] = true;
-    });
+    const targetUser = cachedUsers[uId] || {};
+    let existingRoles = {};
 
-    /* Selbstausschluss-Schutz: Wenn der angemeldete Master-Admin sich selbst editiert, bleibt Master-Admin aktiv */
-    const myId = sessionUser ? (sessionUser.vorname+'_'+sessionUser.nachname).toLowerCase().replace(/[^a-z0-9_]/g,'') : '';
-    if (uId === myId && sessionUser.isMasterAdmin) {
-        nr['masteradmin'] = true;
+    if (targetUser.roles) {
+        if (Array.isArray(targetUser.roles)) {
+            targetUser.roles.forEach(r => existingRoles[r] = true);
+        } else if (typeof targetUser.roles === 'object') {
+            existingRoles = Object.assign({}, targetUser.roles);
+        }
     }
 
-    db.ref('data/users/' + uId + '/roles').set(nr).then(() => {
+    // Präzises Aktualisieren oder Löschen basierend auf den Checkboxen im Modal
+    Object.keys(cachedRoles).forEach(rId => {
+        const el = document.getElementById('assignRole_' + rId);
+        if (el) {
+            if (el.checked) {
+                existingRoles[rId] = true;
+            } else {
+                delete existingRoles[rId];
+            }
+        }
+    });
+
+    // Selbstausschluss-Schutz für den angemeldeten Master-Admin
+    const myId = sessionUser ? (sessionUser.vorname+'_'+sessionUser.nachname).toLowerCase().replace(/[^a-z0-9_]/g,'') : '';
+    if (uId === myId && sessionUser.isMasterAdmin) {
+        existingRoles['masteradmin'] = true;
+    }
+
+    // Wenn keine Rollen mehr angehakt sind, bleibt die Basisrolle "mitarbeiter" erhalten
+    if (Object.keys(existingRoles).length === 0) {
+        existingRoles = { mitarbeiter: true };
+    }
+
+    // Bereinige veraltete Flags auf User-Ebene
+    const userUpdates = {
+        roles: existingRoles,
+        isAdmin: !!(existingRoles.admin || existingRoles.masteradmin),
+        isMasterAdmin: !!existingRoles.masteradmin
+    };
+
+    db.ref('data/users/' + uId).update(userUpdates).then(() => {
+        if (cachedUsers[uId]) {
+            cachedUsers[uId].roles = existingRoles;
+            cachedUsers[uId].isAdmin = userUpdates.isAdmin;
+            cachedUsers[uId].isMasterAdmin = userUpdates.isMasterAdmin;
+        }
         closeAssignRolesModal();
-        logAdminAudit('Rollen zugewiesen', `Für ${uId} von ${sessionUser.vorname} ${sessionUser.nachname}`);
+        renderAdminUserTable(cachedUsers);
+        renderStaffDirectory();
+        logAdminAudit('Rollen angepasst', `Rollen für ${uId} von ${sessionUser.vorname} ${sessionUser.nachname} gespeichert.`);
+        alert('✅ Rollen erfolgreich aktualisiert!');
     });
 }
 
@@ -3588,7 +3767,6 @@ function selectRole(roleId) {
         const allCmds = Object.assign({}, defaultCommands, sCmd.val() || {});
         let allCmdKats = isMaster ? Object.values(allCmds).map(c => c.kat || 'Allgemein') : (r.allowedCmdKats || []);
         
-        /* Automatische Dienstgrad-Rechte für Psychologie & Personal */
         if (!isMaster && (!allCmdKats || !allCmdKats.length)) {
             if (roleId === 'psychologie') allCmdKats = ['Psychologie'];
             if (roleId === 'personalabteilung') allCmdKats = ['Personal'];
@@ -3600,7 +3778,6 @@ function selectRole(roleId) {
         const allLnks = Object.assign({}, defaultLinks, sLnk.val() || {});
         let allLinkKats = isMaster ? Object.values(allLnks).map(l => l.kat || l.thema || 'Allgemein') : (r.allowedLinkKats || []);
         
-        /* Automatische Dienstgrad-Rechte für Psychologie & Personal */
         if (!isMaster && (!allLinkKats || !allLinkKats.length)) {
             if (roleId === 'psychologie') allLinkKats = ['Psychologie'];
             if (roleId === 'personalabteilung') allLinkKats = ['Personal', 'MD Intern'];
@@ -3867,6 +4044,7 @@ _w.toggleProposeNewsForm = toggleProposeNewsForm; _w.submitNewsProposal = submit
 _w.markNewsAsRead = markNewsAsRead; _w.openNewsReadersModal = openNewsReadersModal; _w.closeNewsReadersModal = closeNewsReadersModal;
 _w.openEditNewsModal = openEditNewsModal;
 _w.openChangelogModal = openChangelogModal; _w.closeChangelogModal = closeChangelogModal;
+_w.openChangelogWriterModal = openChangelogWriterModal; _w.closeChangelogWriterModal = closeChangelogWriterModal; _w.saveCustomChangelogEntry = saveCustomChangelogEntry;
 _w.openGehaltInlineModal = openGehaltInlineModal; _w.closeGehaltInlineModal = closeGehaltInlineModal; _w.saveGehaltInline = saveGehaltInline; _w.addGehaltRowInline = addGehaltRowInline; _w.removeGehaltRowInline = removeGehaltRowInline;
 _w.startExam = startExam; _w.cancelActiveExam = cancelActiveExam; _w.submitActiveExam = submitActiveExam;
 _w.addExamQuestionRow = addExamQuestionRow; _w.resetExamBuilderForm = resetExamBuilderForm; _w.neuePruefungSpeichern = neuePruefungSpeichern; _w.editExam = editExam; _w.deleteExam = deleteExam; _w.deleteExamSubmission = deleteExamSubmission;
@@ -3912,3 +4090,4 @@ _w.renderStaffPhotoAdminList = renderStaffPhotoAdminList;
 _w.downloadStaffOriginalPhoto = downloadStaffOriginalPhoto;
 _w.uploadProcessedStaffPhoto = uploadProcessedStaffPhoto;
 _w.resetStaffPhotoToDefault = resetStaffPhotoToDefault;
+_w.toggleBuilderCorrectAnswer = toggleBuilderCorrectAnswer;
