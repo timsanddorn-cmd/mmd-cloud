@@ -10,7 +10,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
-    <link rel="stylesheet" href="style.css?v=5.3">
+    <link rel="stylesheet" href="style.css?v=5.6">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏥</text></svg>">
 </head>
 <body>
@@ -337,7 +337,7 @@
                         <div class="h-card-header">Chief Physician of SAMD</div>
                         <div class="h-card-body">
                             <div class="h-row"><span class="h-label">06 Belegt von:</span><span class="h-val h-name-badge" id="disp_h_chiefphys_06">Katarina Harper</span></div>
-                            <div class="h-row"><span class="h-label">07 Belegt von:</span><span class="h-val h-name-badge" id="disp_h_chiefphys_07">Tim Sanddorn</span></div>
+                            <div class="h-row" style="margin-top:2px;"><span class="h-label">07 Belegt von:</span><span class="h-val h-name-badge" id="disp_h_chiefphys_07">Tim Sanddorn</span></div>
                             <div class="h-row"><span class="h-label">Laufbahn:</span><span class="h-val">Doctor</span></div>
                             <div class="h-row"><span class="h-label">Abteilung:</span><span class="h-val" style="font-size:11px;">06=Psychologie | 07=High Command</span></div>
                             <div class="h-row"><span class="h-label">min. Diensttage:</span><span class="h-val" style="color:var(--warning);">min. 125</span></div>
@@ -347,7 +347,7 @@
                         <div class="h-card-header">Lieutenant of SAMD</div>
                         <div class="h-card-body">
                             <div class="h-row"><span class="h-label">08 Belegt von:</span><span class="h-val h-name-badge" id="disp_h_lt_08">Aktuell nicht belegt</span></div>
-                            <div class="h-row"><span class="h-label">09 Belegt von:</span><span class="h-val h-name-badge" id="disp_h_lt_09">Aktuell nicht belegt</span></div>
+                            <div class="h-row" style="margin-top:2px;"><span class="h-label">09 Belegt von:</span><span class="h-val h-name-badge" id="disp_h_lt_09">Aktuell nicht belegt</span></div>
                             <div class="h-row"><span class="h-label">Laufbahn:</span><span class="h-val">Paramedic</span></div>
                             <div class="h-row"><span class="h-label">Abteilung:</span><span class="h-val" style="font-size:11px;">08=High Cmd | 09=High Cmd</span></div>
                             <div class="h-row"><span class="h-label">min. Diensttage:</span><span class="h-val" style="color:var(--warning);">min. 125</span></div>
@@ -610,7 +610,7 @@
 
                     <div id="instrTabInstructorAllowedExams" class="admin-subtab-content">
                         <h4 style="margin:0 0 8px 0; color:#a855f7;">🎓 Ausbildungsleitung: Mitglieder-Freigabe & Ausbilder-Rollen</h4>
-                        <p style="color:var(--text-muted); font-size:12px; margin-top:0;">Schalte neue Fraktionsmitglieder frei oder sperre den Zugriff. Rollenvergabe beschränkt auf Ausbildungs-relevante Rollen.</p>
+                        <p style="color:var(--text-muted); font-size:12px; margin-top:0;">Schalte neue Fraktionsmitglieder frei oder sperre den Zugriff. Rollenvergabe beschränkt auf Ausbildungs- und Fachabteilungs-Rollen (Ausbilder, CLS, EHK, Luftrettung, Mitarbeiter, Personalabteilung, Psychologie).</p>
                         <div class="table-responsive">
                             <table>
                                 <thead><tr><th>Mitarbeiter Name</th><th>DN</th><th>Rollen</th><th>Status</th><th style="text-align:right;">Aktion</th></tr></thead>
@@ -635,29 +635,16 @@
 
         <!-- REITER: GEHALTSTABELLE -->
         <div id="miscTab" class="tab-content">
-            <h2>💰 Gehaltstabelle (SAMD)</h2>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:10px;">
+                <h2 style="margin:0;">💰 Gehaltstabelle (SAMD)</h2>
+                <button type="button" id="btnEditGehaltInline" class="btn-inline-edit" style="display:none;" onclick="openGehaltInlineModal()" title="Gehälter & Ränge vor Ort anpassen">✏️ Gehaltstabelle anpassen</button>
+            </div>
             <div class="theme-accordion-group" id="group-gehalt" style="margin-top:14px;">
                 <div class="theme-accordion-content" style="display:block;">
                     <div class="table-responsive" style="margin:0; border:none;">
                         <table class="guide-table">
                             <thead><tr><th class="sub-head">IC Rang</th><th class="sub-head">Rang-Name</th><th class="sub-head">Command</th><th class="sub-head">pro 15 Min.</th><th class="sub-head">volle Stunde</th></tr></thead>
-                            <tbody>
-                                <tr style="background-color: var(--rank-trainee);"><td style="font-weight:bold;">Rang 1</td><td style="font-weight:bold;">Trainee</td><td>SAMD Trainee</td><td>5.500k</td><td>22.000k</td></tr>
-                                <tr style="background-color: var(--rank-trainee);"><td style="font-weight:bold;">Rang 2</td><td style="font-weight:bold;">Solo Trainee</td><td>SAMD Trainee</td><td>7.000k</td><td>28.000k</td></tr>
-                                <tr style="background-color: var(--rank-low);"><td style="font-weight:bold;">Rang 3</td><td style="font-weight:bold;">EMT</td><td>Low Command</td><td>7.500k</td><td>30.000k</td></tr>
-                                <tr style="background-color: var(--rank-low);"><td style="font-weight:bold;">Rang 4</td><td style="font-weight:bold;">A-EMT</td><td>Low Command</td><td>8.250k</td><td>33.000k</td></tr>
-                                <tr style="background-color: var(--rank-mid);"><td style="font-weight:bold;">Rang 5</td><td style="font-weight:bold;">Paramedic / Resident Phys.</td><td>Mid Command</td><td>9.500k</td><td>38.000k</td></tr>
-                                <tr style="background-color: var(--rank-mid);"><td style="font-weight:bold;">Rang 6</td><td style="font-weight:bold;">Senior Paramedic</td><td>Mid Command</td><td>11.000k</td><td>44.000k</td></tr>
-                                <tr style="background-color: var(--rank-mid);"><td style="font-weight:bold;">Rang 7</td><td style="font-weight:bold;">Physician</td><td>Mid Command</td><td>11.000k</td><td>44.000k</td></tr>
-                                <tr style="background-color: var(--rank-mid);"><td style="font-weight:bold;">Rang 8</td><td style="font-weight:bold;">Medical Supervisor</td><td>Mid Command</td><td>11.500k</td><td>46.000k</td></tr>
-                                <tr style="background-color: var(--rank-mid);"><td style="font-weight:bold;">Rang 9</td><td style="font-weight:bold;">Attending</td><td>Mid Command</td><td>11.500k</td><td>46.000k</td></tr>
-                                <tr style="background-color: var(--rank-high);"><td style="font-weight:bold;">Rang 10</td><td style="font-weight:bold;">Lieutenant / Field Op. Dir.</td><td>High Command</td><td>12.500k</td><td>50.000k</td></tr>
-                                <tr style="background-color: var(--rank-high);"><td style="font-weight:bold;">Rang 11</td><td style="font-weight:bold;">Chief Phys. / Dir. of Med. Op.</td><td>High Command</td><td>12.500k</td><td>50.000k</td></tr>
-                                <tr style="background-color: var(--rank-chief);"><td style="font-weight:bold;">Rang 12</td><td style="font-weight:bold;">Deputy Chief</td><td>Chiefebene</td><td>15.000k</td><td>60.000k</td></tr>
-                                <tr style="background-color: var(--rank-chief);"><td style="font-weight:bold;">Rang 13</td><td style="font-weight:bold;">Assistant Chief</td><td>Chiefebene</td><td>15.500k</td><td>62.000k</td></tr>
-                                <tr style="background-color: var(--rank-chief);"><td style="font-weight:bold;">Rang 14</td><td style="font-weight:bold;">Chief of SAMD</td><td>Chiefebene</td><td>16.250k</td><td>65.000k</td></tr>
-                                <tr style="background-color: var(--rank-interne);"><td style="font-weight:bold;">Rang 15</td><td style="font-weight:bold;">Interne</td><td>Interne</td><td>0</td><td>0</td></tr>
-                            </tbody>
+                            <tbody id="gehaltTableBody"></tbody>
                         </table>
                     </div>
                 </div>
@@ -672,6 +659,7 @@
                     <p style="color: var(--text-muted); font-size: 13px; margin: 4px 0 0 0;">Dienstanweisungen und Ankündigungen der Klinikleitung.</p>
                 </div>
                 <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                    <button type="button" id="btnOpenChangelogModal" class="btn-changelog-trigger" onclick="openChangelogModal()">📜 Changelog</button>
                     <button type="button" id="btnProposeNews" class="btn" style="width:auto; margin:0; padding:8px 16px; background:rgba(56,189,248,0.15); color:var(--primary); border:1px solid var(--primary); font-weight:700;" onclick="toggleProposeNewsForm()">💡 News vorschlagen</button>
                     <button type="button" id="btnOpenPostNews" class="btn" style="width: auto; margin: 0; padding: 8px 18px; background: var(--primary); color: #080c14; font-weight: 800; font-size: 13px; display: none;" onclick="togglePostNewsForm()">➕ Neue News posten</button>
                 </div>
@@ -754,6 +742,44 @@
         </div>
     </div>
 
+    <!-- MODAL POPUP: CHANGELOG HISTORIE -->
+    <div id="changelogModal" class="modal-overlay">
+        <div class="modal-card" style="max-width: 900px; width: 95vw; max-height: 90vh; overflow-y:auto;">
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:12px; margin-bottom:16px;">
+                <div>
+                    <h3 style="margin:0; color:var(--primary);">📜 MMD Cloud – Vollständiger Versions- & Entwicklungsverlauf</h3>
+                    <p style="margin:4px 0 0 0; color:var(--text-muted); font-size:12px;">Chronologische Übersicht aller Meilensteine, Funktionen und Verbesserungen des Medical Department Portals.</p>
+                </div>
+                <button type="button" class="btn-close" onclick="closeChangelogModal()">✖</button>
+            </div>
+            <div id="changelogContainer" class="changelog-timeline-list"></div>
+            <div style="display:flex; justify-content:flex-end; margin-top:20px;">
+                <button type="button" class="btn" style="width:auto; background:var(--primary); color:#080c14; font-weight:800;" onclick="closeChangelogModal()">Schließen</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL POPUP: GEHALTSTABELLE VOR ORT ANPASSEN (INLINE) -->
+    <div id="gehaltInlineModal" class="modal-overlay">
+        <div class="modal-card" style="max-width: 950px; width: 96vw; max-height: 90vh; overflow-y:auto;">
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:12px; margin-bottom:16px;">
+                <div>
+                    <h3 style="margin:0; color:var(--warning);">💰 Gehaltstabelle bearbeiten</h3>
+                    <p style="margin:4px 0 0 0; color:var(--text-muted); font-size:12px;">Passe Ränge, Bezeichnungen und Sold-Sätze direkt live für alle Medics an.</p>
+                </div>
+                <button type="button" class="btn-close" onclick="closeGehaltInlineModal()">✖</button>
+            </div>
+            <div id="gehaltInlineContainer" style="display:flex; flex-direction:column; gap:10px;"></div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px; border-top:1px solid var(--border); padding-top:14px;">
+                <button type="button" class="btn" style="width:auto; background:rgba(56,189,248,0.15); color:var(--primary); border:1px solid var(--primary); font-weight:800;" onclick="addGehaltRowInline()">➕ Rang hinzufügen</button>
+                <div style="display:flex; gap:10px;">
+                    <button type="button" class="btn" style="width:auto; background:var(--text-muted);" onclick="closeGehaltInlineModal()">Abbrechen</button>
+                    <button type="button" class="btn" style="width:auto; background:var(--success); color:#080c14; font-weight:800;" onclick="saveGehaltInline()">💾 Tabelle speichern</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- MODAL POPUP: PATIENT EDITIEREN -->
     <div id="editModal" class="modal-overlay">
         <div class="modal-card">
@@ -820,7 +846,7 @@
 
     <!-- MODAL POPUP: KALENDER-TERMIN ERSTELLEN / BEARBEITEN -->
     <div id="calendarEventModal" class="modal-overlay">
-        <div class="modal-card" style="max-width: 600px; width: 95vw; max-height: 90vh; overflow-y:auto;">
+        <div class="modal-card" style="max-width: 620px; width: 95vw; max-height: 90vh; overflow-y:auto;">
             <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:12px; margin-bottom:16px;">
                 <h3 style="margin:0; color:var(--primary);" id="calendarEventModalHeading">📅 Neuen Kalender Termin eintragen</h3>
                 <button type="button" class="btn-close" onclick="closeCalendarEventModal()">✖</button>
@@ -837,9 +863,16 @@
                         <input type="time" id="calEventTime" value="20:00" required>
                     </div>
                     <div>
-                        <label for="calEventCreatorSelection">Ersteller / Bereich:</label>
-                        <select id="calEventCreatorSelection"></select>
+                        <label for="calEventCreatorSelection">Bereich / Abteilung:</label>
+                        <select id="calEventCreatorSelection" onchange="handleCalendarCreatorSelectionChange()"></select>
                     </div>
+                </div>
+
+                <!-- Dynamisches Ersteller-Unterfeld: Wer aus der Abteilung setzt den Termin an -->
+                <div id="calEventSubCreatorContainer" style="display:none; margin-top:10px; background:rgba(30,41,59,0.35); border:1px solid var(--border); border-radius:10px; padding:10px;">
+                    <label for="calEventSubCreatorName" style="margin-top:0; color:var(--primary);">👤 Ansprechpartner / Name des Erstellers:</label>
+                    <input type="text" id="calEventSubCreatorName" placeholder="Z.B. Tim Sanddorn oder Vorname Nachname">
+                    <span style="font-size:11px; color:var(--text-muted); display:block; margin-top:4px;">Wird als zuständige Kontaktperson für diesen Termin angezeigt.</span>
                 </div>
 
                 <div id="calEventRepeatContainer" style="margin-top:10px;">
@@ -907,7 +940,7 @@
         </div>
     </div>
 
-    <!-- NEUES MODAL: FOTO EINREICHEN (MITARBEITER) -->
+    <!-- MODAL: FOTO EINREICHEN (MITARBEITER) -->
     <div id="staffPhotoUploadModal" class="modal-overlay">
         <div class="modal-card" style="max-width: 620px; width: 95vw; max-height: 90vh; overflow-y:auto;">
             <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:12px; margin-bottom:16px;">
@@ -932,7 +965,7 @@
                     <p style="margin:0; font-size:12px; color:var(--primary);"><b>Dienstnummer:</b> <span id="staffUploadMedicDN">--</span></p>
                 </div>
 
-                <label for="staffPhotoFileInput">Foto auswählen (JPG / PNG):</label>
+                <label for="staffPhotoFileInput">Foto auswählen (JPG / PNG / WebP):</label>
                 <input type="file" id="staffPhotoFileInput" accept="image/*" required onchange="previewStaffPhotoUpload(event)">
                 
                 <div id="staffPhotoPreviewContainer" style="display:none; margin-top:14px; text-align:center;">
@@ -948,7 +981,7 @@
         </div>
     </div>
 
-    <!-- NEUES MODAL: FOTO-ORDNER DER ADMINS & PERSONALABTEILUNG -->
+    <!-- MODAL: FOTO-ORDNER DER ADMINS & PERSONALABTEILUNG -->
     <div id="staffPhotoAdminModal" class="modal-overlay">
         <div class="modal-card" style="max-width: 1150px; width: 96vw; max-height: 92vh; overflow-y:auto;">
             <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:12px; margin-bottom:16px;">
@@ -1086,7 +1119,7 @@
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:12px;">
                         <div>
                             <h3 style="margin:0; color:var(--primary); font-size:16px;">🎭 Rollen & Berechtigungs-Matrix</h3>
-                            <span style="color:var(--text-muted); font-size:12px;">Thematisch strukturierte Modulrechte, Löschberechtigungen und Kategoriensichtbarkeiten</span>
+                            <span style="color:var(--text-muted); font-size:12px;">Verständliche Funktionsrechte und Schutzeinstellungen für jeden Dienstgrad</span>
                         </div>
                         <button type="button" class="btn" style="width:auto; margin:0; padding:8px 18px; background:var(--success); color:#080c14; font-weight:800;" onclick="neueRolleErstellen()">➕ Neue Rolle erstellen</button>
                     </div>
@@ -1111,70 +1144,70 @@
                                 <div>
                                     <h5 style="margin:0 0 10px 0; color:var(--warning); font-size:13px; text-transform:uppercase;">🛡️ System & Administration</h5>
                                     <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:10px;">
-                                        <div class="role-perm-box"><label for="roleFlagAdmin" class="perm-check"><input type="checkbox" id="roleFlagAdmin"> <b>Admin-Zugang</b></label><span class="perm-desc">Darf das Admin-Menü öffnen.</span></div>
-                                        <div class="role-perm-box"><label for="roleFlagMasterAdmin" class="perm-check"><input type="checkbox" id="roleFlagMasterAdmin"> <b>👑 Master-Admin</b></label><span class="perm-desc">Vollzugriff inkl. Rollen & Backups.</span></div>
-                                        <div class="role-perm-box"><label for="delFlagUsers" class="perm-check"><input type="checkbox" id="delFlagUsers"> <b>🗑️ Accounts löschen</b></label><span class="perm-desc">Darf Mitarbeiterkonten entfernen.</span></div>
+                                        <div class="role-perm-box"><label for="roleFlagAdmin" class="perm-check"><input type="checkbox" id="roleFlagAdmin"> <b>Admin-Zugang</b></label><span class="perm-desc">Darf das Admin-Menü (🔑) öffnen und Mitarbeiter freischalten.</span></div>
+                                        <div class="role-perm-box"><label for="roleFlagMasterAdmin" class="perm-check"><input type="checkbox" id="roleFlagMasterAdmin"> <b>👑 Master-Admin</b></label><span class="perm-desc">Höchste Stufe: Voller Zugriff, Bearbeitungsstifte überall, Rollenverwaltung & Backups.</span></div>
+                                        <div class="role-perm-box"><label for="delFlagUsers" class="perm-check"><input type="checkbox" id="delFlagUsers"> <b>🗑️ Accounts löschen</b></label><span class="perm-desc">Darf Mitarbeiterkonten unwiderruflich aus der Datenbank entfernen.</span></div>
                                     </div>
                                 </div>
 
                                 <div>
                                     <h5 style="margin:0 0 10px 0; color:var(--primary); font-size:13px; text-transform:uppercase;">📝 Einsatz, Preise & Archiv</h5>
                                     <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:10px;">
-                                        <div class="role-perm-box"><label for="roleFlagEditPrices" class="perm-check"><input type="checkbox" id="roleFlagEditPrices"> <b>✏️ Preise anpassen</b></label><span class="perm-desc">Materialpreise vor Ort ändern.</span></div>
-                                        <div class="role-perm-box"><label for="roleFlagArchive" class="perm-check"><input type="checkbox" id="roleFlagArchive"> <b>🗄️ Schicht-Archiv</b></label><span class="perm-desc">Wochen-Gesamtarchiv einsehen.</span></div>
-                                        <div class="role-perm-box"><label for="delFlagPatient" class="perm-check"><input type="checkbox" id="delFlagPatient"> <b>🗑️ Patienten löschen</b></label><span class="perm-desc">Protokolleinträge entfernen.</span></div>
-                                        <div class="role-perm-box"><label for="delFlagArchiv" class="perm-check"><input type="checkbox" id="delFlagArchiv"> <b>🗑️ Archive löschen</b></label><span class="perm-desc">Schichten unwiderruflich löschen.</span></div>
+                                        <div class="role-perm-box"><label for="roleFlagEditPrices" class="perm-check"><input type="checkbox" id="roleFlagEditPrices"> <b>✏️ Preise anpassen</b></label><span class="perm-desc">Sieht das Stiftsymbol im Einsatzbereich zur Anpassung der Materialpreise.</span></div>
+                                        <div class="role-perm-box"><label for="roleFlagArchive" class="perm-check"><input type="checkbox" id="roleFlagArchive"> <b>🗄️ Schicht-Archiv</b></label><span class="perm-desc">Darf die archivierten Wochenschichten einsehen und als CSV herunterladen.</span></div>
+                                        <div class="role-perm-box"><label for="delFlagPatient" class="perm-check"><input type="checkbox" id="delFlagPatient"> <b>🗑️ Patienten löschen</b></label><span class="perm-desc">Darf fehlerhafte Patienteneinträge aus dem heutigen Protokoll löschen.</span></div>
+                                        <div class="role-perm-box"><label for="delFlagArchiv" class="perm-check"><input type="checkbox" id="delFlagArchiv"> <b>🗑️ Archive löschen</b></label><span class="perm-desc">Darf ganze Schichteinträge aus dem Wochenarchiv entfernen.</span></div>
                                     </div>
                                 </div>
 
                                 <div>
                                     <h5 style="margin:0 0 10px 0; color:var(--primary); font-size:13px; text-transform:uppercase;">👥 Mitarbeiter-Fotos & Kartei</h5>
                                     <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:10px;">
-                                        <div class="role-perm-box"><label for="roleFlagManagePhotos" class="perm-check"><input type="checkbox" id="roleFlagManagePhotos"> <b>📁 Foto-Ordner Zugriff</b></label><span class="perm-desc">Originalfotos herunterladen & bearbeitete Fotos einsetzen.</span></div>
+                                        <div class="role-perm-box"><label for="roleFlagManagePhotos" class="perm-check"><input type="checkbox" id="roleFlagManagePhotos"> <b>📁 Foto-Ordner Zugriff</b></label><span class="perm-desc">Darf Rohfotos herunterladen und fertige Mitarbeiterbilder mit Logo einsetzen.</span></div>
                                     </div>
                                 </div>
 
                                 <div>
                                     <h5 style="margin:0 0 10px 0; color:var(--primary); font-size:13px; text-transform:uppercase;">📅 Kalender & Termine</h5>
                                     <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:10px;">
-                                        <div class="role-perm-box"><label for="roleFlagCreateCalendar" class="perm-check"><input type="checkbox" id="roleFlagCreateCalendar"> <b>Termine erstellen</b></label><span class="perm-desc">Neue Kalendereinträge anlegen.</span></div>
-                                        <div class="role-perm-box"><label for="delFlagCalendar" class="perm-check"><input type="checkbox" id="delFlagCalendar"> <b>🗑️ Termine löschen</b></label><span class="perm-desc">Kalendereinträge entfernen.</span></div>
+                                        <div class="role-perm-box"><label for="roleFlagCreateCalendar" class="perm-check"><input type="checkbox" id="roleFlagCreateCalendar"> <b>Termine erstellen</b></label><span class="perm-desc">Darf neue Termine und Besprechungen in den Dienstkalender eintragen.</span></div>
+                                        <div class="role-perm-box"><label for="delFlagCalendar" class="perm-check"><input type="checkbox" id="delFlagCalendar"> <b>🗑️ Termine löschen</b></label><span class="perm-desc">Darf auch Termine anderer Abteilungen dauerhaft aus dem Kalender entfernen.</span></div>
                                     </div>
                                 </div>
 
                                 <div>
                                     <h5 style="margin:0 0 10px 0; color:var(--success); font-size:13px; text-transform:uppercase;">📢 News & Schwarzes Brett</h5>
                                     <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:10px;">
-                                        <div class="role-perm-box"><label for="roleFlagPostNews" class="perm-check"><input type="checkbox" id="roleFlagPostNews"> <b>News direkt posten</b></label><span class="perm-desc">Ohne Freigabe veröffentlichen.</span></div>
-                                        <div class="role-perm-box"><label for="roleFlagApproveNews" class="perm-check"><input type="checkbox" id="roleFlagApproveNews"> <b>Vorschläge annehmen</b></label><span class="perm-desc">Mitarbeiter-News freigeben.</span></div>
-                                        <div class="role-perm-box"><label for="roleFlagViewNewsRead" class="perm-check"><input type="checkbox" id="roleFlagViewNewsRead"> <b>👁️ Gelesen-Liste</b></label><span class="perm-desc">Sieht wer die News gelesen hat.</span></div>
-                                        <div class="role-perm-box"><label for="delFlagNews" class="perm-check"><input type="checkbox" id="delFlagNews"> <b>🗑️ News löschen</b></label><span class="perm-desc">Beiträge dauerhaft entfernen.</span></div>
+                                        <div class="role-perm-box"><label for="roleFlagPostNews" class="perm-check"><input type="checkbox" id="roleFlagPostNews"> <b>News direkt posten</b></label><span class="perm-desc">Darf Dienstanweisungen ohne vorherige Prüfung sofort veröffentlichen.</span></div>
+                                        <div class="role-perm-box"><label for="roleFlagApproveNews" class="perm-check"><input type="checkbox" id="roleFlagApproveNews"> <b>Vorschläge annehmen</b></label><span class="perm-desc">Darf eingereichte News-Vorschläge normaler Mitarbeiter prüfen und freigeben.</span></div>
+                                        <div class="role-perm-box"><label for="roleFlagViewNewsRead" class="perm-check"><input type="checkbox" id="roleFlagViewNewsRead"> <b>👁️ Gelesen-Liste</b></label><span class="perm-desc">Sieht mit einem Klick genau, welche Mitarbeiter die News bereits bestätigt haben.</span></div>
+                                        <div class="role-perm-box"><label for="delFlagNews" class="perm-check"><input type="checkbox" id="delFlagNews"> <b>🗑️ News löschen</b></label><span class="perm-desc">Darf Beiträge dauerhaft vom Schwarzen Brett entfernen.</span></div>
                                     </div>
                                 </div>
 
                                 <div>
                                     <h5 style="margin:0 0 10px 0; color:#c084fc; font-size:13px; text-transform:uppercase;">🎓 Ausbildung & Prüfungen</h5>
                                     <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:10px;">
-                                        <div class="role-perm-box"><label for="roleFlagInstructor" class="perm-check"><input type="checkbox" id="roleFlagInstructor"> <b>Ausbilder-Modus</b></label><span class="perm-desc">Freischalten bestandener Prüfungen.</span></div>
-                                        <div class="role-perm-box"><label for="roleFlagManageInstructors" class="perm-check"><input type="checkbox" id="roleFlagManageInstructors"> <b>⚙️ Ausbildungsleitung</b></label><span class="perm-desc">Vergabe von Ausbilderrollen.</span></div>
-                                        <div class="role-perm-box"><label for="roleFlagManageExams" class="perm-check"><input type="checkbox" id="roleFlagManageExams"> <b>✏️ Prüfungen bauen</b></label><span class="perm-desc">Prüfungen & Fragen anlegen/editieren.</span></div>
-                                        <div class="role-perm-box"><label for="delFlagExams" class="perm-check"><input type="checkbox" id="delFlagExams"> <b>🗑️ Prüfungen löschen</b></label><span class="perm-desc">Prüfungen & Ergebnisse löschen.</span></div>
+                                        <div class="role-perm-box"><label for="roleFlagInstructor" class="perm-check"><input type="checkbox" id="roleFlagInstructor"> <b>Ausbilder-Modus</b></label><span class="perm-desc">Öffnet den Ausbilder-Bereich: Darf bestandene Prüfungen für Schüler freischalten.</span></div>
+                                        <div class="role-perm-box"><label for="roleFlagManageInstructors" class="perm-check"><input type="checkbox" id="roleFlagManageInstructors"> <b>⚙️ Ausbildungsleitung</b></label><span class="perm-desc">Darf Mitarbeiter freischalten und Fachrollen (Ausbilder, CLS, EHK, etc.) vergeben.</span></div>
+                                        <div class="role-perm-box"><label for="roleFlagManageExams" class="perm-check"><input type="checkbox" id="roleFlagManageExams"> <b>✏️ Prüfungen bauen</b></label><span class="perm-desc">Darf Fragenkataloge, Prüfungen und Bestehensquoten neu anlegen oder ändern.</span></div>
+                                        <div class="role-perm-box"><label for="delFlagExams" class="perm-check"><input type="checkbox" id="delFlagExams"> <b>🗑️ Prüfungen löschen</b></label><span class="perm-desc">Darf Prüfungen und absolvierte Prüfungsprotokolle dauerhaft löschen.</span></div>
                                     </div>
                                 </div>
 
                                 <div>
                                     <h5 style="margin:0 0 10px 0; color:var(--text-main); font-size:13px; text-transform:uppercase;">📋 Funk & Codes</h5>
                                     <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:10px;">
-                                        <div class="role-perm-box"><label for="roleFlagEditGuide" class="perm-check"><input type="checkbox" id="roleFlagEditGuide"> <b>✏️ Codes bearbeiten</b></label><span class="perm-desc">Codes vor Ort bearbeiten.</span></div>
-                                        <div class="role-perm-box"><label for="delFlagGuide" class="perm-check"><input type="checkbox" id="delFlagGuide"> <b>🗑️ Codes löschen</b></label><span class="perm-desc">Codes-Einträge entfernen.</span></div>
+                                        <div class="role-perm-box"><label for="roleFlagEditGuide" class="perm-check"><input type="checkbox" id="roleFlagEditGuide"> <b>✏️ Codes bearbeiten</b></label><span class="perm-desc">Darf Ten-Codes, Status-Codes und Streifenbelegungen live editieren.</span></div>
+                                        <div class="role-perm-box"><label for="delFlagGuide" class="perm-check"><input type="checkbox" id="delFlagGuide"> <b>🗑️ Codes löschen</b></label><span class="perm-desc">Darf einzelne Funk-Code-Zeilen dauerhaft entfernen.</span></div>
                                     </div>
                                 </div>
 
                                 <div>
                                     <h5 style="margin:0 0 10px 0; color:var(--primary); font-size:13px; text-transform:uppercase;">💻 Commands (Verwaltung & Sichtbare Kategorien)</h5>
                                     <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:10px; margin-bottom:10px;">
-                                        <div class="role-perm-box"><label for="roleFlagEditCommands" class="perm-check"><input type="checkbox" id="roleFlagEditCommands"> <b>✏️ Commands bearbeiten</b></label><span class="perm-desc">Befehle anlegen und ändern.</span></div>
-                                        <div class="role-perm-box"><label for="delFlagCommands" class="perm-check"><input type="checkbox" id="delFlagCommands"> <b>🗑️ Commands löschen</b></label><span class="perm-desc">Commands entfernen.</span></div>
+                                        <div class="role-perm-box"><label for="roleFlagEditCommands" class="perm-check"><input type="checkbox" id="roleFlagEditCommands"> <b>✏️ Commands bearbeiten</b></label><span class="perm-desc">Darf neue Chatbefehle anlegen und Texte im laufenden Betrieb ändern.</span></div>
+                                        <div class="role-perm-box"><label for="delFlagCommands" class="perm-check"><input type="checkbox" id="delFlagCommands"> <b>🗑️ Commands löschen</b></label><span class="perm-desc">Darf Chatbefehle dauerhaft entfernen.</span></div>
                                     </div>
                                     <span style="font-size:12px; font-weight:700; color:var(--text-muted); display:block; margin-bottom:6px;">Sichtbare Kategorien für diese Rolle (Leer lassen = Alle Kategorien sichtbar):</span>
                                     <div id="roleCommandsCategoriesContainer" style="display:flex; flex-wrap:wrap; gap:8px; background:rgba(8,12,20,0.5); padding:10px; border-radius:8px; border:1px solid var(--border);"></div>
@@ -1183,8 +1216,8 @@
                                 <div>
                                     <h5 style="margin:0 0 10px 0; color:var(--primary); font-size:13px; text-transform:uppercase;">🔗 Links & Dokumente (Verwaltung & Sichtbare Kategorien)</h5>
                                     <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:10px; margin-bottom:10px;">
-                                        <div class="role-perm-box"><label for="roleFlagEditLinks" class="perm-check"><input type="checkbox" id="roleFlagEditLinks"> <b>✏️ Links bearbeiten</b></label><span class="perm-desc">Links anlegen und ändern.</span></div>
-                                        <div class="role-perm-box"><label for="delFlagLinks" class="perm-check"><input type="checkbox" id="delFlagLinks"> <b>🗑️ Links löschen</b></label><span class="perm-desc">Links entfernen.</span></div>
+                                        <div class="role-perm-box"><label for="roleFlagEditLinks" class="perm-check"><input type="checkbox" id="roleFlagEditLinks"> <b>✏️ Links bearbeiten</b></label><span class="perm-desc">Darf Leitfäden, Google Docs und Lesezeichen im laufenden Betrieb anpassen.</span></div>
+                                        <div class="role-perm-box"><label for="delFlagLinks" class="perm-check"><input type="checkbox" id="delFlagLinks"> <b>🗑️ Links löschen</b></label><span class="perm-desc">Darf Dokumentenlinks dauerhaft entfernen.</span></div>
                                     </div>
                                     <span style="font-size:12px; font-weight:700; color:var(--text-muted); display:block; margin-bottom:6px;">Sichtbare Kategorien für diese Rolle (Leer lassen = Alle Kategorien sichtbar):</span>
                                     <div id="roleLinksCategoriesContainer" style="display:flex; flex-wrap:wrap; gap:8px; background:rgba(8,12,20,0.5); padding:10px; border-radius:8px; border:1px solid var(--border);"></div>
@@ -1275,7 +1308,7 @@
         </div>
     </div>
 
-    <!-- MODAL: ROLLEN ZUWEISEN -->
+    <!-- MODAL: ROLLEN ZUWEISEN (MIT SELBSTAUSSCHLUSS-SCHUTZ) -->
     <div id="assignRolesModal" class="modal-overlay">
         <div class="modal-card" style="max-width: 480px;">
             <h3 style="margin-top:0; color:var(--primary);">🎭 Rollen zuweisen</h3>
@@ -1300,6 +1333,6 @@
         </div>
     </div>
 
-    <script src="app.js?v=5.3"></script>
+    <script src="app.js?v=5.6"></script>
 </body>
 </html>

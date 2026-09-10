@@ -1,7 +1,18 @@
 // ============================================================
-//  MMD CLOUD – Medical Center Web-App  |  app.js  v5.3
+//  MMD CLOUD – Medical Center Web-App  |  app.js  v5.6
 //  Firebase Realtime Database (Compat SDK v10)
 // ============================================================
+
+/* ── XSS-Schutz: HTML Sanitization Helper ───────────────────── */
+function escapeHtml(str) {
+    if (str === null || str === undefined) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
 
 /* ── Fallback Icon (Inline SVG, verhindert Endlosschleifen & Blinken) ── */
 const DEFAULT_MD_LOGO_FALLBACK = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%230f172a'/><path d='M42 20h16v22h22v16H58v22H42V58H20V42h22V20z' fill='%2338bdf8'/><circle cx='50' cy='50' r='46' fill='none' stroke='%2338bdf8' stroke-width='4'/></svg>";
@@ -36,8 +47,99 @@ let currentCalYear  = new Date().getFullYear();
 let currentCalMonth = new Date().getMonth();
 let activeDetailEventId = null;
 
+/* ── Vollständiger Gesamt-Changelog (Entwicklungsverlauf) ───── */
+const systemChangelogs = [
+    {
+        version: "v5.6",
+        date: "10.09.2026",
+        category: "Update",
+        title: "Changelog-System, Dynamische Gehaltstabelle & Kalender-Upgrade",
+        changes: [
+            "Offizieller Änderungsverlauf (Changelog) mit separatem Infofenster für alle Mitarbeiter eingeführt.",
+            "Gehaltstabelle vollständig dynamisiert: Ränge, Befehle und Sold-Sätze können von der Leitung nun direkt vor Ort per Stiftsymbol ohne Programmieraufwand gepflegt werden.",
+            "Kalender-Bug behoben: Beim Bearbeiten bestehender Termine wird der Eintrag nun direkt aktualisiert, anstatt als Duplikat neu angelegt zu werden.",
+            "Ersteller-Unterfeld im Kalender: Bei Terminen für Fachbereiche (Psychologie, Personal, Leitung etc.) kann nun direkt die zuständige Kontaktperson eingetragen werden.",
+            "Erweiterte Rechte für die Ausbildungsleitung: Die Ausbildungsleitung kann nun auch die Rollen Personalabteilung und Psychologie vergeben. Leitungsrollen bleiben geschützt.",
+            "Schutz vor versehentlichem Selbstausschluss: Master-Admins können sich im Rechtemenü nicht mehr unabsichtlich selbst die Administrationsrechte entziehen.",
+            "Automatische Zuordnung passender Abteilungs-Kategorien bei Vergabe von Fachbereichs-Rollen."
+        ]
+    },
+    {
+        version: "v5.5",
+        date: "04.09.2026",
+        category: "Neue Funktion",
+        title: "Interaktiver Monatskalender & Mitarbeiter-Fotostudio",
+        changes: [
+            "Neuer interaktiver Monatskalender mit Wochenübersicht, Serienterminen und rollenbasierten Sichtbarkeitsfiltern.",
+            "Private Kalendereinträge: Notizen und Schichttermine können auf Wunsch nur für das eigene Profil sichtbar gespeichert werden.",
+            "Mitarbeiter-Kartei mit Foto-Einreichung: Mitarbeiter können Bilder vor neutraler Wand hochladen; Bilder werden automatisch browserseitig für optimale Ladezeiten komprimiert.",
+            "Foto-Ordner für Admins & Personalabteilung zur finalen Freistellung und Einbindung des MD-Dienstlogos."
+        ]
+    },
+    {
+        version: "v5.0",
+        date: "28.08.2026",
+        category: "Update",
+        title: "Digitaler Ausbildungsbereich & Prüfungssystem",
+        changes: [
+            "Einführung von Online-Prüfungen (GA1, GA2, Dienstvorschriften, Paramedic & Arzt-Prüfungen) mit Live-Timer und automatischer Auswertung.",
+            "Ausbilder-Modul zur individuellen Prüfungsfreigabe und Einsicht detaillierter Antwortbögen.",
+            "Prüfungs-Baukasten: Ausbildungsleitung kann neue Prüfungen mit variablen Bestehensquoten direkt im Portal erstellen."
+        ]
+    },
+    {
+        version: "v4.0",
+        date: "14.08.2026",
+        category: "Neue Funktion",
+        title: "Hierarchie-Board & Inline-Editing (No-Code)",
+        changes: [
+            "Interaktive Dienstgrad- und Abteilungsübersicht (Chief, High Command, Fachabteilungen).",
+            "Einführung des Master-Admin-Stiftsymbols: Dienstvorschriften, Links, Funkcodes und Commands können direkt an Ort und Stelle live angepasst werden."
+        ]
+    },
+    {
+        version: "v3.0",
+        date: "01.08.2026",
+        category: "Update",
+        title: "Echtzeit-Statistiken & Atomares Mitternachts-Archiv",
+        changes: [
+            "Einsatzprotokoll mit automatischer Materialberechnung und Ausgaben-Kalkulation.",
+            "Automatischer Schicht-Abschluss um Mitternacht mit atomarer Transaktion zur Verhinderung von doppelten Archivierungen bei parallelem Dienst.",
+            "Wochen-Archiv mit detaillierter Materialverbrauchs-Aufschlüsselung und CSV-Export."
+        ]
+    },
+    {
+        version: "v1.0",
+        date: "18.07.2026",
+        category: "Neue Funktion",
+        title: "Offizieller Start der MMD Cloud",
+        changes: [
+            "Grundsteinlegung des Medical Department Portals: Authentifizierung, Live-Präsenzanzeige im Dienst und digitales Patienten-Einsatzprotokoll."
+        ]
+    }
+];
+
+/* ── Standard-Gehaltstabelle ───────────────────────────────── */
+const defaultGehaltData = [
+    { id: "g_1",  rang: "Rang 1",  name: "Trainee",                      command: "SAMD Trainee", q15: "5.500k",  h1: "22.000k", styleVar: "var(--rank-trainee)" },
+    { id: "g_2",  rang: "Rang 2",  name: "Solo Trainee",                 command: "SAMD Trainee", q15: "7.000k",  h1: "28.000k", styleVar: "var(--rank-trainee)" },
+    { id: "g_3",  rang: "Rang 3",  name: "EMT",                          command: "Low Command",  q15: "7.500k",  h1: "30.000k", styleVar: "var(--rank-low)" },
+    { id: "g_4",  rang: "Rang 4",  name: "A-EMT",                        command: "Low Command",  q15: "8.250k",  h1: "33.000k", styleVar: "var(--rank-low)" },
+    { id: "g_5",  rang: "Rang 5",  name: "Paramedic / Resident Phys.",    command: "Mid Command",  q15: "9.500k",  h1: "38.000k", styleVar: "var(--rank-mid)" },
+    { id: "g_6",  rang: "Rang 6",  name: "Senior Paramedic",             command: "Mid Command",  q15: "11.000k", h1: "44.000k", styleVar: "var(--rank-mid)" },
+    { id: "g_7",  rang: "Rang 7",  name: "Physician",                    command: "Mid Command",  q15: "11.000k", h1: "44.000k", styleVar: "var(--rank-mid)" },
+    { id: "g_8",  rang: "Rang 8",  name: "Medical Supervisor",           command: "Mid Command",  q15: "11.500k", h1: "46.000k", styleVar: "var(--rank-mid)" },
+    { id: "g_9",  rang: "Rang 9",  name: "Attending",                    command: "Mid Command",  q15: "11.500k", h1: "46.000k", styleVar: "var(--rank-mid)" },
+    { id: "g_10", rang: "Rang 10", name: "Lieutenant / Field Op. Dir.",   command: "High Command", q15: "12.500k", h1: "50.000k", styleVar: "var(--rank-high)" },
+    { id: "g_11", rang: "Rang 11", name: "Chief Phys. / Dir. of Med. Op.",command: "High Command", q15: "12.500k", h1: "50.000k", styleVar: "var(--rank-high)" },
+    { id: "g_12", rang: "Rang 12", name: "Deputy Chief",                 command: "Chiefebene",   q15: "15.000k", h1: "60.000k", styleVar: "var(--rank-chief)" },
+    { id: "g_13", rang: "Rang 13", name: "Assistant Chief",              command: "Chiefebene",   q15: "15.500k", h1: "62.000k", styleVar: "var(--rank-chief)" },
+    { id: "g_14", rang: "Rang 14", name: "Chief of SAMD",                 command: "Chiefebene",   q15: "16.250k", h1: "65.000k", styleVar: "var(--rank-chief)" },
+    { id: "g_15", rang: "Rang 15", name: "Interne",                      command: "Interne",      q15: "0",       h1: "0",       styleVar: "var(--rank-interne)" }
+];
+let cachedGehaltData = JSON.parse(JSON.stringify(defaultGehaltData));
+
 /* ── Standard-Rollen & granulare Berechtigungen ───────────── */
-// Alle Rollen erhalten standardmäßig Kalender-Erstellrechte (canCreateCalendar: true)
 const defaultRoles = {
     masteradmin: {
         id:'masteradmin', name:'Master-Admin', color:'#eab308', icon:'👑', isSystem:true,
@@ -101,6 +203,26 @@ const defaultRoles = {
         canPostNews:false, canApproveNews:false, canViewNewsRead:false,
         canEditPrices:false, canEditGuide:false, canEditCommands:false, canEditLinks:false,
         delPatient:false, delArchiv:false, delGuide:false, delCommands:false, delLinks:false, delNews:false, delExams:false, delUsers:false
+    },
+    psychologie: {
+        id:'psychologie', name:'Psychologie', color:'#f59e0b', icon:'🧠', isSystem:true,
+        isAdmin:false, isMasterAdmin:false, canViewArchive:false,
+        canCreateCalendar:true, delCalendar:false, canManagePhotos:false,
+        isInstructor:false, canManageInstructors:false, canManageExams:false,
+        canPostNews:false, canApproveNews:false, canViewNewsRead:false,
+        canEditPrices:false, canEditGuide:false, canEditCommands:false, canEditLinks:false,
+        delPatient:false, delArchiv:false, delGuide:false, delCommands:false, delLinks:false, delNews:false, delExams:false, delUsers:false,
+        allowedCmdKats: ['Psychologie'], allowedLinkKats: ['Psychologie']
+    },
+    personalabteilung: {
+        id:'personalabteilung', name:'Personalabteilung', color:'#ec4899', icon:'💼', isSystem:true,
+        isAdmin:false, isMasterAdmin:false, canViewArchive:false,
+        canCreateCalendar:true, delCalendar:false, canManagePhotos:true,
+        isInstructor:false, canManageInstructors:false, canManageExams:false,
+        canPostNews:false, canApproveNews:false, canViewNewsRead:false,
+        canEditPrices:false, canEditGuide:false, canEditCommands:false, canEditLinks:false,
+        delPatient:false, delArchiv:false, delGuide:false, delCommands:false, delLinks:false, delNews:false, delExams:false, delUsers:false,
+        allowedCmdKats: ['Personal'], allowedLinkKats: ['Personal', 'MD Intern']
     },
     mitarbeiter: {
         id:'mitarbeiter', name:'Mitarbeiter', color:'#64748b', icon:'👨‍⚕️', isSystem:true,
@@ -340,9 +462,10 @@ function getUserRolesList(user) {
         else if (typeof user.roles === 'object') list = Object.keys(user.roles).filter(k => user.roles[k] === true);
     }
     const v = (user.vorname||'').trim().toLowerCase(), n = (user.nachname||'').trim().toLowerCase();
-    if (v === 'tim' && n === 'sanddorn' && !list.includes('masteradmin')) list.unshift('masteradmin');
-    if (user.isMasterAdmin && !list.includes('masteradmin')) list.unshift('masteradmin');
-    else if (user.isAdmin && !list.includes('admin') && !list.includes('masteradmin')) list.push('admin');
+    if ((user.isMasterAdmin || (v === 'tim' && n === 'sanddorn')) && !list.includes('masteradmin')) {
+        list.unshift('masteradmin');
+    }
+    if (user.isAdmin && !list.includes('admin') && !list.includes('masteradmin')) list.push('admin');
     if (user.canManageInstructors && !list.includes('ausbildungsleitung')) list.push('ausbildungsleitung');
     else if (user.isInstructor && !list.includes('ausbilder') && !list.includes('ausbildungsleitung')) list.push('ausbilder');
     return [...new Set(list)];
@@ -351,7 +474,7 @@ function getUserRolesList(user) {
 function getUserEffectivePermissions(user) {
     const eff = {
         isAdmin:false, isMasterAdmin:false, canViewArchive:false,
-        canCreateCalendar:true, delCalendar:false, canManagePhotos:false, // Jeder darf Termine anlegen
+        canCreateCalendar:true, delCalendar:false, canManagePhotos:false,
         isInstructor:false, canManageInstructors:false, canManageExams:false,
         canPostNews:false, canApproveNews:false, canViewNewsRead:false,
         canEditPrices:false, canEditGuide:false, canEditCommands:false, canEditLinks:false,
@@ -381,7 +504,7 @@ function getUserEffectivePermissions(user) {
     });
 
     const v = (user.vorname||'').trim().toLowerCase(), n = (user.nachname||'').trim().toLowerCase();
-    if (v === 'tim' && n === 'sanddorn') {
+    if (user.isMasterAdmin || (v === 'tim' && n === 'sanddorn')) {
         Object.keys(eff).forEach(k => {
             if (k !== 'allowedCmdKats' && k !== 'allowedLinkKats') eff[k] = true;
         });
@@ -411,12 +534,12 @@ function renderUserRoleBadges(user, isTopBar = false) {
     if (isTopBar && roleIds.length > 2) {
         const topRoles = roleIds.slice(0, 2);
         const remaining = roleIds.length - 2;
-        const allNames = roleIds.map(rId => (cachedRoles[rId] || defaultRoles[rId])?.name || rId).join(', ');
+        const allNames = escapeHtml(roleIds.map(rId => (cachedRoles[rId] || defaultRoles[rId])?.name || rId).join(', '));
         const badgesHtml = topRoles.map(rId => {
             const r = cachedRoles[rId] || defaultRoles[rId];
             if (!r) return '';
             const c = r.color || '#38bdf8';
-            return `<span class="user-role-badge" style="background:${c}22;color:${c};border:1px solid ${c}44;font-size:11px;padding:2px 8px;border-radius:6px;white-space:nowrap;">${r.icon ? r.icon + ' ' : ''}${r.name}</span>`;
+            return `<span class="user-role-badge" style="background:${c}22;color:${c};border:1px solid ${c}44;font-size:11px;padding:2px 8px;border-radius:6px;white-space:nowrap;">${r.icon ? r.icon + ' ' : ''}${escapeHtml(r.name)}</span>`;
         }).join('');
         return badgesHtml + `<span class="user-role-badge" title="${allNames}" style="background:rgba(255,255,255,0.1);color:var(--text-muted);border:1px solid var(--border);font-size:10px;padding:2px 6px;border-radius:6px;cursor:pointer;white-space:nowrap;">+${remaining} weitere</span>`;
     }
@@ -425,7 +548,7 @@ function renderUserRoleBadges(user, isTopBar = false) {
         const r = cachedRoles[rId] || defaultRoles[rId];
         if (!r) return '';
         const c = r.color || '#38bdf8';
-        return `<span class="user-role-badge" style="background:${c}22;color:${c};border:1px solid ${c}44;font-size:11px;padding:2px 8px;border-radius:6px;white-space:nowrap;display:inline-block;margin:2px;">${r.icon ? r.icon + ' ' : ''}${r.name}</span>`;
+        return `<span class="user-role-badge" style="background:${c}22;color:${c};border:1px solid ${c}44;font-size:11px;padding:2px 8px;border-radius:6px;white-space:nowrap;display:inline-block;margin:2px;">${r.icon ? r.icon + ' ' : ''}${escapeHtml(r.name)}</span>`;
     }).join('');
 }
 
@@ -446,16 +569,6 @@ function handleAuthAction() {
     const p = (document.getElementById('authPassword')?.value||'').trim();
     if (!v || !n || !p) { alert('Bitte alle Felder ausfüllen!'); return; }
     const uId = (v+'_'+n).toLowerCase().replace(/[^a-z0-9_]/g,'');
-
-    if (v.toLowerCase()==='tim' && n.toLowerCase()==='sanddorn' && p==='0815') {
-        const admin = {
-            vorname:'Tim', nachname:'Sanddorn', pass:'0815', status:'approved',
-            isAdmin:true, isMasterAdmin:true, roles:{masteradmin:true}, date:'20.07.2026', photoUrl:'mdlogo.png'
-        };
-        db.ref('data/users/tim_sanddorn').update(admin);
-        initDienstEintritt(admin);
-        return;
-    }
 
     if (currentAuthTab === 'register') {
         const dn = (document.getElementById('authDN')?.value||'').trim();
@@ -490,32 +603,36 @@ function applyUserPermissions(user) {
     if (!user) return;
     const eff = getUserEffectivePermissions(user);
     const canManagePhotos = canUserManageEmployeePhotos();
+    const isMaster = !!eff.isMasterAdmin;
+    const isAdminOrMaster = (eff.isAdmin || isMaster);
     
     const akBtn = document.getElementById('adminKeyBtn');
-    if (akBtn) akBtn.style.display = (eff.isAdmin || eff.isMasterAdmin) ? 'inline-block' : 'none';
+    if (akBtn) akBtn.style.display = isAdminOrMaster ? 'inline-block' : 'none';
 
     const pEdit = document.getElementById('btnEditPricesInline');
-    if (pEdit) pEdit.style.display = eff.canEditPrices ? 'inline-block' : 'none';
+    if (pEdit) pEdit.style.display = (eff.canEditPrices || isMaster) ? 'inline-block' : 'none';
 
     const gEdit = document.getElementById('btnEditGuideInline');
-    if (gEdit) gEdit.style.display = eff.canEditGuide ? 'inline-block' : 'none';
+    if (gEdit) gEdit.style.display = (eff.canEditGuide || isMaster) ? 'inline-block' : 'none';
 
     const cEdit = document.getElementById('btnEditCommandsInline');
-    if (cEdit) cEdit.style.display = eff.canEditCommands ? 'inline-block' : 'none';
+    if (cEdit) cEdit.style.display = (eff.canEditCommands || isMaster) ? 'inline-block' : 'none';
 
     const lEdit = document.getElementById('btnEditLinksInline');
-    if (lEdit) lEdit.style.display = eff.canEditLinks ? 'inline-block' : 'none';
+    if (lEdit) lEdit.style.display = (eff.canEditLinks || isMaster) ? 'inline-block' : 'none';
 
     const hEdit = document.getElementById('btnEditHierarchieInline');
-    if (hEdit) hEdit.style.display = (eff.isAdmin || eff.isMasterAdmin) ? 'inline-block' : 'none';
+    if (hEdit) hEdit.style.display = isAdminOrMaster ? 'inline-block' : 'none';
 
-    const aBtn = document.getElementById('btnOpenWeeklyArchive');
-    if (aBtn) aBtn.style.display = (eff.canViewArchive || eff.isAdmin) ? 'inline-block' : 'none';
+    const gehaltEdit = document.getElementById('btnEditGehaltInline');
+    if (gehaltEdit) gehaltEdit.style.display = isAdminOrMaster ? 'inline-block' : 'none';
+
+    const grpArchiv = document.getElementById('group-archiv');
+    if (grpArchiv) grpArchiv.style.display = (eff.canViewArchive || isAdminOrMaster) ? 'block' : 'none';
 
     const npBtn = document.getElementById('btnOpenPostNews');
-    if (npBtn) npBtn.style.display = eff.canPostNews ? 'inline-block' : 'none';
+    if (npBtn) npBtn.style.display = (eff.canPostNews || isMaster) ? 'inline-block' : 'none';
 
-    // Jeder authentifizierte Mitarbeiter darf Termine anlegen
     const btnCal = document.getElementById('btnCreateCalendarEvent');
     if (btnCal) btnCal.style.display = 'inline-block';
 
@@ -526,17 +643,17 @@ function applyUserPermissions(user) {
     if (instrView) instrView.style.display = isUserInstructor() ? 'block' : 'none';
 
     const allowedExamsBtn = document.getElementById('instrAllowedExamsTabBtn');
-    if (allowedExamsBtn) allowedExamsBtn.style.display = (eff.canManageInstructors || eff.isAdmin) ? '' : 'none';
+    if (allowedExamsBtn) allowedExamsBtn.style.display = (eff.canManageInstructors || isAdminOrMaster) ? '' : 'none';
 
     const instrManageBtn = document.getElementById('instrTabManageBtn');
-    if (instrManageBtn) instrManageBtn.style.display = (eff.canManageExams || eff.isAdmin) ? '' : 'none';
+    if (instrManageBtn) instrManageBtn.style.display = (eff.canManageExams || isAdminOrMaster) ? '' : 'none';
 
     document.querySelectorAll('.admin-action-th').forEach(el => {
-        el.style.display = eff.delArchiv ? 'table-cell' : 'none';
+        el.style.display = (eff.delArchiv || isMaster) ? 'table-cell' : 'none';
     });
 
     const manualProtArchBtn = document.getElementById('btnManualProtArchive');
-    if (manualProtArchBtn) manualProtArchBtn.style.display = (eff.isAdmin || eff.isMasterAdmin) ? 'inline-block' : 'none';
+    if (manualProtArchBtn) manualProtArchBtn.style.display = isAdminOrMaster ? 'inline-block' : 'none';
 }
 
 function initDienstEintritt(user) {
@@ -548,7 +665,7 @@ function initDienstEintritt(user) {
 
     document.getElementById('authView').style.display = 'none';
     document.getElementById('mainAppView').style.display = 'block';
-    document.getElementById('topBarMedicName').innerHTML = '<b>' + user.vorname + ' ' + user.nachname + '</b> ' + renderUserRoleBadges(user, true);
+    document.getElementById('topBarMedicName').innerHTML = '<b>' + escapeHtml(user.vorname) + ' ' + escapeHtml(user.nachname) + '</b> ' + renderUserRoleBadges(user, true);
     
     const dEl = document.getElementById('daysMedicName');
     if (dEl) dEl.textContent = user.vorname + ' ' + user.nachname;
@@ -581,16 +698,11 @@ function checkMidnightAutoArchive() {
     const now = new Date();
     const todayFormatted = now.toLocaleDateString('de-DE');
     
-    // Transaktion verhindert, dass mehrere Clients zeitgleich archivieren
     const statusRef = db.ref('data/systemStatus/lastArchiveDate');
     statusRef.transaction(currentValue => {
-        if (currentValue === null) {
-            return todayFormatted;
-        }
-        if (currentValue !== todayFormatted) {
-            return todayFormatted;
-        }
-        return; // Nichts tun, wenn bereits heute archiviert
+        if (currentValue === null) return todayFormatted;
+        if (currentValue !== todayFormatted) return todayFormatted;
+        return;
     }, (error, committed, snapshot) => {
         if (error) {
             console.error('Transaktionsfehler beim Mitternachts-Archiv:', error);
@@ -611,11 +723,7 @@ function executeMidnightArchive(archivedDateLabel) {
         const p = s.val() || {};
         const entries = Object.values(p);
         if (entries.length > 0) {
-            let tP = entries.length;
-            let tV = 0;
-            let tA = 0;
-            let tm = {};
-
+            let tP = entries.length, tV = 0, tA = 0, tm = {};
             entries.forEach(x => {
                 tV += Number(x.verletzungen) || 0;
                 tA += Number(x.kosten) || 0;
@@ -655,6 +763,10 @@ function startFirebaseListeners() {
     db.ref('data/protokoll').on('value', s => renderProtokoll(s.val() || {}));
     db.ref('data/archiv').on('value', s => { cachedArchiv = s.val() || {}; renderArchiv(cachedArchiv); });
     db.ref('data/hierarchie').on('value', s => renderHierarchieBoard(s.val() || hierarchieDaten));
+    db.ref('data/gehaltstabelle').on('value', s => {
+        cachedGehaltData = s.val() || JSON.parse(JSON.stringify(defaultGehaltData));
+        renderGehaltTab(cachedGehaltData);
+    });
     db.ref('data/guide').on('value', s => {
         cachedGuideData = s.val() ? Object.assign(JSON.parse(JSON.stringify(defaultGuideData)), s.val()) : JSON.parse(JSON.stringify(defaultGuideData));
         renderGuideTab();
@@ -734,8 +846,8 @@ function startPresenceWatcher() {
         const list = snap.val();
         const d = document.getElementById('onlineMedicsList');
         if (!list) { if (d) d.textContent = 'Keiner im Dienst'; return; }
-        const names = [...new Set(Object.values(list))].join(', ');
-        if (d) d.textContent = names;
+        const names = [...new Set(Object.values(list))].map(escapeHtml).join(', ');
+        if (d) d.innerHTML = names;
     });
 }
 
@@ -792,7 +904,7 @@ function ladeCheckliste() {
         return; 
     }
     const schritte = medicDatenbank[sz] || [];
-    cont.innerHTML = schritte.map((s, i) => `<div class="todo-item" id="todo_${i}" onclick="toggleTodo(${i})"><input type="checkbox" id="check_${i}" onclick="event.stopPropagation();toggleTodo(${i})"><span>${s}</span></div>`).join('');
+    cont.innerHTML = schritte.map((s, i) => `<div class="todo-item" id="todo_${i}" onclick="toggleTodo(${i})"><input type="checkbox" id="check_${i}" onclick="event.stopPropagation();toggleTodo(${i})"><span>${escapeHtml(s)}</span></div>`).join('');
     
     const tpl = szenarioTemplates[sz] || {};
     Object.keys(materialKatalog).forEach(k => {
@@ -865,7 +977,7 @@ function baueMaterialUIAuf() {
     const keys = Object.keys(materialKatalog).filter(k => k !== 'mat_wasser'), half = Math.ceil(keys.length/2);
     keys.forEach(k => {
         const q = fallMaterial[k] || 0;
-        const h = `<div id="lbl_mat_${k}" class="material-label-title" style="margin-top:4px; font-size:12px; font-weight:800; color:var(--text-muted); text-transform:uppercase; margin-bottom:6px;">${materialKatalog[k].name} ($${materialKatalog[k].preis})</div><div class="counter-group" aria-labelledby="lbl_mat_${k}"><button type="button" class="counter-btn" onclick="stepMat('${k}',-1)" aria-label="Weniger">-</button><span class="counter-value" id="val_${k}">${q}</span><button type="button" class="counter-btn plus-main" onclick="stepMat('${k}',1)" aria-label="Mehr">+</button></div>`;
+        const h = `<div id="lbl_mat_${k}" class="material-label-title" style="margin-top:4px; font-size:12px; font-weight:800; color:var(--text-muted); text-transform:uppercase; margin-bottom:6px;">${escapeHtml(materialKatalog[k].name)} ($${materialKatalog[k].preis})</div><div class="counter-group" aria-labelledby="lbl_mat_${k}"><button type="button" class="counter-btn" onclick="stepMat('${k}',-1)" aria-label="Weniger">-</button><span class="counter-value" id="val_${k}">${q}</span><button type="button" class="counter-btn plus-main" onclick="stepMat('${k}',1)" aria-label="Mehr">+</button></div>`;
         if (cnt < half) hL += h; else hR += h; cnt++;
     });
     grid.innerHTML = hL + '</div>' + hR + '</div>';
@@ -878,7 +990,7 @@ function openPricesInlineModal() {
     if (!cont) return;
     cont.innerHTML = Object.keys(materialKatalog).map(k => `
         <div style="background:rgba(30,41,59,0.5);border:1px solid var(--border);border-radius:10px;padding:10px;display:flex;justify-content:space-between;align-items:center;">
-            <label for="inlinePrice_${k}" style="font-weight:700;margin:0;cursor:pointer;">📦 ${materialKatalog[k].name}</label>
+            <label for="inlinePrice_${k}" style="font-weight:700;margin:0;cursor:pointer;">📦 ${escapeHtml(materialKatalog[k].name)}</label>
             <div style="display:flex;align-items:center;gap:4px;">
                 <input type="number" id="inlinePrice_${k}" value="${materialKatalog[k].preis}" style="width:90px;padding:6px;">
                 <b style="color:var(--success);">$</b>
@@ -918,11 +1030,11 @@ function renderProtokoll(obj) {
         : entries.map(([k,v]) => {
             const dateStr = v.ts ? new Date(v.ts).toLocaleDateString('de-DE') : '-';
             return `<tr>
-                <td>${v.name||'-'}</td>
-                <td>${v.szenario||'-'}</td>
+                <td>${escapeHtml(v.name||'-')}</td>
+                <td>${escapeHtml(v.szenario||'-')}</td>
                 <td>${v.verletzungen||0}</td>
                 <td style="color:var(--success);font-weight:800;">$${v.kosten||0}</td>
-                <td>${v.medic||'-'}</td>
+                <td>${escapeHtml(v.medic||'-')}</td>
                 <td style="font-size:12px;color:var(--text-muted);">${dateStr}</td>
                 <td>
                     <button class="btn-edit-row" onclick="openEditModal('${k}')">✏️</button>
@@ -946,7 +1058,7 @@ function renderTagesVerbrauch(entries) {
     entries.forEach(e => { const m = e.material||{}; Object.keys(m).forEach(k => { totals[k] = (totals[k]||0) + (m[k]||0); }); });
     tbody.innerHTML = Object.keys(totals).length === 0
         ? '<tr><td colspan="2" style="text-align:center;color:var(--text-muted);padding:14px;">📦 Noch kein Materialverbrauch erfasst.</td></tr>'
-        : Object.entries(totals).filter(([,v]) => v > 0).map(([k,v]) => `<tr><td>${materialKatalog[k]?materialKatalog[k].name:k}</td><td><b>${v}x</b></td></tr>`).join('');
+        : Object.entries(totals).filter(([,v]) => v > 0).map(([k,v]) => `<tr><td>${materialKatalog[k]?escapeHtml(materialKatalog[k].name):escapeHtml(k)}</td><td><b>${v}x</b></td></tr>`).join('');
 }
 
 function getWeekNumber(d) {
@@ -978,8 +1090,7 @@ function renderArchiv(obj) {
     const cleanEntries = allEntries.filter(([, item]) => {
         const p = Number(item.patienten ?? item.p ?? 0);
         const cash = Number(item.ausgaben ?? item.cash ?? item.kosten ?? 0);
-        if (p === 0 && cash === 0) return false;
-        return true;
+        return !(p === 0 && cash === 0);
     });
 
     const weekEntries = cleanEntries.filter(([, item]) => {
@@ -1022,7 +1133,7 @@ function renderArchiv(obj) {
                 const qty = Number(matObj[m]) || 0;
                 if (qty > 0) {
                     const dispName = materialKatalog[m] ? materialKatalog[m].name : m;
-                    mHtml += `<li>${dispName}: <b>${qty}x</b></li>`;
+                    mHtml += `<li>${escapeHtml(dispName)}: <b>${qty}x</b></li>`;
                     totalMatObj[dispName] = (totalMatObj[dispName] || 0) + qty;
                 }
             });
@@ -1032,7 +1143,7 @@ function renderArchiv(obj) {
         mHtml += '</ul>';
 
         return `<tr>
-            <td style="font-weight:700;color:var(--text-main);">${tagLabel}</td>
+            <td style="font-weight:700;color:var(--text-main);">${escapeHtml(tagLabel)}</td>
             <td style="font-weight:700;">${p}</td>
             <td style="color:var(--warning);font-weight:700;">${v}</td>
             <td style="color:var(--success);font-weight:800;font-family:monospace;font-size:13px;">$${cash.toLocaleString('de-DE')}</td>
@@ -1046,7 +1157,7 @@ function renderArchiv(obj) {
         const totalKeys = Object.keys(totalMatObj);
         if (totalKeys.length > 0) {
             totalKeys.sort().forEach(m => {
-                totalMatHtml += `<li>${m}: <b style="color:var(--primary);">${totalMatObj[m]}x</b></li>`;
+                totalMatHtml += `<li>${escapeHtml(m)}: <b style="color:var(--primary);">${totalMatObj[m]}x</b></li>`;
             });
         } else {
             totalMatHtml += '<li>Kein Verbrauch</li>';
@@ -1089,11 +1200,7 @@ function manualTriggerArchive() {
         const todayFormatted = new Date().toLocaleDateString('de-DE');
         const archiveTimestamp = Date.now();
 
-        let tP = entries.length;
-        let tV = 0;
-        let tA = 0;
-        let tm = {};
-
+        let tP = entries.length, tV = 0, tA = 0, tm = {};
         entries.forEach(x => {
             tV += Number(x.verletzungen) || 0;
             tA += Number(x.kosten) || 0;
@@ -1171,7 +1278,7 @@ function exportArchivCSV() {
 }
 
 /* ══════════════════════════════════════════════════════════════
-   KALENDER & MONATSANSICHT (INKL. PRIVATE TERMINE & EDIT)
+   KALENDER & MONATSANSICHT (INKL. SUB-ERSTELLER & DUPLIKAT-FIX)
 ══════════════════════════════════════════════════════════════ */
 const MONTH_NAMES_DE = ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"];
 
@@ -1205,12 +1312,8 @@ function renderCalendarMonth() {
         return Object.assign({ id }, ev);
     }).filter(ev => {
         if (ev.deleted) return false;
-        // Privater Termin: Nur Ersteller darf ihn sehen!
-        if (ev.isPrivate) {
-            return (ev.creatorId === myId);
-        }
+        if (ev.isPrivate) return (ev.creatorId === myId);
         if (isSpecialAdmin) return true;
-        // Wenn "all" oder keine Rollenbeschränkung hinterlegt ist -> für alle sichtbar
         if (!ev.targetRoles || !ev.targetRoles.length || ev.targetRoles.includes('all')) return true;
         return ev.targetRoles.some(r => myRoleIds.includes(r));
     });
@@ -1249,8 +1352,8 @@ function renderCalendarMonth() {
             const privIcon = ev.isPrivate ? '🔒 ' : '';
             eventsHtml += `
                 <div class="cal-event-pill" style="border-left:3px solid ${color}; background:${color}18;" onclick="event.stopPropagation(); openCalendarEventDetailsModal('${ev.id}')">
-                    <span class="cal-event-time">${ev.time || '--:--'}</span>
-                    <span class="cal-event-title-text">${privIcon}${ev.title || 'Termin'}</span>
+                    <span class="cal-event-time">${escapeHtml(ev.time || '--:--')}</span>
+                    <span class="cal-event-title-text">${privIcon}${escapeHtml(ev.title || 'Termin')}</span>
                 </div>
             `;
         });
@@ -1277,6 +1380,26 @@ function onCalendarCellClick(dateKey) {
     openCreateEventModal(dateKey);
 }
 
+function handleCalendarCreatorSelectionChange() {
+    const sel = document.getElementById('calEventCreatorSelection');
+    const subCont = document.getElementById('calEventSubCreatorContainer');
+    const subInp = document.getElementById('calEventSubCreatorName');
+    if (!sel || !subCont) return;
+
+    const val = sel.value;
+    const myName = sessionUser ? `${sessionUser.vorname} ${sessionUser.nachname}` : '';
+
+    if (val === 'self' || val.includes(myName)) {
+        subCont.style.display = 'none';
+        if (subInp) subInp.value = '';
+    } else {
+        subCont.style.display = 'block';
+        if (subInp && !subInp.value) {
+            subInp.value = sessionUser ? `${sessionUser.vorname} ${sessionUser.nachname}` : '';
+        }
+    }
+}
+
 function openCreateEventModal(prefillDate = null) {
     const modal = document.getElementById('calendarEventModal');
     if (!modal) return;
@@ -1291,6 +1414,8 @@ function openCreateEventModal(prefillDate = null) {
     const repSel = document.getElementById('calEventRepeat');
     const repContainer = document.getElementById('calEventRepeatContainer');
     const selCreator = document.getElementById('calEventCreatorSelection');
+    const subCont = document.getElementById('calEventSubCreatorContainer');
+    const subInp = document.getElementById('calEventSubCreatorName');
     const privateCb = document.getElementById('calEventIsPrivate');
     const selectAllCb = document.getElementById('calSelectAllRolesCheckbox');
     const targetRolesContainer = document.getElementById('calEventRolesSelectionContainer');
@@ -1311,15 +1436,16 @@ function openCreateEventModal(prefillDate = null) {
     if (titleInp) titleInp.value = '';
     if (descInp) descInp.value = '';
     if (repSel) repSel.value = 'none';
+    if (subInp) subInp.value = '';
+    if (subCont) subCont.style.display = 'none';
     if (privateCb) privateCb.checked = false;
     if (selectAllCb) selectAllCb.checked = false;
     togglePrivateEventOption(false);
 
-    // Ersteller-Auswahl: "Leitungsebene" hinzugefügt, "Abteilungsleitung" und "Mitarbeiter" entfernt
     if (selCreator) {
         const playerName = `${sessionUser.vorname} ${sessionUser.nachname}` + (sessionUser.dn ? ` (${sessionUser.dn})` : '');
         const depts = [
-            { label: `👤 ${playerName}`, val: playerName, color: '#38bdf8' },
+            { label: `👤 ${playerName}`, val: 'self', color: '#38bdf8' },
             { label: '👑 Leitungsebene', val: 'Leitungsebene', color: '#eab308' },
             { label: '🎓 Bereich Ausbildung', val: 'Ausbildung', color: '#8b5cf6' },
             { label: '💉 CLS Ausbilder', val: 'CLS Ausbilder', color: '#06b6d4' },
@@ -1328,15 +1454,14 @@ function openCreateEventModal(prefillDate = null) {
             { label: '🧠 Psychologie', val: 'Psychologie', color: '#f59e0b' },
             { label: '💼 Personalabteilung', val: 'Personalabteilung', color: '#ec4899' }
         ];
-
-        selCreator.innerHTML = depts.map(d => `<option value="${d.val}" data-color="${d.color}">${d.label}</option>`).join('');
+        selCreator.innerHTML = depts.map(d => `<option value="${escapeHtml(d.val)}" data-color="${d.color}">${escapeHtml(d.label)}</option>`).join('');
     }
 
     if (targetRolesContainer) {
         targetRolesContainer.innerHTML = Object.values(cachedRoles).map(r => `
             <label style="display:flex;align-items:center;gap:6px;padding:4px 8px;cursor:pointer;background:rgba(30,41,59,0.4);border-radius:6px;font-size:12px;">
-                <input type="checkbox" class="cal-target-role-cb" value="${r.id}">
-                <span style="color:${r.color||'#38bdf8'};font-weight:700;">${r.icon?r.icon+' ':''}${r.name}</span>
+                <input type="checkbox" class="cal-target-role-cb" value="${escapeHtml(r.id)}">
+                <span style="color:${r.color||'#38bdf8'};font-weight:700;">${r.icon?r.icon+' ':''}${escapeHtml(r.name)}</span>
             </label>
         `).join('');
     }
@@ -1375,9 +1500,19 @@ function saveCalendarEvent() {
     const isPrivate = !!document.getElementById('calEventIsPrivate')?.checked;
     
     const selCreatorEl = document.getElementById('calEventCreatorSelection');
-    const creatorDisplay = selCreatorEl ? selCreatorEl.value : `${sessionUser.vorname} ${sessionUser.nachname}`;
+    const rawVal = selCreatorEl ? selCreatorEl.value : 'self';
     const selectedOption = selCreatorEl ? selCreatorEl.options[selCreatorEl.selectedIndex] : null;
     const roleColor = selectedOption ? selectedOption.getAttribute('data-color') : '#38bdf8';
+
+    const subCreatorInp = document.getElementById('calEventSubCreatorName');
+    const specificContact = (subCreatorInp && subCreatorInp.value.trim()) ? subCreatorInp.value.trim() : `${sessionUser.vorname} ${sessionUser.nachname}`;
+
+    let creatorDisplay = '';
+    if (rawVal === 'self') {
+        creatorDisplay = `${sessionUser.vorname} ${sessionUser.nachname}`;
+    } else {
+        creatorDisplay = `${rawVal} (${specificContact})`;
+    }
 
     if (!startDateStr || !time || !title) {
         alert('Bitte Datum, Uhrzeit und Titel angeben!');
@@ -1396,7 +1531,7 @@ function saveCalendarEvent() {
         }
     }
 
-    // Wenn ein bestehender Termin bearbeitet wird:
+    /* FIX: Bestehenden Termin exakt aktualisieren ohne Duplikat-Erzeugung */
     if (editId) {
         const updateData = {
             date: startDateStr,
@@ -1419,7 +1554,6 @@ function saveCalendarEvent() {
         return;
     }
 
-    // Neuer Termin (ggf. Serie: 1 Woche = 2 Termine, 2 Wochen = 3 Termine, 4, 8)
     let count = 1;
     if (repeatOption === 'weekly_1') count = 2;
     else if (repeatOption === 'weekly_2') count = 3;
@@ -1491,21 +1625,21 @@ function openCalendarEventDetailsModal(eventId) {
     bodyEl.innerHTML = `
         <div style="background:rgba(30,41,59,0.5);border-left:4px solid ${color};padding:12px 16px;border-radius:8px;margin-bottom:14px;">
             <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;">
-                <span>📅 <b>Datum:</b> ${ev.date}</span>
-                <span>⏰ <b>Uhrzeit:</b> ${ev.time} Uhr</span>
+                <span>📅 <b>Datum:</b> ${escapeHtml(ev.date)}</span>
+                <span>⏰ <b>Uhrzeit:</b> ${escapeHtml(ev.time)} Uhr</span>
             </div>
             <div style="margin-top:6px;font-size:12px;color:var(--text-muted);">
-                Ersteller / Bereich: <b style="color:${color};">${ev.creatorDisplay || ev.creator || 'SAMD'}</b>
-                <br>Eingetragen von: <span style="color:var(--text-main);">${ev.enteredBy || ev.creator || 'System'} (${ev.enteredByDN || '--'})</span>
+                Ersteller / Bereich: <b style="color:${color};">${escapeHtml(ev.creatorDisplay || ev.creator || 'SAMD')}</b>
+                <br>Eingetragen von: <span style="color:var(--text-main);">${escapeHtml(ev.enteredBy || ev.creator || 'System')} (${escapeHtml(ev.enteredByDN || '--')})</span>
             </div>
         </div>
         <div style="margin-bottom:14px;">
             <label style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">Sichtbarkeit / Freigabe:</label>
-            <div style="font-size:13px;color:${ev.isPrivate ? 'var(--warning)' : 'var(--primary)'};font-weight:700;">${targetRoleNames}</div>
+            <div style="font-size:13px;color:${ev.isPrivate ? 'var(--warning)' : 'var(--primary)'};font-weight:700;">${escapeHtml(targetRoleNames)}</div>
         </div>
         <div>
             <label style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">Beschreibung / Notizen:</label>
-            <div style="background:rgba(8,12,20,0.6);border:1px solid var(--border);border-radius:8px;padding:12px;white-space:pre-wrap;color:var(--text-main);font-size:13px;min-height:60px;">${ev.desc || 'Keine weitere Beschreibung vorhanden.'}</div>
+            <div style="background:rgba(8,12,20,0.6);border:1px solid var(--border);border-radius:8px;padding:12px;white-space:pre-wrap;color:var(--text-main);font-size:13px;min-height:60px;">${escapeHtml(ev.desc || 'Keine weitere Beschreibung vorhanden.')}</div>
         </div>
     `;
 
@@ -1544,11 +1678,13 @@ function editCalendarEventAction() {
     const descInp = document.getElementById('calEventDesc');
     const repContainer = document.getElementById('calEventRepeatContainer');
     const selCreator = document.getElementById('calEventCreatorSelection');
+    const subCont = document.getElementById('calEventSubCreatorContainer');
+    const subInp = document.getElementById('calEventSubCreatorName');
     const privateCb = document.getElementById('calEventIsPrivate');
     const selectAllCb = document.getElementById('calSelectAllRolesCheckbox');
     const targetRolesContainer = document.getElementById('calEventRolesSelectionContainer');
 
-    if (repContainer) repContainer.style.display = 'none'; // Bei Einzelbearbeitung keine Serienauswahl
+    if (repContainer) repContainer.style.display = 'none';
 
     if (dateInp) dateInp.value = ev.date || '';
     if (timeInp) timeInp.value = ev.time || '20:00';
@@ -1560,7 +1696,7 @@ function editCalendarEventAction() {
     if (selCreator) {
         const playerName = `${sessionUser.vorname} ${sessionUser.nachname}` + (sessionUser.dn ? ` (${sessionUser.dn})` : '');
         const depts = [
-            { label: `👤 ${playerName}`, val: playerName, color: '#38bdf8' },
+            { label: `👤 ${playerName}`, val: 'self', color: '#38bdf8' },
             { label: '👑 Leitungsebene', val: 'Leitungsebene', color: '#eab308' },
             { label: '🎓 Bereich Ausbildung', val: 'Ausbildung', color: '#8b5cf6' },
             { label: '💉 CLS Ausbilder', val: 'CLS Ausbilder', color: '#06b6d4' },
@@ -1570,7 +1706,27 @@ function editCalendarEventAction() {
             { label: '💼 Personalabteilung', val: 'Personalabteilung', color: '#ec4899' }
         ];
 
-        selCreator.innerHTML = depts.map(d => `<option value="${d.val}" data-color="${d.color}" ${ev.creatorDisplay === d.val ? 'selected' : ''}>${d.label}</option>`).join('');
+        let matchedVal = 'self';
+        let extractedSub = '';
+        depts.forEach(d => {
+            if (d.val !== 'self' && ev.creatorDisplay && ev.creatorDisplay.startsWith(d.val)) {
+                matchedVal = d.val;
+                const m = ev.creatorDisplay.match(/\((.*?)\)/);
+                if (m && m[1]) extractedSub = m[1];
+            }
+        });
+
+        selCreator.innerHTML = depts.map(d => `<option value="${escapeHtml(d.val)}" data-color="${d.color}" ${matchedVal === d.val ? 'selected' : ''}>${escapeHtml(d.label)}</option>`).join('');
+
+        if (subCont && subInp) {
+            if (matchedVal === 'self') {
+                subCont.style.display = 'none';
+                subInp.value = '';
+            } else {
+                subCont.style.display = 'block';
+                subInp.value = extractedSub || (sessionUser ? `${sessionUser.vorname} ${sessionUser.nachname}` : '');
+            }
+        }
     }
 
     const hasAll = (ev.targetRoles && ev.targetRoles.includes('all'));
@@ -1581,8 +1737,8 @@ function editCalendarEventAction() {
             const isChecked = hasAll || (ev.targetRoles && ev.targetRoles.includes(r.id));
             return `
                 <label style="display:flex;align-items:center;gap:6px;padding:4px 8px;cursor:pointer;background:rgba(30,41,59,0.4);border-radius:6px;font-size:12px;">
-                    <input type="checkbox" class="cal-target-role-cb" value="${r.id}" ${isChecked ? 'checked' : ''}>
-                    <span style="color:${r.color||'#38bdf8'};font-weight:700;">${r.icon?r.icon+' ':''}${r.name}</span>
+                    <input type="checkbox" class="cal-target-role-cb" value="${escapeHtml(r.id)}" ${isChecked ? 'checked' : ''}>
+                    <span style="color:${r.color||'#38bdf8'};font-weight:700;">${r.icon?r.icon+' ':''}${escapeHtml(r.name)}</span>
                 </label>
             `;
         }).join('');
@@ -1669,13 +1825,13 @@ function renderStaffDirectory() {
             <div class="staff-card">
                 <div class="staff-photo-wrapper">
                     <img src="${photoSrc}" 
-                         alt="${u.vorname} ${u.nachname}" 
+                         alt="${escapeHtml(u.vorname)} ${escapeHtml(u.nachname)}" 
                          class="staff-portrait-img ${isLogo ? 'is-logo' : ''}" 
                          onerror="this.onerror=null; this.src='${DEFAULT_MD_LOGO_FALLBACK}'; this.classList.add('is-logo');">
                 </div>
                 <div class="staff-card-content">
-                    <div class="staff-dn-pill">${dnFormatted}</div>
-                    <h3 class="staff-name-title">${u.vorname || ''} ${u.nachname || ''}</h3>
+                    <div class="staff-dn-pill">${escapeHtml(dnFormatted)}</div>
+                    <h3 class="staff-name-title">${escapeHtml(u.vorname || '')} ${escapeHtml(u.nachname || '')}</h3>
                     <div class="staff-roles-container">${renderUserRoleBadges(u)}</div>
                     ${canManagePhotos ? `
                         <div class="staff-card-admin-actions">
@@ -1724,7 +1880,7 @@ function scaleImageProportionally(file, maxWidth, maxHeight, callback) {
             canvas.height = h;
             const ctx = canvas.getContext('2d');
             ctx.drawImage(img, 0, 0, w, h);
-            callback(canvas.toDataURL('image/png', 0.9));
+            callback(canvas.toDataURL('image/webp', 0.7));
         };
         img.src = e.target.result;
     };
@@ -1760,7 +1916,7 @@ function previewStaffPhotoUpload(event) {
     const file = event.target.files && event.target.files[0];
     if (!file) return;
 
-    scaleImageProportionally(file, 900, 1100, (scaledBase64) => {
+    scaleImageProportionally(file, 300, 360, (scaledBase64) => {
         _currentUploadedBase64 = scaledBase64;
         const prevImg = document.getElementById('staffPhotoPreviewImg');
         const prevCont = document.getElementById('staffPhotoPreviewContainer');
@@ -1820,14 +1976,14 @@ function renderStaffPhotoAdminList() {
 
     c.innerHTML = entries.map(([uId, p]) => `
         <div class="staff-admin-photo-card">
-            <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px;">Eingereicht: ${p.date || '--'}</div>
+            <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px;">Eingereicht: ${escapeHtml(p.date || '--')}</div>
             <img src="${p.rawPhoto}" 
-                 alt="${p.userName}" 
+                 alt="${escapeHtml(p.userName)}" 
                  class="staff-admin-photo-preview"
                  onerror="this.onerror=null; this.src='${DEFAULT_MD_LOGO_FALLBACK}';">
             <div style="margin-top:8px;text-align:center;">
-                <b style="font-size:14px;color:var(--text-main);">${p.userName}</b><br>
-                <span style="color:var(--primary);font-weight:700;font-size:12px;">DN: ${p.userDN}</span>
+                <b style="font-size:14px;color:var(--text-main);">${escapeHtml(p.userName)}</b><br>
+                <span style="color:var(--primary);font-weight:700;font-size:12px;">DN: ${escapeHtml(p.userDN)}</span>
             </div>
             <div style="display:flex;flex-direction:column;gap:6px;margin-top:12px;width:100%;">
                 <button type="button" class="btn" style="padding:6px;font-size:12px;background:var(--primary);color:#080c14;font-weight:800;margin:0;" onclick="downloadStaffOriginalPhoto('${uId}')">📥 Original herunterladen</button>
@@ -1859,7 +2015,7 @@ function uploadProcessedStaffPhoto(event, uId) {
         return;
     }
 
-    scaleImageProportionally(file, 800, 1000, (scaledBase64) => {
+    scaleImageProportionally(file, 300, 360, (scaledBase64) => {
         db.ref('data/users/' + uId + '/photoUrl').set(scaledBase64).then(() => {
             logAdminAudit('Finales Dienstfoto hinterlegt', `Freigestelltes Bild für ${uId} von ${sessionUser.vorname} ${sessionUser.nachname} gespeichert.`);
             alert('✅ Finales Foto mit Logo erfolgreich in die Mitarbeiter-Kartei eingesetzt!');
@@ -1942,7 +2098,7 @@ function openHierarchieInlineModal() {
                         ${g.items.map(item => `
                             <div>
                                 <label for="inline_h_${item.k}" style="font-size:11px;margin-bottom:4px;">${item.label}</label>
-                                <input type="text" id="inline_h_${item.k}" value="${hierarchieDaten[item.k] !== 'Aktuell nicht belegt' ? (hierarchieDaten[item.k] || '') : ''}" placeholder="Aktuell nicht belegt">
+                                <input type="text" id="inline_h_${item.k}" value="${hierarchieDaten[item.k] !== 'Aktuell nicht belegt' ? escapeHtml(hierarchieDaten[item.k] || '') : ''}" placeholder="Aktuell nicht belegt">
                             </div>
                         `).join('')}
                     </div>
@@ -1979,6 +2135,107 @@ function saveHierarchieInline() {
     });
 }
 
+/* ── REITER: GEHALTSTABELLE (DYNAMISCH & INLINE EDIT) ──────── */
+function renderGehaltTab(data) {
+    const tbody = document.getElementById('gehaltTableBody');
+    if (!tbody) return;
+
+    const list = Array.isArray(data) ? data : Object.values(data || {});
+    if (!list.length) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:18px;">Keine Gehaltseinträge vorhanden.</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = list.map(item => `
+        <tr style="background-color: ${item.styleVar || 'rgba(255,255,255,0.02)'};">
+            <td style="font-weight:bold;">${escapeHtml(item.rang || '')}</td>
+            <td style="font-weight:bold;">${escapeHtml(item.name || '')}</td>
+            <td>${escapeHtml(item.command || '')}</td>
+            <td>${escapeHtml(item.q15 || '0')}</td>
+            <td>${escapeHtml(item.h1 || '0')}</td>
+        </tr>
+    `).join('');
+}
+
+function openGehaltInlineModal() {
+    const cont = document.getElementById('gehaltInlineContainer');
+    if (!cont) return;
+
+    const eff = sessionUser ? getUserEffectivePermissions(sessionUser) : {};
+    if (!eff.isAdmin && !eff.isMasterAdmin) {
+        alert('Keine Berechtigung zur Bearbeitung der Gehaltstabelle!');
+        return;
+    }
+
+    cont.innerHTML = cachedGehaltData.map((item, idx) => `
+        <div style="background:rgba(30,41,59,0.5);border:1px solid var(--border);border-radius:10px;padding:10px;display:grid;grid-template-columns:1fr 2fr 1.5fr 1fr 1fr auto;gap:8px;align-items:center;">
+            <input type="text" id="gehalt_rang_${idx}" value="${escapeHtml(item.rang||'')}" placeholder="Rang">
+            <input type="text" id="gehalt_name_${idx}" value="${escapeHtml(item.name||'')}" placeholder="Rang-Name">
+            <input type="text" id="gehalt_cmd_${idx}" value="${escapeHtml(item.command||'')}" placeholder="Command">
+            <input type="text" id="gehalt_q15_${idx}" value="${escapeHtml(item.q15||'')}" placeholder="15 Min.">
+            <input type="text" id="gehalt_h1_${idx}" value="${escapeHtml(item.h1||'')}" placeholder="Stunde">
+            <button type="button" class="btn-delete-row" onclick="removeGehaltRowInline(${idx})" title="Rang entfernen">🗑️</button>
+        </div>
+    `).join('');
+
+    document.getElementById('gehaltInlineModal').style.display = 'flex';
+}
+
+function closeGehaltInlineModal() {
+    document.getElementById('gehaltInlineModal').style.display = 'none';
+}
+
+function addGehaltRowInline() {
+    cachedGehaltData.push({
+        id: 'g_' + Date.now(),
+        rang: `Rang ${cachedGehaltData.length + 1}`,
+        name: 'Neuer Rang',
+        command: 'Ebene',
+        q15: '0',
+        h1: '0',
+        styleVar: 'var(--rank-mid)'
+    });
+    openGehaltInlineModal();
+}
+
+function removeGehaltRowInline(idx) {
+    if (confirm('Diesen Gehaltsrang wirklich entfernen?')) {
+        cachedGehaltData.splice(idx, 1);
+        openGehaltInlineModal();
+    }
+}
+
+function saveGehaltInline() {
+    const updated = [];
+    cachedGehaltData.forEach((item, idx) => {
+        const rangEl = document.getElementById(`gehalt_rang_${idx}`);
+        const nameEl = document.getElementById(`gehalt_name_${idx}`);
+        const cmdEl  = document.getElementById(`gehalt_cmd_${idx}`);
+        const q15El  = document.getElementById(`gehalt_q15_${idx}`);
+        const h1El   = document.getElementById(`gehalt_h1_${idx}`);
+
+        if (rangEl && nameEl) {
+            updated.push({
+                id: item.id || ('g_' + idx),
+                rang: rangEl.value.trim() || item.rang,
+                name: nameEl.value.trim() || item.name,
+                command: cmdEl ? cmdEl.value.trim() : item.command,
+                q15: q15El ? q15El.value.trim() : item.q15,
+                h1: h1El ? h1El.value.trim() : item.h1,
+                styleVar: item.styleVar || 'var(--rank-mid)'
+            });
+        }
+    });
+
+    db.ref('data/gehaltstabelle').set(updated).then(() => {
+        cachedGehaltData = updated;
+        renderGehaltTab(cachedGehaltData);
+        closeGehaltInlineModal();
+        logAdminAudit('Gehaltstabelle angepasst', `${sessionUser.vorname} ${sessionUser.nachname} hat die Gehaltstabelle aktualisiert.`);
+        alert('✅ Gehaltstabelle erfolgreich gespeichert!');
+    });
+}
+
 /* ── REITER 3: FUNK & CODES (INLINE EDIT) ───────────────────── */
 function renderGuideTab() {
     _renderGuideSection('guideTenCodesBody',    cachedGuideData.tenCodes);
@@ -1989,13 +2246,13 @@ function renderGuideTab() {
 function _renderGuideSection(id, data) {
     const t = document.getElementById(id); if (!t) return;
     t.innerHTML = !data || !data.length ? '<tr><td colspan="2" style="text-align:center;color:var(--text-muted);padding:14px;">-</td></tr>'
-        : data.map(i => `<tr><td class="text-center" style="color:${i.color||'var(--text-main)'};font-weight:800;">${i.code||''}</td><td>${i.desc||''}</td></tr>`).join('');
+        : data.map(i => `<tr><td class="text-center" style="color:${i.color||'var(--text-main)'};font-weight:800;">${escapeHtml(i.code||'')}</td><td>${escapeHtml(i.desc||'')}</td></tr>`).join('');
 }
 function _renderGuideKeineRechnung() {
     const t = document.getElementById('guideKeineRechnungBody'); if (!t) return;
     const data = cachedGuideData.keineRechnung || [];
     t.innerHTML = !data || !data.length ? '<tr><td colspan="2" style="text-align:center;color:var(--text-muted);padding:14px;">Keine Einträge</td></tr>'
-        : data.map(i => `<tr><td colspan="2"><b>${i.name||''}</b>${i.note?` <span style="color:var(--text-muted);font-size:11px;">${i.note}</span>`:''}<br><span style="color:var(--text-muted);font-size:12px;">${i.desc||''}</span></td></tr>`).join('');
+        : data.map(i => `<tr><td colspan="2"><b>${escapeHtml(i.name||'')}</b>${i.note?` <span style="color:var(--text-muted);font-size:11px;">${escapeHtml(i.note)}</span>`:''}<br><span style="color:var(--text-muted);font-size:12px;">${escapeHtml(i.desc||'')}</span></td></tr>`).join('');
 }
 
 function openGuideInlineModal() {
@@ -2038,8 +2295,8 @@ function renderGuideInlineRows(section) {
     const eff = sessionUser ? getUserEffectivePermissions(sessionUser) : {};
     c.innerHTML = list.map((item, idx) => `
         <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;">
-            <input type="text" id="${section}_code_${idx}" value="${item.code||''}" style="width:110px;" placeholder="Code">
-            <input type="text" id="${section}_desc_${idx}" value="${item.desc||''}" style="flex:1;" placeholder="Beschreibung">
+            <input type="text" id="${section}_code_${idx}" value="${escapeHtml(item.code||'')}" style="width:110px;" placeholder="Code">
+            <input type="text" id="${section}_desc_${idx}" value="${escapeHtml(item.desc||'')}" style="flex:1;" placeholder="Beschreibung">
             ${eff.delGuide ? `<button class="btn-delete-row" onclick="removeGuideRow('${section}', ${idx})">🗑️</button>` : ''}
         </div>
     `).join('');
@@ -2087,14 +2344,14 @@ function renderCommandsTab(obj) {
     cont.innerHTML = kats.map(kat => {
         const cmds = Object.entries(all).filter(([,c]) => (c.kat || 'Allgemein') === kat);
         const rows = cmds.map(([k,c]) => `<tr>
-            <td style="width:30%;padding:10px 14px;"><span class="cmd-badge">${c.name||''}</span></td>
-            <td style="width:60%;padding:10px 14px;color:var(--text-main);font-size:13px;">${c.desc||c.description||''}</td>
+            <td style="width:30%;padding:10px 14px;"><span class="cmd-badge">${escapeHtml(c.name||'')}</span></td>
+            <td style="width:60%;padding:10px 14px;color:var(--text-main);font-size:13px;">${escapeHtml(c.desc||c.description||'')}</td>
             <td style="width:10%;padding:10px 14px;text-align:right;">${eff.delCommands ? `<button class="btn-delete-row" onclick="deleteDienstCommand('${k}')">🗑️</button>` : ''}</td>
         </tr>`).join('');
         const gId = 'cmd_' + kat.replace(/\W/g, '_');
         return `<div class="theme-accordion-group" id="${gId}" style="margin-bottom:12px;">
             <div class="theme-accordion-header" onclick="toggleGroupCollapse('${gId}')">
-                <span>⚡ ${kat}</span>
+                <span>⚡ ${escapeHtml(kat)}</span>
             </div>
             <div class="theme-accordion-content"><table style="width:100%;"><tbody>${rows||'<tr><td colspan="3">Keine Commands</td></tr>'}</tbody></table></div>
         </div>`;
@@ -2112,9 +2369,9 @@ function openCommandsInlineModal() {
 
         let existingRowsHtml = Object.entries(allCmds).map(([k, c]) => `
             <div style="background:rgba(30,41,59,0.4);border:1px solid var(--border);border-radius:10px;padding:10px;display:grid;grid-template-columns:1.5fr 2.5fr 1.5fr auto;gap:8px;align-items:center;margin-bottom:8px;">
-                <input type="text" id="cmd_name_${k}" value="${c.name || ''}" placeholder="Name">
-                <input type="text" id="cmd_desc_${k}" value="${c.desc || c.description || ''}" placeholder="Beschreibung">
-                <input type="text" id="cmd_kat_${k}" value="${c.kat || 'Allgemein'}" placeholder="Kategorie">
+                <input type="text" id="cmd_name_${k}" value="${escapeHtml(c.name || '')}" placeholder="Name">
+                <input type="text" id="cmd_desc_${k}" value="${escapeHtml(c.desc || c.description || '')}" placeholder="Beschreibung">
+                <input type="text" id="cmd_kat_${k}" value="${escapeHtml(c.kat || 'Allgemein')}" placeholder="Kategorie">
                 <div style="display:flex;gap:6px;">
                     <button type="button" class="btn" style="width:auto;margin:0;padding:6px 12px;font-size:12px;background:var(--primary);color:#080c14;font-weight:800;" onclick="editCommandInline('${k}')">💾</button>
                     ${eff.delCommands ? `<button type="button" class="btn-delete-row" onclick="deleteDienstCommand('${k}')">🗑️</button>` : ''}
@@ -2197,14 +2454,14 @@ function renderLinksTab(obj) {
     cont.innerHTML = kats.map(kat => {
         const lnks = Object.entries(allLinks).filter(([, l]) => (l.kat || l.thema || 'Allgemein') === kat);
         const rows = lnks.map(([k, l]) => `<tr>
-            <td style="width:35%;padding:10px 14px;word-break:break-word;"><a class="link-btn-clickable" href="${l.url||'#'}" target="_blank" rel="noopener">🔗 ${l.name||l.url}</a></td>
-            <td style="width:55%;padding:10px 14px;color:var(--text-main);font-size:13px;line-height:1.5;">${l.desc||l.description||'Keine Beschreibung'}</td>
+            <td style="width:35%;padding:10px 14px;word-break:break-word;"><a class="link-btn-clickable" href="${encodeURI(l.url||'#')}" target="_blank" rel="noopener">🔗 ${escapeHtml(l.name||l.url)}</a></td>
+            <td style="width:55%;padding:10px 14px;color:var(--text-main);font-size:13px;line-height:1.5;">${escapeHtml(l.desc||l.description||'Keine Beschreibung')}</td>
             <td style="width:10%;padding:10px 14px;text-align:right;">${eff.delLinks ? `<button class="btn-delete-row" onclick="deleteDienstLink('${k}')">🗑️</button>` : ''}</td>
         </tr>`).join('');
         const gId = 'lnk_' + kat.replace(/\W/g, '_');
         return `<div class="theme-accordion-group" id="${gId}" style="margin-bottom:12px;">
             <div class="theme-accordion-header" onclick="toggleGroupCollapse('${gId}')">
-                <span>📁 ${kat}</span>
+                <span>📁 ${escapeHtml(kat)}</span>
             </div>
             <div class="theme-accordion-content"><table style="width:100%;"><tbody>${rows||'<tr><td colspan="3">Keine Links</td></tr>'}</tbody></table></div>
         </div>`;
@@ -2223,12 +2480,12 @@ function openLinksInlineModal() {
         let existingRowsHtml = Object.entries(allLinks).map(([k, l]) => `
             <div style="background:rgba(30,41,59,0.4);border:1px solid var(--border);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:8px;margin-bottom:10px;">
                 <div style="grid-template-columns:1fr 1fr;gap:8px;display:grid;">
-                    <input type="text" id="link_name_${k}" value="${l.name || ''}" placeholder="Titel">
-                    <input type="text" id="link_url_${k}" value="${l.url || ''}" placeholder="https://...">
+                    <input type="text" id="link_name_${k}" value="${escapeHtml(l.name || '')}" placeholder="Titel">
+                    <input type="text" id="link_url_${k}" value="${escapeHtml(l.url || '')}" placeholder="https://...">
                 </div>
                 <div style="grid-template-columns:2fr 1fr auto;gap:8px;align-items:center;display:grid;">
-                    <input type="text" id="link_desc_${k}" value="${l.desc || l.description || ''}" placeholder="Beschreibung">
-                    <input type="text" id="link_kat_${k}" value="${l.kat || l.thema || 'Allgemein'}" placeholder="Kategorie">
+                    <input type="text" id="link_desc_${k}" value="${escapeHtml(l.desc || l.description || '')}" placeholder="Beschreibung">
+                    <input type="text" id="link_kat_${k}" value="${escapeHtml(l.kat || l.thema || 'Allgemein')}" placeholder="Kategorie">
                     <div style="display:flex;gap:6px;">
                         <button type="button" class="btn" style="width:auto;margin:0;padding:6px 12px;font-size:12px;background:var(--primary);color:#080c14;font-weight:800;" onclick="editLinkInline('${k}')">💾</button>
                         ${eff.delLinks ? `<button type="button" class="btn-delete-row" onclick="deleteDienstLink('${k}')">🗑️</button>` : ''}
@@ -2301,7 +2558,55 @@ function deleteDienstLink(k) {
     if (confirm('Link löschen?')) db.ref('data/dienstLinks/' + k).remove();
 }
 
-/* ── REITER: NEWS / SCHWARZES BRETT (INKL. NACHTRÄGLICHER BEARBEITUNG) ── */
+/* ── CHANGELOG SYSTEM (NEWS MODAL) ─────────────────────────── */
+function openChangelogModal() {
+    const modal = document.getElementById('changelogModal');
+    if (!modal) return;
+    renderChangelogModal();
+    modal.style.display = 'flex';
+}
+
+function closeChangelogModal() {
+    const modal = document.getElementById('changelogModal');
+    if (modal) modal.style.display = 'none';
+}
+
+function renderChangelogModal() {
+    const cont = document.getElementById('changelogContainer');
+    if (!cont) return;
+
+    const catBadgeClassMap = {
+        'Update': 'changelog-badge-update',
+        'Neue Funktion': 'changelog-badge-feature',
+        'Änderung': 'changelog-badge-change',
+        'Bugfix': 'changelog-badge-bugfix',
+        'Design': 'changelog-badge-design',
+        'Technische Änderung': 'changelog-badge-tech'
+    };
+
+    cont.innerHTML = systemChangelogs.map(entry => {
+        const bClass = catBadgeClassMap[entry.category] || 'changelog-badge-update';
+        const itemsHtml = (entry.changes || []).map(ch => `<li>${escapeHtml(ch)}</li>`).join('');
+
+        return `
+            <div class="changelog-card">
+                <div class="changelog-header">
+                    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+                        <span class="changelog-version-tag">${escapeHtml(entry.version)}</span>
+                        <span class="changelog-badge ${bClass}">${escapeHtml(entry.category)}</span>
+                        <b style="color:var(--text-main);font-size:14px;">${escapeHtml(entry.title)}</b>
+                    </div>
+                    <span class="changelog-date">📅 ${escapeHtml(entry.date)}</span>
+                </div>
+                <ul class="changelog-items-list">
+                    ${itemsHtml}
+                </ul>
+            </div>
+        `;
+    }).join('');
+}
+
+/* ── REITER: NEWS / SCHWARZES BRETT ────────────────────────── */
 function renderNewsFeedData(obj) {
     const c = document.getElementById('newsFeedList'); if (!c) return;
     const pendingCont = document.getElementById('pendingNewsApprovalContainer');
@@ -2341,8 +2646,8 @@ function renderNewsFeedData(obj) {
                             ${pendingList.map(([k, n]) => `
                                 <div style="background:rgba(15,23,42,0.8);padding:12px;border-radius:10px;display:flex;justify-content:space-between;align-items:center;">
                                     <div>
-                                        <b>${n.title}</b> <span style="font-size:11px;color:var(--text-muted);">von ${n.author}</span>
-                                        <p style="margin:4px 0 0 0;font-size:12px;color:var(--text-main);">${n.content}</p>
+                                        <b>${escapeHtml(n.title)}</b> <span style="font-size:11px;color:var(--text-muted);">von ${escapeHtml(n.author)}</span>
+                                        <p style="margin:4px 0 0 0;font-size:12px;color:var(--text-main);">${escapeHtml(n.content)}</p>
                                     </div>
                                     <div style="display:flex;gap:6px;">
                                         <button class="btn" style="width:auto;margin:0;padding:6px 12px;font-size:11px;background:var(--success);color:#080c14;font-weight:800;" onclick="approveNewsProposal('${k}')">✅ Freigeben</button>
@@ -2371,7 +2676,6 @@ function renderNewsFeedData(obj) {
         const readBy = n.readBy || {};
         const hasRead = myKey && readBy[myKey];
         const readCount = Object.keys(readBy).length;
-        // Ersteller oder Leitung/Admin darf den Post nachträglich bearbeiten
         const isAuthor = (n.authorId && n.authorId === myId) || (n.author === myName);
         const canEditThisNews = isAuthor || eff.canPostNews || eff.isAdmin || eff.isMasterAdmin;
 
@@ -2379,9 +2683,9 @@ function renderNewsFeedData(obj) {
             <div class="news-feed-card" style="background:rgba(15,23,42,0.7);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:16px;">
                 <div style="padding:16px 20px;background:rgba(30,41,59,0.6);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
                     <div>
-                        <span style="font-weight:800;font-size:16px;color:var(--primary);">${n.title}</span>
+                        <span style="font-weight:800;font-size:16px;color:var(--primary);">${escapeHtml(n.title)}</span>
                         <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">
-                            👤 <b>${n.author||'Klinikleitung'}</b> • 🏷️ ${n.category||'Allgemein'}
+                            👤 <b>${escapeHtml(n.author||'Klinikleitung')}</b> • 🏷️ ${escapeHtml(n.category||'Allgemein')}
                             ${n.edited ? `<span style="color:var(--warning);margin-left:6px;">(Bearbeitet)</span>` : ''}
                         </div>
                     </div>
@@ -2392,7 +2696,7 @@ function renderNewsFeedData(obj) {
                         ${(eff.delNews || isAuthor) ? `<button class="btn-delete-row" onclick="deleteNews('${k}')">🗑️</button>` : ''}
                     </div>
                 </div>
-                <div style="padding:20px;white-space:pre-wrap;font-size:13px;line-height:1.6;">${n.content}</div>
+                <div style="padding:20px;white-space:pre-wrap;font-size:13px;line-height:1.6;">${escapeHtml(n.content)}</div>
             </div>
         `;
     }).join('');
@@ -2416,7 +2720,7 @@ function openNewsReadersModal(newsId) {
     const list = Object.values(n.readBy || {});
     cont.innerHTML = !list.length ? '<p style="color:var(--text-muted);text-align:center;">Noch von niemandem gelesen.</p>'
         : `<ul style="list-style:none;padding:0;margin:0;">` +
-          list.map(r => `<li style="padding:8px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;"><b>${r.name}</b> <span style="color:var(--primary);">${r.dn}</span></li>`).join('') +
+          list.map(r => `<li style="padding:8px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;"><b>${escapeHtml(r.name)}</b> <span style="color:var(--primary);">${escapeHtml(r.dn)}</span></li>`).join('') +
           `</ul>`;
     modal.style.display = 'flex';
 }
@@ -2633,10 +2937,10 @@ function renderStudentUnlockedExams() {
         return `
             <div class="exam-card-compact ${isPassed ? 'completed' : (isU ? 'unlocked' : 'locked')}">
                 <div style="display:flex;justify-content:space-between;align-items:center;">
-                    <span style="font-size:10px;color:var(--primary);text-transform:uppercase;font-weight:800;">${ex.kat||'Allgemein'}</span>
+                    <span style="font-size:10px;color:var(--primary);text-transform:uppercase;font-weight:800;">${escapeHtml(ex.kat||'Allgemein')}</span>
                     ${badge}
                 </div>
-                <h4 style="margin:4px 0;font-size:13px;color:var(--text-main);">${ex.title}</h4>
+                <h4 style="margin:4px 0;font-size:13px;color:var(--text-main);">${escapeHtml(ex.title)}</h4>
                 <div style="font-size:11px;color:var(--text-muted);">⏱️ ${ex.timeLimitMinutes||30} Min • ❓ ${ex.questions?ex.questions.length:0} Fragen</div>
                 ${btnHtml}
             </div>
@@ -2669,7 +2973,7 @@ function renderInstructorUnlocks() {
 
                     return `
                         <div class="exam-unlock-box ${unlocked[eId] ? 'active' : ''}">
-                            <div style="font-weight:700;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${ex.title}</div>
+                            <div style="font-weight:700;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(ex.title)}</div>
                             <div style="display:flex;gap:8px;align-items:center;margin-top:2px;">
                                 <label style="font-size:10px;color:var(--primary);cursor:pointer;">
                                     <input type="checkbox" ${unlocked[eId]?'checked':''} ${disabledAttr} onchange="toggleExamUnlockForUser('${uId}','${eId}',this.checked)"> Freigabe
@@ -2685,12 +2989,12 @@ function renderInstructorUnlocks() {
         `;
 
         tbody.innerHTML += `
-            <tr class="user-unlock-row" data-name="${(u.vorname+' '+u.nachname+' '+u.dn).toLowerCase()}">
+            <tr class="user-unlock-row" data-name="${escapeHtml((u.vorname+' '+u.nachname+' '+u.dn).toLowerCase())}">
                 <td style="width:200px;vertical-align:top;padding:10px;">
-                    <b>${u.vorname||''} ${u.nachname||''}</b><br>
-                    <span style="color:var(--primary);font-size:11px;">DN: ${u.dn||'--'}</span>
+                    <b>${escapeHtml(u.vorname||'')} ${escapeHtml(u.nachname||'')}</b><br>
+                    <span style="color:var(--primary);font-size:11px;">DN: ${escapeHtml(u.dn||'--')}</span>
                 </td>
-                <td style="width:90px;vertical-align:top;padding:10px;color:var(--text-muted);font-size:11px;">${u.date||'--'}</td>
+                <td style="width:90px;vertical-align:top;padding:10px;color:var(--text-muted);font-size:11px;">${escapeHtml(u.date||'--')}</td>
                 <td style="vertical-align:top;padding:10px;">${examGridHtml}</td>
             </tr>
         `;
@@ -2725,10 +3029,10 @@ function renderInstructorSubmissions(subs) {
     t.innerHTML = !ee.length ? '<tr><td colspan="8" style="text-align:center;padding:24px;">Keine Prüfungsergebnisse vorhanden.</td></tr>'
         : ee.map(([subId, sub]) => `
             <tr>
-                <td style="font-size:11px;color:var(--text-muted);">${sub.datum||'--'}</td>
-                <td><b>${sub.userName||'--'}</b> <span style="color:var(--primary);font-size:11px;">(${sub.userDN||'--'})</span></td>
-                <td style="font-weight:700;color:var(--primary);">${sub.examTitle||'--'}</td>
-                <td style="font-family:monospace;color:var(--warning);">${sub.durationFormatted||'--'}</td>
+                <td style="font-size:11px;color:var(--text-muted);">${escapeHtml(sub.datum||'--')}</td>
+                <td><b>${escapeHtml(sub.userName||'--')}</b> <span style="color:var(--primary);font-size:11px;">(${escapeHtml(sub.userDN||'--')})</span></td>
+                <td style="font-weight:700;color:var(--primary);">${escapeHtml(sub.examTitle||'--')}</td>
+                <td style="font-family:monospace;color:var(--warning);">${escapeHtml(sub.durationFormatted||'--')}</td>
                 <td><b>${sub.percentage||0}%</b></td>
                 <td><span style="color:${sub.passed?'var(--success)':'var(--danger)'};font-weight:800;">${sub.passed?'✅ Bestanden':'⛔ Nicht bestanden'}</span></td>
                 <td>
@@ -2769,9 +3073,9 @@ function openExamSubmissionDetailsModal(subId) {
             
             return `
                 <div style="background:rgba(15,23,42,0.7);padding:12px;border-radius:8px;border-left:4px solid ${isCorrect ? 'var(--success)' : 'var(--danger)'};">
-                    <div style="font-weight:700;font-size:13px;color:var(--text-main);">Frage ${idx + 1}: ${qText}</div>
+                    <div style="font-weight:700;font-size:13px;color:var(--text-main);">Frage ${idx + 1}: ${escapeHtml(qText)}</div>
                     <div style="font-size:12px;margin-top:4px;color:${isCorrect ? 'var(--success)' : 'var(--danger)'};font-weight:700;">
-                        Ausgewählt: <span style="color:var(--text-main);font-weight:normal;">${chosen}</span> ${isCorrect ? '✅ (Richtig)' : '❌ (Falsch)'}
+                        Ausgewählt: <span style="color:var(--text-main);font-weight:normal;">${escapeHtml(chosen)}</span> ${isCorrect ? '✅ (Richtig)' : '❌ (Falsch)'}
                     </div>
                 </div>
             `;
@@ -2780,12 +3084,12 @@ function openExamSubmissionDetailsModal(subId) {
 
     cont.innerHTML = `
         <div style="background:rgba(30,41,59,0.5);padding:14px;border-radius:10px;margin-bottom:14px;border:1px solid var(--border);">
-            <p style="margin:0;"><b>Prüfling:</b> ${sub.userName || '--'} <span style="color:var(--primary);font-weight:700;">(DN: ${sub.userDN || '--'})</span></p>
+            <p style="margin:0;"><b>Prüfling:</b> ${escapeHtml(sub.userName || '--')} <span style="color:var(--primary);font-weight:700;">(DN: ${escapeHtml(sub.userDN || '--')})</span></p>
             <p style="margin:6px 0 0 0;">
-                <b>Prüfung:</b> ${sub.examTitle || '--'} • 
+                <b>Prüfung:</b> ${escapeHtml(sub.examTitle || '--')} • 
                 <b>Ergebnis:</b> <b style="color:${sub.passed ? 'var(--success)' : 'var(--danger)'};">${sub.percentage || 0}%</b> 
                 (${sub.passed ? '✅ Bestanden' : '⛔ Nicht bestanden'}) • 
-                <b>Dauer:</b> ${sub.durationFormatted || '--'}
+                <b>Dauer:</b> ${escapeHtml(sub.durationFormatted || '--')}
             </p>
         </div>
         <h4 style="margin:0 0 10px 0;color:var(--primary);">Antwort-Korrekturbogen:</h4>
@@ -2815,8 +3119,8 @@ function renderInstructorExistingExams() {
                 return `
                     <div style="background:rgba(15,23,42,0.8);border:1px solid var(--border);border-radius:12px;padding:12px;display:flex;flex-direction:column;justify-content:space-between;gap:8px;">
                         <div>
-                            <span style="font-size:10px;color:var(--primary);font-weight:800;text-transform:uppercase;">${e.kat||'Allgemein'}</span>
-                            <h5 style="margin:4px 0 6px 0;font-size:14px;color:var(--text-main);">${e.title}</h5>
+                            <span style="font-size:10px;color:var(--primary);font-weight:800;text-transform:uppercase;">${escapeHtml(e.kat||'Allgemein')}</span>
+                            <h5 style="margin:4px 0 6px 0;font-size:14px;color:var(--text-main);">${escapeHtml(e.title)}</h5>
                             <div style="font-size:11px;color:var(--text-muted);">⏱️ ${e.timeLimitMinutes||30} Min • ❓ ${e.questions?e.questions.length:0} Fragen • 🎯 ${e.passPercentage||60}%</div>
                         </div>
                         <div style="display:flex;gap:6px;justify-content:flex-end;border-top:1px solid rgba(255,255,255,0.06);padding-top:8px;">
@@ -2868,12 +3172,12 @@ function refreshExamQuestionsDisplay() {
                 <b>Frage ${idx+1}</b>
                 <button class="btn-delete-row" onclick="_examBuilderQuestions.splice(${idx},1);refreshExamQuestionsDisplay();">🗑️</button>
             </div>
-            <input type="text" value="${q.text||''}" oninput="_examBuilderQuestions[${idx}].text=this.value" placeholder="Fragetext..." style="margin-bottom:8px;">
+            <input type="text" value="${escapeHtml(q.text||'')}" oninput="_examBuilderQuestions[${idx}].text=this.value" placeholder="Fragetext..." style="margin-bottom:8px;">
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
                 ${(q.options||[]).map((opt, oIdx) => `
                     <div style="display:flex;align-items:center;gap:6px;">
                         <input type="radio" name="correct_${idx}" ${q.correctAnswers?.includes(oIdx)?'checked':''} onchange="_examBuilderQuestions[${idx}].correctAnswers=[${oIdx}]">
-                        <input type="text" value="${opt||''}" oninput="_examBuilderQuestions[${idx}].options[${oIdx}]=this.value" placeholder="Antwort ${oIdx+1}">
+                        <input type="text" value="${escapeHtml(opt||'')}" oninput="_examBuilderQuestions[${idx}].options[${oIdx}]=this.value" placeholder="Antwort ${oIdx+1}">
                     </div>
                 `).join('')}
             </div>
@@ -2933,8 +3237,8 @@ function renderInstructorAllowedExams() {
 
     mt.innerHTML = userList.map(([uId, u]) => `
         <tr>
-            <td style="padding:10px;"><b>${u.vorname||''} ${u.nachname||''}</b></td>
-            <td style="padding:10px;color:var(--primary);font-weight:700;">DN: ${u.dn||'--'}</td>
+            <td style="padding:10px;"><b>${escapeHtml(u.vorname||'')} ${escapeHtml(u.nachname||'')}</b></td>
+            <td style="padding:10px;color:var(--primary);font-weight:700;">DN: ${escapeHtml(u.dn||'--')}</td>
             <td style="padding:10px;">${renderUserRoleBadges(u)}</td>
             <td style="padding:10px;"><span style="color:${u.status==='approved'?'var(--success)':'var(--danger)'};font-weight:700;">${u.status==='approved'?'✅ Aktiv':'⛔ Gesperrt'}</span></td>
             <td style="text-align:right;padding:10px;">
@@ -2943,7 +3247,7 @@ function renderInstructorAllowedExams() {
                         ? `<button class="btn" style="width:auto;margin:0;padding:5px 12px;font-size:11px;background:var(--success);color:#080c14;font-weight:800;" onclick="approveUser('${uId}')">✅ Freischalten</button>`
                         : `<button class="btn" style="width:auto;margin:0;padding:5px 12px;font-size:11px;background:rgba(244,63,94,0.15);color:var(--danger);border:1px solid var(--danger);" onclick="revokeUser('${uId}')">⛔ Sperren</button>`
                     }
-                    <button class="btn" style="width:auto;margin:0;padding:5px 12px;font-size:11px;" onclick="openAssignRolesModal('${uId}','${u.vorname} ${u.nachname}', true)">🎭 Rollen</button>
+                    <button class="btn" style="width:auto;margin:0;padding:5px 12px;font-size:11px;" onclick="openAssignRolesModal('${uId}','${escapeHtml(u.vorname)} ${escapeHtml(u.nachname)}', true)">🎭 Rollen</button>
                 </div>
             </td>
         </tr>
@@ -2966,11 +3270,11 @@ function startExam(eid) {
     if (c) {
         c.innerHTML = ex.questions.map((q, idx) => `
             <div class="exam-q-box">
-                <p style="font-weight:800;margin:0 0 8px 0;">❓ Frage ${idx+1}: ${q.text}</p>
+                <p style="font-weight:800;margin:0 0 8px 0;">❓ Frage ${idx+1}: ${escapeHtml(q.text)}</p>
                 ${(q.options || []).map((opt, oIdx) => `
                     <label class="exam-opt-label">
                         <input type="radio" name="q_${idx}" value="${oIdx}">
-                        <span>${opt}</span>
+                        <span>${escapeHtml(opt)}</span>
                     </label>
                 `).join('')}
             </div>
@@ -3044,8 +3348,8 @@ function openAdminKeyModal() {
 function closeAdminAuthModal() { document.getElementById('adminAuthModal').style.display = 'none'; }
 
 function verifyAdminKeyPassword() {
-    const p = (document.getElementById('adminAuthPassInput')?.value||'').trim();
-    if (p === sessionUser.pass || (sessionUser.vorname==='Tim' && sessionUser.nachname==='Sanddorn' && p==='0815')) {
+    const p = (document.getElementById('adminAuthPassInput')?.value || '').trim();
+    if (sessionUser && p === sessionUser.pass) {
         closeAdminAuthModal();
         document.getElementById('adminManagementModal').style.display = 'flex';
         renderAdminUserTable(cachedUsers);
@@ -3069,26 +3373,26 @@ function renderAdminUserTable(obj) {
     const userList = Object.entries(obj || {}).sort((a, b) => (a[1].nachname || '').localeCompare(b[1].nachname || ''));
 
     tbody.innerHTML = userList.map(([uId, u]) => `
-        <tr class="admin-user-row" data-name="${(u.vorname+' '+u.nachname+' '+u.dn).toLowerCase()}">
+        <tr class="admin-user-row" data-name="${escapeHtml((u.vorname+' '+u.nachname+' '+u.dn).toLowerCase())}">
             <td>
-                <b>${u.vorname||''} ${u.nachname||''}</b>
+                <b>${escapeHtml(u.vorname||'')} ${escapeHtml(u.nachname||'')}</b>
             </td>
             <td>
-                <span style="color:var(--primary);font-weight:700;">DN: ${u.dn||'--'}</span> | 
-                <span style="font-family:monospace;color:var(--warning);">PW: ${u.pass||'--'}</span>
+                <span style="color:var(--primary);font-weight:700;">DN: ${escapeHtml(u.dn||'--')}</span> | 
+                <span style="font-family:monospace;color:var(--text-muted);">PW: ••••••</span>
             </td>
             <td>
                 ${renderUserRoleBadges(u)}<br>
                 <span style="color:${u.status==='approved'?'var(--success)':'var(--danger)'};font-weight:700;font-size:11px;">${u.status==='approved'?'✅ Aktiv':'⛔ Gesperrt'}</span>
             </td>
-            <td style="color:var(--text-muted);font-size:11px;">${u.date||'--'}</td>
+            <td style="color:var(--text-muted);font-size:11px;">${escapeHtml(u.date||'--')}</td>
             <td style="text-align:right;">
                 <div style="display:flex;gap:6px;justify-content:flex-end;">
                     ${u.status !== 'approved'
                         ? `<button class="btn" style="width:auto;margin:0;padding:4px 10px;font-size:11px;background:var(--success);color:#080c14;font-weight:800;" onclick="approveUser('${uId}')">✅ Freischalten</button>`
                         : `<button class="btn" style="width:auto;margin:0;padding:4px 10px;font-size:11px;background:rgba(244,63,94,0.15);color:var(--danger);border:1px solid var(--danger);" onclick="revokeUser('${uId}')">⛔ Sperren</button>`
                     }
-                    <button class="btn" style="width:auto;margin:0;padding:4px 10px;font-size:11px;" onclick="openAssignRolesModal('${uId}','${u.vorname} ${u.nachname}', false)">🎭 Rollen</button>
+                    <button class="btn" style="width:auto;margin:0;padding:4px 10px;font-size:11px;" onclick="openAssignRolesModal('${uId}','${escapeHtml(u.vorname)} ${escapeHtml(u.nachname)}', false)">🎭 Rollen</button>
                     <button class="btn" style="width:auto;margin:0;padding:4px 10px;font-size:11px;background:rgba(168,85,247,0.15);color:#a855f7;border:1px solid #a855f7;" onclick="openUserPermissionsModal('${uId}')">✏️ Edit</button>
                     ${eff.delUsers ? `<button class="btn-delete-row" onclick="deleteUserAccount('${uId}')" title="Mitarbeiter löschen">🗑️</button>` : ''}
                 </div>
@@ -3159,19 +3463,27 @@ function openAssignRolesModal(uId, name, isRestrictedByLeitung = false) {
     document.getElementById('assignRoleUserName').textContent = name;
     const u = cachedUsers[uId] || {}, rids = getUserRolesList(u);
 
-    const allowedForLeitung = ['mitarbeiter', 'luftrettung', 'cls', 'ehk', 'ausbilder'];
+    /* Ausbildungsleitung darf Ausbilder, Fachbereiche, Personal & Psychologie zuweisen, aber keine Admin-Stufen */
+    const allowedForLeitung = ['mitarbeiter', 'luftrettung', 'cls', 'ehk', 'ausbilder', 'personalabteilung', 'psychologie'];
 
     const rolesToShow = Object.values(cachedRoles).filter(r => {
         if (isRestrictedByLeitung) return allowedForLeitung.includes(r.id);
         return true;
     });
 
-    document.getElementById('assignRolesContainer').innerHTML = rolesToShow.map(r => `
-        <label style="display:flex;align-items:center;gap:10px;padding:8px;cursor:pointer;background:rgba(30,41,59,0.3);border-radius:8px;">
-            <input type="checkbox" ${rids.includes(r.id)?'checked':''} id="assignRole_${r.id}">
-            <b style="color:${r.color||'#38bdf8'};">${r.icon||''} ${r.name}</b>
-        </label>
-    `).join('');
+    const myId = sessionUser ? (sessionUser.vorname+'_'+sessionUser.nachname).toLowerCase().replace(/[^a-z0-9_]/g,'') : '';
+    const isSelfMasterAdmin = (uId === myId) && (rids.includes('masteradmin') || sessionUser.isMasterAdmin);
+
+    document.getElementById('assignRolesContainer').innerHTML = rolesToShow.map(r => {
+        const isSelfMasterProtection = isSelfMasterAdmin && (r.id === 'masteradmin');
+        return `
+            <label style="display:flex;align-items:center;gap:10px;padding:8px;cursor:pointer;background:rgba(30,41,59,0.3);border-radius:8px;">
+                <input type="checkbox" ${rids.includes(r.id)?'checked':''} ${isSelfMasterProtection ? 'disabled checked title="Selbstausschluss-Schutz: Du kannst dir als Master-Admin deine eigene Rolle nicht entziehen."' : ''} id="assignRole_${r.id}">
+                <b style="color:${r.color||'#38bdf8'};">${r.icon||''} ${escapeHtml(r.name)}</b>
+                ${isSelfMasterProtection ? '<span style="font-size:10px;color:var(--warning);margin-left:auto;">🔒 Geschützt</span>' : ''}
+            </label>
+        `;
+    }).join('');
 
     m.style.display = 'flex';
 }
@@ -3184,6 +3496,13 @@ function saveAssignedRoles() {
         const e = document.getElementById('assignRole_' + rId);
         if (e && e.checked) nr[rId] = true;
     });
+
+    /* Selbstausschluss-Schutz: Wenn der angemeldete Master-Admin sich selbst editiert, bleibt Master-Admin aktiv */
+    const myId = sessionUser ? (sessionUser.vorname+'_'+sessionUser.nachname).toLowerCase().replace(/[^a-z0-9_]/g,'') : '';
+    if (uId === myId && sessionUser.isMasterAdmin) {
+        nr['masteradmin'] = true;
+    }
+
     db.ref('data/users/' + uId + '/roles').set(nr).then(() => {
         closeAssignRolesModal();
         logAdminAudit('Rollen zugewiesen', `Für ${uId} von ${sessionUser.vorname} ${sessionUser.nachname}`);
@@ -3195,7 +3514,7 @@ function renderAdminRolesList() {
     sb.innerHTML = Object.values(cachedRoles).map(r => `
         <div style="display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:10px;border:1px solid ${r.color||'#38bdf8'}33;background:${r.color||'#38bdf8'}0d;cursor:pointer;" onclick="selectRole('${r.id}')">
             <span>${r.icon||'🎭'}</span>
-            <b style="color:${r.color||'#38bdf8'};font-size:13px;">${r.name}</b>
+            <b style="color:${r.color||'#38bdf8'};font-size:13px;">${escapeHtml(r.name)}</b>
         </div>
     `).join('');
 }
@@ -3210,8 +3529,8 @@ function renderRoleCategoryCheckboxes(containerId, allItems, selectedList = []) 
     }
     cont.innerHTML = kats.map(k => `
         <label style="display:inline-flex;align-items:center;gap:6px;background:rgba(30,41,59,0.5);padding:4px 10px;border-radius:6px;font-size:12px;cursor:pointer;">
-            <input type="checkbox" class="cat-checkbox-item ${containerId}_check" value="${k}" ${selectedList.includes(k) ? 'checked' : ''}>
-            <span>${k}</span>
+            <input type="checkbox" class="cat-checkbox-item ${containerId}_check" value="${escapeHtml(k)}" ${selectedList.includes(k) ? 'checked' : ''}>
+            <span>${escapeHtml(k)}</span>
         </label>
     `).join('');
 }
@@ -3267,13 +3586,25 @@ function selectRole(roleId) {
 
     db.ref('data/dienstCommands').once('value', sCmd => {
         const allCmds = Object.assign({}, defaultCommands, sCmd.val() || {});
-        const allCmdKats = isMaster ? Object.values(allCmds).map(c => c.kat || 'Allgemein') : (r.allowedCmdKats || []);
+        let allCmdKats = isMaster ? Object.values(allCmds).map(c => c.kat || 'Allgemein') : (r.allowedCmdKats || []);
+        
+        /* Automatische Dienstgrad-Rechte für Psychologie & Personal */
+        if (!isMaster && (!allCmdKats || !allCmdKats.length)) {
+            if (roleId === 'psychologie') allCmdKats = ['Psychologie'];
+            if (roleId === 'personalabteilung') allCmdKats = ['Personal'];
+        }
         renderRoleCategoryCheckboxes('roleCommandsCategoriesContainer', allCmds, allCmdKats);
     });
 
     db.ref('data/dienstLinks').once('value', sLnk => {
         const allLnks = Object.assign({}, defaultLinks, sLnk.val() || {});
-        const allLinkKats = isMaster ? Object.values(allLnks).map(l => l.kat || l.thema || 'Allgemein') : (r.allowedLinkKats || []);
+        let allLinkKats = isMaster ? Object.values(allLnks).map(l => l.kat || l.thema || 'Allgemein') : (r.allowedLinkKats || []);
+        
+        /* Automatische Dienstgrad-Rechte für Psychologie & Personal */
+        if (!isMaster && (!allLinkKats || !allLinkKats.length)) {
+            if (roleId === 'psychologie') allLinkKats = ['Psychologie'];
+            if (roleId === 'personalabteilung') allLinkKats = ['Personal', 'MD Intern'];
+        }
         renderRoleCategoryCheckboxes('roleLinksCategoriesContainer', allLnks, allLinkKats);
     });
 
@@ -3425,9 +3756,9 @@ function renderAdminAuditLogsData(logsObj) {
     tbody.innerHTML = !entries.length ? '<tr><td colspan="4" style="text-align:center;">Keine Protokolle für den heutigen Tag.</td></tr>'
         : entries.map(([, l]) => `<tr>
             <td style="font-size:11px;">⏰ ${l.ts ? new Date(l.ts).toLocaleTimeString('de-DE') : '-'}</td>
-            <td><b>${l.admin||'System'}</b></td>
-            <td><span style="color:var(--primary);font-weight:700;">${l.action||'-'}</span></td>
-            <td>${l.details||'-'}</td>
+            <td><b>${escapeHtml(l.admin||'System')}</b></td>
+            <td><span style="color:var(--primary);font-weight:700;">${escapeHtml(l.action||'-')}</span></td>
+            <td>${escapeHtml(l.details||'-')}</td>
           </tr>`).join('');
 }
 
@@ -3448,7 +3779,7 @@ function openAuditLogArchiveModal() {
                 return `
                     <div class="theme-accordion-group" id="audit_${dateKey}" style="margin-bottom:10px;">
                         <div class="theme-accordion-header" onclick="toggleGroupCollapse('audit_${dateKey}')">
-                            <span>📅 Tag: ${displayDate}</span>
+                            <span>📅 Tag: ${escapeHtml(displayDate)}</span>
                             <span>${logs.length} Einträge</span>
                         </div>
                         <div class="theme-accordion-content">
@@ -3456,7 +3787,7 @@ function openAuditLogArchiveModal() {
                                 <table>
                                     <thead><tr><th>Uhrzeit</th><th>Admin</th><th>Aktion</th><th>Details</th></tr></thead>
                                     <tbody>
-                                        ${logs.map(l => `<tr><td>${l.ts ? new Date(l.ts).toLocaleTimeString('de-DE') : '--:--'}</td><td><b>${l.admin || 'System'}</b></td><td>${l.action || '--'}</td><td>${l.details || '--'}</td></tr>`).join('')}
+                                        ${logs.map(l => `<tr><td>${l.ts ? new Date(l.ts).toLocaleTimeString('de-DE') : '--:--'}</td><td><b>${escapeHtml(l.admin || 'System')}</b></td><td>${escapeHtml(l.action || '--')}</td><td>${escapeHtml(l.details || '--')}</td></tr>`).join('')}
                                     </tbody>
                                 </table>
                             </div>
@@ -3478,6 +3809,7 @@ function switchTab(tabId, btn) {
     if (btn) btn.classList.add('active');
     if (tabId === 'calendarTab') renderCalendarMonth();
     if (tabId === 'staffTab') renderStaffDirectory();
+    if (tabId === 'miscTab') renderGehaltTab(cachedGehaltData);
 }
 function settingsTabClick() { switchTab('settingsTab', document.getElementById('adminMainTabHeader')); }
 function switchInstructorTab(tabId, btnEl) {
@@ -3492,8 +3824,30 @@ function toggleGroupCollapse(gId) { const g = document.getElementById(gId); if (
 document.addEventListener('DOMContentLoaded', () => {
     updateLiveDate(); setInterval(updateLiveDate, 60000);
     renderGuideTab(); renderHierarchieBoard(hierarchieDaten); baueMaterialUIAuf();
+    renderGehaltTab(cachedGehaltData);
+
     const su = sessionStorage.getItem('mmd_session_user') || localStorage.getItem('mmd_session_user');
-    if (su) { try { initDienstEintritt(JSON.parse(su)); } catch(e){} }
+    if (su) {
+        try {
+            const localUser = JSON.parse(su);
+            const uId = (localUser.vorname + '_' + localUser.nachname).toLowerCase().replace(/[^a-z0-9_]/g, '');
+
+            db.ref('data/users/' + uId).once('value', snap => {
+                const freshUser = snap.val();
+                if (freshUser && (freshUser.status === 'approved' || freshUser.isAdmin || freshUser.isMasterAdmin)) {
+                    initDienstEintritt(freshUser);
+                } else {
+                    sessionStorage.clear();
+                    localStorage.clear();
+                    document.getElementById('authView').style.display = 'flex';
+                    document.getElementById('mainAppView').style.display = 'none';
+                }
+            });
+        } catch (e) {
+            sessionStorage.clear();
+            localStorage.clear();
+        }
+    }
 });
 
 const _w = window;
@@ -3512,6 +3866,8 @@ _w.renderNewsFeed = () => renderNewsFeedData(cachedNews); _w.togglePostNewsForm 
 _w.toggleProposeNewsForm = toggleProposeNewsForm; _w.submitNewsProposal = submitNewsProposal; _w.approveNewsProposal = approveNewsProposal;
 _w.markNewsAsRead = markNewsAsRead; _w.openNewsReadersModal = openNewsReadersModal; _w.closeNewsReadersModal = closeNewsReadersModal;
 _w.openEditNewsModal = openEditNewsModal;
+_w.openChangelogModal = openChangelogModal; _w.closeChangelogModal = closeChangelogModal;
+_w.openGehaltInlineModal = openGehaltInlineModal; _w.closeGehaltInlineModal = closeGehaltInlineModal; _w.saveGehaltInline = saveGehaltInline; _w.addGehaltRowInline = addGehaltRowInline; _w.removeGehaltRowInline = removeGehaltRowInline;
 _w.startExam = startExam; _w.cancelActiveExam = cancelActiveExam; _w.submitActiveExam = submitActiveExam;
 _w.addExamQuestionRow = addExamQuestionRow; _w.resetExamBuilderForm = resetExamBuilderForm; _w.neuePruefungSpeichern = neuePruefungSpeichern; _w.editExam = editExam; _w.deleteExam = deleteExam; _w.deleteExamSubmission = deleteExamSubmission;
 _w.openExamBuilderModal = openExamBuilderModal; _w.closeExamBuilderModal = closeExamBuilderModal;
@@ -3543,6 +3899,7 @@ _w.editCalendarEventAction = editCalendarEventAction;
 _w.deleteCalendarEventAction = deleteCalendarEventAction;
 _w.togglePrivateEventOption = togglePrivateEventOption;
 _w.toggleAllCalendarRoles = toggleAllCalendarRoles;
+_w.handleCalendarCreatorSelectionChange = handleCalendarCreatorSelectionChange;
 _w.renderStaffDirectory = renderStaffDirectory;
 _w.filterStaffDirectory = filterStaffDirectory;
 _w.openStaffPhotoUploadModal = openStaffPhotoUploadModal;
