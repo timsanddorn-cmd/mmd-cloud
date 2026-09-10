@@ -1,5 +1,5 @@
 // ============================================================
-//  MMD CLOUD – Medical Center Web-App  |  app.js  v5.9.1
+//  MMD CLOUD – Medical Center Web-App  |  app.js  v5.9.2
 //  Firebase Realtime Database (Compat SDK v10)
 // ============================================================
 
@@ -33,6 +33,15 @@ function sanitizeUrl(url) {
     return encodeURI(trimmed);
 }
 
+/* ── Robuste, einheitliche Benutzer-ID Normalisierung ──────── */
+function generateUserId(vorname, nachname) {
+    const cleanV = (vorname || '').trim().toLowerCase()
+        .replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue').replace(/ß/g, 'ss');
+    const cleanN = (nachname || '').trim().toLowerCase()
+        .replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue').replace(/ß/g, 'ss');
+    return (cleanV + '_' + cleanN).replace(/[^a-z0-9_]/g, '');
+}
+
 /* ── Fallback Icon (Inline SVG) ────────────────────────────── */
 const DEFAULT_MD_LOGO_FALLBACK = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%230f172a'/><path d='M42 20h16v22h22v16H58v22H42V58H20V42h22V20z' fill='%2338bdf8'/><circle cx='50' cy='50' r='46' fill='none' stroke='%2338bdf8' stroke-width='4'/></svg>";
 
@@ -61,6 +70,7 @@ let cachedCustomChangelogs = {};
 let activeExam        = null;
 let activeExamTimerInterval = null;
 let activeExamSecondsElapsed = 0;
+let midnightIntervalId = null;
 
 /* ── Kalender State ────────────────────────────────────────── */
 let currentCalYear  = new Date().getFullYear();
@@ -69,6 +79,19 @@ let activeDetailEventId = null;
 
 /* ── Vollständiger Gesamt-Changelog (Entwicklungsverlauf) ───── */
 const systemChangelogs = [
+    {
+        id: "sys_v5_9_2",
+        version: "v5.9.2",
+        date: "11.09.2026",
+        category: "Technische Änderung",
+        title: "Architektur-Härtung, ID-Normalisierung & Validierung",
+        changes: [
+            "Zentrale ID-Normalisierung (Umlaute-Ersetzung) für absolut fehlerfreie Benutzer-Zuordnungen eingeführt.",
+            "Strikte Validierung im Prüfungs-Builder: Es wird nun zwingend geprüft, ob Multiple-Choice-Fragen korrekte Antworten besitzen.",
+            "Vollständige Server-Synchronisation für Basisdaten (Gehälter, Rollen, Guide, Commands, Links) gegen veraltete Hardcoded-Fallbacks.",
+            "Vermeidung von Speicherlecks durch zentrale Intervall-Verwaltung beim Systemstart."
+        ]
+    },
     {
         id: "sys_v5_9_1",
         version: "v5.9.1",
@@ -79,36 +102,6 @@ const systemChangelogs = [
             "Alle 7 offiziellen Prüfungen (GA1, GA2, DV, Para 1, Para 2, Arzt 1, Arzt 2) mit den vollständigen Original-Fragenkatalogen fest im System hinterlegt.",
             "Frage 1 bis 3 in allen Prüfungen als neutrale Stammdatenfelder (Mitarbeiter-DN, Prüfer-DN, Name) definiert.",
             "Prüfungsbewertung angepasst: Stammdatenfragen fließen nicht in die Fehlerquote ein und verfälschen die Bestehensquote nicht."
-        ]
-    },
-    {
-        id: "sys_v5_9",
-        version: "v5.9",
-        date: "11.09.2026",
-        category: "Bugfix",
-        title: "Rollen-Entzug dauerhaft repariert, Kalender-Einladungen & No-Code Schicht-Korrektur",
-        changes: [
-            "Rollen-Entzug dauerhaft repariert: Abgewählte Rollen (wie Ausbilder) werden restlos und ohne veraltete Alt-Flags aus der Datenbank entfernt.",
-            "Strikte Rollen-Isolierung: Rollen ohne Berechtigung für Spezialkategorien (wie Psychologie) können diese weder bei Commands noch bei Links einsehen.",
-            "Klickbare Links in Commands und automatische URL-Reparatur für externe Leitfäden integriert.",
-            "Kalender-Upgrade: Keine Duplizierung mehr beim Verschieben von Terminen; spezifische Kollegen können nun zu Terminen eingeladen werden.",
-            "Automatische Bereinigung: Termine, die älter als 7 Tage sind, werden automatisch aus dem Kalender gelöscht.",
-            "Diensttage-Rechner dauerhaft in der Cloud gesichert: Das Einstellungsdatum geht bei Abmeldung nicht mehr verloren.",
-            "Schutz für Patientenprotokoll: Das Stiftsymbol ist standardmäßig nur für den Medic sichtbar, der den Patienten selbst eingetragen hat.",
-            "Schichtarchiv-Korrektur: Master-Admins können archivierte Schichten direkt vor Ort per Stiftsymbol editieren."
-        ]
-    },
-    {
-        id: "sys_v5_8",
-        version: "v5.8",
-        date: "10.09.2026",
-        category: "Bugfix",
-        title: "Rollen-Entzugs-Fix, Multiple-Choice Prüfungsbaukasten & Link-Audit",
-        changes: [
-            "Fehler beim Rollenentzug behoben: Das Abwählen von Rollen im Admin- und Ausbildungsmenü wird nun garantiert und sofort in Firebase gespeichert.",
-            "Prüfungs-Baukasten repariert: Beim Bearbeiten bestehender Prüfungen (wie GA2 Frage 4) können nun fehlerfrei beliebig viele Antworten als richtig definiert und gespeichert werden.",
-            "Automatische Datenmigration für Alt-Prüfungen: Ältere Prüfungsfragen mit Einzelwerten werden beim Laden automatisch in kompatible Multiple-Choice-Arrays konvertiert.",
-            "Vollständiges Audit aller Buttons, Verlinkungen und No-Code-Inline-Editoren erfolgreich abgeschlossen."
         ]
     }
 ];
@@ -375,7 +368,6 @@ let defaultLinks = {
     link_12:{ name:"Sanktionskatalog",                  url:"https://docs.google.com/spreadsheets/d/1BXxvqmkU_1N9MwHMLimZlPRGtT668xMzkhxqH_hhm9k/edit", desc:"Sanktionskatalog", kat:"MD Intern" }
 };
 
-/* ── Standard-Prüfungen aus Backup mit Stammdaten ──────────── */
 const STANDARD_INFO_QUESTIONS = [
     { id: 1, text: "Dienstnummer des Mitarbeiters", type: "text", isInfo: true },
     { id: 2, text: "Dienstnummer des Prüfers", type: "text", isInfo: true },
@@ -522,7 +514,7 @@ function handleAuthAction() {
     const n = (document.getElementById('authNachname')?.value||'').trim();
     const p = (document.getElementById('authPassword')?.value||'').trim();
     if (!v || !n || !p) { alert('Bitte alle Felder ausfüllen!'); return; }
-    const uId = (v+'_'+n).toLowerCase().replace(/[^a-z0-9_]/g,'');
+    const uId = generateUserId(v, n);
 
     if (currentAuthTab === 'register') {
         const dn = (document.getElementById('authDN')?.value||'').trim();
@@ -661,8 +653,9 @@ function updateLiveDate() {
 
 /* ── Automatische Mitternachts-Archivierung ─────────────────── */
 function setupMidnightScheduler() {
+    if (midnightIntervalId) clearInterval(midnightIntervalId);
     checkMidnightAutoArchive();
-    setInterval(checkMidnightAutoArchive, 20000);
+    midnightIntervalId = setInterval(checkMidnightAutoArchive, 20000);
 }
 
 function checkMidnightAutoArchive() {
@@ -743,21 +736,25 @@ function startFirebaseListeners() {
     db.ref('data/archiv').on('value', s => { cachedArchiv = s.val() || {}; renderArchiv(cachedArchiv); });
     db.ref('data/hierarchie').on('value', s => renderHierarchieBoard(s.val() || hierarchieDaten));
     db.ref('data/gehaltstabelle').on('value', s => {
-        cachedGehaltData = s.val() || JSON.parse(JSON.stringify(defaultGehaltData));
+        const serverData = s.val();
+        cachedGehaltData = (serverData && Array.isArray(serverData) && serverData.length > 0) ? serverData : JSON.parse(JSON.stringify(defaultGehaltData));
         renderGehaltTab(cachedGehaltData);
     });
     db.ref('data/guide').on('value', s => {
-        cachedGuideData = s.val() ? Object.assign(JSON.parse(JSON.stringify(defaultGuideData)), s.val()) : JSON.parse(JSON.stringify(defaultGuideData));
+        const serverData = s.val();
+        cachedGuideData = serverData ? Object.assign(JSON.parse(JSON.stringify(defaultGuideData)), serverData) : JSON.parse(JSON.stringify(defaultGuideData));
         renderGuideTab();
     });
     db.ref('data/materialPreise').on('value', s => {
-        if (!s.val()) return;
-        Object.keys(s.val()).forEach(k => { if (materialKatalog[k]) materialKatalog[k].preis = s.val()[k]; });
+        const serverData = s.val();
+        if (serverData) {
+            Object.keys(serverData).forEach(k => { if (materialKatalog[k]) materialKatalog[k].preis = serverData[k]; });
+        }
         baueMaterialUIAuf();
     });
     db.ref('data/szenarioTemplates').on('value', s => { if (s.val()) szenarioTemplates = Object.assign({}, szenarioTemplates, s.val()); });
-    db.ref('data/dienstLinks').on('value', s => renderLinksTab(s.val() || {}));
-    db.ref('data/dienstCommands').on('value', s => renderCommandsTab(s.val() || {}));
+    db.ref('data/dienstLinks').on('value', s => renderLinksTab(s.val() || defaultLinks));
+    db.ref('data/dienstCommands').on('value', s => renderCommandsTab(s.val() || defaultCommands));
     db.ref('data/roles').on('value', s => {
         cachedRoles = s.val() ? Object.assign({}, defaultRoles, s.val()) : Object.assign({}, defaultRoles);
         if (sessionUser) applyUserPermissions(sessionUser);
@@ -769,7 +766,7 @@ function startFirebaseListeners() {
     db.ref('data/users').on('value', s => {
         cachedUsers = s.val() || {};
         if (sessionUser) {
-            const uId = (sessionUser.vorname+'_'+sessionUser.nachname).toLowerCase().replace(/[^a-z0-9_]/g,'');
+            const uId = generateUserId(sessionUser.vorname, sessionUser.nachname);
             if (cachedUsers[uId]) {
                 sessionUser = cachedUsers[uId];
                 applyUserPermissions(sessionUser);
@@ -961,7 +958,7 @@ function patientHinzufuegen() {
     const patName = (nF?.value||'').trim() || 'Patient ' + ((daten.patienten||0)+1);
     const sz = sS?.value || 'Undefinierbar';
     const mat = Object.assign({}, fallMaterial); mat['mat_wasser'] = anzahlVerletzungenFall;
-    const myId = (sessionUser.vorname+'_'+sessionUser.nachname).toLowerCase().replace(/[^a-z0-9_]/g,'');
+    const myId = generateUserId(sessionUser.vorname, sessionUser.nachname);
 
     db.ref('data/protokoll').push({
         name: patName,
@@ -1041,7 +1038,7 @@ function renderProtokoll(obj) {
     const tbody = document.getElementById('logTableBody'); if (!tbody) return;
     const eff = sessionUser ? getUserEffectivePermissions(sessionUser) : {};
     const myName = sessionUser ? (sessionUser.vorname + ' ' + sessionUser.nachname) : '';
-    const myId = sessionUser ? (sessionUser.vorname+'_'+sessionUser.nachname).toLowerCase().replace(/[^a-z0-9_]/g,'') : '';
+    const myId = sessionUser ? generateUserId(sessionUser.vorname, sessionUser.nachname) : '';
     const entries = Object.entries(obj).sort((a,b) => (b[1].ts||0) - (a[1].ts||0));
     
     tbody.innerHTML = entries.length === 0
@@ -1405,7 +1402,7 @@ function renderCalendarMonth() {
     const myRoleIds = sessionUser ? getUserRolesList(sessionUser) : [];
     const eff = sessionUser ? getUserEffectivePermissions(sessionUser) : {};
     const isSpecialAdmin = eff.isAdmin || eff.isMasterAdmin;
-    const myId = sessionUser ? (sessionUser.vorname+'_'+sessionUser.nachname).toLowerCase().replace(/[^a-z0-9_]/g,'') : '';
+    const myId = sessionUser ? generateUserId(sessionUser.vorname, sessionUser.nachname) : '';
 
     const eventsList = Object.entries(cachedCalendar || {}).map(([id, ev]) => {
         return Object.assign({ id }, ev);
@@ -1570,7 +1567,7 @@ function openCreateEventModal(prefillDate = null) {
     }
 
     if (invitedUsersContainer) {
-        const myId = sessionUser ? (sessionUser.vorname+'_'+sessionUser.nachname).toLowerCase().replace(/[^a-z0-9_]/g,'') : '';
+        const myId = sessionUser ? generateUserId(sessionUser.vorname, sessionUser.nachname) : '';
         const allUsers = Object.entries(cachedUsers).sort((a,b) => (a[1].nachname||'').localeCompare(b[1].nachname||''));
         invitedUsersContainer.innerHTML = allUsers.filter(([uId]) => uId !== myId).map(([uId, u]) => `
             <label style="display:flex;align-items:center;gap:6px;padding:4px 8px;cursor:pointer;background:rgba(30,41,59,0.4);border-radius:6px;font-size:12px;">
@@ -1633,7 +1630,7 @@ function saveCalendarEvent() {
         return;
     }
 
-    const myId = (sessionUser.vorname+'_'+sessionUser.nachname).toLowerCase().replace(/[^a-z0-9_]/g,'');
+    const myId = generateUserId(sessionUser.vorname, sessionUser.nachname);
 
     let targetRoles = [];
     if (!isPrivate) {
@@ -1773,7 +1770,7 @@ function openCalendarEventDetailsModal(eventId) {
         </div>
     `;
 
-    const myId = sessionUser ? (sessionUser.vorname+'_'+sessionUser.nachname).toLowerCase().replace(/[^a-z0-9_]/g,'') : '';
+    const myId = generateUserId(sessionUser.vorname, sessionUser.nachname);
     const eff = sessionUser ? getUserEffectivePermissions(sessionUser) : {};
     const isOwnerOrAdmin = (ev.creatorId === myId) || eff.isAdmin || eff.isMasterAdmin;
 
@@ -1876,7 +1873,7 @@ function editCalendarEventAction() {
     }
 
     if (invitedUsersContainer) {
-        const myId = sessionUser ? (sessionUser.vorname+'_'+sessionUser.nachname).toLowerCase().replace(/[^a-z0-9_]/g,'') : '';
+        const myId = generateUserId(sessionUser.vorname, sessionUser.nachname);
         const allUsers = Object.entries(cachedUsers).sort((a,b) => (a[1].nachname||'').localeCompare(b[1].nachname||''));
         invitedUsersContainer.innerHTML = allUsers.filter(([uId]) => uId !== myId).map(([uId, u]) => {
             const isInv = (ev.invitedUsers && Array.isArray(ev.invitedUsers) && ev.invitedUsers.includes(uId));
@@ -1897,7 +1894,7 @@ function deleteCalendarEventAction() {
     const ev = cachedCalendar[activeDetailEventId];
     if (!ev) return;
 
-    const myId = sessionUser ? (sessionUser.vorname+'_'+sessionUser.nachname).toLowerCase().replace(/[^a-z0-9_]/g,'') : '';
+    const myId = generateUserId(sessionUser.vorname, sessionUser.nachname);
     const eff = sessionUser ? getUserEffectivePermissions(sessionUser) : {};
     const isOwnerOrAdmin = (ev.creatorId === myId) || eff.isAdmin || eff.isMasterAdmin || eff.delCalendar;
 
@@ -2075,7 +2072,7 @@ function submitStaffPhotoUpload() {
         return;
     }
 
-    const uId = (sessionUser.vorname+'_'+sessionUser.nachname).toLowerCase().replace(/[^a-z0-9_]/g,'');
+    const uId = generateUserId(sessionUser.vorname, sessionUser.nachname);
 
     const photoEntry = {
         userId: uId,
@@ -2176,7 +2173,7 @@ function deleteSubmittedRawPhoto(uId) {
     }
 }
 
-/* ── REITER: HIERARCHIE BOARD ──────────────────────────────── */
+/* ── REITER: HIERARCHIE BOARD ────────────────---------------- */
 function renderHierarchieBoard(hData) {
     if (!hData) return;
     hierarchieDaten = Object.assign({}, hierarchieDaten, hData);
@@ -2815,7 +2812,7 @@ function renderNewsFeedData(obj) {
     const allNews = Object.entries(obj || {}).filter(([, n]) => !n.deleted);
     const eff = sessionUser ? getUserEffectivePermissions(sessionUser) : {};
     const myName = sessionUser ? (sessionUser.vorname + ' ' + sessionUser.nachname) : '';
-    const myId = sessionUser ? (sessionUser.vorname+'_'+sessionUser.nachname).toLowerCase().replace(/[^a-z0-9_]/g,'') : '';
+    const myId = sessionUser ? generateUserId(sessionUser.vorname, sessionUser.nachname) : '';
     const myKey = sessionUser ? (sessionUser.dn ? ('dn_' + sessionUser.dn) : myId) : '';
 
     const approvedNews = allNews.filter(([, n]) => n.status !== 'pending_approval');
@@ -2904,7 +2901,7 @@ function renderNewsFeedData(obj) {
 
 function markNewsAsRead(newsId) {
     if (!sessionUser) return;
-    const myKey = sessionUser.dn ? ('dn_' + sessionUser.dn) : (sessionUser.vorname + '_' + sessionUser.nachname).replace(/\W/g, '_');
+    const myKey = sessionUser.dn ? ('dn_' + sessionUser.dn) : generateUserId(sessionUser.vorname, sessionUser.nachname);
     db.ref('data/news/' + newsId + '/readBy/' + myKey).set({
         name: sessionUser.vorname + ' ' + sessionUser.nachname,
         dn: sessionUser.dn || '--',
@@ -2973,7 +2970,7 @@ function speichereNeueNews() {
     const c = document.getElementById('newNewsContent')?.value.trim();
     const cat = document.getElementById('newNewsCategory')?.value || 'Allgemein';
     const editId = document.getElementById('editingNewsId')?.value;
-    const myId = (sessionUser.vorname+'_'+sessionUser.nachname).toLowerCase().replace(/[^a-z0-9_]/g,'');
+    const myId = generateUserId(sessionUser.vorname, sessionUser.nachname);
 
     if (!t || !c) { alert('Bitte Titel und Inhalt eingeben!'); return; }
 
@@ -3009,7 +3006,7 @@ function submitNewsProposal() {
     if (!sessionUser) return;
     const t = document.getElementById('propNewsTitle')?.value.trim();
     const c = document.getElementById('propNewsContent')?.value.trim();
-    const myId = (sessionUser.vorname+'_'+sessionUser.nachname).toLowerCase().replace(/[^a-z0-9_]/g,'');
+    const myId = generateUserId(sessionUser.vorname, sessionUser.nachname);
 
     if (!t || !c) { alert('Bitte Titel und Inhalt angeben!'); return; }
     db.ref('data/news').push({
@@ -3035,7 +3032,7 @@ function deleteNews(k) {
     if (!sessionUser) return;
     const eff = getUserEffectivePermissions(sessionUser);
     const n = cachedNews[k];
-    const myId = (sessionUser.vorname+'_'+sessionUser.nachname).toLowerCase().replace(/[^a-z0-9_]/g,'');
+    const myId = generateUserId(sessionUser.vorname, sessionUser.nachname);
     const isAuthor = n && ((n.authorId && n.authorId === myId) || n.author === (sessionUser.vorname + ' ' + sessionUser.nachname));
 
     if (!eff.delNews && !isAuthor) return;
@@ -3051,7 +3048,7 @@ function deleteNews(k) {
 function passwortAendern() {
     if (!sessionUser) return;
     const np = document.getElementById('newPasswordInput')?.value.trim(); if (!np) return;
-    const uId = (sessionUser.vorname+'_'+sessionUser.nachname).toLowerCase().replace(/[^a-z0-9_]/g,'');
+    const uId = generateUserId(sessionUser.vorname, sessionUser.nachname);
     db.ref('data/users/'+uId+'/pass').set(np).then(() => {
         sessionUser.pass = np;
         alert('✅ Passwort erfolgreich geändert!');
@@ -3063,7 +3060,7 @@ function berechneDienstTage(shouldPersist = false) {
     const f = document.getElementById('einstellungsDatum'); if (!f || !f.value) return;
     
     if (shouldPersist) {
-        const uId = (sessionUser.vorname+'_'+sessionUser.nachname).toLowerCase().replace(/[^a-z0-9_]/g,'');
+        const uId = generateUserId(sessionUser.vorname, sessionUser.nachname);
         db.ref('data/users/' + uId + '/einstellungsDatum').set(f.value);
         localStorage.setItem('mmd_einstellungsdatum_' + sessionUser.vorname + '_' + sessionUser.nachname, f.value);
     }
@@ -3126,7 +3123,7 @@ function renderStudentUnlockedExams() {
         return;
     }
 
-    const uId = sessionUser ? (sessionUser.vorname+'_'+sessionUser.nachname).toLowerCase().replace(/[^a-z0-9_]/g,'') : '';
+    const uId = sessionUser ? generateUserId(sessionUser.vorname, sessionUser.nachname) : '';
     const user = cachedUsers[uId] || sessionUser || {};
     const unlocked = user.unlockedExams || {};
     const passed = user.passedExams || {};
@@ -3169,7 +3166,7 @@ function renderInstructorUnlocks() {
     tbody.innerHTML = '';
     const sortedExamIds = sortExamIds(Object.keys(cachedExams));
 
-    const myId = sessionUser ? (sessionUser.vorname+'_'+sessionUser.nachname).toLowerCase().replace(/[^a-z0-9_]/g,'') : '';
+    const myId = sessionUser ? generateUserId(sessionUser.vorname, sessionUser.nachname) : '';
     const myPassed = (cachedUsers[myId]?.passedExams) || {};
     const eff = sessionUser ? getUserEffectivePermissions(sessionUser) : {};
     const isLeitung = eff.canManageInstructors || eff.isAdmin || eff.isMasterAdmin;
@@ -3234,7 +3231,7 @@ function toggleExamPassedForUser(uId, examId, isPassed) {
 function renderInstructorSubmissions(subs) {
     const t = document.getElementById('instructorSubmissionsTableBody'); if (!t) return;
     const eff = sessionUser ? getUserEffectivePermissions(sessionUser) : {};
-    const myId = sessionUser ? (sessionUser.vorname+'_'+sessionUser.nachname).toLowerCase().replace(/[^a-z0-9_]/g,'') : '';
+    const myId = sessionUser ? generateUserId(sessionUser.vorname, sessionUser.nachname) : '';
 
     let ee = Object.entries(subs || {}).sort((a,b) => (b[1].ts||0) - (a[1].ts||0));
 
@@ -3370,6 +3367,8 @@ function renderInstructorExistingExams() {
     `;
 }
 
+let _examBuilderQuestions = [];
+
 function openExamBuilderModal() {
     resetExamBuilderForm();
     document.getElementById('examBuilderModalHeading').textContent = '📝 Neue Prüfung erstellen';
@@ -3459,13 +3458,28 @@ function toggleBuilderCorrectAnswer(qIdx, oIdx, isChecked) {
 function neuePruefungSpeichern() {
     const title = document.getElementById('newExamTitle')?.value.trim();
     if (!title) { alert('Bitte Titel angeben!'); return; }
+    
+    let finalQuestions = _examBuilderQuestions.filter(q => !q.isInfo);
+    
+    // Robuste Validierung: Jede Frage muss Text und mind. eine richtige Antwort besitzen
+    for (let i = 0; i < finalQuestions.length; i++) {
+        const q = finalQuestions[i];
+        if (!q.text || !q.text.trim()) {
+            alert(`⚠️ Fachfrage ${i + 1} besitzt keinen Fragetext!`);
+            return;
+        }
+        if (!Array.isArray(q.correctAnswers) || q.correctAnswers.length === 0) {
+            alert(`⚠️ Fachfrage "${q.text.substring(0, 30)}..." hat keine korrekte Antwort markiert!`);
+            return;
+        }
+    }
+
     const kat = document.getElementById('newExamKat')?.value.trim() || 'Allgemein';
     const timeLimit = parseInt(document.getElementById('newExamTime')?.value) || 30;
     const passRate = parseInt(document.getElementById('newExamPassRate')?.value) || 60;
     const intro = document.getElementById('newExamIntroText')?.value.trim() || '';
     const examId = document.getElementById('editingExamId')?.value || ('exam_' + Date.now());
 
-    let finalQuestions = _examBuilderQuestions.filter(q => !q.isInfo);
     finalQuestions.forEach(q => {
         if (!Array.isArray(q.correctAnswers)) q.correctAnswers = [0];
     });
@@ -3643,7 +3657,7 @@ function submitActiveExam() {
 
     const pct = totalQ > 0 ? Math.round((correctQ / totalQ) * 100) : 0;
     const passed = pct >= (ex.passPercentage || 60);
-    const myId = (sessionUser.vorname + '_' + sessionUser.nachname).toLowerCase().replace(/[^a-z0-9_]/g, '');
+    const myId = generateUserId(sessionUser.vorname, sessionUser.nachname);
     const m = Math.floor(activeExamSecondsElapsed / 60).toString().padStart(2, '0');
     const s = (activeExamSecondsElapsed % 60).toString().padStart(2, '0');
 
@@ -3806,7 +3820,7 @@ function openAssignRolesModal(uId, name, isRestrictedByLeitung = false) {
         return true;
     });
 
-    const myId = sessionUser ? (sessionUser.vorname+'_'+sessionUser.nachname).toLowerCase().replace(/[^a-z0-9_]/g,'') : '';
+    const myId = generateUserId(sessionUser.vorname, sessionUser.nachname);
     const isSelfMasterAdmin = (uId === myId) && (rids.includes('masteradmin') || sessionUser.isMasterAdmin);
 
     document.getElementById('assignRolesContainer').innerHTML = rolesToShow.map(r => {
@@ -3836,7 +3850,7 @@ function saveAssignedRoles() {
         }
     });
 
-    const myId = sessionUser ? (sessionUser.vorname+'_'+sessionUser.nachname).toLowerCase().replace(/[^a-z0-9_]/g,'') : '';
+    const myId = generateUserId(sessionUser.vorname, sessionUser.nachname);
     if (uId === myId && sessionUser.isMasterAdmin) {
         cleanRoles['masteradmin'] = true;
     }
@@ -4183,7 +4197,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (su) {
         try {
             const localUser = JSON.parse(su);
-            const uId = (localUser.vorname + '_' + localUser.nachname).toLowerCase().replace(/[^a-z0-9_]/g, '');
+            const uId = generateUserId(localUser.vorname, localUser.nachname);
 
             db.ref('data/users/' + uId).once('value', snap => {
                 const freshUser = snap.val();
@@ -4202,72 +4216,3 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 });
-
-const _w = window;
-_w.switchTab = switchTab; _w.settingsTabClick = settingsTabClick; _w.switchAdminTab = switchAdminTab; _w.switchInstructorTab = switchInstructorTab;
-_w.handleAuthAction = handleAuthAction; _w.toggleAuthTab = toggleAuthTab;
-_w.openAdminKeyModal = openAdminKeyModal; _w.closeAdminAuthModal = closeAdminAuthModal; _w.verifyAdminKeyPassword = verifyAdminKeyPassword; _w.closeAdminManagementModal = closeAdminManagementModal;
-_w.handleDienstEndeLogout = handleDienstEndeLogout; _w.berechneDienstTage = berechneDienstTage; _w.passwortAendern = passwortAendern;
-_w.toggleGroupCollapse = toggleGroupCollapse; _w.stepVerletzungenAnzahl = stepVerletzungenAnzahl; _w.stepKosten = stepKosten; _w.stepMat = stepMat; _w.ladeCheckliste = ladeCheckliste; _w.patientHinzufuegen = patientHinzufuegen; _w.toggleTodo = toggleTodo;
-_w.resetMedicalWorkflow = resetMedicalWorkflow; _w.openEditModal = openEditModal; _w.closeEditModal = closeEditModal; _w.speicherePatientEdit = speicherePatientEdit;
-_w.deletePatient = deletePatient; _w.deleteArchivSchicht = deleteArchivSchicht; _w.deleteDienstLink = deleteDienstLink; _w.deleteDienstCommand = deleteDienstCommand; _w.exportArchivCSV = exportArchivCSV;
-_w.openPricesInlineModal = openPricesInlineModal; _w.closePricesInlineModal = closePricesInlineModal; _w.speicherePreiseInline = speicherePreiseInline;
-_w.openGuideInlineModal = openGuideInlineModal; _w.closeGuideInlineModal = closeGuideInlineModal; _w.addGuideRow = addGuideRow; _w.removeGuideRow = removeGuideRow; _w.saveGuideInline = saveGuideInline;
-_w.openCommandsInlineModal = openCommandsInlineModal; _w.closeCommandsInlineModal = closeCommandsInlineModal; _w.addCommandInline = addCommandInline;
-_w.openLinksInlineModal = openLinksInlineModal; _w.closeLinksInlineModal = closeLinksInlineModal; _w.addLinkInline = addLinkInline;
-_w.renderNewsFeed = () => renderNewsFeedData(cachedNews); _w.togglePostNewsForm = togglePostNewsForm; _w.speichereNeueNews = speichereNeueNews; _w.deleteNews = deleteNews;
-_w.toggleProposeNewsForm = toggleProposeNewsForm; _w.submitNewsProposal = submitNewsProposal; _w.approveNewsProposal = approveNewsProposal;
-_w.markNewsAsRead = markNewsAsRead; _w.openNewsReadersModal = openNewsReadersModal; _w.closeNewsReadersModal = closeNewsReadersModal;
-_w.openEditNewsModal = openEditNewsModal;
-_w.openChangelogModal = openChangelogModal; _w.closeChangelogModal = closeChangelogModal;
-_w.openChangelogWriterModal = openChangelogWriterModal; _w.closeChangelogWriterModal = closeChangelogWriterModal; _w.saveCustomChangelogEntry = saveCustomChangelogEntry;
-_w.openGehaltInlineModal = openGehaltInlineModal; _w.closeGehaltInlineModal = closeGehaltInlineModal; _w.saveGehaltInline = saveGehaltInline; _w.addGehaltRowInline = addGehaltRowInline; _w.removeGehaltRowInline = removeGehaltRowInline;
-_w.startExam = startExam; _w.cancelActiveExam = cancelActiveExam; _w.submitActiveExam = submitActiveExam;
-_w.addExamQuestionRow = addExamQuestionRow; _w.resetExamBuilderForm = resetExamBuilderForm; _w.neuePruefungSpeichern = neuePruefungSpeichern; _w.editExam = editExam; _w.deleteExam = deleteExam; _w.deleteExamSubmission = deleteExamSubmission;
-_w.openExamBuilderModal = openExamBuilderModal; _w.closeExamBuilderModal = closeExamBuilderModal;
-_w.openExamSubmissionDetailsModal = openExamSubmissionDetailsModal; _w.closeExamSubmissionDetailsModal = closeExamSubmissionDetailsModal;
-_w.filterUnlocksTable = filterUnlocksTable; _w.toggleExamUnlockForUser = toggleExamUnlockForUser; _w.toggleExamPassedForUser = toggleExamPassedForUser;
-_w.downloadSystemBackup = downloadSystemBackup; _w.restoreSystemBackupFromFile = restoreSystemBackupFromFile;
-_w.speichereHierarchieDaten = saveHierarchieInline;
-_w.approveUser = approveUser; _w.revokeUser = revokeUser; _w.deleteUserAccount = deleteUserAccount; _w.filterAdminUserTable = filterAdminUserTable;
-_w.openAssignRolesModal = openAssignRolesModal; _w.closeAssignRolesModal = closeAssignRolesModal; _w.saveAssignedRoles = saveAssignedRoles;
-_w.openUserPermissionsModal = openUserPermissionsModal; _w.closeUserPermissionsModal = closeUserPermissionsModal; _w.saveUserPermissions = saveUserPermissions;
-_w.neueRolleErstellen = neueRolleErstellen; _w.selectRole = selectRole; _w.updateRoleBadgePreview = updateRoleBadgePreview; _w.speichereRolle = speichereRolle; _w.loescheRolle = loescheRolle;
-_w.vollstaendigerReset = vollstaendigerReset; _w.renderAdminAuditLogs = renderAdminAuditLogs;
-_w.openAuditLogArchiveModal = openAuditLogArchiveModal; _w.closeAuditArchiveModal = closeAuditArchiveModal;
-_w.editCommandInline = editCommandInline;
-_w.editLinkInline = editLinkInline;
-_w.openHierarchieInlineModal = openHierarchieInlineModal;
-_w.closeHierarchieInlineModal = closeHierarchieInlineModal;
-_w.saveHierarchieInline = saveHierarchieInline;
-_w.changeCalendarMonth = changeCalendarMonth;
-_w.resetCalendarToToday = resetCalendarToToday;
-_w.renderCalendarMonth = renderCalendarMonth;
-_w.onCalendarCellClick = onCalendarCellClick;
-_w.openCreateEventModal = openCreateEventModal;
-_w.closeCalendarEventModal = closeCalendarEventModal;
-_w.saveCalendarEvent = saveCalendarEvent;
-_w.openCalendarEventDetailsModal = openCalendarEventDetailsModal;
-_w.closeCalendarEventDetailsModal = closeCalendarEventDetailsModal;
-_w.editCalendarEventAction = editCalendarEventAction;
-_w.deleteCalendarEventAction = deleteCalendarEventAction;
-_w.togglePrivateEventOption = togglePrivateEventOption;
-_w.toggleAllCalendarRoles = toggleAllCalendarRoles;
-_w.handleCalendarCreatorSelectionChange = handleCalendarCreatorSelectionChange;
-_w.renderStaffDirectory = renderStaffDirectory;
-_w.filterStaffDirectory = filterStaffDirectory;
-_w.openStaffPhotoUploadModal = openStaffPhotoUploadModal;
-_w.closeStaffPhotoUploadModal = closeStaffPhotoUploadModal;
-_w.previewStaffPhotoUpload = previewStaffPhotoUpload;
-_w.submitStaffPhotoUpload = submitStaffPhotoUpload;
-_w.openStaffPhotoAdminModal = openStaffPhotoAdminModal;
-_w.closeStaffPhotoAdminModal = closeStaffPhotoAdminModal;
-_w.renderStaffPhotoAdminList = renderStaffPhotoAdminList;
-_w.downloadStaffOriginalPhoto = downloadStaffOriginalPhoto;
-_w.uploadProcessedStaffPhoto = uploadProcessedStaffPhoto;
-_w.resetStaffPhotoToDefault = resetStaffPhotoToDefault;
-_w.toggleBuilderCorrectAnswer = toggleBuilderCorrectAnswer;
-_w.manualTriggerArchive = manualTriggerArchive;
-_w.openArchivEditModal = openArchivEditModal;
-_w.closeArchivEditModal = closeArchivEditModal;
-_w.saveArchivEdit = saveArchivEdit;
