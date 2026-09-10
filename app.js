@@ -1,5 +1,5 @@
 // ============================================================
-//  MMD CLOUD – Medical Center Web-App  |  app.js  v5.9.2
+//  MMD CLOUD – Medical Center Web-App  |  app.js  v5.9.3
 //  Firebase Realtime Database (Compat SDK v10)
 // ============================================================
 
@@ -77,8 +77,45 @@ let currentCalYear  = new Date().getFullYear();
 let currentCalMonth = new Date().getMonth();
 let activeDetailEventId = null;
 
+/* ── Standard-Hierarchie-Daten ─────────────────────────────── */
+const defaultHierarchieData = {
+    chief_01: "Aktuell nicht belegt",
+    chief_02: "Aktuell nicht belegt",
+    chief_03: "Aktuell nicht belegt",
+    dept_psych_l: "Aktuell nicht belegt",
+    dept_psych_sl: "Aktuell nicht belegt",
+    dept_perso_l: "Aktuell nicht belegt",
+    dept_perso_sl: "Aktuell nicht belegt",
+    dept_ausb_l: "Aktuell nicht belegt",
+    dept_ausb_sl: "Aktuell nicht belegt",
+    dept_luft_l: "Gleich die Ausbildungsleitung",
+    dept_luft_sl: "Aktuell nicht belegt",
+    domo_04: "Nick Garcia",
+    domo_04_sub: "",
+    fod_05: "Mike Gonzalo",
+    fod_05_sub: "",
+    chiefphys_06: "Katarina Harper",
+    chiefphys_07: "Tim Sanddorn",
+    lt_08: "Aktuell nicht belegt",
+    lt_09: "Aktuell nicht belegt",
+    a_emt_count: "2",
+    emt_count: "0"
+};
+let hierarchieDaten = JSON.parse(JSON.stringify(defaultHierarchieData));
+
 /* ── Vollständiger Gesamt-Changelog (Entwicklungsverlauf) ───── */
 const systemChangelogs = [
+    {
+        id: "sys_v5_9_3",
+        version: "v5.9.3",
+        date: "11.09.2026",
+        category: "Design",
+        title: "Barrierefreiheit & Label-Verknüpfungen (A11y)",
+        changes: [
+            "Alle dynamisch generierten Checkboxen und Auswahllisten im Kalender und in der Admin-Rollenverwaltung wurden mit korrekten for- und id-Attributen versehen.",
+            "Lighthouse- und DevTools-Warnungen bezüglich fehlender Formular-Labels vollständig behoben."
+        ]
+    },
     {
         id: "sys_v5_9_2",
         version: "v5.9.2",
@@ -87,21 +124,7 @@ const systemChangelogs = [
         title: "Architektur-Härtung, ID-Normalisierung & Validierung",
         changes: [
             "Zentrale ID-Normalisierung (Umlaute-Ersetzung) für absolut fehlerfreie Benutzer-Zuordnungen eingeführt.",
-            "Strikte Validierung im Prüfungs-Builder: Es wird nun zwingend geprüft, ob Multiple-Choice-Fragen korrekte Antworten besitzen.",
-            "Vollständige Server-Synchronisation für Basisdaten (Gehälter, Rollen, Guide, Commands, Links) gegen veraltete Hardcoded-Fallbacks.",
-            "Vermeidung von Speicherlecks durch zentrale Intervall-Verwaltung beim Systemstart."
-        ]
-    },
-    {
-        id: "sys_v5_9_1",
-        version: "v5.9.1",
-        date: "11.09.2026",
-        category: "Update",
-        title: "Vollständige Fragenkataloge & Stammdaten-Integration",
-        changes: [
-            "Alle 7 offiziellen Prüfungen (GA1, GA2, DV, Para 1, Para 2, Arzt 1, Arzt 2) mit den vollständigen Original-Fragenkatalogen fest im System hinterlegt.",
-            "Frage 1 bis 3 in allen Prüfungen als neutrale Stammdatenfelder (Mitarbeiter-DN, Prüfer-DN, Name) definiert.",
-            "Prüfungsbewertung angepasst: Stammdatenfragen fließen nicht in die Fehlerquote ein und verfälschen die Bestehensquote nicht."
+            "Strikte Validierung im Prüfungs-Builder: Es wird nun zwingend geprüft, ob Multiple-Choice-Fags korrekte Antworten besitzen."
         ]
     }
 ];
@@ -266,32 +289,6 @@ const ROLE_PROPERTY_MAP = {
     roleFlagEditLinks: 'canEditLinks',
     delFlagLinks: 'delLinks'
 };
-
-/* ── Standard-Hierarchie-Daten ─────────────────────────────── */
-const defaultHierarchieData = {
-    chief_01: "Aktuell nicht belegt",
-    chief_02: "Aktuell nicht belegt",
-    chief_03: "Aktuell nicht belegt",
-    dept_psych_l: "Aktuell nicht belegt",
-    dept_psych_sl: "Aktuell nicht belegt",
-    dept_perso_l: "Aktuell nicht belegt",
-    dept_perso_sl: "Aktuell nicht belegt",
-    dept_ausb_l: "Aktuell nicht belegt",
-    dept_ausb_sl: "Aktuell nicht belegt",
-    dept_luft_l: "Gleich die Ausbildungsleitung",
-    dept_luft_sl: "Aktuell nicht belegt",
-    domo_04: "Nick Garcia",
-    domo_04_sub: "",
-    fod_05: "Mike Gonzalo",
-    fod_05_sub: "",
-    chiefphys_06: "Katarina Harper",
-    chiefphys_07: "Tim Sanddorn",
-    lt_08: "Aktuell nicht belegt",
-    lt_09: "Aktuell nicht belegt",
-    a_emt_count: "2",
-    emt_count: "0"
-};
-let hierarchieDaten = JSON.parse(JSON.stringify(defaultHierarchieData));
 
 /* ── Standard-Guide-Daten ───────────────────────────────────── */
 let defaultGuideData = {
@@ -1585,8 +1582,8 @@ function openCreateEventModal(prefillDate = null) {
 
     if (targetRolesContainer) {
         targetRolesContainer.innerHTML = Object.values(cachedRoles).map(r => `
-            <label style="display:flex;align-items:center;gap:6px;padding:4px 8px;cursor:pointer;background:rgba(30,41,59,0.4);border-radius:6px;font-size:12px;">
-                <input type="checkbox" class="cal-target-role-cb" value="${escapeHtml(r.id)}">
+            <label for="cal_role_${r.id}" style="display:flex;align-items:center;gap:6px;padding:4px 8px;cursor:pointer;background:rgba(30,41,59,0.4);border-radius:6px;font-size:12px;">
+                <input type="checkbox" id="cal_role_${r.id}" class="cal-target-role-cb" value="${escapeHtml(r.id)}">
                 <span style="color:${r.color||'#38bdf8'};font-weight:700;">${r.icon?r.icon+' ':''}${escapeHtml(r.name)}</span>
             </label>
         `).join('');
@@ -1596,8 +1593,8 @@ function openCreateEventModal(prefillDate = null) {
         const myId = sessionUser ? generateUserId(sessionUser.vorname, sessionUser.nachname) : '';
         const allUsers = Object.entries(cachedUsers).sort((a,b) => (a[1].nachname||'').localeCompare(b[1].nachname||''));
         invitedUsersContainer.innerHTML = allUsers.filter(([uId]) => uId !== myId).map(([uId, u]) => `
-            <label style="display:flex;align-items:center;gap:6px;padding:4px 8px;cursor:pointer;background:rgba(30,41,59,0.4);border-radius:6px;font-size:12px;">
-                <input type="checkbox" class="cal-invited-user-cb" value="${escapeHtml(uId)}">
+            <label for="cal_invite_${uId}" style="display:flex;align-items:center;gap:6px;padding:4px 8px;cursor:pointer;background:rgba(30,41,59,0.4);border-radius:6px;font-size:12px;">
+                <input type="checkbox" id="cal_invite_${uId}" class="cal-invited-user-cb" value="${escapeHtml(uId)}">
                 <span><b>${escapeHtml(u.vorname||'')} ${escapeHtml(u.nachname||'')}</b> <span style="color:var(--primary);font-size:10px;">(${escapeHtml(u.dn||'--')})</span></span>
             </label>
         `).join('');
@@ -1890,8 +1887,8 @@ function editCalendarEventAction() {
         targetRolesContainer.innerHTML = Object.values(cachedRoles).map(r => {
             const isChecked = hasAll || (ev.targetRoles && ev.targetRoles.includes(r.id));
             return `
-                <label style="display:flex;align-items:center;gap:6px;padding:4px 8px;cursor:pointer;background:rgba(30,41,59,0.4);border-radius:6px;font-size:12px;">
-                    <input type="checkbox" class="cal-target-role-cb" value="${escapeHtml(r.id)}" ${isChecked ? 'checked' : ''}>
+                <label for="edit_cal_role_${r.id}" style="display:flex;align-items:center;gap:6px;padding:4px 8px;cursor:pointer;background:rgba(30,41,59,0.4);border-radius:6px;font-size:12px;">
+                    <input type="checkbox" id="edit_cal_role_${r.id}" class="cal-target-role-cb" value="${escapeHtml(r.id)}" ${isChecked ? 'checked' : ''}>
                     <span style="color:${r.color||'#38bdf8'};font-weight:700;">${r.icon?r.icon+' ':''}${escapeHtml(r.name)}</span>
                 </label>
             `;
@@ -1904,8 +1901,8 @@ function editCalendarEventAction() {
         invitedUsersContainer.innerHTML = allUsers.filter(([uId]) => uId !== myId).map(([uId, u]) => {
             const isInv = (ev.invitedUsers && Array.isArray(ev.invitedUsers) && ev.invitedUsers.includes(uId));
             return `
-                <label style="display:flex;align-items:center;gap:6px;padding:4px 8px;cursor:pointer;background:rgba(30,41,59,0.4);border-radius:6px;font-size:12px;">
-                    <input type="checkbox" class="cal-invited-user-cb" value="${escapeHtml(uId)}" ${isInv ? 'checked' : ''}>
+                <label for="edit_cal_invite_${uId}" style="display:flex;align-items:center;gap:6px;padding:4px 8px;cursor:pointer;background:rgba(30,41,59,0.4);border-radius:6px;font-size:12px;">
+                    <input type="checkbox" id="edit_cal_invite_${uId}" class="cal-invited-user-cb" value="${escapeHtml(uId)}" ${isInv ? 'checked' : ''}>
                     <span><b>${escapeHtml(u.vorname||'')} ${escapeHtml(u.nachname||'')}</b> <span style="color:var(--primary);font-size:10px;">(${escapeHtml(u.dn||'--')})</span></span>
                 </label>
             `;
@@ -3487,7 +3484,6 @@ function neuePruefungSpeichern() {
     
     let finalQuestions = _examBuilderQuestions.filter(q => !q.isInfo);
     
-    // Robuste Validierung: Jede Frage muss Text und mind. eine richtige Antwort besitzen
     for (let i = 0; i < finalQuestions.length; i++) {
         const q = finalQuestions[i];
         if (!q.text || !q.text.trim()) {
@@ -3853,8 +3849,8 @@ function openAssignRolesModal(uId, name, isRestrictedByLeitung = false) {
         const isSelfMasterProtection = isSelfMasterAdmin && (r.id === 'masteradmin');
         const isChecked = rids.includes(r.id);
         return `
-            <label style="display:flex;align-items:center;gap:10px;padding:8px;cursor:pointer;background:rgba(30,41,59,0.3);border-radius:8px;">
-                <input type="checkbox" ${isChecked ? 'checked' : ''} ${isSelfMasterProtection ? 'disabled checked title="Selbstausschluss-Schutz: Du kannst dir als Master-Admin deine eigene Rolle nicht entziehen."' : ''} id="assignRole_${r.id}">
+            <label for="assignRoleInput_${r.id}" style="display:flex;align-items:center;gap:10px;padding:8px;cursor:pointer;background:rgba(30,41,59,0.3);border-radius:8px;">
+                <input type="checkbox" ${isChecked ? 'checked' : ''} ${isSelfMasterProtection ? 'disabled checked title="Selbstausschluss-Schutz: Du kannst dir als Master-Admin deine eigene Rolle nicht entziehen."' : ''} id="assignRoleInput_${r.id}">
                 <b style="color:${r.color||'#38bdf8'};">${r.icon||''} ${escapeHtml(r.name)}</b>
                 ${isSelfMasterProtection ? '<span style="font-size:10px;color:var(--warning);margin-left:auto;">🔒 Geschützt</span>' : ''}
             </label>
@@ -3870,7 +3866,7 @@ function saveAssignedRoles() {
     let cleanRoles = {};
 
     Object.keys(cachedRoles).forEach(rId => {
-        const el = document.getElementById('assignRole_' + rId);
+        const el = document.getElementById('assignRoleInput_' + rId);
         if (el && el.checked) {
             cleanRoles[rId] = true;
         }
@@ -3932,9 +3928,9 @@ function renderRoleCategoryCheckboxes(containerId, allItems, selectedList = []) 
         cont.innerHTML = '<span style="color:var(--text-muted);font-size:12px;">Keine Kategorien vorhanden.</span>';
         return;
     }
-    cont.innerHTML = kats.map(k => `
-        <label style="display:inline-flex;align-items:center;gap:6px;background:rgba(30,41,59,0.5);padding:4px 10px;border-radius:6px;font-size:12px;cursor:pointer;">
-            <input type="checkbox" class="cat-checkbox-item ${containerId}_check" value="${escapeHtml(k)}" ${selectedList.includes(k) ? 'checked' : ''}>
+    cont.innerHTML = kats.map((k, idx) => `
+        <label for="${containerId}_item_${idx}" style="display:inline-flex;align-items:center;gap:6px;background:rgba(30,41,59,0.5);padding:4px 10px;border-radius:6px;font-size:12px;cursor:pointer;">
+            <input type="checkbox" id="${containerId}_item_${idx}" class="cat-checkbox-item ${containerId}_check" value="${escapeHtml(k)}" ${selectedList.includes(k) ? 'checked' : ''}>
             <span>${escapeHtml(k)}</span>
         </label>
     `).join('');
@@ -4213,7 +4209,7 @@ function switchInstructorTab(tabId, btnEl) {
 }
 function toggleGroupCollapse(gId) { const g = document.getElementById(gId); if (g) g.classList.toggle('collapsed'); }
 
-/* ── DOM Ready & Exports ───────────────────────────────────── */
+/* ── DOM Ready & Exports ────────────────────────────────     */
 document.addEventListener('DOMContentLoaded', () => {
     updateLiveDate(); setInterval(updateLiveDate, 60000);
     renderGuideTab(); renderHierarchieBoard(hierarchieDaten); baueMaterialUIAuf();
@@ -4242,3 +4238,72 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 });
+
+const _w = window;
+_w.switchTab = switchTab; _w.settingsTabClick = settingsTabClick; _w.switchAdminTab = switchAdminTab; _w.switchInstructorTab = switchInstructorTab;
+_w.handleAuthAction = handleAuthAction; _w.toggleAuthTab = toggleAuthTab;
+_w.openAdminKeyModal = openAdminKeyModal; _w.closeAdminAuthModal = closeAdminAuthModal; _w.verifyAdminKeyPassword = verifyAdminKeyPassword; _w.closeAdminManagementModal = closeAdminManagementModal;
+_w.handleDienstEndeLogout = handleDienstEndeLogout; _w.berechneDienstTage = berechneDienstTage; _w.passwortAendern = passwortAendern;
+_w.toggleGroupCollapse = toggleGroupCollapse; _w.stepVerletzungenAnzahl = stepVerletzungenAnzahl; _w.stepKosten = stepKosten; _w.stepMat = stepMat; _w.ladeCheckliste = ladeCheckliste; _w.patientHinzufuegen = patientHinzufuegen; _w.toggleTodo = toggleTodo;
+_w.resetMedicalWorkflow = resetMedicalWorkflow; _w.openEditModal = openEditModal; _w.closeEditModal = closeEditModal; _w.speicherePatientEdit = speicherePatientEdit;
+_w.deletePatient = deletePatient; _w.deleteArchivSchicht = deleteArchivSchicht; _w.deleteDienstLink = deleteDienstLink; _w.deleteDienstCommand = deleteDienstCommand; _w.exportArchivCSV = exportArchivCSV;
+_w.openPricesInlineModal = openPricesInlineModal; _w.closePricesInlineModal = closePricesInlineModal; _w.speicherePreiseInline = speicherePreiseInline;
+_w.openGuideInlineModal = openGuideInlineModal; _w.closeGuideInlineModal = closeGuideInlineModal; _w.addGuideRow = addGuideRow; _w.removeGuideRow = removeGuideRow; _w.saveGuideInline = saveGuideInline;
+_w.openCommandsInlineModal = openCommandsInlineModal; _w.closeCommandsInlineModal = closeCommandsInlineModal; _w.addCommandInline = addCommandInline;
+_w.openLinksInlineModal = openLinksInlineModal; _w.closeLinksInlineModal = closeLinksInlineModal; _w.addLinkInline = addLinkInline;
+_w.renderNewsFeed = () => renderNewsFeedData(cachedNews); _w.togglePostNewsForm = togglePostNewsForm; _w.speichereNeueNews = speichereNeueNews; _w.deleteNews = deleteNews;
+_w.toggleProposeNewsForm = toggleProposeNewsForm; _w.submitNewsProposal = submitNewsProposal; _w.approveNewsProposal = approveNewsProposal;
+_w.markNewsAsRead = markNewsAsRead; _w.openNewsReadersModal = openNewsReadersModal; _w.closeNewsReadersModal = closeNewsReadersModal;
+_w.openEditNewsModal = openEditNewsModal;
+_w.openChangelogModal = openChangelogModal; _w.closeChangelogModal = closeChangelogModal;
+_w.openChangelogWriterModal = openChangelogWriterModal; _w.closeChangelogWriterModal = closeChangelogWriterModal; _w.saveCustomChangelogEntry = saveCustomChangelogEntry;
+_w.openGehaltInlineModal = openGehaltInlineModal; _w.closeGehaltInlineModal = closeGehaltInlineModal; _w.saveGehaltInline = saveGehaltInline; _w.addGehaltRowInline = addGehaltRowInline; _w.removeGehaltRowInline = removeGehaltRowInline;
+_w.startExam = startExam; _w.cancelActiveExam = cancelActiveExam; _w.submitActiveExam = submitActiveExam;
+_w.addExamQuestionRow = addExamQuestionRow; _w.resetExamBuilderForm = resetExamBuilderForm; _w.neuePruefungSpeichern = neuePruefungSpeichern; _w.editExam = editExam; _w.deleteExam = deleteExam; _w.deleteExamSubmission = deleteExamSubmission;
+_w.openExamBuilderModal = openExamBuilderModal; _w.closeExamBuilderModal = closeExamBuilderModal;
+_w.openExamSubmissionDetailsModal = openExamSubmissionDetailsModal; _w.closeExamSubmissionDetailsModal = closeExamSubmissionDetailsModal;
+_w.filterUnlocksTable = filterUnlocksTable; _w.toggleExamUnlockForUser = toggleExamUnlockForUser; _w.toggleExamPassedForUser = toggleExamPassedForUser;
+_w.downloadSystemBackup = downloadSystemBackup; _w.restoreSystemBackupFromFile = restoreSystemBackupFromFile;
+_w.speichereHierarchieDaten = saveHierarchieInline;
+_w.approveUser = approveUser; _w.revokeUser = revokeUser; _w.deleteUserAccount = deleteUserAccount; _w.filterAdminUserTable = filterAdminUserTable;
+_w.openAssignRolesModal = openAssignRolesModal; _w.closeAssignRolesModal = closeAssignRolesModal; _w.saveAssignedRoles = saveAssignedRoles;
+_w.openUserPermissionsModal = openUserPermissionsModal; _w.closeUserPermissionsModal = closeUserPermissionsModal; _w.saveUserPermissions = saveUserPermissions;
+_w.neueRolleErstellen = neueRolleErstellen; _w.selectRole = selectRole; _w.updateRoleBadgePreview = updateRoleBadgePreview; _w.speichereRolle = speichereRolle; _w.loescheRolle = loescheRolle;
+_w.vollstaendigerReset = vollstaendigerReset; _w.renderAdminAuditLogs = renderAdminAuditLogs;
+_w.openAuditLogArchiveModal = openAuditLogArchiveModal; _w.closeAuditArchiveModal = closeAuditArchiveModal;
+_w.editCommandInline = editCommandInline;
+_w.editLinkInline = editLinkInline;
+_w.openHierarchieInlineModal = openHierarchieInlineModal;
+_w.closeHierarchieInlineModal = closeHierarchieInlineModal;
+_w.saveHierarchieInline = saveHierarchieInline;
+_w.changeCalendarMonth = changeCalendarMonth;
+_w.resetCalendarToToday = resetCalendarToToday;
+_w.renderCalendarMonth = renderCalendarMonth;
+_w.onCalendarCellClick = onCalendarCellClick;
+_w.openCreateEventModal = openCreateEventModal;
+_w.closeCalendarEventModal = closeCalendarEventModal;
+_w.saveCalendarEvent = saveCalendarEvent;
+_w.openCalendarEventDetailsModal = openCalendarEventDetailsModal;
+_w.closeCalendarEventDetailsModal = closeCalendarEventDetailsModal;
+_w.editCalendarEventAction = editCalendarEventAction;
+_w.deleteCalendarEventAction = deleteCalendarEventAction;
+_w.togglePrivateEventOption = togglePrivateEventOption;
+_w.toggleAllCalendarRoles = toggleAllCalendarRoles;
+_w.handleCalendarCreatorSelectionChange = handleCalendarCreatorSelectionChange;
+_w.renderStaffDirectory = renderStaffDirectory;
+_w.filterStaffDirectory = filterStaffDirectory;
+_w.openStaffPhotoUploadModal = openStaffPhotoUploadModal;
+_w.closeStaffPhotoUploadModal = closeStaffPhotoUploadModal;
+_w.previewStaffPhotoUpload = previewStaffPhotoUpload;
+_w.submitStaffPhotoUpload = submitStaffPhotoUpload;
+_w.openStaffPhotoAdminModal = openStaffPhotoAdminModal;
+_w.closeStaffPhotoAdminModal = closeStaffPhotoAdminModal;
+_w.renderStaffPhotoAdminList = renderStaffPhotoAdminList;
+_w.downloadStaffOriginalPhoto = downloadStaffOriginalPhoto;
+_w.uploadProcessedStaffPhoto = uploadProcessedStaffPhoto;
+_w.resetStaffPhotoToDefault = resetStaffPhotoToDefault;
+_w.toggleBuilderCorrectAnswer = toggleBuilderCorrectAnswer;
+_w.manualTriggerArchive = manualTriggerArchive;
+_w.openArchivEditModal = openArchivEditModal;
+_w.closeArchivEditModal = closeArchivEditModal;
+_w.saveArchivEdit = saveArchivEdit;
