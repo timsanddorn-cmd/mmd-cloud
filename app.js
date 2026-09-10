@@ -267,6 +267,32 @@ const ROLE_PROPERTY_MAP = {
     delFlagLinks: 'delLinks'
 };
 
+/* ── Standard-Hierarchie-Daten ─────────────────────────────── */
+const defaultHierarchieData = {
+    chief_01: "Aktuell nicht belegt",
+    chief_02: "Aktuell nicht belegt",
+    chief_03: "Aktuell nicht belegt",
+    dept_psych_l: "Aktuell nicht belegt",
+    dept_psych_sl: "Aktuell nicht belegt",
+    dept_perso_l: "Aktuell nicht belegt",
+    dept_perso_sl: "Aktuell nicht belegt",
+    dept_ausb_l: "Aktuell nicht belegt",
+    dept_ausb_sl: "Aktuell nicht belegt",
+    dept_luft_l: "Gleich die Ausbildungsleitung",
+    dept_luft_sl: "Aktuell nicht belegt",
+    domo_04: "Nick Garcia",
+    domo_04_sub: "",
+    fod_05: "Mike Gonzalo",
+    fod_05_sub: "",
+    chiefphys_06: "Katarina Harper",
+    chiefphys_07: "Tim Sanddorn",
+    lt_08: "Aktuell nicht belegt",
+    lt_09: "Aktuell nicht belegt",
+    a_emt_count: "2",
+    emt_count: "0"
+};
+let hierarchieDaten = JSON.parse(JSON.stringify(defaultHierarchieData));
+
 /* ── Standard-Guide-Daten ───────────────────────────────────── */
 let defaultGuideData = {
     tenCodes: [
