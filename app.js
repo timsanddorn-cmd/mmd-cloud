@@ -1,5 +1,5 @@
 // ============================================================
-//  MMD CLOUD – Medical Center Web-App  |  app.js  v5.8
+//  MMD CLOUD – Medical Center Web-App  |  app.js  v5.9.1
 //  Firebase Realtime Database (Compat SDK v10)
 // ============================================================
 
@@ -14,7 +14,26 @@ function escapeHtml(str) {
         .replace(/'/g, '&#039;');
 }
 
-/* ── Fallback Icon (Inline SVG, verhindert Endlosschleifen & Blinken) ── */
+/* ── Text-Parser: Links in Texten klickbar machen ─────────── */
+function formatTextWithLinks(text) {
+    if (!text) return '';
+    const escaped = escapeHtml(text);
+    const urlPattern = /(https?:\/\/[^\s]+)/g;
+    return escaped.replace(urlPattern, url => {
+        return `<a href="${url}" target="_blank" rel="noopener noreferrer" style="color:var(--primary);text-decoration:underline;word-break:break-all;">${url}</a>`;
+    });
+}
+
+function sanitizeUrl(url) {
+    if (!url) return '#';
+    let trimmed = String(url).trim();
+    if (!trimmed.startsWith('http://') && !trimmed.startsWith('https://')) {
+        trimmed = 'https://' + trimmed;
+    }
+    return encodeURI(trimmed);
+}
+
+/* ── Fallback Icon (Inline SVG) ────────────────────────────── */
 const DEFAULT_MD_LOGO_FALLBACK = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%230f172a'/><path d='M42 20h16v22h22v16H58v22H42V58H20V42h22V20z' fill='%2338bdf8'/><circle cx='50' cy='50' r='46' fill='none' stroke='%2338bdf8' stroke-width='4'/></svg>";
 
 /* ── Firebase Init ─────────────────────────────────────────── */
@@ -51,6 +70,35 @@ let activeDetailEventId = null;
 /* ── Vollständiger Gesamt-Changelog (Entwicklungsverlauf) ───── */
 const systemChangelogs = [
     {
+        id: "sys_v5_9_1",
+        version: "v5.9.1",
+        date: "11.09.2026",
+        category: "Update",
+        title: "Vollständige Fragenkataloge & Stammdaten-Integration",
+        changes: [
+            "Alle 7 offiziellen Prüfungen (GA1, GA2, DV, Para 1, Para 2, Arzt 1, Arzt 2) mit den vollständigen Original-Fragenkatalogen fest im System hinterlegt.",
+            "Frage 1 bis 3 in allen Prüfungen als neutrale Stammdatenfelder (Mitarbeiter-DN, Prüfer-DN, Name) definiert.",
+            "Prüfungsbewertung angepasst: Stammdatenfragen fließen nicht in die Fehlerquote ein und verfälschen die Bestehensquote nicht."
+        ]
+    },
+    {
+        id: "sys_v5_9",
+        version: "v5.9",
+        date: "11.09.2026",
+        category: "Bugfix",
+        title: "Rollen-Entzug dauerhaft repariert, Kalender-Einladungen & No-Code Schicht-Korrektur",
+        changes: [
+            "Rollen-Entzug dauerhaft repariert: Abgewählte Rollen (wie Ausbilder) werden restlos und ohne veraltete Alt-Flags aus der Datenbank entfernt.",
+            "Strikte Rollen-Isolierung: Rollen ohne Berechtigung für Spezialkategorien (wie Psychologie) können diese weder bei Commands noch bei Links einsehen.",
+            "Klickbare Links in Commands und automatische URL-Reparatur für externe Leitfäden integriert.",
+            "Kalender-Upgrade: Keine Duplizierung mehr beim Verschieben von Terminen; spezifische Kollegen können nun zu Terminen eingeladen werden.",
+            "Automatische Bereinigung: Termine, die älter als 7 Tage sind, werden automatisch aus dem Kalender gelöscht.",
+            "Diensttage-Rechner dauerhaft in der Cloud gesichert: Das Einstellungsdatum geht bei Abmeldung nicht mehr verloren.",
+            "Schutz für Patientenprotokoll: Das Stiftsymbol ist standardmäßig nur für den Medic sichtbar, der den Patienten selbst eingetragen hat.",
+            "Schichtarchiv-Korrektur: Master-Admins können archivierte Schichten direkt vor Ort per Stiftsymbol editieren."
+        ]
+    },
+    {
         id: "sys_v5_8",
         version: "v5.8",
         date: "10.09.2026",
@@ -61,63 +109,6 @@ const systemChangelogs = [
             "Prüfungs-Baukasten repariert: Beim Bearbeiten bestehender Prüfungen (wie GA2 Frage 4) können nun fehlerfrei beliebig viele Antworten als richtig definiert und gespeichert werden.",
             "Automatische Datenmigration für Alt-Prüfungen: Ältere Prüfungsfragen mit Einzelwerten werden beim Laden automatisch in kompatible Multiple-Choice-Arrays konvertiert.",
             "Vollständiges Audit aller Buttons, Verlinkungen und No-Code-Inline-Editoren erfolgreich abgeschlossen."
-        ]
-    },
-    {
-        id: "sys_v5_7",
-        version: "v5.7",
-        date: "10.09.2026",
-        category: "Update",
-        title: "Multiple-Choice Prüfungssystem, No-Code Changelog & Auto-Schichtexport",
-        changes: [
-            "Prüfungssystem erweitert: Fragen unterstützen echte Mehrfachauswahl (Multiple-Choice via Checkboxen) für Prüflinge und Ausbilder.",
-            "Bestehende Standardprüfungen (GA1, GA2, DV, Para, Arzt) vollständig an das Mehrfachauswahl-System angepasst.",
-            "No-Code Changelog-System: Master-Admins können neue Patchnotes und Hinweise direkt per Stiftsymbol im Portal verfassen.",
-            "Automatischer Schichtbericht-Download: Beim Archivieren des Tagesprotokolls wird sofort automatisch ein CSV-Bericht für die Klinikleitung heruntergeladen."
-        ]
-    },
-    {
-        id: "sys_v5_6",
-        version: "v5.6",
-        date: "10.09.2026",
-        category: "Update",
-        title: "Changelog-System, Dynamische Gehaltstabelle & Kalender-Upgrade",
-        changes: [
-            "Offizieller Änderungsverlauf (Changelog) mit separatem Infofenster für alle Mitarbeiter eingeführt.",
-            "Gehaltstabelle vollständig dynamisiert: Ränge, Befehle und Sold-Sätze direkt vor Ort per Stiftsymbol editierbar.",
-            "Kalender-Bug behoben: Beim Bearbeiten bestehender Termine wird der Eintrag direkt aktualisiert.",
-            "Ersteller-Unterfeld im Kalender: Bei Terminen für Fachbereiche kann die zuständige Kontaktperson eingetragen werden."
-        ]
-    },
-    {
-        id: "sys_v5_5",
-        version: "v5.5",
-        date: "04.09.2026",
-        category: "Neue Funktion",
-        title: "Interaktiver Monatskalender & Mitarbeiter-Fotostudio",
-        changes: [
-            "Neuer interaktiver Monatskalender mit Wochenübersicht, Serienterminen und rollenbasierten Sichtbarkeitsfiltern.",
-            "Mitarbeiter-Kartei mit Foto-Einreichung und browserseitiger Komprimierung."
-        ]
-    },
-    {
-        id: "sys_v5_0",
-        version: "v5.0",
-        date: "28.08.2026",
-        category: "Update",
-        title: "Digitaler Ausbildungsbereich & Prüfungssystem",
-        changes: [
-            "Einführung von Online-Prüfungen mit Live-Timer und automatischer Auswertung."
-        ]
-    },
-    {
-        id: "sys_v1_0",
-        version: "v1.0",
-        date: "18.07.2026",
-        category: "Neue Funktion",
-        title: "Offizieller Start der MMD Cloud",
-        changes: [
-            "Grundsteinlegung des Medical Department Portals: Authentifizierung, Live-Präsenzanzeige und Patienten-Einsatzprotokoll."
         ]
     }
 ];
@@ -142,99 +133,115 @@ const defaultGehaltData = [
 ];
 let cachedGehaltData = JSON.parse(JSON.stringify(defaultGehaltData));
 
-/* ── Standard-Rollen & granulare Berechtigungen ───────────── */
+/* ── Standard-Rollen & Berechtigungen ───────────────────────── */
 const defaultRoles = {
     masteradmin: {
         id:'masteradmin', name:'Master-Admin', color:'#eab308', icon:'👑', isSystem:true,
-        isAdmin:true, isMasterAdmin:true, canViewArchive:true,
+        isAdmin:true, isMasterAdmin:true, canViewArchive:true, canEditAllPatients:true,
         canCreateCalendar:true, delCalendar:true, canManagePhotos:true,
         isInstructor:true, canManageInstructors:true, canManageExams:true,
         canPostNews:true, canApproveNews:true, canViewNewsRead:true,
         canEditPrices:true, canEditGuide:true, canEditCommands:true, canEditLinks:true,
-        delPatient:true, delArchiv:true, delGuide:true, delCommands:true, delLinks:true, delNews:true, delExams:true, delUsers:true
+        delPatient:true, delArchiv:true, delGuide:true, delCommands:true, delLinks:true, delNews:true, delExams:true, delUsers:true,
+        allowedCmdKats: [], allowedLinkKats: []
     },
     admin: {
         id:'admin', name:'Admin', color:'#f59e0b', icon:'🛡️', isSystem:true,
-        isAdmin:true, isMasterAdmin:false, canViewArchive:true,
+        isAdmin:true, isMasterAdmin:false, canViewArchive:true, canEditAllPatients:true,
         canCreateCalendar:true, delCalendar:true, canManagePhotos:true,
         isInstructor:true, canManageInstructors:true, canManageExams:true,
         canPostNews:true, canApproveNews:true, canViewNewsRead:true,
         canEditPrices:true, canEditGuide:true, canEditCommands:true, canEditLinks:true,
-        delPatient:true, delArchiv:true, delGuide:true, delCommands:true, delLinks:true, delNews:true, delExams:true, delUsers:false
+        delPatient:true, delArchiv:true, delGuide:true, delCommands:true, delLinks:true, delNews:true, delExams:true, delUsers:false,
+        allowedCmdKats: [], allowedLinkKats: []
     },
     ausbildungsleitung: {
         id:'ausbildungsleitung', name:'Ausbildungsleitung', color:'#c084fc', icon:'⚙️', isSystem:true,
-        isAdmin:false, isMasterAdmin:false, canViewArchive:false,
+        isAdmin:false, isMasterAdmin:false, canViewArchive:false, canEditAllPatients:false,
         canCreateCalendar:true, delCalendar:false, canManagePhotos:false,
         isInstructor:true, canManageInstructors:true, canManageExams:true,
         canPostNews:true, canApproveNews:true, canViewNewsRead:true,
-        canEditPrices:false, canEditGuide:false, canEditCommands:true, canEditLinks:true,
-        delPatient:false, delArchiv:false, delGuide:false, delCommands:false, delLinks:false, delNews:false, delExams:true, delUsers:false
+        canEditPrices:false, canEditGuide:false, canEditCommands:false, canEditLinks:false,
+        delPatient:false, delArchiv:false, delGuide:false, delCommands:false, delLinks:false, delNews:false, delExams:true, delUsers:false,
+        allowedCmdKats: ['Ausbildung', 'Ausbildungsabteilung', 'Abkürzungen & Dokumente', 'T-Codes'],
+        allowedLinkKats: ['Allgemein', 'Ausbildung', 'MD Intern']
     },
     ausbilder: {
         id:'ausbilder', name:'Ausbilder', color:'#8b5cf6', icon:'🎓', isSystem:true,
-        isAdmin:false, isMasterAdmin:false, canViewArchive:false,
+        isAdmin:false, isMasterAdmin:false, canViewArchive:false, canEditAllPatients:false,
         canCreateCalendar:true, delCalendar:false, canManagePhotos:false,
         isInstructor:true, canManageInstructors:false, canManageExams:false,
         canPostNews:false, canApproveNews:false, canViewNewsRead:false,
         canEditPrices:false, canEditGuide:false, canEditCommands:false, canEditLinks:false,
-        delPatient:false, delArchiv:false, delGuide:false, delCommands:false, delLinks:false, delNews:false, delExams:false, delUsers:false
+        delPatient:false, delArchiv:false, delGuide:false, delCommands:false, delLinks:false, delNews:false, delExams:false, delUsers:false,
+        allowedCmdKats: ['Ausbildung', 'Ausbildungsabteilung', 'Abkürzungen & Dokumente', 'T-Codes'],
+        allowedLinkKats: ['Allgemein', 'MD Intern']
     },
     cls: {
         id:'cls', name:'CLS-Ausbilder', color:'#06b6d4', icon:'💉', isSystem:true,
-        isAdmin:false, isMasterAdmin:false, canViewArchive:false,
-        canCreateCalendar:true, delCalendar:false, canManagePhotos:false,
-        isInstructor:true, canManageInstructors:false, canManageExams:false,
+        isAdmin:false, isMasterAdmin:false, canViewArchive:false, canEditAllPatients:false,
+        canCreateCalendar:false, delCalendar:false, canManagePhotos:false,
+        isInstructor:false, canManageInstructors:false, canManageExams:false,
         canPostNews:false, canApproveNews:false, canViewNewsRead:false,
         canEditPrices:false, canEditGuide:false, canEditCommands:false, canEditLinks:false,
-        delPatient:false, delArchiv:false, delGuide:false, delCommands:false, delLinks:false, delNews:false, delExams:false, delUsers:false
+        delPatient:false, delArchiv:false, delGuide:false, delCommands:false, delLinks:false, delNews:false, delExams:false, delUsers:false,
+        allowedCmdKats: ['Abkürzungen & Dokumente', 'T-Codes'],
+        allowedLinkKats: ['Allgemein', 'CLS', 'MD Intern']
     },
     ehk: {
         id:'ehk', name:'EHK-Ausbilder', color:'#10b981', icon:'🩺', isSystem:true,
-        isAdmin:false, isMasterAdmin:false, canViewArchive:false,
-        canCreateCalendar:true, delCalendar:false, canManagePhotos:false,
-        isInstructor:true, canManageInstructors:false, canManageExams:false,
+        isAdmin:false, isMasterAdmin:false, canViewArchive:false, canEditAllPatients:false,
+        canCreateCalendar:false, delCalendar:false, canManagePhotos:false,
+        isInstructor:false, canManageInstructors:false, canManageExams:false,
         canPostNews:false, canApproveNews:false, canViewNewsRead:false,
         canEditPrices:false, canEditGuide:false, canEditCommands:false, canEditLinks:false,
-        delPatient:false, delArchiv:false, delGuide:false, delCommands:false, delLinks:false, delNews:false, delExams:false, delUsers:false
+        delPatient:false, delArchiv:false, delGuide:false, delCommands:false, delLinks:false, delNews:false, delExams:false, delUsers:false,
+        allowedCmdKats: ['Abkürzungen & Dokumente', 'T-Codes'],
+        allowedLinkKats: ['Allgemein', 'EHK', 'MD Intern']
     },
     luftrettung: {
         id:'luftrettung', name:'Luftrettung', color:'#0284c7', icon:'🚁', isSystem:true,
-        isAdmin:false, isMasterAdmin:false, canViewArchive:false,
-        canCreateCalendar:true, delCalendar:false, canManagePhotos:false,
-        isInstructor:false, canManageInstructors:false, canManageExams:false,
-        canPostNews:false, canApproveNews:false, canViewNewsRead:false,
-        canEditPrices:false, canEditGuide:false, canEditCommands:false, canEditLinks:false,
-        delPatient:false, delArchiv:false, delGuide:false, delCommands:false, delLinks:false, delNews:false, delExams:false, delUsers:false
-    },
-    psychologie: {
-        id:'psychologie', name:'Psychologie', color:'#f59e0b', icon:'🧠', isSystem:true,
-        isAdmin:false, isMasterAdmin:false, canViewArchive:false,
+        isAdmin:false, isMasterAdmin:false, canViewArchive:false, canEditAllPatients:false,
         canCreateCalendar:true, delCalendar:false, canManagePhotos:false,
         isInstructor:false, canManageInstructors:false, canManageExams:false,
         canPostNews:false, canApproveNews:false, canViewNewsRead:false,
         canEditPrices:false, canEditGuide:false, canEditCommands:false, canEditLinks:false,
         delPatient:false, delArchiv:false, delGuide:false, delCommands:false, delLinks:false, delNews:false, delExams:false, delUsers:false,
-        allowedCmdKats: ['Psychologie'], allowedLinkKats: ['Psychologie']
+        allowedCmdKats: ['Abkürzungen & Dokumente', 'Allgemein', 'T-Codes'],
+        allowedLinkKats: ['MD Intern']
+    },
+    psychologie: {
+        id:'psychologie', name:'Psychologie', color:'#ec4899', icon:'🧠', isSystem:true,
+        isAdmin:false, isMasterAdmin:false, canViewArchive:false, canEditAllPatients:false,
+        canCreateCalendar:true, delCalendar:true, canManagePhotos:false,
+        isInstructor:false, canManageInstructors:false, canManageExams:false,
+        canPostNews:true, canApproveNews:false, canViewNewsRead:false,
+        canEditPrices:false, canEditGuide:false, canEditCommands:false, canEditLinks:false,
+        delPatient:false, delArchiv:false, delGuide:false, delCommands:false, delLinks:false, delNews:false, delExams:false, delUsers:false,
+        allowedCmdKats: ['Abkürzungen & Dokumente', 'Psychologie', 'T-Codes'],
+        allowedLinkKats: ['Allgemein', 'MD Intern', 'Psychologie']
     },
     personalabteilung: {
         id:'personalabteilung', name:'Personalabteilung', color:'#ec4899', icon:'💼', isSystem:true,
-        isAdmin:false, isMasterAdmin:false, canViewArchive:false,
-        canCreateCalendar:true, delCalendar:false, canManagePhotos:true,
+        isAdmin:false, isMasterAdmin:false, canViewArchive:false, canEditAllPatients:false,
+        canCreateCalendar:true, delCalendar:false, canManagePhotos:false,
         isInstructor:false, canManageInstructors:false, canManageExams:false,
-        canPostNews:false, canApproveNews:false, canViewNewsRead:false,
+        canPostNews:true, canApproveNews:true, canViewNewsRead:true,
         canEditPrices:false, canEditGuide:false, canEditCommands:false, canEditLinks:false,
-        delPatient:false, delArchiv:false, delGuide:false, delCommands:false, delLinks:false, delNews:false, delExams:false, delUsers:false,
-        allowedCmdKats: ['Personal'], allowedLinkKats: ['Personal', 'MD Intern']
+        delPatient:false, delArchiv:false, delGuide:false, delCommands:false, delLinks:false, delNews:true, delExams:false, delUsers:false,
+        allowedCmdKats: ['Abkürzungen & Dokumente', 'T-Codes'],
+        allowedLinkKats: ['Allgemein', 'MD Intern']
     },
     mitarbeiter: {
         id:'mitarbeiter', name:'Mitarbeiter', color:'#64748b', icon:'👨‍⚕️', isSystem:true,
-        isAdmin:false, isMasterAdmin:false, canViewArchive:false,
+        isAdmin:false, isMasterAdmin:false, canViewArchive:false, canEditAllPatients:false,
         canCreateCalendar:true, delCalendar:false, canManagePhotos:false,
         isInstructor:false, canManageInstructors:false, canManageExams:false,
         canPostNews:false, canApproveNews:false, canViewNewsRead:false,
         canEditPrices:false, canEditGuide:false, canEditCommands:false, canEditLinks:false,
-        delPatient:false, delArchiv:false, delGuide:false, delCommands:false, delLinks:false, delNews:false, delExams:false, delUsers:false
+        delPatient:false, delArchiv:false, delGuide:false, delCommands:false, delLinks:false, delNews:false, delExams:false, delUsers:false,
+        allowedCmdKats: ['Abkürzungen & Dokumente', 'T-Codes'],
+        allowedLinkKats: ['Allgemein', 'MD Intern']
     }
 };
 let cachedRoles = Object.assign({}, defaultRoles);
@@ -245,6 +252,7 @@ const ROLE_PROPERTY_MAP = {
     delFlagUsers: 'delUsers',
     roleFlagEditPrices: 'canEditPrices',
     roleFlagArchive: 'canViewArchive',
+    roleFlagEditAllPatients: 'canEditAllPatients',
     delFlagPatient: 'delPatient',
     delFlagArchiv: 'delArchiv',
     roleFlagManagePhotos: 'canManagePhotos',
@@ -337,14 +345,19 @@ let medicDatenbank = {
 };
 
 let defaultCommands = {
-    cmd_1: { name:"!Psych",       desc:"Psych anforderungen",        kat:"Psychologie" },
+    cmd_1: { name:"!Psych",       desc:"Psych anforderungen",  kat:"Psychologie" },
     cmd_2: { name:"!waffenschein",desc:"Warten für die Überprüfung", kat:"Psychologie" },
-    cmd_3: { name:"/editmdthud",  desc:"MD HUD ändern",              kat:"T-Codes" },
-    cmd_4: { name:"PSGU Test",    desc:"Psychologisches Gutachten",   kat:"Abkürzungen & Dokumente" },
-    cmd_5: { name:"CLS",          desc:"Combat Life Saver",           kat:"Abkürzungen & Dokumente" },
-    cmd_6: { name:"EHK",          desc:"Erste Hilfe Kurs",            kat:"Abkürzungen & Dokumente" },
-    cmd_7: { name:"!ausbildung",  desc:"Ausbildungsanfrage stellen",  kat:"Ausbildung" },
-    cmd_8: { name:"!pruefung",    desc:"Prüfungsanmeldung",           kat:"Ausbildung" }
+    cmd_3: { name:"/editmdthud",  desc:"MD HUD ändern", kat:"T-Codes" },
+    cmd_4: { name:"PSGU Test",    desc:"Psychologisches Gutachten Leitfaden", kat:"Abkürzungen & Dokumente" },
+    cmd_5: { name:"CLS",          desc:"Combat Life Saver Protokoll", kat:"Abkürzungen & Dokumente" },
+    cmd_6: { name:"EHK",          desc:"Erste Hilfe Kurs Vorlage", kat:"Abkürzungen & Dokumente" },
+    cmd_7: { name:"!ausbildung",  desc:"Ausbildungsanfrage stellen", kat:"Ausbildung" },
+    cmd_8: { name:"!pruefung",    desc:"Prüfungsanmeldung", kat:"Ausbildung" },
+    cmd_9: { name:"!ehkleiter",   desc:"Ausbildung zum EHK Ausbilder", kat:"Ausbildungsabteilung" },
+    cmd_10: { name:"!arzt3info",  desc:"Infoblatt Arzt 3", kat:"Ausbildungsabteilung" },
+    cmd_11: { name:"!para3info",  desc:"Infoblatt Paramedic 3", kat:"Ausbildungsabteilung" },
+    cmd_12: { name:"!info",       desc:"Infoblatt Schemen, Gerätschaften und Medikamente", kat:"Ausbildungsabteilung" },
+    cmd_13: { name:"/rename",     desc:"Ticket für Termin umbenennen im Discord", kat:"Psychologie" }
 };
 
 let defaultLinks = {
@@ -354,97 +367,22 @@ let defaultLinks = {
     link_4: { name:"Medikamenten-Leitfaden",            url:"https://docs.google.com", desc:"Dosierungen und Wirkstoffe", kat:"MD Intern" },
     link_5: { name:"Preisliste Behandlungen",           url:"https://docs.google.com", desc:"Aktuelle Abrechnungspreise", kat:"MD Intern" },
     link_6: { name:"Dienstplan / Schichtplan",          url:"https://docs.google.com", desc:"Aktuelle Dienstverteilung", kat:"MD Intern" },
-    link_7: { name:"Urlaubsantrag",                     url:"https://docs.google.com", desc:"Formular zur Urlaubsbeantragung", kat:"Allgemein" }
+    link_7: { name:"Urlaubsantrag",                     url:"https://docs.google.com", desc:"Formular zur Urlaubsbeantragung", kat:"Allgemein" },
+    link_8: { name:"Leitfaden EHK Original",            url:"https://docs.google.com/document/d/1v5fRU_FgLcElt5Tc5DGe_pUp3kzrCZEx0Llmi85rt5M/edit", desc:"Leitfaden zum Erste Hilfe Kurs", kat:"EHK" },
+    link_9: { name:"Leitfaden Combat Life Saver",       url:"https://docs.google.com/document/d/1aLWK8zhFfqTdbvrTECvkStKCTgvuMCaah0xPlCJxNfU/edit", desc:"Leitfaden zum Combat Life Saver Kurs", kat:"CLS" },
+    link_10:{ name:"Dokumente Psychologie",             url:"https://docs.google.com/document/d/19kLhrw9PDfk4Jmv9Yqo4l1JfUWh2HoEPf_WdZgVylBM/edit", desc:"Patienten Akten der Psychologie", kat:"Psychologie" },
+    link_11:{ name:"Dienstvorschriften",                url:"https://docs.google.com/document/d/11q46KTgY9v0zysC-_xPgnyiFyqhtzTeMhUP0CGyAj3Q/edit", desc:"Dienstvorschriften", kat:"MD Intern" },
+    link_12:{ name:"Sanktionskatalog",                  url:"https://docs.google.com/spreadsheets/d/1BXxvqmkU_1N9MwHMLimZlPRGtT668xMzkhxqH_hhm9k/edit", desc:"Sanktionskatalog", kat:"MD Intern" }
 };
 
-/* ── Standard-Prüfungen mit echtem Multiple-Choice ─────────── */
-let defaultExams = {
-    exam_ga1: {
-        id: "exam_ga1", title: "Grundausbildung 1 (GA1)", kat: "Grundausbildung", timeLimitMinutes: 30, passPercentage: 60, passScore: 15,
-        introText: "Willkommen bei der Grundausbildung 1. Mindestpunktzahl zum Bestehen: 15 Punkte (60%). Hinweis: Mehrere Antworten können richtig sein!",
-        questions: [
-            { id: 1, text: "Wie viel kostet ein MRT?", options: ["10.000 $", "7.500 $", "5.000 $", "2.500 $"], correctAnswers: [3] },
-            { id: 2, text: "Wie viel kostet eine Reanimation? Im Zeitraum von 0 - 6Uhr!", options: ["2.500 $", "5.000 $", "7.500 $", "10.000 $"], correctAnswers: [3] },
-            { id: 3, text: "Wie melde ich, dass mein Dispatch erledigt ist?", options: ["Einfach wegfahren", "SMS an Leitstelle", "Meldung im Funk: [Unit] 10-5", "Neuen Dispatch senden"], correctAnswers: [2] },
-            { id: 4, text: "Was bedeutet der Funkcode 10-3?", options: ["Unterwegs", "Verstanden, Ende", "Weg ins MD", "Funkstille"], correctAnswers: [2] },
-            { id: 5, text: "Was bedeutet der Funkcode 10-10?", options: ["Statusbericht", "Am Einsatzort", "Unterwegs", "Weiterer RTW benötigt"], correctAnswers: [3] },
-            { id: 6, text: "Streife 2 trifft vor Ort ein und die Leitstelle fragt nach 10-8.", options: ["Einsatz abbrechen", "Warten auf Anweisung", "Ignorieren", "Streife 2 meldet ihren Status"], correctAnswers: [3] },
-            { id: 7, text: "Wie meldest du dich im Funk an?", options: ["DN, meldet sich Status 10-4", "DN, meldet sich Status 10-5", "DN, meldet sich 10-11", "DN, meldet sich Code 10-2"], correctAnswers: [2] },
-            { id: 8, text: "In welches GPS loggst du dich ein?", options: ["Kanal 1", "Kanal 4", "Kanal 2", "Kanal 3", "Kanal 5"], correctAnswers: [3] },
-            { id: 9, text: "Wo stempelst du dich ein?", options: ["Hinter dem Tresen", "Gar nicht", "In der Mensa", "Hinter dem Gebäude"], correctAnswers: [0] },
-            { id: 10, text: "Was ziehst du bei Dienstantritt an?", options: ["Außendienstkleidung", "Innendienstkleidung", "Leitstellen Outfit", "Zivilkleidung"], correctAnswers: [0] }
-        ]
-    },
-    exam_ga2: {
-        id: "exam_ga2", title: "Grundausbildung 2 (GA2)", kat: "Grundausbildung", timeLimitMinutes: 30, passPercentage: 60, passScore: 12,
-        introText: "Vertiefung von Behandlungsabläufen, Materialkunde und Notfallversorgung. Mehrfachauswahl möglich!",
-        questions: [
-            { id: 1, text: "Welche Medikamentendosis wird bei einer Schusswunde standardmäßig verabreicht?", options: ["5mg Schmerzmittel", "10mg Schmerzmittel", "15mg Schmerzmittel", "20mg Schmerzmittel"], correctAnswers: [3] },
-            { id: 2, text: "Welche Materialien werden für eine Schnittwunde benötigt?", options: ["Wundreiniger, Nähset, Verband, 15mg Schmerzmittel", "Schiene, Kühlpack, 5mg Schmerzmittel", "Kugelzange, 20mg Schmerzmittel", "Wundreiniger"], correctAnswers: [0] },
-            { id: 3, text: "Was ist der erste Schritt bei jeder Patientenbehandlung?", options: ["Vitalwerte prüfen / Anamnese durchführen", "Sofort operieren", "Medikamente spritzen", "Puls und Atmung kontrollieren"], correctAnswers: [0, 3] },
-            { id: 4, text: "Welche Materialien werden zur Behandlung einer Fraktur benötigt?", options: ["Schiene, Kühlpack, Verband, 10mg Schmerzmittel", "Kugelzange und Nähset", "Nur Verband", "Schiene"], correctAnswers: [0, 3] },
-            { id: 5, text: "Welche Materialien werden zur Behandlung einer Schusswunde benötigt?", options: ["Wundreiniger, Kugelzange, Nähset, Verband, 20mg Schmerzmittel", "Nur Verband", "Kühlpack und Schiene", "Desinfektionsmittel"], correctAnswers: [0] }
-        ]
-    },
-    exam_dv: {
-        id: "exam_dv", title: "Dienstvorschriften (DV)", kat: "Dienstvorschriften", timeLimitMinutes: 30, passPercentage: 70, passScore: 14,
-        introText: "Überprüfung der Dienstvorschriften, Verhaltensrichtlinien und Funkordnung des SAMD. Mehrfachauswahl beachten!",
-        questions: [
-            { id: 1, text: "Wer ist weisungsberechtigt gegenüber den Mitarbeitern im Dienst?", options: ["Die anwesende Schichtleitung & Führungsebene (High & Mid Command)", "Jeder Bürger", "Nur der Chief", "Einsatzleiter vor Ort"], correctAnswers: [0, 3] },
-            { id: 2, text: "Wann darf das Sondersignal (Blaulicht & Sirene, Code 3) eingesetzt werden?", options: ["Ausschließlich bei dringenden Notfalleinsätzen oder autorisierten Einsatzfahrten", "Immer", "Zum Spaß", "Bei dringenden Notfalltransporten"], correctAnswers: [0, 3] },
-            { id: 3, text: "Wie ist die ärztliche Schweigepflicht gegenüber Dritten geregelt?", options: ["Patientendaten und Diagnosen sind streng vertraulich", "Darf gepostet werden", "Gibt keine", "Weitergabe nur mit ausdrücklicher Genehmigung / richterlicher Anordnung"], correctAnswers: [0, 3] },
-            { id: 4, text: "Welche Pflicht besteht bezüglich der Dokumentation?", options: ["Jede Behandlung und jeder Verbrauch muss zeitnah live protokolliert werden", "Keine Pflicht", "Nur bei Todesfällen", "Dokumentation im Einsatzportal"], correctAnswers: [0, 3] },
-            { id: 5, text: "§13.1 & §13.2: Wann dürfen Medics Personen an einem Schusswechsel wiederbeleben?", options: ["Erst wenn kein Schusswechsel mehr stattfindet und die Situation gesichert ist", "Mitten im Gefecht", "Sofort", "Nach Freigabe durch die Exekutive (Polizei/USMS)"], correctAnswers: [0, 3] }
-        ]
-    },
-    exam_para1: {
-        id: "exam_para1", title: "Paramedic 1 (Para 1)", kat: "Paramedic", timeLimitMinutes: 30, passPercentage: 75, passScore: 15,
-        introText: "Erweiterte Notfallmedizin und Rettungsdienstpraxis.",
-        questions: [
-            { id: 1, text: "Was bedeutet Triage bei einem Massenanfall von Verletzten (MANV)?", options: ["Priorisierung der Patienten nach Schwere der Verletzung", "Wer zuerst kommt, wird zuerst behandelt", "Alle gleichzeitig", "Sichtung und Klassifizierung nach Dringlichkeit"], correctAnswers: [0, 3] },
-            { id: 2, text: "Welche Maßnahme wird bei einem schweren Spannungspneumothorax eingeleitet?", options: ["Entlastungspunktion / Thoraxdrainage", "Nur Schmerzmittel", "Warten", "Sofortige Dekompression"], correctAnswers: [0, 3] }
-        ]
-    },
-    exam_para2: {
-        id: "exam_para2", title: "Paramedic 2 (Para 2)", kat: "Paramedic", timeLimitMinutes: 30, passPercentage: 75, passScore: 15,
-        introText: "ACLS-Leitlinien, erweiterte Notfallversorgung und schwierige Atemwegs-Sicherung.",
-        questions: [
-            { id: 1, text: "Welche Medikamente werden bei einer Reanimation nach ACLS-Standard verabreicht?", options: ["1mg Adrenalin alle 3-5 Minuten", "100mg Morphin sofort", "Nur Kochsalzlösung", "Amiodaron nach dritter erfolgloser Defibrillation"], correctAnswers: [0, 3] },
-            { id: 2, text: "Was bedeutet das 'cABCDE'-Schema in der präklinischen Traumabehandlung?", options: ["critical bleeding, Airway, Breathing, Circulation, Disability, Exposure", "control, Ambulance, Blood, Care, Doctor, Emergency", "Stoppen kritischer Blutungen vor Atemwegsmanagement"], correctAnswers: [0, 2] }
-        ]
-    },
-    exam_arzt1: {
-        id: "exam_arzt1", title: "Arzt 1", kat: "Doctor", timeLimitMinutes: 35, passPercentage: 80, passScore: 16,
-        introText: "Klinisches Basiswissen, Differentialdiagnostik und Stationsorganisation.",
-        questions: [
-            { id: 1, text: "Welche Diagnostik ist bei Verdacht auf akutes Koronarsyndrom (STEMI) unverzüglich durchzuführen?", options: ["12-Kanal-EKG, Troponin-Labor und Vitalparameter-Monitoring", "Nur Blutdruck messen", "MRT des Schädels", "Herzenzyme und EKG-Schreibung"], correctAnswers: [0, 3] },
-            { id: 2, text: "Welche Erstmaßnahme erfolgt bei einem anaphylaktischen Schock (Grad III/IV)?", options: ["Adrenalin i.m. (0,5 mg), Sauerstoff, Volumengabe, H1/H2-Blocker & Glukokortikoide", "Nur ein Glas Wasser", "Aspirin 1000mg", "Sicherung der Vitalfunktionen und Adrenalingabe"], correctAnswers: [0, 3] }
-        ]
-    },
-    exam_arzt2: {
-        id: "exam_arzt2", title: "Arzt 2", kat: "Doctor", timeLimitMinutes: 40, passPercentage: 85, passScore: 18,
-        introText: "Klinische Notfallchirurgie, Intensivmedizin und Führungskompetenz.",
-        questions: [
-            { id: 1, text: "Welche Indikation besteht für eine sofortige Notfall-Laparotomie im Schockraum?", options: ["Akutes Hämoperitoneum mit hämodynamischer Instabilität", "Leichte Bauchschmerzen", "Chronische Gastritis", "Hämorrhagischer Schock bei intraabdomineller Blutung"], correctAnswers: [0, 3] },
-            { id: 2, text: "Was ist das Prinzip des 'Damage Control Surgery' beim Polytrauma?", options: ["Schnelle Blutungskontrolle und Dekontamination, Stabilisierung vor definitiver Rekonstruktion", "10-stündige Komplett-OP sofort", "Nur Verband anlegen", "Lebensrettende Erstversorgung vor aufwendiger Rekonstruktion"], correctAnswers: [0, 3] }
-        ]
-    }
-};
+/* ── Standard-Prüfungen aus Backup mit Stammdaten ──────────── */
+const STANDARD_INFO_QUESTIONS = [
+    { id: 1, text: "Dienstnummer des Mitarbeiters", type: "text", isInfo: true },
+    { id: 2, text: "Dienstnummer des Prüfers", type: "text", isInfo: true },
+    { id: 3, text: "Vor- und Nachname des Mitarbeiters", type: "text", isInfo: true }
+];
 
-let _examBuilderQuestions = [];
-
-let hierarchieDaten = {
-    chief_01:"Aktuell nicht belegt", chief_02:"Aktuell nicht belegt", chief_03:"Aktuell nicht belegt",
-    domo_04:"Nick Garcia",   domo_04_sub:"",
-    fod_05:"Mike Gonzalo",   fod_05_sub:"",
-    chiefphys_06:"Katarina Harper", chiefphys_07:"Tim Sanddorn",
-    lt_08:"Aktuell nicht belegt", lt_09:"Aktuell nicht belegt",
-    dept_psych_l:"Aktuell nicht belegt",  dept_psych_sl:"Aktuell nicht belegt",
-    dept_perso_l:"Aktuell nicht belegt",  dept_perso_sl:"Aktuell nicht belegt",
-    dept_ausb_l:"Aktuell nicht belegt",   dept_ausb_sl:"Aktuell nicht belegt",
-    dept_luft_l:"Gleich die Ausbildungsleitung", dept_luft_sl:"Aktuell nicht belegt",
-    a_emt_count:"2", emt_count:"0"
-};
+let defaultExams = {};
 
 /* ── Audit Logger ──────────────────────────────────────────── */
 function logAdminAudit(action, details) {
@@ -457,27 +395,27 @@ function logAdminAudit(action, details) {
     });
 }
 
-/* ── Rollen & Effektive Berechtigungen ─────────────────────── */
+/* ── Rollen & Berechtigungen (Single Source of Truth) ──────── */
 function getUserRolesList(user) {
     if (!user) return [];
     let list = [];
     if (user.roles) {
-        if (Array.isArray(user.roles)) list = [...user.roles];
-        else if (typeof user.roles === 'object') list = Object.keys(user.roles).filter(k => user.roles[k] === true);
+        if (Array.isArray(user.roles)) {
+            list = [...user.roles];
+        } else if (typeof user.roles === 'object') {
+            list = Object.keys(user.roles).filter(k => user.roles[k] === true);
+        }
     }
     const v = (user.vorname||'').trim().toLowerCase(), n = (user.nachname||'').trim().toLowerCase();
     if ((user.isMasterAdmin || (v === 'tim' && n === 'sanddorn')) && !list.includes('masteradmin')) {
         list.unshift('masteradmin');
     }
-    if (user.isAdmin && !list.includes('admin') && !list.includes('masteradmin')) list.push('admin');
-    if (user.canManageInstructors && !list.includes('ausbildungsleitung')) list.push('ausbildungsleitung');
-    else if (user.isInstructor && !list.includes('ausbilder') && !list.includes('ausbildungsleitung')) list.push('ausbilder');
     return [...new Set(list)];
 }
 
 function getUserEffectivePermissions(user) {
     const eff = {
-        isAdmin:false, isMasterAdmin:false, canViewArchive:false,
+        isAdmin:false, isMasterAdmin:false, canViewArchive:false, canEditAllPatients:false,
         canCreateCalendar:true, delCalendar:false, canManagePhotos:false,
         isInstructor:false, canManageInstructors:false, canManageExams:false,
         canPostNews:false, canApproveNews:false, canViewNewsRead:false,
@@ -489,13 +427,24 @@ function getUserEffectivePermissions(user) {
     if (!user) return eff;
 
     const roleIds = getUserRolesList(user);
+    let accumulatedCmdKats = [];
+    let accumulatedLinkKats = [];
+
     roleIds.forEach(rId => {
         const role = cachedRoles[rId] || defaultRoles[rId];
         if (!role) return;
         Object.keys(eff).forEach(prop => {
-            if (prop === 'allowedCmdKats' || prop === 'allowedLinkKats') {
-                if (role[prop] && Array.isArray(role[prop])) {
-                    eff[prop] = [...new Set([...eff[prop], ...role[prop]])];
+            if (prop === 'allowedCmdKats') {
+                if (role.allowedCmdKats && Array.isArray(role.allowedCmdKats)) {
+                    accumulatedCmdKats.push(...role.allowedCmdKats);
+                } else if (role.allowedCmdKats && typeof role.allowedCmdKats === 'object') {
+                    accumulatedCmdKats.push(...Object.keys(role.allowedCmdKats).filter(k => role.allowedCmdKats[k]));
+                }
+            } else if (prop === 'allowedLinkKats') {
+                if (role.allowedLinkKats && Array.isArray(role.allowedLinkKats)) {
+                    accumulatedLinkKats.push(...role.allowedLinkKats);
+                } else if (role.allowedLinkKats && typeof role.allowedLinkKats === 'object') {
+                    accumulatedLinkKats.push(...Object.keys(role.allowedLinkKats).filter(k => role.allowedLinkKats[k]));
                 }
             } else if (role[prop]) {
                 eff[prop] = true;
@@ -503,15 +452,16 @@ function getUserEffectivePermissions(user) {
         });
     });
 
-    Object.keys(eff).forEach(k => {
-        if (k !== 'allowedCmdKats' && k !== 'allowedLinkKats' && user[k]) eff[k] = true;
-    });
+    eff.allowedCmdKats = [...new Set(accumulatedCmdKats)];
+    eff.allowedLinkKats = [...new Set(accumulatedLinkKats)];
 
     const v = (user.vorname||'').trim().toLowerCase(), n = (user.nachname||'').trim().toLowerCase();
-    if (user.isMasterAdmin || (v === 'tim' && n === 'sanddorn')) {
+    if (user.isMasterAdmin || (v === 'tim' && n === 'sanddorn') || roleIds.includes('masteradmin')) {
         Object.keys(eff).forEach(k => {
             if (k !== 'allowedCmdKats' && k !== 'allowedLinkKats') eff[k] = true;
         });
+        eff.allowedCmdKats = [];
+        eff.allowedLinkKats = [];
     }
     return eff;
 }
@@ -579,9 +529,12 @@ function handleAuthAction() {
         if (!dn) { alert('Bitte Dienstnummer eingeben!'); return; }
         db.ref('data/users/'+uId).once('value', snap => {
             if (snap.val()) { alert('Dieser Name ist bereits registriert!'); return; }
+            const todayIso = new Date().toISOString().split('T')[0];
             const newUser = {
                 vorname: v, nachname: n, pass: p, dn: dn, status: 'pending',
-                date: new Date().toLocaleDateString('de-DE'), roles: { mitarbeiter: true },
+                date: new Date().toLocaleDateString('de-DE'),
+                einstellungsDatum: todayIso,
+                roles: { mitarbeiter: true },
                 photoUrl: 'mdlogo.png'
             };
             db.ref('data/users/'+uId).set(newUser).then(() => {
@@ -684,10 +637,21 @@ function initDienstEintritt(user) {
     baueMaterialUIAuf();
     startFirebaseListeners();
     setupMidnightScheduler();
+    cleanOldCalendarEvents();
 
-    const gDatum = localStorage.getItem('mmd_einstellungsdatum_' + user.vorname + '_' + user.nachname);
     const eDatumEl = document.getElementById('einstellungsDatum');
-    if (gDatum && eDatumEl) { eDatumEl.value = gDatum; berechneDienstTage(); }
+    if (eDatumEl) {
+        if (user.einstellungsDatum) {
+            eDatumEl.value = user.einstellungsDatum;
+            berechneDienstTage(false);
+        } else {
+            const gDatum = localStorage.getItem('mmd_einstellungsdatum_' + user.vorname + '_' + user.nachname);
+            if (gDatum) {
+                eDatumEl.value = gDatum;
+                berechneDienstTage(true);
+            }
+        }
+    }
 }
 
 function updateLiveDate() {
@@ -695,7 +659,7 @@ function updateLiveDate() {
     if (el) el.textContent = new Date().toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric' });
 }
 
-/* ── Automatische Mitternachts-Archivierung (Atomare Transaktion) ── */
+/* ── Automatische Mitternachts-Archivierung ─────────────────── */
 function setupMidnightScheduler() {
     checkMidnightAutoArchive();
     setInterval(checkMidnightAutoArchive, 20000);
@@ -767,6 +731,14 @@ function executeMidnightArchive(archivedDateLabel) {
 
 /* ── Firebase Listeners ────────────────────────────────────── */
 function startFirebaseListeners() {
+    const endpoints = [
+        'data/protokoll', 'data/archiv', 'data/hierarchie', 'data/gehaltstabelle',
+        'data/guide', 'data/materialPreise', 'data/szenarioTemplates', 'data/dienstLinks',
+        'data/dienstCommands', 'data/roles', 'data/users', 'data/exams', 'data/examSubmissions',
+        'data/news', 'data/calendar', 'data/employeePhotos', 'data/changelogs', 'data/auditLogs'
+    ];
+    endpoints.forEach(ep => db.ref(ep).off());
+
     db.ref('data/protokoll').on('value', s => renderProtokoll(s.val() || {}));
     db.ref('data/archiv').on('value', s => { cachedArchiv = s.val() || {}; renderArchiv(cachedArchiv); });
     db.ref('data/hierarchie').on('value', s => renderHierarchieBoard(s.val() || hierarchieDaten));
@@ -791,6 +763,8 @@ function startFirebaseListeners() {
         if (sessionUser) applyUserPermissions(sessionUser);
         renderCalendarMonth();
         renderStaffDirectory();
+        renderCommandsTab(null);
+        renderLinksTab(null);
     });
     db.ref('data/users').on('value', s => {
         cachedUsers = s.val() || {};
@@ -809,21 +783,33 @@ function startFirebaseListeners() {
     db.ref('data/exams').on('value', s => {
         const raw = s.val() || {};
         cachedExams = {};
-        Object.keys(defaultExams).forEach(k => {
-            if (!raw[k] || !raw[k].deleted) cachedExams[k] = defaultExams[k];
-        });
+        
         Object.keys(raw).forEach(k => {
             if (raw[k] && !raw[k].deleted) {
-                const ex = raw[k];
-                // Automatische Konvertierung von Altdaten zu sauberem Array
+                const ex = JSON.parse(JSON.stringify(raw[k]));
                 if (ex.questions && Array.isArray(ex.questions)) {
-                    ex.questions.forEach(q => {
+                    let filteredQ = ex.questions.filter(q => {
+                        const t = (q.text||'').toLowerCase();
+                        return !(q.type === 'info_dn' || q.type === 'info_pruefer' || q.type === 'info_name' ||
+                                 t.includes('dienstnummer des mitarbeiters') ||
+                                 t.includes('dienstnummer des prüfers') ||
+                                 t.includes('vor- und nachname'));
+                    });
+
+                    filteredQ.forEach(q => {
                         if (q.correctAnswers === undefined || q.correctAnswers === null) {
                             q.correctAnswers = [0];
                         } else if (!Array.isArray(q.correctAnswers)) {
                             q.correctAnswers = [parseInt(q.correctAnswers) || 0];
                         }
                     });
+
+                    ex.questions = [
+                        { id: 1, text: "Dienstnummer des Mitarbeiters", type: "text", isInfo: true },
+                        { id: 2, text: "Dienstnummer des Prüfers", type: "text", isInfo: true },
+                        { id: 3, text: "Vor- und Nachname des Mitarbeiters", type: "text", isInfo: true },
+                        ...filteredQ
+                    ];
                 }
                 cachedExams[k] = ex;
             }
@@ -975,10 +961,17 @@ function patientHinzufuegen() {
     const patName = (nF?.value||'').trim() || 'Patient ' + ((daten.patienten||0)+1);
     const sz = sS?.value || 'Undefinierbar';
     const mat = Object.assign({}, fallMaterial); mat['mat_wasser'] = anzahlVerletzungenFall;
-    
+    const myId = (sessionUser.vorname+'_'+sessionUser.nachname).toLowerCase().replace(/[^a-z0-9_]/g,'');
+
     db.ref('data/protokoll').push({
-        name: patName, szenario: sz, verletzungen: anzahlVerletzungenFall, kosten: aktuellerFallKosten,
-        material: mat, medic: sessionUser.vorname + ' ' + sessionUser.nachname, ts: Date.now()
+        name: patName,
+        szenario: sz,
+        verletzungen: anzahlVerletzungenFall,
+        kosten: aktuellerFallKosten,
+        material: mat,
+        medic: sessionUser.vorname + ' ' + sessionUser.nachname,
+        medicId: myId,
+        ts: Date.now()
     }).then(() => {
         if (nF) nF.value = '';
         if (sS) sS.value = '';
@@ -1047,12 +1040,17 @@ function speicherePreiseInline() {
 function renderProtokoll(obj) {
     const tbody = document.getElementById('logTableBody'); if (!tbody) return;
     const eff = sessionUser ? getUserEffectivePermissions(sessionUser) : {};
+    const myName = sessionUser ? (sessionUser.vorname + ' ' + sessionUser.nachname) : '';
+    const myId = sessionUser ? (sessionUser.vorname+'_'+sessionUser.nachname).toLowerCase().replace(/[^a-z0-9_]/g,'') : '';
     const entries = Object.entries(obj).sort((a,b) => (b[1].ts||0) - (a[1].ts||0));
     
     tbody.innerHTML = entries.length === 0
         ? '<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:24px;">📋 Noch keine Patienten für die laufende Schicht dokumentiert.</td></tr>'
         : entries.map(([k,v]) => {
             const dateStr = v.ts ? new Date(v.ts).toLocaleDateString('de-DE') : '-';
+            const isOwnEntry = (v.medicId && v.medicId === myId) || (v.medic === myName);
+            const canEditThis = isOwnEntry || eff.canEditAllPatients || eff.isMasterAdmin;
+
             return `<tr>
                 <td>${escapeHtml(v.name||'-')}</td>
                 <td>${escapeHtml(v.szenario||'-')}</td>
@@ -1061,8 +1059,8 @@ function renderProtokoll(obj) {
                 <td>${escapeHtml(v.medic||'-')}</td>
                 <td style="font-size:12px;color:var(--text-muted);">${dateStr}</td>
                 <td>
-                    <button class="btn-edit-row" onclick="openEditModal('${k}')">✏️</button>
-                    ${eff.delPatient ? `<button class="btn-delete-row" onclick="deletePatient('${k}')">🗑️</button>` : ''}
+                    ${canEditThis ? `<button class="btn-edit-row" onclick="openEditModal('${k}')" title="Eintrag bearbeiten">✏️</button>` : ''}
+                    ${eff.delPatient ? `<button class="btn-delete-row" onclick="deletePatient('${k}')" title="Eintrag löschen">🗑️</button>` : ''}
                 </td>
               </tr>`;
           }).join('');
@@ -1098,6 +1096,7 @@ function renderArchiv(obj) {
     const tfoot = document.getElementById('archivTableFoot');
     if (!tbody) return;
     const eff = sessionUser ? getUserEffectivePermissions(sessionUser) : {};
+    const isMaster = !!eff.isMasterAdmin;
 
     if (!obj || !Object.keys(obj).length) {
         tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:24px;">📥 Noch keine archivierten Schichten vorhanden.</td></tr>';
@@ -1172,7 +1171,10 @@ function renderArchiv(obj) {
             <td style="color:var(--warning);font-weight:700;">${v}</td>
             <td style="color:var(--success);font-weight:800;font-family:monospace;font-size:13px;">$${cash.toLocaleString('de-DE')}</td>
             <td>${mHtml}</td>
-            <td style="text-align:right;">${eff.delArchiv ? `<button class="btn-delete-row" onclick="deleteArchivSchicht('${k}')" title="Schicht löschen">🗑️</button>` : '--'}</td>
+            <td style="text-align:right;white-space:nowrap;">
+                ${isMaster ? `<button class="btn-edit-row" onclick="openArchivEditModal('${k}')" title="Schicht korrigieren">✏️</button>` : ''}
+                ${eff.delArchiv ? `<button class="btn-delete-row" onclick="deleteArchivSchicht('${k}')" title="Schicht löschen">🗑️</button>` : ''}
+            </td>
         </tr>`;
     }).join('');
 
@@ -1194,7 +1196,7 @@ function renderArchiv(obj) {
             <td style="color:var(--warning);">${totalV.toLocaleString('de-DE')}</td>
             <td style="color:var(--success);font-family:monospace;">$${totalCash.toLocaleString('de-DE')}</td>
             <td>${totalMatHtml}</td>
-            <td>--</td>
+            <td style="text-align:right;">${isMaster ? '<span style="color:var(--primary);font-size:11px;">👑 Master</span>' : '--'}</td>
         </tr>`;
     }
 }
@@ -1203,7 +1205,48 @@ function itemCash(i) {
     return Number(i.ausgaben ?? i.cash ?? i.kosten ?? 0);
 }
 
-/* ── Manueller Schichtabschluss mit automatischem CSV-Download ── */
+/* ── Schicht-Korrektur (Master-Admin No-Code Stift) ─────────── */
+function openArchivEditModal(k) {
+    const s = cachedArchiv[k];
+    if (!s) return;
+    document.getElementById('editArchivKey').value = k;
+    document.getElementById('editArchivDatum').value = s.datum || (s.ts ? new Date(s.ts).toLocaleDateString('de-DE') : '');
+    document.getElementById('editArchivPatienten').value = s.patienten ?? s.p ?? 0;
+    document.getElementById('editArchivVerletzungen').value = s.verletzungen ?? s.v ?? 0;
+    document.getElementById('editArchivAusgaben').value = s.ausgaben ?? s.cash ?? s.kosten ?? 0;
+    document.getElementById('archivEditModal').style.display = 'flex';
+}
+function closeArchivEditModal() { document.getElementById('archivEditModal').style.display = 'none'; }
+
+function saveArchivEdit() {
+    const eff = sessionUser ? getUserEffectivePermissions(sessionUser) : {};
+    if (!eff.isMasterAdmin) { alert('Nur Master-Admins dürfen archivierte Schichten bearbeiten!'); return; }
+
+    const k = document.getElementById('editArchivKey')?.value;
+    if (!k) return;
+
+    const datum = document.getElementById('editArchivDatum')?.value.trim();
+    const patienten = parseInt(document.getElementById('editArchivPatienten')?.value) || 0;
+    const verletzungen = parseInt(document.getElementById('editArchivVerletzungen')?.value) || 0;
+    const ausgaben = parseInt(document.getElementById('editArchivAusgaben')?.value) || 0;
+
+    if (!datum) { alert('Bitte Datum angeben!'); return; }
+
+    db.ref('data/archiv/' + k).update({
+        datum: datum,
+        patienten: patienten,
+        verletzungen: verletzungen,
+        ausgaben: ausgaben,
+        lastEditedBy: sessionUser.vorname + ' ' + sessionUser.nachname,
+        lastEditedTs: Date.now()
+    }).then(() => {
+        closeArchivEditModal();
+        logAdminAudit('Archivierte Schicht korrigiert', `${sessionUser.vorname} ${sessionUser.nachname} hat Schicht ${datum} bearbeitet.`);
+        alert('✅ Schichteintrag erfolgreich aktualisiert!');
+    });
+}
+
+/* ── Manueller Schichtabschluss mit CSV-Download ────────────── */
 function manualTriggerArchive() {
     if (!sessionUser) return;
     const eff = getUserEffectivePermissions(sessionUser);
@@ -1240,7 +1283,6 @@ function manualTriggerArchive() {
             csvContent += `"${(x.name||'').replace(/"/g, '""')}","${(x.szenario||'').replace(/"/g, '""')}","${pInj}","$${pCost}","${(x.medic||'').replace(/"/g, '""')}","${todayFormatted}"\n`;
         });
 
-        // Automatischer CSV-Download
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -1258,8 +1300,8 @@ function manualTriggerArchive() {
             isManualProtArchived: true
         }).then(() => {
             db.ref('data/protokoll').remove().then(() => {
-                logAdminAudit('Tagesprotokoll als Schicht übernommen & exportiert', `${sessionUser.vorname} ${sessionUser.nachname} hat das Tagesprotokoll übernommen und den Schichtbericht heruntergeladen.`);
-                alert('✅ Tagesprotokoll wurde als Schicht übernommen, der CSV-Schichtbericht wurde automatisch heruntergeladen und das Protokoll zurückgesetzt!');
+                logAdminAudit('Tagesprotokoll als Schicht übernommen & exportiert', `${sessionUser.vorname} ${sessionUser.nachname} hat das Tagesprotokoll übernommen und exportiert.`);
+                alert('✅ Tagesprotokoll wurde archiviert, Schichtbericht heruntergeladen und Protokoll zurückgesetzt!');
             });
         });
     });
@@ -1316,9 +1358,28 @@ function exportArchivCSV() {
 }
 
 /* ══════════════════════════════════════════════════════════════
-   KALENDER & MONATSANSICHT
+   KALENDER: EINLADUNGEN, BEREINIGUNG & ATOMARE BEARBEITUNG
 ══════════════════════════════════════════════════════════════ */
 const MONTH_NAMES_DE = ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"];
+
+function cleanOldCalendarEvents() {
+    const oneWeekAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
+    db.ref('data/calendar').once('value', snap => {
+        const events = snap.val() || {};
+        Object.entries(events).forEach(([id, ev]) => {
+            let eventTs = ev.ts;
+            if (!eventTs && ev.date) {
+                const parts = ev.date.split('-');
+                if (parts.length === 3) {
+                    eventTs = new Date(parts[0], parts[1] - 1, parts[2]).getTime();
+                }
+            }
+            if (eventTs && eventTs < oneWeekAgo) {
+                db.ref('data/calendar/' + id).remove();
+            }
+        });
+    });
+}
 
 function changeCalendarMonth(delta) {
     currentCalMonth += delta;
@@ -1350,6 +1411,8 @@ function renderCalendarMonth() {
         return Object.assign({ id }, ev);
     }).filter(ev => {
         if (ev.deleted) return false;
+        const isInvited = ev.invitedUsers && Array.isArray(ev.invitedUsers) && ev.invitedUsers.includes(myId);
+        if (isInvited) return true;
         if (ev.isPrivate) return (ev.creatorId === myId);
         if (isSpecialAdmin) return true;
         if (!ev.targetRoles || !ev.targetRoles.length || ev.targetRoles.includes('all')) return true;
@@ -1388,10 +1451,11 @@ function renderCalendarMonth() {
         dayEvents.forEach(ev => {
             const color = ev.roleColor || '#38bdf8';
             const privIcon = ev.isPrivate ? '🔒 ' : '';
+            const invIcon = (ev.invitedUsers && ev.invitedUsers.length) ? '👥 ' : '';
             eventsHtml += `
                 <div class="cal-event-pill" style="border-left:3px solid ${color}; background:${color}18;" onclick="event.stopPropagation(); openCalendarEventDetailsModal('${ev.id}')">
                     <span class="cal-event-time">${escapeHtml(ev.time || '--:--')}</span>
-                    <span class="cal-event-title-text">${privIcon}${escapeHtml(ev.title || 'Termin')}</span>
+                    <span class="cal-event-title-text">${privIcon}${invIcon}${escapeHtml(ev.title || 'Termin')}</span>
                 </div>
             `;
         });
@@ -1457,6 +1521,7 @@ function openCreateEventModal(prefillDate = null) {
     const privateCb = document.getElementById('calEventIsPrivate');
     const selectAllCb = document.getElementById('calSelectAllRolesCheckbox');
     const targetRolesContainer = document.getElementById('calEventRolesSelectionContainer');
+    const invitedUsersContainer = document.getElementById('calEventInvitedUsersContainer');
 
     if (repContainer) repContainer.style.display = 'block';
 
@@ -1500,6 +1565,17 @@ function openCreateEventModal(prefillDate = null) {
             <label style="display:flex;align-items:center;gap:6px;padding:4px 8px;cursor:pointer;background:rgba(30,41,59,0.4);border-radius:6px;font-size:12px;">
                 <input type="checkbox" class="cal-target-role-cb" value="${escapeHtml(r.id)}">
                 <span style="color:${r.color||'#38bdf8'};font-weight:700;">${r.icon?r.icon+' ':''}${escapeHtml(r.name)}</span>
+            </label>
+        `).join('');
+    }
+
+    if (invitedUsersContainer) {
+        const myId = sessionUser ? (sessionUser.vorname+'_'+sessionUser.nachname).toLowerCase().replace(/[^a-z0-9_]/g,'') : '';
+        const allUsers = Object.entries(cachedUsers).sort((a,b) => (a[1].nachname||'').localeCompare(b[1].nachname||''));
+        invitedUsersContainer.innerHTML = allUsers.filter(([uId]) => uId !== myId).map(([uId, u]) => `
+            <label style="display:flex;align-items:center;gap:6px;padding:4px 8px;cursor:pointer;background:rgba(30,41,59,0.4);border-radius:6px;font-size:12px;">
+                <input type="checkbox" class="cal-invited-user-cb" value="${escapeHtml(uId)}">
+                <span><b>${escapeHtml(u.vorname||'')} ${escapeHtml(u.nachname||'')}</b> <span style="color:var(--primary);font-size:10px;">(${escapeHtml(u.dn||'--')})</span></span>
             </label>
         `).join('');
     }
@@ -1569,6 +1645,9 @@ function saveCalendarEvent() {
         }
     }
 
+    let invitedUsers = [];
+    document.querySelectorAll('.cal-invited-user-cb:checked').forEach(cb => invitedUsers.push(cb.value));
+
     if (editId) {
         const updateData = {
             date: startDateStr,
@@ -1579,6 +1658,7 @@ function saveCalendarEvent() {
             roleColor,
             isPrivate,
             targetRoles: isPrivate ? [] : targetRoles,
+            invitedUsers: invitedUsers,
             lastEditedBy: sessionUser.vorname + ' ' + sessionUser.nachname,
             lastEditedTs: Date.now()
         };
@@ -1616,6 +1696,7 @@ function saveCalendarEvent() {
             roleColor,
             isPrivate,
             targetRoles: isPrivate ? [] : targetRoles,
+            invitedUsers: invitedUsers,
             creatorId: myId,
             repeatSeries: count > 1,
             enteredBy: sessionUser.vorname + ' ' + sessionUser.nachname,
@@ -1650,13 +1731,21 @@ function openCalendarEventDetailsModal(eventId) {
 
     let targetRoleNames = 'Alle Rollen / Öffentlich';
     if (ev.isPrivate) {
-        targetRoleNames = '🔒 Nur für mich sichtbar (Privat)';
+        targetRoleNames = '🔒 Nur für mich & Eingeladene sichtbar (Privat)';
     } else if (ev.targetRoles && ev.targetRoles.length) {
         if (ev.targetRoles.includes('all')) {
             targetRoleNames = 'Alle Rollen';
         } else {
             targetRoleNames = ev.targetRoles.map(rid => (cachedRoles[rid]?.name || defaultRoles[rid]?.name || rid)).join(', ');
         }
+    }
+
+    let invitedNames = 'Keine weiteren Personen eingeladen';
+    if (ev.invitedUsers && ev.invitedUsers.length) {
+        invitedNames = ev.invitedUsers.map(uId => {
+            const u = cachedUsers[uId];
+            return u ? `${u.vorname} ${u.nachname} (${u.dn || '--'})` : uId;
+        }).join(', ');
     }
 
     bodyEl.innerHTML = `
@@ -1670,13 +1759,17 @@ function openCalendarEventDetailsModal(eventId) {
                 <br>Eingetragen von: <span style="color:var(--text-main);">${escapeHtml(ev.enteredBy || ev.creator || 'System')} (${escapeHtml(ev.enteredByDN || '--')})</span>
             </div>
         </div>
-        <div style="margin-bottom:14px;">
+        <div style="margin-bottom:10px;">
             <label style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">Sichtbarkeit / Freigabe:</label>
             <div style="font-size:13px;color:${ev.isPrivate ? 'var(--warning)' : 'var(--primary)'};font-weight:700;">${escapeHtml(targetRoleNames)}</div>
         </div>
+        <div style="margin-bottom:14px;">
+            <label style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">Eingeladene Mitarbeiter:</label>
+            <div style="font-size:12px;color:var(--text-main);">${escapeHtml(invitedNames)}</div>
+        </div>
         <div>
             <label style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">Beschreibung / Notizen:</label>
-            <div style="background:rgba(8,12,20,0.6);border:1px solid var(--border);border-radius:8px;padding:12px;white-space:pre-wrap;color:var(--text-main);font-size:13px;min-height:60px;">${escapeHtml(ev.desc || 'Keine weitere Beschreibung vorhanden.')}</div>
+            <div style="background:rgba(8,12,20,0.6);border:1px solid var(--border);border-radius:8px;padding:12px;white-space:pre-wrap;color:var(--text-main);font-size:13px;min-height:60px;">${formatTextWithLinks(ev.desc || 'Keine weitere Beschreibung vorhanden.')}</div>
         </div>
     `;
 
@@ -1720,6 +1813,7 @@ function editCalendarEventAction() {
     const privateCb = document.getElementById('calEventIsPrivate');
     const selectAllCb = document.getElementById('calSelectAllRolesCheckbox');
     const targetRolesContainer = document.getElementById('calEventRolesSelectionContainer');
+    const invitedUsersContainer = document.getElementById('calEventInvitedUsersContainer');
 
     if (repContainer) repContainer.style.display = 'none';
 
@@ -1776,6 +1870,20 @@ function editCalendarEventAction() {
                 <label style="display:flex;align-items:center;gap:6px;padding:4px 8px;cursor:pointer;background:rgba(30,41,59,0.4);border-radius:6px;font-size:12px;">
                     <input type="checkbox" class="cal-target-role-cb" value="${escapeHtml(r.id)}" ${isChecked ? 'checked' : ''}>
                     <span style="color:${r.color||'#38bdf8'};font-weight:700;">${r.icon?r.icon+' ':''}${escapeHtml(r.name)}</span>
+                </label>
+            `;
+        }).join('');
+    }
+
+    if (invitedUsersContainer) {
+        const myId = sessionUser ? (sessionUser.vorname+'_'+sessionUser.nachname).toLowerCase().replace(/[^a-z0-9_]/g,'') : '';
+        const allUsers = Object.entries(cachedUsers).sort((a,b) => (a[1].nachname||'').localeCompare(b[1].nachname||''));
+        invitedUsersContainer.innerHTML = allUsers.filter(([uId]) => uId !== myId).map(([uId, u]) => {
+            const isInv = (ev.invitedUsers && Array.isArray(ev.invitedUsers) && ev.invitedUsers.includes(uId));
+            return `
+                <label style="display:flex;align-items:center;gap:6px;padding:4px 8px;cursor:pointer;background:rgba(30,41,59,0.4);border-radius:6px;font-size:12px;">
+                    <input type="checkbox" class="cal-invited-user-cb" value="${escapeHtml(uId)}" ${isInv ? 'checked' : ''}>
+                    <span><b>${escapeHtml(u.vorname||'')} ${escapeHtml(u.nachname||'')}</b> <span style="color:var(--primary);font-size:10px;">(${escapeHtml(u.dn||'--')})</span></span>
                 </label>
             `;
         }).join('');
@@ -1924,7 +2032,6 @@ function scaleImageProportionally(file, maxWidth, maxHeight, callback) {
     reader.readAsDataURL(file);
 }
 
-/* ── Foto-Einreichung durch Mitarbeiter ────────────────────── */
 function openStaffPhotoUploadModal() {
     if (!sessionUser) { alert('Nicht eingeloggt!'); return; }
     const modal = document.getElementById('staffPhotoUploadModal');
@@ -1981,12 +2088,11 @@ function submitStaffPhotoUpload() {
 
     db.ref('data/employeePhotos/' + uId).set(photoEntry).then(() => {
         closeStaffPhotoUploadModal();
-        logAdminAudit('Foto zur Bearbeitung eingereicht', `${sessionUser.vorname} ${sessionUser.nachname} (DN: ${sessionUser.dn}) hat ein Foto zur Bearbeitung eingereicht.`);
+        logAdminAudit('Foto zur Bearbeitung eingereicht', `${sessionUser.vorname} ${sessionUser.nachname} (DN: ${sessionUser.dn}) hat ein Foto eingereicht.`);
         alert('✅ Foto erfolgreich eingereicht!\n\nDein Bild liegt nun im internen Foto-Ordner der Leitung/Personalabteilung.');
     });
 }
 
-/* ── Admin- & Personalabteilungs-Ordner ─────────────────────── */
 function openStaffPhotoAdminModal() {
     if (!canUserManageEmployeePhotos()) {
         alert('Keine Berechtigung für den Foto-Ordner!');
@@ -2028,7 +2134,7 @@ function renderStaffPhotoAdminList() {
                     🎨 Bearbeitetes Bild einsetzen
                     <input type="file" accept="image/*" style="display:none;" onchange="uploadProcessedStaffPhoto(event, '${uId}')">
                 </label>
-                <button type="button" class="btn-delete-row" style="font-size:11px;padding:4px;" onclick="deleteSubmittedRawPhoto('${uId}')">🗑️ Aus Einreichungs-Ordner löschen</button>
+                <button type="button" class="btn-delete-row" style="font-size:11px;padding:4px;" onclick="deleteSubmittedRawPhoto('${uId}')">🗑️ Aus Ordner löschen</button>
             </div>
         </div>
     `).join('');
@@ -2055,7 +2161,7 @@ function uploadProcessedStaffPhoto(event, uId) {
     scaleImageProportionally(file, 300, 360, (scaledBase64) => {
         db.ref('data/users/' + uId + '/photoUrl').set(scaledBase64).then(() => {
             logAdminAudit('Finales Dienstfoto hinterlegt', `Freigestelltes Bild für ${uId} von ${sessionUser.vorname} ${sessionUser.nachname} gespeichert.`);
-            alert('✅ Finales Foto mit Logo erfolgreich in die Mitarbeiter-Kartei eingesetzt!');
+            alert('✅ Finales Foto erfolgreich in die Mitarbeiter-Kartei eingesetzt!');
             renderStaffDirectory();
         });
     });
@@ -2369,7 +2475,7 @@ function saveGuideInline() {
     });
 }
 
-/* ── REITER: COMMANDS ──────────────────────────────────────── */
+/* ── REITER: COMMANDS (MIT KLICKBAREN LINKS) ───────────────── */
 function renderCommandsTab(obj) {
     const cont = document.getElementById('commandsAccordionContainer'); if (!cont) return;
     const all = Object.assign({}, defaultCommands, obj || {});
@@ -2386,7 +2492,7 @@ function renderCommandsTab(obj) {
         const cmds = Object.entries(all).filter(([,c]) => (c.kat || 'Allgemein') === kat);
         const rows = cmds.map(([k,c]) => `<tr>
             <td style="width:30%;padding:10px 14px;"><span class="cmd-badge">${escapeHtml(c.name||'')}</span></td>
-            <td style="width:60%;padding:10px 14px;color:var(--text-main);font-size:13px;">${escapeHtml(c.desc||c.description||'')}</td>
+            <td style="width:60%;padding:10px 14px;color:var(--text-main);font-size:13px;">${formatTextWithLinks(c.desc||c.description||'')}</td>
             <td style="width:10%;padding:10px 14px;text-align:right;">${eff.delCommands ? `<button class="btn-delete-row" onclick="deleteDienstCommand('${k}')">🗑️</button>` : ''}</td>
         </tr>`).join('');
         const gId = 'cmd_' + kat.replace(/\W/g, '_');
@@ -2411,7 +2517,7 @@ function openCommandsInlineModal() {
         let existingRowsHtml = Object.entries(allCmds).map(([k, c]) => `
             <div style="background:rgba(30,41,59,0.4);border:1px solid var(--border);border-radius:10px;padding:10px;display:grid;grid-template-columns:1.5fr 2.5fr 1.5fr auto;gap:8px;align-items:center;margin-bottom:8px;">
                 <input type="text" id="cmd_name_${k}" value="${escapeHtml(c.name || '')}" placeholder="Name">
-                <input type="text" id="cmd_desc_${k}" value="${escapeHtml(c.desc || c.description || '')}" placeholder="Beschreibung">
+                <input type="text" id="cmd_desc_${k}" value="${escapeHtml(c.desc || c.description || '')}" placeholder="Beschreibung (inkl. https:// Links)">
                 <input type="text" id="cmd_kat_${k}" value="${escapeHtml(c.kat || 'Allgemein')}" placeholder="Kategorie">
                 <div style="display:flex;gap:6px;">
                     <button type="button" class="btn" style="width:auto;margin:0;padding:6px 12px;font-size:12px;background:var(--primary);color:#080c14;font-weight:800;" onclick="editCommandInline('${k}')">💾</button>
@@ -2426,7 +2532,7 @@ function openCommandsInlineModal() {
                     <h4 style="margin:0 0 10px 0;color:var(--success);">➕ Neuen Command anlegen</h4>
                     <div style="display:grid;grid-template-columns:1.5fr 2.5fr 1.5fr auto;gap:8px;">
                         <input type="text" id="inlineNewCmdName" placeholder="Name (z.B. !funk)">
-                        <input type="text" id="inlineNewCmdDesc" placeholder="Beschreibung">
+                        <input type="text" id="inlineNewCmdDesc" placeholder="Beschreibung (inkl. Webadresse)">
                         <input type="text" id="inlineNewCmdKat" placeholder="Kategorie">
                         <button type="button" class="btn" style="width:auto;margin:0;padding:8px 16px;" onclick="addCommandInline()">Hinzufügen</button>
                     </div>
@@ -2479,7 +2585,7 @@ function deleteDienstCommand(k) {
     if (confirm('Command löschen?')) db.ref('data/dienstCommands/' + k).remove();
 }
 
-/* ── REITER 4: LINKS & DOKUMENTE ──────────────────────────── */
+/* ── REITER 4: LINKS & DOKUMENTE (AUTOMATISCHES HTTPS) ──────── */
 function renderLinksTab(obj) {
     const cont = document.getElementById('linksAccordionContainer'); if (!cont) return;
     const allLinks = Object.assign({}, defaultLinks, obj || {});
@@ -2495,8 +2601,8 @@ function renderLinksTab(obj) {
     cont.innerHTML = kats.map(kat => {
         const lnks = Object.entries(allLinks).filter(([, l]) => (l.kat || l.thema || 'Allgemein') === kat);
         const rows = lnks.map(([k, l]) => `<tr>
-            <td style="width:35%;padding:10px 14px;word-break:break-word;"><a class="link-btn-clickable" href="${encodeURI(l.url||'#')}" target="_blank" rel="noopener">🔗 ${escapeHtml(l.name||l.url)}</a></td>
-            <td style="width:55%;padding:10px 14px;color:var(--text-main);font-size:13px;line-height:1.5;">${escapeHtml(l.desc||l.description||'Keine Beschreibung')}</td>
+            <td style="width:35%;padding:10px 14px;word-break:break-word;"><a class="link-btn-clickable" href="${sanitizeUrl(l.url)}" target="_blank" rel="noopener noreferrer">🔗 ${escapeHtml(l.name||l.url)}</a></td>
+            <td style="width:55%;padding:10px 14px;color:var(--text-main);font-size:13px;line-height:1.5;">${formatTextWithLinks(l.desc||l.description||'Keine Beschreibung')}</td>
             <td style="width:10%;padding:10px 14px;text-align:right;">${eff.delLinks ? `<button class="btn-delete-row" onclick="deleteDienstLink('${k}')">🗑️</button>` : ''}</td>
         </tr>`).join('');
         const gId = 'lnk_' + kat.replace(/\W/g, '_');
@@ -2522,7 +2628,7 @@ function openLinksInlineModal() {
             <div style="background:rgba(30,41,59,0.4);border:1px solid var(--border);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:8px;margin-bottom:10px;">
                 <div style="grid-template-columns:1fr 1fr;gap:8px;display:grid;">
                     <input type="text" id="link_name_${k}" value="${escapeHtml(l.name || '')}" placeholder="Titel">
-                    <input type="text" id="link_url_${k}" value="${escapeHtml(l.url || '')}" placeholder="https://...">
+                    <input type="text" id="link_url_${k}" value="${escapeHtml(l.url || '')}" placeholder="https://docs.google.com/...">
                 </div>
                 <div style="grid-template-columns:2fr 1fr auto;gap:8px;align-items:center;display:grid;">
                     <input type="text" id="link_desc_${k}" value="${escapeHtml(l.desc || l.description || '')}" placeholder="Beschreibung">
@@ -2569,10 +2675,12 @@ function closeLinksInlineModal() { document.getElementById('linksInlineModal').s
 
 function addLinkInline() {
     const name = document.getElementById('inlineNewLinkName')?.value.trim();
-    const url = document.getElementById('inlineNewLinkUrl')?.value.trim();
+    let url = document.getElementById('inlineNewLinkUrl')?.value.trim();
     const desc = document.getElementById('inlineNewLinkDesc')?.value.trim();
     const kat = document.getElementById('inlineNewLinkKat')?.value.trim() || 'Allgemein';
     if (!name || !url) { alert('Bitte Name und URL angeben!'); return; }
+    if (!url.startsWith('http://') && !url.startsWith('https://')) url = 'https://' + url;
+
     db.ref('data/dienstLinks').push({ name, url, desc, kat }).then(() => {
         alert('✅ Link gespeichert!');
         closeLinksInlineModal();
@@ -2582,11 +2690,12 @@ function addLinkInline() {
 
 function editLinkInline(k) {
     const name = document.getElementById('link_name_' + k)?.value.trim();
-    const url = document.getElementById('link_url_' + k)?.value.trim();
+    let url = document.getElementById('link_url_' + k)?.value.trim();
     const desc = document.getElementById('link_desc_' + k)?.value.trim();
     const kat = document.getElementById('link_kat_' + k)?.value.trim() || 'Allgemein';
 
     if (!name || !url) { alert('Name und URL dürfen nicht leer sein!'); return; }
+    if (!url.startsWith('http://') && !url.startsWith('https://')) url = 'https://' + url;
 
     db.ref('data/dienstLinks/' + k).set({ name, url, desc, kat }).then(() => {
         logAdminAudit('Link bearbeitet', `${sessionUser.vorname} ${sessionUser.nachname} hat Link "${name}" geändert.`);
@@ -2787,7 +2896,7 @@ function renderNewsFeedData(obj) {
                         ${(eff.delNews || isAuthor) ? `<button class="btn-delete-row" onclick="deleteNews('${k}')">🗑️</button>` : ''}
                     </div>
                 </div>
-                <div style="padding:20px;white-space:pre-wrap;font-size:13px;line-height:1.6;">${escapeHtml(n.content)}</div>
+                <div style="padding:20px;white-space:pre-wrap;font-size:13px;line-height:1.6;">${formatTextWithLinks(n.content)}</div>
             </div>
         `;
     }).join('');
@@ -2949,10 +3058,16 @@ function passwortAendern() {
     });
 }
 
-function berechneDienstTage() {
+function berechneDienstTage(shouldPersist = false) {
     if (!sessionUser) return;
     const f = document.getElementById('einstellungsDatum'); if (!f || !f.value) return;
-    localStorage.setItem('mmd_einstellungsdatum_' + sessionUser.vorname + '_' + sessionUser.nachname, f.value);
+    
+    if (shouldPersist) {
+        const uId = (sessionUser.vorname+'_'+sessionUser.nachname).toLowerCase().replace(/[^a-z0-9_]/g,'');
+        db.ref('data/users/' + uId + '/einstellungsDatum').set(f.value);
+        localStorage.setItem('mmd_einstellungsdatum_' + sessionUser.vorname + '_' + sessionUser.nachname, f.value);
+    }
+
     const ed = new Date(f.value); ed.setHours(0,0,0,0);
     const h = new Date(); h.setHours(0,0,0,0);
     const t = Math.max(0, Math.floor((h - ed)/(1000*60*60*24)) + 1);
@@ -2965,9 +3080,17 @@ function handleDienstEndeLogout() {
 }
 
 /* ══════════════════════════════════════════════════════════════
-   AUSBILDUNGS- & PRÜFUNGSBEREICH (MULTIPLE-CHOICE SYSTEM)
+   AUSBILDUNGSBEREICH (MIT STAMMDATEN & VOLLSTÄNDIGEN FRAGEN)
 ══════════════════════════════════════════════════════════════ */
-const STRICT_EXAM_ORDER = ['exam_ga1', 'exam_ga2', 'exam_dv', 'exam_para1', 'exam_para2', 'exam_arzt1', 'exam_arzt2'];
+const STRICT_EXAM_ORDER = [
+    'exam_ga1',
+    'exam_1787879357076',
+    'exam_1787901145793',
+    'exam_1787911180569',
+    'exam_1787914959704',
+    'exam_1787916215019',
+    'exam_1787916321372'
+];
 
 function sortExamIds(ids) {
     return ids.sort((a, b) => {
@@ -3025,6 +3148,8 @@ function renderStudentUnlockedExams() {
             btnHtml = '<div style="font-size:11px;color:var(--danger);margin-top:6px;">Nicht freigeschaltet oder durchgefallen.</div>';
         }
 
+        const questionCount = (ex.questions || []).filter(q => !q.isInfo).length;
+
         return `
             <div class="exam-card-compact ${isPassed ? 'completed' : (isU ? 'unlocked' : 'locked')}">
                 <div style="display:flex;justify-content:space-between;align-items:center;">
@@ -3032,7 +3157,7 @@ function renderStudentUnlockedExams() {
                     ${badge}
                 </div>
                 <h4 style="margin:4px 0;font-size:13px;color:var(--text-main);">${escapeHtml(ex.title)}</h4>
-                <div style="font-size:11px;color:var(--text-muted);">⏱️ ${ex.timeLimitMinutes||30} Min • ❓ ${ex.questions?ex.questions.length:0} Fragen</div>
+                <div style="font-size:11px;color:var(--text-muted);">⏱️ ${ex.timeLimitMinutes||30} Min • ❓ ${questionCount} Fachfragen</div>
                 ${btnHtml}
             </div>
         `;
@@ -3145,6 +3270,13 @@ function openExamSubmissionDetailsModal(subId) {
     let answersList = [];
     if (Array.isArray(sub.answers)) {
         answersList = sub.answers;
+    } else if (Array.isArray(sub.details)) {
+        answersList = sub.details.map(d => ({
+            questionText: d.questionText,
+            chosenAnswerText: Array.isArray(d.selectedOptions) ? d.selectedOptions.join(', ') : (d.selectedOptions || '--'),
+            isCorrect: d.isCorrect,
+            isInfo: d.isInfo
+        }));
     } else if (sub.answers && typeof sub.answers === 'object') {
         answersList = Object.values(sub.answers);
     }
@@ -3158,13 +3290,25 @@ function openExamSubmissionDetailsModal(subId) {
         `;
     } else {
         answersHtml = answersList.map((ans, idx) => {
-            const isCorrect = !!ans.isCorrect;
             const qText = ans.questionText || `Frage ${idx + 1}`;
             const chosen = ans.chosenAnswerText || 'Keine Antwort ausgewählt';
             
+            if (ans.isInfo) {
+                return `
+                    <div style="background:rgba(30,41,59,0.5);padding:12px;border-radius:8px;border-left:4px solid var(--primary);">
+                        <div style="font-weight:700;font-size:12px;color:var(--primary);text-transform:uppercase;">📋 Stammdaten / Prüfungs-Angabe</div>
+                        <div style="font-weight:700;font-size:13px;color:var(--text-main);margin-top:2px;">${escapeHtml(qText)}</div>
+                        <div style="font-size:13px;margin-top:4px;color:var(--text-main);background:rgba(8,12,20,0.6);padding:6px 10px;border-radius:6px;">
+                            ${escapeHtml(chosen)}
+                        </div>
+                    </div>
+                `;
+            }
+
+            const isCorrect = !!ans.isCorrect;
             return `
                 <div style="background:rgba(15,23,42,0.7);padding:12px;border-radius:8px;border-left:4px solid ${isCorrect ? 'var(--success)' : 'var(--danger)'};">
-                    <div style="font-weight:700;font-size:13px;color:var(--text-main);">Frage ${idx + 1}: ${escapeHtml(qText)}</div>
+                    <div style="font-weight:700;font-size:13px;color:var(--text-main);">${escapeHtml(qText)}</div>
                     <div style="font-size:12px;margin-top:4px;color:${isCorrect ? 'var(--success)' : 'var(--danger)'};font-weight:700;">
                         Ausgewählt: <span style="color:var(--text-main);font-weight:normal;">${escapeHtml(chosen)}</span> ${isCorrect ? '✅ (Richtig)' : '❌ (Falsch)'}
                     </div>
@@ -3183,7 +3327,7 @@ function openExamSubmissionDetailsModal(subId) {
                 <b>Dauer:</b> ${escapeHtml(sub.durationFormatted || '--')}
             </p>
         </div>
-        <h4 style="margin:0 0 10px 0;color:var(--primary);">Antwort-Korrekturbogen (Mehrfachauswahl):</h4>
+        <h4 style="margin:0 0 10px 0;color:var(--primary);">Antwort-Korrekturbogen:</h4>
         <div style="display:flex;flex-direction:column;gap:8px;">
             ${answersHtml}
         </div>
@@ -3207,12 +3351,13 @@ function renderInstructorExistingExams() {
         <div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(260px, 1fr));gap:12px;">
             ${validIds.map(k => {
                 const e = cachedExams[k]; if (!e) return '';
+                const qCount = (e.questions || []).filter(q => !q.isInfo).length;
                 return `
                     <div style="background:rgba(15,23,42,0.8);border:1px solid var(--border);border-radius:12px;padding:12px;display:flex;flex-direction:column;justify-content:space-between;gap:8px;">
                         <div>
                             <span style="font-size:10px;color:var(--primary);font-weight:800;text-transform:uppercase;">${escapeHtml(e.kat||'Allgemein')}</span>
                             <h5 style="margin:4px 0 6px 0;font-size:14px;color:var(--text-main);">${escapeHtml(e.title)}</h5>
-                            <div style="font-size:11px;color:var(--text-muted);">⏱️ ${e.timeLimitMinutes||30} Min • ❓ ${e.questions?e.questions.length:0} Fragen • 🎯 ${e.passPercentage||60}%</div>
+                            <div style="font-size:11px;color:var(--text-muted);">⏱️ ${e.timeLimitMinutes||30} Min • ❓ ${qCount} Fachfragen (+3 Stammdaten) • 🎯 ${e.passPercentage||60}%</div>
                         </div>
                         <div style="display:flex;gap:6px;justify-content:flex-end;border-top:1px solid rgba(255,255,255,0.06);padding-top:8px;">
                             ${eff.canManageExams ? `<button class="btn" style="width:auto;margin:0;padding:4px 10px;font-size:11px;" onclick="editExam('${k}')">✏️ Bearbeiten</button>` : ''}
@@ -3248,7 +3393,8 @@ function addExamQuestionRow() {
         id: _examBuilderQuestions.length + 1,
         text: '',
         options: ['', '', '', ''],
-        correctAnswers: [0]
+        correctAnswers: [0],
+        type: 'choice'
     });
     refreshExamQuestionsDisplay();
 }
@@ -3258,7 +3404,15 @@ function refreshExamQuestionsDisplay() {
     document.getElementById('examQuestionsCountDisplay').textContent = _examBuilderQuestions.length;
 
     c.innerHTML = _examBuilderQuestions.map((q, idx) => {
-        // Robuste Absicherung: correctAnswers als Array erzwingen
+        if (q.isInfo) {
+            return `
+                <div style="background:rgba(30,41,59,0.5);border:1px solid var(--primary);border-radius:10px;padding:12px;">
+                    <div style="font-weight:800;color:var(--primary);font-size:12px;">📋 Stammdaten-Pflichtfeld ${idx+1} (Fest vorgegeben)</div>
+                    <div style="font-size:13px;font-weight:700;margin-top:4px;">${escapeHtml(q.text)}</div>
+                </div>
+            `;
+        }
+
         if (!Array.isArray(q.correctAnswers)) {
             q.correctAnswers = (q.correctAnswers !== undefined && q.correctAnswers !== null) ? [parseInt(q.correctAnswers)] : [0];
         }
@@ -3277,7 +3431,7 @@ function refreshExamQuestionsDisplay() {
         return `
             <div style="background:rgba(15,23,42,0.6);border:1px solid var(--border);border-radius:10px;padding:12px;">
                 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-                    <b>Frage ${idx+1} <span style="font-size:11px;color:var(--primary);">(Mehrfachauswahl aktiv)</span></b>
+                    <b>Fachfrage ${idx - 2} <span style="font-size:11px;color:var(--primary);">(Mehrfachauswahl aktiv)</span></b>
                     <button class="btn-delete-row" type="button" onclick="_examBuilderQuestions.splice(${idx},1);refreshExamQuestionsDisplay();">🗑️</button>
                 </div>
                 <input type="text" value="${escapeHtml(q.text||'')}" oninput="_examBuilderQuestions[${idx}].text=this.value" placeholder="Fragetext..." style="margin-bottom:8px;">
@@ -3311,16 +3465,19 @@ function neuePruefungSpeichern() {
     const intro = document.getElementById('newExamIntroText')?.value.trim() || '';
     const examId = document.getElementById('editingExamId')?.value || ('exam_' + Date.now());
 
-    // Absicherung vor dem Speichern
-    _examBuilderQuestions.forEach(q => {
-        if (!Array.isArray(q.correctAnswers)) {
-            q.correctAnswers = [0];
-        }
+    let finalQuestions = _examBuilderQuestions.filter(q => !q.isInfo);
+    finalQuestions.forEach(q => {
+        if (!Array.isArray(q.correctAnswers)) q.correctAnswers = [0];
     });
+
+    const fullCatalog = [
+        ...STANDARD_INFO_QUESTIONS,
+        ...finalQuestions
+    ];
 
     const data = {
         id: examId, title, kat, timeLimitMinutes: timeLimit, passPercentage: passRate,
-        introText: intro, questions: _examBuilderQuestions, ts: Date.now()
+        introText: intro, questions: fullCatalog, ts: Date.now()
     };
 
     db.ref('data/exams/' + examId).set(data).then(() => {
@@ -3341,10 +3498,18 @@ function editExam(eid) {
     document.getElementById('newExamPassRate').value = ex.passPercentage || 60;
     document.getElementById('newExamIntroText').value = ex.introText || '';
     
-    // Klone Fragen und stelle sicher, dass alle correctAnswers Arrays sind
     _examBuilderQuestions = JSON.parse(JSON.stringify(ex.questions || []));
+    
+    let hasInfo = _examBuilderQuestions.some(q => q.isInfo);
+    if (!hasInfo) {
+        _examBuilderQuestions = [
+            ...STANDARD_INFO_QUESTIONS,
+            ..._examBuilderQuestions
+        ];
+    }
+
     _examBuilderQuestions.forEach(q => {
-        if (!Array.isArray(q.correctAnswers)) {
+        if (!q.isInfo && !Array.isArray(q.correctAnswers)) {
             q.correctAnswers = (q.correctAnswers !== undefined && q.correctAnswers !== null) ? [parseInt(q.correctAnswers)] : [0];
         }
     });
@@ -3403,17 +3568,27 @@ function startExam(eid) {
     document.getElementById('activeExamTitle').textContent = ex.title;
     const c = document.getElementById('activeExamQuestionsContainer');
     if (c) {
-        c.innerHTML = ex.questions.map((q, idx) => `
-            <div class="exam-q-box">
-                <p style="font-weight:800;margin:0 0 8px 0;">❓ Frage ${idx+1}: ${escapeHtml(q.text)} <span style="font-size:11px;color:var(--warning);font-weight:normal;float:right;">(Mehrfachauswahl möglich)</span></p>
-                ${(q.options || []).map((opt, oIdx) => `
-                    <label class="exam-opt-label">
-                        <input type="checkbox" name="q_${idx}" value="${oIdx}">
-                        <span>${escapeHtml(opt)}</span>
-                    </label>
-                `).join('')}
-            </div>
-        `).join('');
+        c.innerHTML = ex.questions.map((q, idx) => {
+            if (q.isInfo || q.type === 'text') {
+                return `
+                    <div class="exam-q-box" style="border-left: 4px solid var(--primary);">
+                        <p style="font-weight:800;margin:0 0 8px 0;">📋 Angabe ${idx+1}: ${escapeHtml(q.text)}</p>
+                        <input type="text" name="q_text_${idx}" placeholder="Hier eintragen..." class="form-input" style="width:100%;margin-top:6px;" required>
+                    </div>
+                `;
+            }
+            return `
+                <div class="exam-q-box">
+                    <p style="font-weight:800;margin:0 0 8px 0;">❓ Frage ${idx-2}: ${escapeHtml(q.text)} <span style="font-size:11px;color:var(--warning);font-weight:normal;float:right;">(Mehrfachauswahl möglich)</span></p>
+                    ${(q.options || []).map((opt, oIdx) => `
+                        <label class="exam-opt-label">
+                            <input type="checkbox" name="q_${idx}" value="${oIdx}">
+                            <span>${escapeHtml(opt)}</span>
+                        </label>
+                    `).join('')}
+                </div>
+            `;
+        }).join('');
     }
 
     document.getElementById('activeExamContainer').style.display = 'block';
@@ -3431,18 +3606,29 @@ function submitActiveExam() {
     if (!activeExam) return;
     clearInterval(activeExamTimerInterval);
     const ex = activeExam.exam, eid = activeExam.id;
-    let totalQ = ex.questions.length, correctQ = 0;
+    let totalQ = 0, correctQ = 0;
     const recordedAnswers = [];
 
     ex.questions.forEach((q, idx) => {
+        if (q.isInfo || q.type === 'text') {
+            const val = (document.querySelector(`input[name="q_text_${idx}"]`)?.value || '').trim();
+            recordedAnswers.push({
+                questionText: q.text,
+                chosenAnswerText: val || 'Keine Angabe',
+                isCorrect: true,
+                isInfo: true
+            });
+            return;
+        }
+
         const checkboxes = document.querySelectorAll(`input[name="q_${idx}"]:checked`);
         let chosenArr = [];
         checkboxes.forEach(cb => chosenArr.push(parseInt(cb.value)));
 
         const correctArr = (q.correctAnswers || [0]).map(Number);
-        
-        // Exakter Multiple-Choice-Abgleich
         const isRight = (chosenArr.length === correctArr.length) && chosenArr.every(val => correctArr.includes(val));
+        
+        totalQ++;
         if (isRight) correctQ++;
 
         const chosenTexts = chosenArr.length > 0 ? chosenArr.map(oIdx => q.options[oIdx] || 'Unbekannt').join(', ') : 'Keine Antwort';
@@ -3450,7 +3636,8 @@ function submitActiveExam() {
         recordedAnswers.push({
             questionText: q.text,
             chosenAnswerText: chosenTexts,
-            isCorrect: isRight
+            isCorrect: isRight,
+            isInfo: false
         });
     });
 
@@ -3461,9 +3648,16 @@ function submitActiveExam() {
     const s = (activeExamSecondsElapsed % 60).toString().padStart(2, '0');
 
     db.ref('data/examSubmissions').push({
-        examId: eid, examTitle: ex.title, userId: myId, userName: sessionUser.vorname + ' ' + sessionUser.nachname,
-        userDN: sessionUser.dn || 'Keine DN', percentage: pct, passed: passed,
-        durationFormatted: `${m}:${s} Min`, datum: new Date().toLocaleDateString('de-DE'), ts: Date.now(),
+        examId: eid,
+        examTitle: ex.title,
+        userId: myId,
+        userName: sessionUser.vorname + ' ' + sessionUser.nachname,
+        userDN: sessionUser.dn || 'Keine DN',
+        percentage: pct,
+        passed: passed,
+        durationFormatted: `${m}:${s} Min`,
+        datum: new Date().toLocaleDateString('de-DE'),
+        ts: Date.now(),
         answers: recordedAnswers
     }).then(() => {
         if (passed) {
@@ -3478,7 +3672,7 @@ function submitActiveExam() {
 }
 
 /* ══════════════════════════════════════════════════════════════
-   ADMIN-BEREICH: MITARBEITER & ROLLENVERGABE (BUGFIX ENTZUG)
+   ADMIN-BEREICH: ROLLENVERGABE & DAUERHAFTER ENTZUG
 ══════════════════════════════════════════════════════════════ */
 function openAdminKeyModal() {
     const eff = sessionUser ? getUserEffectivePermissions(sessionUser) : {};
@@ -3633,58 +3827,50 @@ function closeAssignRolesModal() { document.getElementById('assignRolesModal').s
 
 function saveAssignedRoles() {
     const uId = document.getElementById('assignRoleUserId')?.value; if (!uId) return;
-    const targetUser = cachedUsers[uId] || {};
-    let existingRoles = {};
+    let cleanRoles = {};
 
-    if (targetUser.roles) {
-        if (Array.isArray(targetUser.roles)) {
-            targetUser.roles.forEach(r => existingRoles[r] = true);
-        } else if (typeof targetUser.roles === 'object') {
-            existingRoles = Object.assign({}, targetUser.roles);
-        }
-    }
-
-    // Präzises Aktualisieren oder Löschen basierend auf den Checkboxen im Modal
     Object.keys(cachedRoles).forEach(rId => {
         const el = document.getElementById('assignRole_' + rId);
-        if (el) {
-            if (el.checked) {
-                existingRoles[rId] = true;
-            } else {
-                delete existingRoles[rId];
-            }
+        if (el && el.checked) {
+            cleanRoles[rId] = true;
         }
     });
 
-    // Selbstausschluss-Schutz für den angemeldeten Master-Admin
     const myId = sessionUser ? (sessionUser.vorname+'_'+sessionUser.nachname).toLowerCase().replace(/[^a-z0-9_]/g,'') : '';
     if (uId === myId && sessionUser.isMasterAdmin) {
-        existingRoles['masteradmin'] = true;
+        cleanRoles['masteradmin'] = true;
     }
 
-    // Wenn keine Rollen mehr angehakt sind, bleibt die Basisrolle "mitarbeiter" erhalten
-    if (Object.keys(existingRoles).length === 0) {
-        existingRoles = { mitarbeiter: true };
+    if (Object.keys(cleanRoles).length === 0) {
+        cleanRoles = { mitarbeiter: true };
     }
 
-    // Bereinige veraltete Flags auf User-Ebene
-    const userUpdates = {
-        roles: existingRoles,
-        isAdmin: !!(existingRoles.admin || existingRoles.masteradmin),
-        isMasterAdmin: !!existingRoles.masteradmin
+    const updates = {
+        roles: cleanRoles,
+        isAdmin: !!(cleanRoles.admin || cleanRoles.masteradmin),
+        isMasterAdmin: !!cleanRoles.masteradmin,
+        isInstructor: null,
+        canManageInstructors: null,
+        canManageExams: null
     };
 
-    db.ref('data/users/' + uId).update(userUpdates).then(() => {
-        if (cachedUsers[uId]) {
-            cachedUsers[uId].roles = existingRoles;
-            cachedUsers[uId].isAdmin = userUpdates.isAdmin;
-            cachedUsers[uId].isMasterAdmin = userUpdates.isMasterAdmin;
-        }
-        closeAssignRolesModal();
-        renderAdminUserTable(cachedUsers);
-        renderStaffDirectory();
-        logAdminAudit('Rollen angepasst', `Rollen für ${uId} von ${sessionUser.vorname} ${sessionUser.nachname} gespeichert.`);
-        alert('✅ Rollen erfolgreich aktualisiert!');
+    db.ref('data/users/' + uId + '/roles').set(cleanRoles).then(() => {
+        db.ref('data/users/' + uId).update(updates).then(() => {
+            if (cachedUsers[uId]) {
+                cachedUsers[uId].roles = cleanRoles;
+                cachedUsers[uId].isAdmin = updates.isAdmin;
+                cachedUsers[uId].isMasterAdmin = updates.isMasterAdmin;
+                delete cachedUsers[uId].isInstructor;
+                delete cachedUsers[uId].canManageInstructors;
+                delete cachedUsers[uId].canManageExams;
+            }
+            closeAssignRolesModal();
+            renderAdminUserTable(cachedUsers);
+            renderStaffDirectory();
+            renderExamTab();
+            logAdminAudit('Rollen angepasst & bereinigt', `Rollen für ${uId} von ${sessionUser.vorname} ${sessionUser.nachname} gespeichert.`);
+            alert('✅ Rollen erfolgreich und dauerhaft aktualisiert!');
+        });
     });
 }
 
@@ -3766,22 +3952,12 @@ function selectRole(roleId) {
     db.ref('data/dienstCommands').once('value', sCmd => {
         const allCmds = Object.assign({}, defaultCommands, sCmd.val() || {});
         let allCmdKats = isMaster ? Object.values(allCmds).map(c => c.kat || 'Allgemein') : (r.allowedCmdKats || []);
-        
-        if (!isMaster && (!allCmdKats || !allCmdKats.length)) {
-            if (roleId === 'psychologie') allCmdKats = ['Psychologie'];
-            if (roleId === 'personalabteilung') allCmdKats = ['Personal'];
-        }
         renderRoleCategoryCheckboxes('roleCommandsCategoriesContainer', allCmds, allCmdKats);
     });
 
     db.ref('data/dienstLinks').once('value', sLnk => {
         const allLnks = Object.assign({}, defaultLinks, sLnk.val() || {});
         let allLinkKats = isMaster ? Object.values(allLnks).map(l => l.kat || l.thema || 'Allgemein') : (r.allowedLinkKats || []);
-        
-        if (!isMaster && (!allLinkKats || !allLinkKats.length)) {
-            if (roleId === 'psychologie') allLinkKats = ['Psychologie'];
-            if (roleId === 'personalabteilung') allLinkKats = ['Personal', 'MD Intern'];
-        }
         renderRoleCategoryCheckboxes('roleLinksCategoriesContainer', allLnks, allLinkKats);
     });
 
@@ -3825,7 +4001,7 @@ function neueRolleErstellen() {
 function speichereRolle() {
     const id = document.getElementById('editingRoleId')?.value; 
     if (!id) {
-        alert('Bitte wähle zuerst eine Rolle aus oder klicke auf "Neue Rolle erstellen"!');
+        alert('Bitte wähle zuerst eine Rolle aus oder erstelle eine neue Rolle!');
         return;
     }
 
@@ -4091,3 +4267,7 @@ _w.downloadStaffOriginalPhoto = downloadStaffOriginalPhoto;
 _w.uploadProcessedStaffPhoto = uploadProcessedStaffPhoto;
 _w.resetStaffPhotoToDefault = resetStaffPhotoToDefault;
 _w.toggleBuilderCorrectAnswer = toggleBuilderCorrectAnswer;
+_w.manualTriggerArchive = manualTriggerArchive;
+_w.openArchivEditModal = openArchivEditModal;
+_w.closeArchivEditModal = closeArchivEditModal;
+_w.saveArchivEdit = saveArchivEdit;

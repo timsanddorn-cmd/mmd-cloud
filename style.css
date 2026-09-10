@@ -1,5 +1,5 @@
 ﻿/* ============================================================
-   MMD CLOUD – Medical Center Web-App  |  style.css  v5.8
+   MMD CLOUD – Medical Center Web-App  |  style.css  v5.9
    ============================================================ */
 
 :root {
@@ -307,7 +307,7 @@ body {
     padding-left: 24px;
 }
 
-/* KALENDER DESIGN */
+/* KALENDER DESIGN & EINLADUNGEN */
 .calendar-header-toolbar {
     display: flex;
     justify-content: space-between;

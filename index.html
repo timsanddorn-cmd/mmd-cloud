@@ -10,7 +10,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
-    <link rel="stylesheet" href="style.css?v=5.8">
+    <link rel="stylesheet" href="style.css?v=5.9">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏥</text></svg>">
 </head>
 <body>
@@ -42,7 +42,7 @@
                     <input type="text" id="authDN" placeholder="z.B. DN 42" name="authDN">
                 </div>
                 
-                <button type="button" class="btn" id="mainAuthActionBtn" onclick="handleAuthAction()" style="margin-top:20px;">Dienst antreten</button>
+                <button type="submit" class="btn" id="mainAuthActionBtn" style="margin-top:20px;">Dienst antreten</button>
             </form>
         </div>
     </div>
@@ -183,7 +183,7 @@
                 </div>
                 <div class="theme-accordion-content">
                     <div class="table-responsive" style="margin:0; border:none;">
-                        <table><thead><tr><th>Schicht</th><th>Patienten</th><th>Verletzungen</th><th>Ausgaben</th><th>Detaillierter Verbrauch</th><th style="width:60px; text-align:right;" class="admin-action-th">Aktion</th></tr></thead><tbody id="archivTableBody"></tbody><tfoot id="archivTableFoot"></tfoot></table>
+                        <table><thead><tr><th>Schicht</th><th>Patienten</th><th>Verletzungen</th><th>Ausgaben</th><th>Detaillierter Verbrauch</th><th style="width:80px; text-align:right;" class="admin-action-th">Aktion</th></tr></thead><tbody id="archivTableBody"></tbody><tfoot id="archivTableFoot"></tfoot></table>
                     </div>
                 </div>
             </div>
@@ -719,7 +719,7 @@
                     <div style="background: rgba(8, 12, 20, 0.5); padding: 18px; border-radius: 14px; border: 1px solid var(--border);">
                         <p style="margin-top:0; font-size:14px; font-weight:700;">Mitarbeiter: <b id="daysMedicName" style="color:var(--primary);">--</b></p>
                         <label for="einstellungsDatum">Eingestellt am:</label>
-                        <input type="date" id="einstellungsDatum" onchange="berechneDienstTage()">
+                        <input type="date" id="einstellungsDatum" onchange="berechneDienstTage(true)">
                         <div style="margin-top:16px; text-align:center; background: rgba(56, 189, 248, 0.04); padding:18px; border-radius:14px; border:1px dashed rgba(56, 189, 248, 0.3);">
                             <span style="font-size:10px; font-weight:800; color:var(--text-muted); display:block; text-transform:uppercase;">Dienstzeit aktuell</span>
                             <span id="val_dienstTage" style="font-size:42px; font-weight:800; color:var(--warning); display:block; margin: 4px 0;">0</span>
@@ -735,7 +735,7 @@
                             <input type="text" name="username" autocomplete="username" style="display:none;" aria-hidden="true">
                             <label for="newPasswordInput">Neues Passwort:</label>
                             <input type="password" id="newPasswordInput" name="newPasswordInput" autocomplete="new-password" placeholder="Neues Passwort eingeben">
-                            <button type="button" class="btn" style="background:var(--primary); color:#080c14; font-weight:800;" onclick="passwortAendern()">Passwort speichern</button>
+                            <button type="submit" class="btn" style="background:var(--primary); color:#080c14; font-weight:800;">Passwort speichern</button>
                         </form>
                     </div>
                 </div>
@@ -773,8 +773,8 @@
             <form onsubmit="event.preventDefault(); saveCustomChangelogEntry();">
                 <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:12px;">
                     <div>
-                        <label for="clNewVersion">Version (z.B. v5.8):</label>
-                        <input type="text" id="clNewVersion" placeholder="v5.8" required>
+                        <label for="clNewVersion">Version (z.B. v5.9):</label>
+                        <input type="text" id="clNewVersion" placeholder="v5.9" required>
                     </div>
                     <div>
                         <label for="clNewCategory">Kategorie:</label>
@@ -839,6 +839,40 @@
         </div>
     </div>
 
+    <!-- MODAL POPUP: SCHICHTARCHIV EDITIEREN (MASTER-ADMIN) -->
+    <div id="archivEditModal" class="modal-overlay">
+        <div class="modal-card" style="max-width: 500px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:10px; margin-bottom:14px;">
+                <h3 style="margin:0; color:var(--warning);">✏️ Schichteintrag korrigieren</h3>
+                <button type="button" class="btn-close" onclick="closeArchivEditModal()">✖</button>
+            </div>
+            <form onsubmit="event.preventDefault(); saveArchivEdit();">
+                <input type="hidden" id="editArchivKey">
+                <label for="editArchivDatum">Schicht-Datum:</label>
+                <input type="text" id="editArchivDatum" placeholder="TT.MM.JJJJ" required>
+
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                    <div>
+                        <label for="editArchivPatienten">Patienten:</label>
+                        <input type="number" id="editArchivPatienten" min="0" required>
+                    </div>
+                    <div>
+                        <label for="editArchivVerletzungen">Verletzungen:</label>
+                        <input type="number" id="editArchivVerletzungen" min="0" required>
+                    </div>
+                </div>
+
+                <label for="editArchivAusgaben">Gesamtausgaben ($):</label>
+                <input type="number" id="editArchivAusgaben" min="0" required>
+
+                <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:20px;">
+                    <button type="button" class="btn" style="width:auto; background:var(--text-muted);" onclick="closeArchivEditModal()">Abbrechen</button>
+                    <button type="submit" class="btn" style="width:auto; background:var(--success); color:#080c14; font-weight:800;">💾 Schicht speichern</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- MODAL POPUP: PREISE & SZENARIEN VOR ORT -->
     <div id="pricesInlineModal" class="modal-overlay">
         <div class="modal-card" style="max-width: 800px; width: 95vw;">
@@ -889,7 +923,7 @@
 
     <!-- MODAL POPUP: KALENDER-TERMIN ERSTELLEN / BEARBEITEN -->
     <div id="calendarEventModal" class="modal-overlay">
-        <div class="modal-card" style="max-width: 620px; width: 95vw; max-height: 90vh; overflow-y:auto;">
+        <div class="modal-card" style="max-width: 650px; width: 95vw; max-height: 90vh; overflow-y:auto;">
             <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:12px; margin-bottom:16px;">
                 <h3 style="margin:0; color:var(--primary);" id="calendarEventModalHeading">📅 Neuen Kalender Termin eintragen</h3>
                 <button type="button" class="btn-close" onclick="closeCalendarEventModal()">✖</button>
@@ -935,15 +969,24 @@
                 <label for="calEventDesc">Beschreibung / Details (optional):</label>
                 <textarea id="calEventDesc" rows="3" placeholder="Z.B. Treffpunkt Besprechungsraum, Anwesenheitspflicht..."></textarea>
 
+                <!-- Einladungs-Funktion für Mitarbeiter -->
+                <div style="margin-top:14px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                        <span style="font-size:11px; color:var(--primary); font-weight:800; text-transform:uppercase;">👥 Spezifische Mitarbeiter einladen:</span>
+                        <span style="font-size:11px; color:var(--text-muted);">Eingeladene sehen diesen Termin garantiert</span>
+                    </div>
+                    <div id="calEventInvitedUsersContainer" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:6px; background:rgba(8,12,20,0.5); padding:10px; border-radius:10px; border:1px solid var(--border); max-height:140px; overflow-y:auto;"></div>
+                </div>
+
                 <label style="margin-top:14px; margin-bottom:6px;">Sichtbarkeit des Termins:</label>
                 
                 <!-- Private Termin-Option -->
                 <div style="background:rgba(8,12,20,0.6); padding:10px; border-radius:10px; border:1px solid var(--border); margin-bottom:10px;">
                     <label style="display:flex; align-items:center; gap:8px; cursor:pointer; margin:0; text-transform:none; font-size:13px;">
                         <input type="checkbox" id="calEventIsPrivate" onchange="togglePrivateEventOption(this.checked)">
-                        <span style="color:var(--warning); font-weight:800;">🔒 Nur für mich sichtbar (Privater Kalendereintrag)</span>
+                        <span style="color:var(--warning); font-weight:800;">🔒 Nur für mich & eingeladene Personen sichtbar (Privat)</span>
                     </label>
-                    <p style="color:var(--text-muted); font-size:11px; margin:4px 0 0 24px;">Wenn aktiviert, ist der Termin ausschließlich für deinen Account sichtbar.</p>
+                    <p style="color:var(--text-muted); font-size:11px; margin:4px 0 0 24px;">Wenn aktiviert, bleibt der Termin für andere Rollen verborgen.</p>
                 </div>
 
                 <div id="calEventRolesSection">
@@ -1090,7 +1133,7 @@
                 <label for="adminAuthPassInput">Admin-Passwort:</label>
                 <input type="password" id="adminAuthPassInput" autocomplete="current-password" placeholder="Passwort eingeben...">
                 <div style="display:flex; gap:10px; margin-top:20px;">
-                    <button type="button" class="btn" style="background:var(--warning); color:#080c14; font-weight:800;" onclick="verifyAdminKeyPassword()">Freischalten 🔓</button>
+                    <button type="submit" class="btn" style="background:var(--warning); color:#080c14; font-weight:800;">Freischalten 🔓</button>
                     <button type="button" class="btn" style="background:var(--text-muted);" onclick="closeAdminAuthModal()">Abbrechen</button>
                 </div>
             </form>
@@ -1198,6 +1241,7 @@
                                     <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:10px;">
                                         <div class="role-perm-box"><label for="roleFlagEditPrices" class="perm-check"><input type="checkbox" id="roleFlagEditPrices"> <b>✏️ Preise anpassen</b></label><span class="perm-desc">Sieht das Stiftsymbol im Einsatzbereich zur Anpassung der Materialpreise.</span></div>
                                         <div class="role-perm-box"><label for="roleFlagArchive" class="perm-check"><input type="checkbox" id="roleFlagArchive"> <b>🗄️ Schicht-Archiv</b></label><span class="perm-desc">Darf die archivierten Wochenschichten einsehen und als CSV herunterladen.</span></div>
+                                        <div class="role-perm-box"><label for="roleFlagEditAllPatients" class="perm-check"><input type="checkbox" id="roleFlagEditAllPatients"> <b>✏️ Fremde Patienten bearbeiten</b></label><span class="perm-desc">Darf Einträge von allen Kollegen bearbeiten (Standard: nur eigene).</span></div>
                                         <div class="role-perm-box"><label for="delFlagPatient" class="perm-check"><input type="checkbox" id="delFlagPatient"> <b>🗑️ Patienten löschen</b></label><span class="perm-desc">Darf fehlerhafte Patienteneinträge aus dem heutigen Protokoll löschen.</span></div>
                                         <div class="role-perm-box"><label for="delFlagArchiv" class="perm-check"><input type="checkbox" id="delFlagArchiv"> <b>🗑️ Archive löschen</b></label><span class="perm-desc">Darf ganze Schichteinträge aus dem Wochenarchiv entfernen.</span></div>
                                     </div>
@@ -1376,6 +1420,6 @@
         </div>
     </div>
 
-    <script src="app.js?v=5.8"></script>
+    <script src="app.js?v=5.9.1"></script>
 </body>
 </html>
