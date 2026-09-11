@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MMD Cloud-Patientenverwaltung Live</title>
     <!-- Google Fonts & Firebase SDK -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -10,7 +10,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
-    <link rel="stylesheet" href="style.css?v=5.9.4">
+    <link rel="stylesheet" href="style.css?v=6.0.0">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏥</text></svg>">
 </head>
 <body>
@@ -48,7 +48,7 @@
     </div>
 
     <!-- HAUPTANSICHT -->
-    <div id="mainAppView" class="container">
+    <div id="mainAppView" class="container" style="display:none;">
         <!-- TOP BAR -->
         <div class="top-bar" style="flex-wrap:wrap;gap:12px;min-height:64px;">
             <div class="medic-identity-display">
@@ -86,6 +86,10 @@
 
         <!-- REITER 1: DOKUMENTATION & EINSATZ -->
         <div id="docTab" class="tab-content active">
+            <div class="content-header-bar" style="margin-bottom: 18px;">
+                <h2 style="margin:0 0 4px 0; color:var(--primary);">📝 Dokumentation & Einsatz</h2>
+                <p style="margin:0; color:var(--text-muted); font-size:13px;">Erfassung von Notfalleinsätzen, medizinischen Behandlungsabläufen und Materialausgaben.</p>
+            </div>
             <div class="action-grid">
                 <div>
                     <div class="section">
@@ -112,7 +116,10 @@
                 </div>
                 <div>
                     <div class="section" style="min-height: 200px;">
-                        <h3>📋 Medizinischer Ablauf</h3>
+                        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom: 1px solid var(--border); padding-bottom: 8px; margin-bottom: 12px;">
+                            <h3 style="margin:0; border:none; padding:0;">📋 Medizinischer Ablauf</h3>
+                            <button type="button" id="btnEditSzenarienInline" class="btn-inline-edit" style="display:none;" onclick="openSzenarienInlineModal()" title="Szenarien & Behandlungsabläufe bearbeiten">✏️ Abläufe anpassen</button>
+                        </div>
                         <div id="checklisteContainer"><p style="color: var(--text-muted); font-size:12px;">Wähle links ein Szenario aus, um die Schritte zu sehen.</p></div>
                         <button type="button" class="btn" style="margin-top:15px; width:100%; background:rgba(239,68,68,0.2); color:var(--danger); border:1px solid var(--danger); font-weight:700; border-radius:8px; padding:10px; cursor:pointer;" onclick="resetMedicalWorkflow()">🔄 Einsatz Zurücksetzen (nur Checkboxen)</button>
                     </div>
@@ -121,7 +128,7 @@
                     <div class="section">
                         <div style="display:flex; justify-content:space-between; align-items:center; border-bottom: 1px solid var(--border); padding-bottom: 8px; margin-bottom: 12px;">
                             <h3 style="margin:0; border:none; padding:0;">📦 Verbrauch & Ausgaben</h3>
-                            <button type="button" id="btnEditPricesInline" class="btn-inline-edit" style="display:none;" onclick="openPricesInlineModal()" title="Preise & Szenarien vor Ort bearbeiten">✏️ Anpassen</button>
+                            <button type="button" id="btnEditPricesInline" class="btn-inline-edit" style="display:none;" onclick="openPricesInlineModal()" title="Preise & Szenarien vor Ort bearbeiten">✏️ Preise anpassen</button>
                         </div>
                         <div class="material-grid" id="dynamischerMaterialVerbrauchGrid"></div>
                         <div style="background: rgba(56, 189, 248, 0.05); padding: 12px; border-radius: 10px; border: 1px dashed rgba(56, 189, 248, 0.3); margin-top: 12px; text-align: center; font-weight: 600;">
@@ -143,7 +150,10 @@
 
         <!-- REITER 2: STATISTIK & ARCHIV -->
         <div id="statsTab" class="tab-content">
-            <h2>📊 Statistik & Archiv</h2>
+            <div class="content-header-bar" style="margin-bottom: 18px;">
+                <h2 style="margin:0 0 4px 0; color:var(--primary);">📊 Statistik & Archiv</h2>
+                <p style="margin:0; color:var(--text-muted); font-size:13px;">Einsatzprotokolle der aktuellen Schicht und Wochenarchivierung.</p>
+            </div>
             <div class="section" style="background: rgba(56, 189, 248, 0.02); border-color: rgba(56, 189, 248, 0.3);">
                 <div class="stats-grid">
                     <div class="stat-card"><h5>Behandelte Patienten</h5><span id="statPatienten">0</span></div>
@@ -191,10 +201,14 @@
 
         <!-- REITER: KALENDER -->
         <div id="calendarTab" class="tab-content">
+            <div class="content-header-bar" style="margin-bottom: 18px;">
+                <h2 style="margin:0 0 4px 0; color:var(--primary);">📅 Dienstkalender & Termine</h2>
+                <p style="margin:0; color:var(--text-muted); font-size:13px;">Übersicht aller Dienstbesprechungen, Ausbildungen, Termine und persönlicher Einladungen.</p>
+            </div>
             <div class="calendar-header-toolbar">
                 <div class="calendar-nav-controls">
                     <button type="button" class="btn-cal-nav" onclick="changeCalendarMonth(-1)">◀ Vorheriger</button>
-                    <h2 id="calendarCurrentMonthYear" style="margin:0; font-size:20px; color:var(--primary); min-width:180px; text-align:center;">--</h2>
+                    <h3 id="calendarCurrentMonthYear" style="margin:0; font-size:18px; color:var(--primary); min-width:180px; text-align:center;">--</h3>
                     <button type="button" class="btn-cal-nav" onclick="changeCalendarMonth(1)">Nächster ▶</button>
                     <button type="button" class="btn-cal-today" onclick="resetCalendarToToday()">Heute</button>
                 </div>
@@ -219,7 +233,7 @@
                     <p style="margin:4px 0 0 0; color:var(--text-muted); font-size:13px;">Offizielle Übersicht aller registrierten und aktiven Mitarbeiter im Dienst.</p>
                 </div>
                 <div class="staff-toolbar-actions">
-                    <input type="text" id="searchStaffInput" class="form-input" placeholder="🔍 Nach DN oder Name suchen..." oninput="filterStaffDirectory()">
+                    <input type="text" id="searchStaffInput" class="form-input" placeholder="🔍 Nach DN oder Name suchen..." oninput="filterStaffDirectory()" aria-label="Mitarbeiter nach Name oder DN suchen">
                     <div style="display:flex; align-items:center; gap:8px;">
                         <button type="button" class="btn" style="width:auto; margin:0; padding:8px 16px; background:var(--primary); color:#080c14; font-weight:800;" onclick="openStaffPhotoUploadModal()">📷 Foto einreichen</button>
                         <button type="button" id="btnOpenPhotoAdminModal" class="btn" style="width:auto; margin:0; padding:8px 16px; background:rgba(245,158,11,0.15); color:var(--warning); border:1px solid var(--warning); font-weight:800; display:none;" onclick="openStaffPhotoAdminModal()">📁 Foto Ordner (Bearbeitung)</button>
@@ -237,9 +251,12 @@
 
         <!-- REITER: HIERARCHIE BOARD -->
         <div id="hierarchieTab" class="tab-content">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px; flex-wrap:wrap; gap:10px;">
-                <h2 style="margin:0; color: var(--primary); font-size: 24px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">San Andreas Medical Department</h2>
-                <button type="button" id="btnEditHierarchieInline" class="btn-inline-edit" style="display:none;" onclick="openHierarchieInlineModal()">✏️ Hierarchie bearbeiten</button>
+            <div style="text-align:center; margin-bottom: 24px;">
+                <h2 style="margin:0 auto; color: var(--primary); font-size: 24px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; text-align:center;">San Andreas Medical Department</h2>
+                <p style="margin:4px auto 10px auto; color:var(--text-muted); font-size:13px; text-align:center;">Offizielle Befehlskette und Besetzung der Klinikleitung und Fachabteilungen.</p>
+                <div style="display:flex; justify-content:center;">
+                    <button type="button" id="btnEditHierarchieInline" class="btn-inline-edit" style="display:none;" onclick="openHierarchieInlineModal()">✏️ Hierarchie bearbeiten</button>
+                </div>
             </div>
             
             <!-- CHIEFEBENE -->
@@ -584,14 +601,17 @@
                         </div>
                         <div class="table-responsive">
                             <table>
-                                <thead><tr><th>Mitarbeiter</th><th>Registriert</th><th>Freizuschaltende Prüfungen (GA1, GA2 | DV | Para 1, 2 | Arzt 1, 2)</th></tr></thead>
+                                <thead><tr><th>Mitarbeiter</th><th>Registriert</th><th>Freizuschaltende Prüfungen</th></tr></thead>
                                 <tbody id="instructorUserUnlocksTableBody"></tbody>
                             </table>
                         </div>
                     </div>
 
                     <div id="instrTabResults" class="admin-subtab-content">
-                        <h4 style="margin:0 0 12px 0; color:var(--warning);">📊 Prüfungsergebnisse</h4>
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:10px;">
+                            <h4 style="margin:0; color:var(--warning);">📊 Prüfungsergebnisse</h4>
+                            <input type="text" class="form-input" id="searchSubmissionsInput" placeholder="🔍 Ergebnisse nach Name, DN oder Prüfung filtern..." style="max-width:380px;" oninput="filterSubmissionsTable()" aria-label="Prüfungsergebnisse nach Name, DN oder Prüfung filtern">
+                        </div>
                         <div class="table-responsive">
                             <table>
                                 <thead><tr><th>Datum</th><th>Prüfling & DN</th><th>Prüfung</th><th>Bearbeitungszeit</th><th>Ergebnis</th><th>Status</th><th>Details</th><th style="width:50px;">Aktion</th></tr></thead>
@@ -625,29 +645,11 @@
         <!-- REITER: LINKS & DOKUMENTE -->
         <div id="linksTab" class="tab-content">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; flex-wrap:wrap; gap:10px;">
-                <h2 style="margin:0;">🔗 Interne Dokumente & Lesezeichen-Cloud</h2>
+                <h2 style="margin:0;">🔗 Links & Dokumente</h2>
                 <button type="button" id="btnEditLinksInline" class="btn-inline-edit" style="display:none;" onclick="openLinksInlineModal()">✏️ Links verwalten</button>
             </div>
             <div style="background: rgba(15, 23, 42, 0.6); padding: 20px; border-radius: 14px; border: 1px solid var(--border);">
                 <div id="linksAccordionContainer"></div>
-            </div>
-        </div>
-
-        <!-- REITER: GEHALTSTABELLE -->
-        <div id="miscTab" class="tab-content">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:10px;">
-                <h2 style="margin:0;">💰 Gehaltstabelle (SAMD)</h2>
-                <button type="button" id="btnEditGehaltInline" class="btn-inline-edit" style="display:none;" onclick="openGehaltInlineModal()" title="Gehälter & Ränge vor Ort anpassen">✏️ Gehaltstabelle anpassen</button>
-            </div>
-            <div class="theme-accordion-group" id="group-gehalt" style="margin-top:14px;">
-                <div class="theme-accordion-content" style="display:block;">
-                    <div class="table-responsive" style="margin:0; border:none;">
-                        <table class="guide-table">
-                            <thead><tr><th class="sub-head">IC Rang</th><th class="sub-head">Rang-Name</th><th class="sub-head">Command</th><th class="sub-head">pro 15 Min.</th><th class="sub-head">volle Stunde</th></tr></thead>
-                            <tbody id="gehaltTableBody"></tbody>
-                        </table>
-                    </div>
-                </div>
             </div>
         </div>
 
@@ -708,6 +710,24 @@
 
             <div id="pendingNewsApprovalContainer" style="display:none; margin-bottom:24px;"></div>
             <div id="newsFeedList" style="display: flex; flex-direction: column; gap: 16px;"></div>
+        </div>
+
+        <!-- REITER: GEHALTSTABELLE -->
+        <div id="miscTab" class="tab-content">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:10px;">
+                <h2 style="margin:0;">💰 Gehaltstabelle (SAMD)</h2>
+                <button type="button" id="btnEditGehaltInline" class="btn-inline-edit" style="display:none;" onclick="openGehaltInlineModal()" title="Gehälter & Ränge vor Ort anpassen">✏️ Gehaltstabelle anpassen</button>
+            </div>
+            <div class="theme-accordion-group" id="group-gehalt" style="margin-top:14px;">
+                <div class="theme-accordion-content" style="display:block;">
+                    <div class="table-responsive" style="margin:0; border:none;">
+                        <table class="guide-table">
+                            <thead><tr><th class="sub-head">IC Rang</th><th class="sub-head">Rang-Name</th><th class="sub-head">Command</th><th class="sub-head">pro 15 Min.</th><th class="sub-head">volle Stunde</th></tr></thead>
+                            <tbody id="gehaltTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- REITER: EINSTELLUNGEN / DIENSTTAGE -->
@@ -773,8 +793,8 @@
             <form onsubmit="event.preventDefault(); saveCustomChangelogEntry();">
                 <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:12px;">
                     <div>
-                        <label for="clNewVersion">Version (z.B. v5.9.4):</label>
-                        <input type="text" id="clNewVersion" placeholder="v5.9.4" required>
+                        <label for="clNewVersion">Version (z.B. v6.0.0):</label>
+                        <input type="text" id="clNewVersion" placeholder="v6.0.0" required>
                     </div>
                     <div>
                         <label for="clNewCategory">Kategorie:</label>
@@ -799,6 +819,20 @@
                     <button type="submit" class="btn" style="width:auto; background:var(--success); color:#080c14; font-weight:800;">💾 Eintrag veröffentlichen</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- MODAL POPUP: SZENARIEN & ABLÄUFE ANPASSEN (INLINE) -->
+    <div id="szenarienInlineModal" class="modal-overlay">
+        <div class="modal-card" style="max-width: 950px; width: 96vw; max-height: 90vh; overflow-y:auto;">
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:12px; margin-bottom:16px;">
+                <div>
+                    <h3 style="margin:0; color:var(--primary);">📋 Medizinische Szenarien & Behandlungsabläufe bearbeiten</h3>
+                    <p style="margin:4px 0 0 0; color:var(--text-muted); font-size:12px;">Definiere Schritte für die Checkliste sowie automatische Materialbedarfe direkt vor Ort.</p>
+                </div>
+                <button type="button" class="btn-close" onclick="closeSzenarienInlineModal()">✖</button>
+            </div>
+            <div id="szenarienInlineEditorContainer"></div>
         </div>
     </div>
 
@@ -973,7 +1007,7 @@
                 <div style="margin-top:14px;">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
                         <span style="font-size:11px; color:var(--primary); font-weight:800; text-transform:uppercase;">👥 Spezifische Mitarbeiter einladen:</span>
-                        <span style="font-size:11px; color:var(--text-muted);">Eingeladene sehen diesen Termin garantiert</span>
+                        <span style="font-size:11px; color:var(--text-muted);">Erfordert aktive Zusage durch Eingeladene</span>
                     </div>
                     <div id="calEventInvitedUsersContainer" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:6px; background:rgba(8,12,20,0.5); padding:10px; border-radius:10px; border:1px solid var(--border); max-height:140px; overflow-y:auto;"></div>
                 </div>
@@ -1056,7 +1090,7 @@
                 
                 <div id="staffPhotoPreviewContainer" style="display:none; margin-top:14px; text-align:center;">
                     <div style="font-size:11px; color:var(--text-muted); margin-bottom:6px;">Vorschau (Skaliert & vollständig erhalten):</div>
-                    <img id="staffPhotoPreviewImg" src="" alt="Vorschau" style="max-width:200px; max-height:220px; object-fit:contain; border-radius:12px; border:2px solid var(--primary); background:#080c14;">
+                    <img id="staffPhotoPreviewImg" alt="Vorschau" style="max-width:200px; max-height:220px; object-fit:contain; border-radius:12px; border:2px solid var(--primary); background:#080c14;">
                 </div>
 
                 <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:20px;">
@@ -1366,7 +1400,10 @@
     <!-- MODAL: MITARBEITER EDITIEREN -->
     <div id="userPermissionsModal" class="modal-overlay">
         <div class="modal-card" style="max-width: 550px;">
-            <h3 style="margin-top:0; color:var(--primary);">👤 Mitarbeiter bearbeiten</h3>
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:10px; margin-bottom:14px;">
+                <h3 style="margin:0; color:var(--primary);">👤 Mitarbeiter bearbeiten</h3>
+                <button type="button" class="btn-close" onclick="closeUserPermissionsModal()">✖</button>
+            </div>
             <input type="hidden" id="permUserId">
             <label for="permVorname">Vorname</label><input type="text" id="permVorname">
             <label for="permNachname">Nachname</label><input type="text" id="permNachname">
@@ -1387,9 +1424,12 @@
     <!-- MODAL: ROLLEN ZUWEISEN (MIT SELBSTAUSSCHLUSS-SCHUTZ) -->
     <div id="assignRolesModal" class="modal-overlay">
         <div class="modal-card" style="max-width: 480px;">
-            <h3 style="margin-top:0; color:var(--primary);">🎭 Rollen zuweisen</h3>
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:10px; margin-bottom:14px;">
+                <h3 style="margin:0; color:var(--primary);">🎭 Rollen zuweisen</h3>
+                <button type="button" class="btn-close" onclick="closeAssignRolesModal()">✖</button>
+            </div>
             <input type="hidden" id="assignRoleUserId">
-            <p style="margin-top:0;">Mitarbeiter: <b id="assignRoleUserName" style="color:var(--text-main);">--</b></p>
+            <p style="margin-top:0; margin-bottom:10px;">Mitarbeiter: <b id="assignRoleUserName" style="color:var(--text-main);">--</b></p>
             <div id="assignRolesContainer" style="max-height:320px; overflow-y:auto; display:flex; flex-direction:column; gap:8px;"></div>
             <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:20px;">
                 <button type="button" class="btn" style="width:auto; background:var(--text-muted);" onclick="closeAssignRolesModal()">Abbrechen</button>
@@ -1409,6 +1449,20 @@
         </div>
     </div>
 
-    <script src="app.js?v=5.9.4"></script>
+    <!-- MODAL: AUDIT-LOG ARCHIV -->
+    <div id="auditArchiveModal" class="modal-overlay">
+        <div class="modal-card" style="max-width: 900px; width: 95vw; max-height: 88vh; overflow-y:auto;">
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:12px; margin-bottom:16px;">
+                <h3 style="margin:0; color:var(--primary);">🗄️ Systemprotokoll-Archiv</h3>
+                <button type="button" class="btn-close" onclick="closeAuditArchiveModal()">✖</button>
+            </div>
+            <div id="auditArchiveContent"></div>
+            <div style="display:flex; justify-content:flex-end; margin-top:16px;">
+                <button type="button" class="btn" style="width:auto; background:var(--text-muted);" onclick="closeAuditArchiveModal()">Schließen</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js?v=6.0.0"></script>
 </body>
 </html>
