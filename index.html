@@ -978,11 +978,11 @@
                     <div id="calEventInvitedUsersContainer" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:6px; background:rgba(8,12,20,0.5); padding:10px; border-radius:10px; border:1px solid var(--border); max-height:140px; overflow-y:auto;"></div>
                 </div>
 
-                <label style="margin-top:14px; margin-bottom:6px;">Sichtbarkeit des Termins:</label>
+                <div class="counter-title" style="margin-top:14px; margin-bottom:6px;">Sichtbarkeit des Termins:</div>
                 
                 <!-- Private Termin-Option -->
                 <div style="background:rgba(8,12,20,0.6); padding:10px; border-radius:10px; border:1px solid var(--border); margin-bottom:10px;">
-                    <label style="display:flex; align-items:center; gap:8px; cursor:pointer; margin:0; text-transform:none; font-size:13px;">
+                    <label for="calEventIsPrivate" style="display:flex; align-items:center; gap:8px; cursor:pointer; margin:0; text-transform:none; font-size:13px;">
                         <input type="checkbox" id="calEventIsPrivate" onchange="togglePrivateEventOption(this.checked)">
                         <span style="color:var(--warning); font-weight:800;">🔒 Nur für mich & eingeladene Personen sichtbar (Privat)</span>
                     </label>
@@ -992,7 +992,7 @@
                 <div id="calEventRolesSection">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
                         <span style="font-size:11px; color:var(--text-muted); font-weight:700; text-transform:uppercase;">Sichtbar für folgende Rollen:</span>
-                        <label style="font-size:11px; color:var(--primary); font-weight:800; cursor:pointer; display:flex; align-items:center; gap:4px; margin:0;">
+                        <label for="calSelectAllRolesCheckbox" style="font-size:11px; color:var(--primary); font-weight:800; cursor:pointer; display:flex; align-items:center; gap:4px; margin:0;">
                             <input type="checkbox" id="calSelectAllRolesCheckbox" onchange="toggleAllCalendarRoles(this.checked)">
                             <span>Alle Rollen</span>
                         </label>
