@@ -925,13 +925,13 @@ function stepVerletzungenAnzahl(d) {
     if (we) we.textContent = anzahlVerletzungenFall;
 
     let total = 0;
-    Object.keys(fallMaterial).forEach(k => {
-        const itemPreis = (materialKatalog[k] && materialKatalog[k].preis) ? materialKatalog[k].preis : 0;
-        total += fallMaterial[k] * itemPreis;
-    });
-    aktuellerFallKosten = total;
-    const ke = document.getElementById('val_pKosten');
-    if (ke) ke.textContent = '$' + total;
+Object.keys(fallMaterial).forEach(k => {
+    const itemPreis = (materialKatalog[k] && materialKatalog[k].preis) ? materialKatalog[k].preis : 0;
+    total += fallMaterial[k] * itemPreis;
+});
+aktuellerFallKosten = total;
+const ke = document.getElementById('val_pKosten');
+if (ke) ke.textContent = '$' + total;
 }
 
 function stepKosten(d) {
@@ -943,10 +943,10 @@ function stepMat(key, d) {
     fallMaterial[key] = Math.max(0, (fallMaterial[key]||0) + d);
     const el = document.getElementById('val_' + key); if (el) el.textContent = fallMaterial[key];
     let total = 0; 
-    Object.keys(fallMaterial).forEach(k => { 
-        const itemPreis = (materialKatalog[k] && materialKatalog[k].preis) ? materialKatalog[k].preis : 0;
-        total += fallMaterial[k] * itemPreis; 
-    });
+Object.keys(fallMaterial).forEach(k => { 
+    const itemPreis = (materialKatalog[k] && materialKatalog[k].preis) ? materialKatalog[k].preis : 0;
+    total += fallMaterial[k] * itemPreis; 
+});
     aktuellerFallKosten = total;
     const ke = document.getElementById('val_pKosten'); if (ke) ke.textContent = '$' + total;
 }
@@ -988,13 +988,13 @@ function ladeCheckliste() {
     if (we) we.textContent = anzahlVerletzungenFall;
     
     let total = 0; 
-    Object.keys(fallMaterial).forEach(k => { 
-        const itemPreis = (materialKatalog[k] && materialKatalog[k].preis) ? materialKatalog[k].preis : 0;
-        total += fallMaterial[k] * itemPreis; 
-    });
-    aktuellerFallKosten = total;
-    const ke = document.getElementById('val_pKosten'); 
-    if (ke) ke.textContent = '$' + total;
+Object.keys(fallMaterial).forEach(k => { 
+    const itemPreis = (materialKatalog[k] && materialKatalog[k].preis) ? materialKatalog[k].preis : 0;
+    total += fallMaterial[k] * itemPreis; 
+});
+aktuellerFallKosten = total;
+const ke = document.getElementById('val_pKosten'); 
+if (ke) ke.textContent = '$' + total;
 }
 
 function toggleTodo(idx) {
@@ -2696,7 +2696,7 @@ function renderLinksTab(obj) {
     let kats = [...new Set(Object.values(cleanedLinks).map(l => l.kat || l.thema || 'Allgemein'))].sort();
     const eff = sessionUser ? getUserEffectivePermissions(sessionUser) : {};
 
-    if (!eff.isAdmin && !eff.isMasterAdmin && eff.allowedLinkKats && eff.allowedLinkKats.length > 0) {
+   if (!eff.isAdmin && !eff.isMasterAdmin && eff.allowedLinkKats && eff.allowedLinkKats.length > 0) {
         kats = kats.filter(k => eff.allowedLinkKats.includes(k));
     }
 
@@ -4408,4 +4408,36 @@ _w.openAssignRolesModal = openAssignRolesModal; _w.closeAssignRolesModal = close
 _w.openUserPermissionsModal = openUserPermissionsModal; _w.closeUserPermissionsModal = closeUserPermissionsModal; _w.saveUserPermissions = saveUserPermissions;
 _w.neueRolleErstellen = neueRolleErstellen; _w.selectRole = selectRole; _w.updateRoleBadgePreview = updateRoleBadgePreview; _w.speichereRolle = speichereRolle; _w.loescheRolle = loescheRolle;
 _w.vollstaendigerReset = vollstaendigerReset; _w.renderAdminAuditLogs = renderAdminAuditLogs;
-_w.openAuditLogArchiveModal = openAuditLogArchiveModal; _w.closeAuditLogArchiveModal = closeIch bin nur ein Sprachmodell und kann dabei nicht helfen.
+_w.openAuditLogArchiveModal = openAuditLogArchiveModal; _w.closeAuditLogArchiveModal = closeAuditArchiveModal;
+_w.editCommandInline = editCommandInline;
+_w.editLinkInline = editLinkInline;
+_w.openHierarchieInlineModal = openHierarchieInlineModal;
+_w.closeHierarchieInlineModal = closeHierarchieInlineModal;
+_w.saveHierarchieInline = saveHierarchieInline;
+_w.changeCalendarMonth = changeCalendarMonth;
+_w.resetCalendarToToday = resetCalendarToToday;
+_w.renderCalendarMonth = renderCalendarMonth;
+_w.onCalendarCellClick = onCalendarCellClick;
+_w.openCreateEventModal = openCreateEventModal;
+_w.closeCalendarEventModal = closeCalendarEventModal;
+_w.saveCalendarEvent = saveCalendarEvent;
+_w.openCalendarEventDetailsModal = openCalendarEventDetailsModal;
+_w.closeCalendarEventDetailsModal = closeCalendarEventDetailsModal;
+_w.editCalendarEventAction = editCalendarEventAction;
+_w.deleteCalendarEventAction = deleteCalendarEventAction;
+_w.togglePrivateEventOption = togglePrivateEventOption;
+_w.toggleAllCalendarRoles = toggleAllCalendarRoles;
+_w.handleCalendarCreatorSelectionChange = handleCalendarCreatorSelectionChange;
+_w.renderStaffDirectory = renderStaffDirectory;
+_w.filterStaffDirectory = filterStaffDirectory;
+_w.openStaffPhotoUploadModal = openStaffPhotoUploadModal;
+_w.closeStaffPhotoUploadModal = closeStaffPhotoUploadModal;
+_w.previewStaffPhotoUpload = previewStaffPhotoUpload;
+_w.submitStaffPhotoUpload = submitStaffPhotoUpload;
+_w.openStaffPhotoAdminModal = openStaffPhotoAdminModal;
+_w.closeStaffPhotoAdminModal = closeStaffPhotoAdminModal;
+_w.renderStaffPhotoAdminList = renderStaffPhotoAdminList;
+_w.downloadStaffOriginalPhoto = downloadStaffOriginalPhoto;
+_w.uploadProcessedStaffPhoto = uploadProcessedStaffPhoto;
+_w.resetStaffPhotoToDefault = resetStaffPhotoToDefault;
+_w.toggleBuilderCorrectAnswer = toggleBuilderCorrectAnswer;
