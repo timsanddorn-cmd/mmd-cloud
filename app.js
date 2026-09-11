@@ -1,5 +1,5 @@
 // ============================================================
-//  MMD CLOUD – Medical Center Web-App  |  app.js  v5.9.3
+//  MMD CLOUD – Medical Center Web-App  |  app.js  v5.9.4
 //  Firebase Realtime Database (Compat SDK v10)
 // ============================================================
 
@@ -106,14 +106,25 @@ let hierarchieDaten = JSON.parse(JSON.stringify(defaultHierarchieData));
 /* ── Vollständiger Gesamt-Changelog (Entwicklungsverlauf) ───── */
 const systemChangelogs = [
     {
+        id: "sys_v5_9_4",
+        version: "v5.9.4",
+        date: "11.09.2026",
+        category: "Bugfix",
+        title: "Link-Bereinigung & Robuste Mülleimer-Funktionen",
+        changes: [
+            "Generische Google-Docs-Dummy-Links und leere Kategorien wurden bereinigt[cite: 2].",
+            "Mülleimer-Funktionen für Links und Dokumente wurden optimiert und gegen verwaiste DOM-Referenzen gehärtet[cite: 2]."
+        ]
+    },
+    {
         id: "sys_v5_9_3",
         version: "v5.9.3",
         date: "11.09.2026",
         category: "Design",
         title: "Barrierefreiheit & Label-Verknüpfungen (A11y)",
         changes: [
-            "Alle dynamisch generierten Checkboxen und Auswahllisten im Kalender und in der Admin-Rollenverwaltung wurden mit korrekten for- und id-Attributen versehen.",
-            "Lighthouse- und DevTools-Warnungen bezüglich fehlender Formular-Labels vollständig behoben."
+            "Alle dynamisch generierten Checkboxen und Auswahllisten im Kalender und in der Admin-Rollenverwaltung wurden mit korrekten for- und id-Attributen versehen[cite: 2].",
+            "Lighthouse- und DevTools-Warnungen bezüglich fehlender Formular-Labels vollständig behoben[cite: 2]."
         ]
     },
     {
@@ -123,8 +134,8 @@ const systemChangelogs = [
         category: "Technische Änderung",
         title: "Architektur-Härtung, ID-Normalisierung & Validierung",
         changes: [
-            "Zentrale ID-Normalisierung (Umlaute-Ersetzung) für absolut fehlerfreie Benutzer-Zuordnungen eingeführt.",
-            "Strikte Validierung im Prüfungs-Builder: Es wird nun zwingend geprüft, ob Multiple-Choice-Fags korrekte Antworten besitzen."
+            "Zentrale ID-Normalisierung (Umlaute-Ersetzung) für absolut fehlerfreie Benutzer-Zuordnungen eingeführt[cite: 2].",
+            "Strikte Validierung im Prüfungs-Builder: Es wird nun zwingend geprüft, ob Multiple-Choice-Fragen korrekte Antworten besitzen[cite: 2]."
         ]
     }
 ];
@@ -231,7 +242,7 @@ const defaultRoles = {
         isAdmin:false, isMasterAdmin:false, canViewArchive:false, canEditAllPatients:false,
         canCreateCalendar:true, delCalendar:true, canManagePhotos:false,
         isInstructor:false, canManageInstructors:false, canManageExams:false,
-        canPostNews:true, canApproveNews:false, canViewNewsRead:false,
+        canPostNews:true, canApproveNews:false, canViewNewsRead:true,
         canEditPrices:false, canEditGuide:false, canEditCommands:false, canEditLinks:false,
         delPatient:false, delArchiv:false, delGuide:false, delCommands:false, delLinks:false, delNews:false, delExams:false, delUsers:false,
         allowedCmdKats: ['Abkürzungen & Dokumente', 'Psychologie', 'T-Codes'],
@@ -377,13 +388,6 @@ let defaultCommands = {
 };
 
 let defaultLinks = {
-    link_1: { name:"Fraktions-Regelwerk SAMD",          url:"https://docs.google.com", desc:"Offizielles Regelwerk des SAMD", kat:"Allgemein" },
-    link_2: { name:"Dienstblatt & Protokolle",           url:"https://docs.google.com", desc:"Zentrale Tabelle für Einsatzprotokolle", kat:"MD Intern" },
-    link_3: { name:"Ausbildungs-Leitfaden & Richtlinien",url:"https://docs.google.com", desc:"Richtlinien für Lehrgänge & Prüfungen", kat:"Ausbildung" },
-    link_4: { name:"Medikamenten-Leitfaden",            url:"https://docs.google.com", desc:"Dosierungen und Wirkstoffe", kat:"MD Intern" },
-    link_5: { name:"Preisliste Behandlungen",           url:"https://docs.google.com", desc:"Aktuelle Abrechnungspreise", kat:"MD Intern" },
-    link_6: { name:"Dienstplan / Schichtplan",          url:"https://docs.google.com", desc:"Aktuelle Dienstverteilung", kat:"MD Intern" },
-    link_7: { name:"Urlaubsantrag",                     url:"https://docs.google.com", desc:"Formular zur Urlaubsbeantragung", kat:"Allgemein" },
     link_8: { name:"Leitfaden EHK Original",            url:"https://docs.google.com/document/d/1v5fRU_FgLcElt5Tc5DGe_pUp3kzrCZEx0Llmi85rt5M/edit", desc:"Leitfaden zum Erste Hilfe Kurs", kat:"EHK" },
     link_9: { name:"Leitfaden Combat Life Saver",       url:"https://docs.google.com/document/d/1aLWK8zhFfqTdbvrTECvkStKCTgvuMCaah0xPlCJxNfU/edit", desc:"Leitfaden zum Combat Life Saver Kurs", kat:"CLS" },
     link_10:{ name:"Dokumente Psychologie",             url:"https://docs.google.com/document/d/19kLhrw9PDfk4Jmv9Yqo4l1JfUWh2HoEPf_WdZgVylBM/edit", desc:"Patienten Akten der Psychologie", kat:"Psychologie" },
@@ -2608,29 +2612,52 @@ function deleteDienstCommand(k) {
 /* ── REITER 4: LINKS & DOKUMENTE (AUTOMATISCHES HTTPS) ──────── */
 function renderLinksTab(obj) {
     const cont = document.getElementById('linksAccordionContainer'); if (!cont) return;
-    const allLinks = Object.assign({}, defaultLinks, obj || {});
-    let kats = [...new Set(Object.values(allLinks).map(l => l.kat || l.thema || 'Allgemein'))].sort();
+    
+    // Bereinige Dummy-Links, die nur auf die Basis-Domain verweisen oder keine ID besitzen
+    let rawLinks = Object.assign({}, defaultLinks, obj || {});
+    let cleanedLinks = {};
+    
+    Object.entries(rawLinks).forEach(([k, l]) => {
+        if (l && l.url) {
+            let u = String(l.url).trim();
+            // Prüfen, ob es ein generischer Google-Docs-Dummy ohne spezifisches Dokument ist
+            if (u === 'https://docs.google.com' || u === 'https://docs.google.com/' || u === 'http://docs.google.com') {
+                return; // Überspringen/Löschen
+            }
+        }
+        cleanedLinks[k] = l;
+    });
+
+    let kats = [...new Set(Object.values(cleanedLinks).map(l => l.kat || l.thema || 'Allgemein'))].sort();
     const eff = sessionUser ? getUserEffectivePermissions(sessionUser) : {};
 
     if (!eff.isMasterAdmin && eff.allowedLinkKats && eff.allowedLinkKats.length > 0) {
         kats = kats.filter(k => eff.allowedLinkKats.includes(k));
     }
 
-    if (!kats.length) { cont.innerHTML = '<p style="color:var(--text-muted);text-align:center;padding:24px;">Keine Links für deinen Dienstgrad freigegeben.</p>'; return; }
+    if (!kats.length) { 
+        cont.innerHTML = '<p style="color:var(--text-muted);text-align:center;padding:24px;">Keine Links für deinen Dienstgrad freigegeben.</p>'; 
+        return; 
+    }
 
     cont.innerHTML = kats.map(kat => {
-        const lnks = Object.entries(allLinks).filter(([, l]) => (l.kat || l.thema || 'Allgemein') === kat);
+        const lnks = Object.entries(cleanedLinks).filter(([, l]) => (l.kat || l.thema || 'Allgemein') === kat);
+        
+        // Falls durch das Bereinigen keine Links mehr in der Kategorie sind, wird sie automatisch übersprungen (leere Kategorien entfallen)
+        if (!lnks.length) return '';
+
         const rows = lnks.map(([k, l]) => `<tr>
             <td style="width:35%;padding:10px 14px;word-break:break-word;"><a class="link-btn-clickable" href="${sanitizeUrl(l.url)}" target="_blank" rel="noopener noreferrer">🔗 ${escapeHtml(l.name||l.url)}</a></td>
             <td style="width:55%;padding:10px 14px;color:var(--text-main);font-size:13px;line-height:1.5;">${formatTextWithLinks(l.desc||l.description||'Keine Beschreibung')}</td>
             <td style="width:10%;padding:10px 14px;text-align:right;">${eff.delLinks ? `<button class="btn-delete-row" onclick="deleteDienstLink('${k}')">🗑️</button>` : ''}</td>
         </tr>`).join('');
+        
         const gId = 'lnk_' + kat.replace(/\W/g, '_');
         return `<div class="theme-accordion-group" id="${gId}" style="margin-bottom:12px;">
             <div class="theme-accordion-header" onclick="toggleGroupCollapse('${gId}')">
                 <span>📁 ${escapeHtml(kat)}</span>
             </div>
-            <div class="theme-accordion-content"><table style="width:100%;"><tbody>${rows||'<tr><td colspan="3">Keine Links</td></tr>'}</tbody></table></div>
+            <div class="theme-accordion-content"><table style="width:100%;"><tbody>${rows}</tbody></table></div>
         </div>`;
     }).join('');
 }
@@ -2645,7 +2672,7 @@ function openLinksInlineModal() {
         const eff = sessionUser ? getUserEffectivePermissions(sessionUser) : {};
 
         let existingRowsHtml = Object.entries(allLinks).map(([k, l]) => `
-            <div style="background:rgba(30,41,59,0.4);border:1px solid var(--border);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:8px;margin-bottom:10px;">
+            <div style="background:rgba(30,41,59,0.4);border:1px solid var(--border);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:8px;margin-bottom:10px;" id="link_row_${k}">
                 <div style="grid-template-columns:1fr 1fr;gap:8px;display:grid;">
                     <input type="text" id="link_name_${k}" value="${escapeHtml(l.name || '')}" placeholder="Titel">
                     <input type="text" id="link_url_${k}" value="${escapeHtml(l.url || '')}" placeholder="https://docs.google.com/...">
@@ -2725,7 +2752,16 @@ function editLinkInline(k) {
 
 function deleteDienstLink(k) {
     if (!sessionUser || !getUserEffectivePermissions(sessionUser).delLinks) return;
-    if (confirm('Link löschen?')) db.ref('data/dienstLinks/' + k).remove();
+    if (confirm('Link wirklich löschen?')) {
+        db.ref('data/dienstLinks/' + k).remove().then(() => {
+            // Verhinderung von verwaisten DOM-Referenzen durch sauberes Entfernen der Zeile aus dem Inline-Modal falls offen
+            const rowEl = document.getElementById('link_row_' + k);
+            if (rowEl) rowEl.remove();
+            alert('✅ Link erfolgreich gelöscht!');
+        }).catch(err => {
+            alert('Fehler beim Löschen des Links: ' + err.message);
+        });
+    }
 }
 
 /* ── CHANGELOG SYSTEM ──────────────────────────────────────── */
@@ -3484,6 +3520,7 @@ function neuePruefungSpeichern() {
     
     let finalQuestions = _examBuilderQuestions.filter(q => !q.isInfo);
     
+    // Strikte Validierung: Prüfen ob Multiple-Choice-Fragen mindestens eine gültige korrekte Antwort besitzen
     for (let i = 0; i < finalQuestions.length; i++) {
         const q = finalQuestions[i];
         if (!q.text || !q.text.trim()) {
@@ -4270,7 +4307,7 @@ _w.openAssignRolesModal = openAssignRolesModal; _w.closeAssignRolesModal = close
 _w.openUserPermissionsModal = openUserPermissionsModal; _w.closeUserPermissionsModal = closeUserPermissionsModal; _w.saveUserPermissions = saveUserPermissions;
 _w.neueRolleErstellen = neueRolleErstellen; _w.selectRole = selectRole; _w.updateRoleBadgePreview = updateRoleBadgePreview; _w.speichereRolle = speichereRolle; _w.loescheRolle = loescheRolle;
 _w.vollstaendigerReset = vollstaendigerReset; _w.renderAdminAuditLogs = renderAdminAuditLogs;
-_w.openAuditLogArchiveModal = openAuditLogArchiveModal; _w.closeAuditArchiveModal = closeAuditArchiveModal;
+_w.openAuditLogArchiveModal = openAuditLogArchiveModal; _w.closeAuditLogArchiveModal = closeAuditArchiveModal;
 _w.editCommandInline = editCommandInline;
 _w.editLinkInline = editLinkInline;
 _w.openHierarchieInlineModal = openHierarchieInlineModal;

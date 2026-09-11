@@ -10,7 +10,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
-    <link rel="stylesheet" href="style.css?v=5.9">
+    <link rel="stylesheet" href="style.css?v=5.9.4">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏥</text></svg>">
 </head>
 <body>
@@ -773,8 +773,8 @@
             <form onsubmit="event.preventDefault(); saveCustomChangelogEntry();">
                 <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:12px;">
                     <div>
-                        <label for="clNewVersion">Version (z.B. v5.9):</label>
-                        <input type="text" id="clNewVersion" placeholder="v5.9" required>
+                        <label for="clNewVersion">Version (z.B. v5.9.4):</label>
+                        <input type="text" id="clNewVersion" placeholder="v5.9.4" required>
                     </div>
                     <div>
                         <label for="clNewCategory">Kategorie:</label>
@@ -1113,7 +1113,7 @@
             </div>
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
                 <h4 style="margin:0; color:var(--text-main);">❓ Fragen-Katalog (<span id="examQuestionsCountDisplay">0</span> Fragen)</h4>
-                <button type="button" class="btn" style="width:auto; padding:6px 14px; font-size:12px; background:var(--primary); color:#080c14;" onclick="addExamQuestionRow()">➕ Frage hinzufügen</button>
+                <button type="button" class="btn" style="width:auto; margin:0; padding:6px 14px; font-size:12px; background:var(--primary); color:#080c14;" onclick="addExamQuestionRow()">➕ Frage hinzufügen</button>
             </div>
             <div id="examQuestionsListBuilder" style="display:flex; flex-direction:column; gap:12px; margin-bottom:20px;"></div>
             <div style="display:flex; justify-content:flex-end; gap:12px; border-top:1px solid var(--border); padding-top:16px;">
@@ -1363,17 +1363,6 @@
         </div>
     </div>
 
-    <!-- MODAL POPUP: PROTOKOLL-ARCHIV -->
-    <div id="auditArchiveModal" class="modal-overlay">
-        <div class="modal-card" style="max-width: 1000px; width: 95vw; max-height: 85vh; overflow-y:auto;">
-            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:12px; margin-bottom:16px;">
-                <h3 style="margin:0; color:var(--primary);">🗄️ Historisches System-Protokoll</h3>
-                <button type="button" class="btn-close" onclick="closeAuditArchiveModal()">✖</button>
-            </div>
-            <div id="auditArchiveContent">Lade Protokoll-Archiv...</div>
-        </div>
-    </div>
-
     <!-- MODAL: MITARBEITER EDITIEREN -->
     <div id="userPermissionsModal" class="modal-overlay">
         <div class="modal-card" style="max-width: 550px;">
@@ -1420,6 +1409,6 @@
         </div>
     </div>
 
-    <script src="app.js?v=5.9.3"></script>
+    <script src="app.js?v=5.9.4"></script>
 </body>
 </html>
