@@ -10,7 +10,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
-    <link rel="stylesheet" href="style.css?v=6.0.0">
+    <link rel="stylesheet" href="style.css?v=6.1.0">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏥</text></svg>">
 </head>
 <body>
@@ -62,6 +62,7 @@
                 </div>
                 <div class="date-display">📅 <span id="liveDateDisplay">--.--.----</span></div>
                 <button type="button" id="adminKeyBtn" class="btn-admin-key" style="display:none;" onclick="openAdminKeyModal()" title="Admin-Zentralverwaltung">🔑 Admin</button>
+                <button type="button" class="btn-feedback-trigger" onclick="openFeedbackSubmitModal()" title="Wünsche, Feedback oder Bugs melden">💡 Wünsche & Bugs</button>
                 <button type="button" class="btn-logout" onclick="handleDienstEndeLogout()">Dienst beenden 🚪</button>
             </div>
         </div>
@@ -763,7 +764,73 @@
         </div>
     </div>
 
-    <!-- MODAL POPUP: CHANGELOG HISTORIE & NO-CODE PFLEGE -->
+    <!-- MODAL POPUP: WÜNSCHE & BUGS EINREICHEN (FÜR ALLE BENUTZER) -->
+    <div id="feedbackSubmitModal" class="modal-overlay">
+        <div class="modal-card" style="max-width: 600px; width: 95vw;">
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:12px; margin-bottom:16px;">
+                <div>
+                    <h3 style="margin:0; color:var(--warning);">💡 Wünsche & Bug-Meldung einreichen</h3>
+                    <p style="margin:4px 0 0 0; color:var(--text-muted); font-size:12px;">Reiche Ideen oder Fehlerberichte diskret an die Klinikleitung und Administration ein.</p>
+                </div>
+                <button type="button" class="btn-close" onclick="closeFeedbackSubmitModal()">✖</button>
+            </div>
+            <form onsubmit="event.preventDefault(); submitUserFeedback();">
+                <label for="fbCategory">Kategorie:</label>
+                <select id="fbCategory" required>
+                    <option value="Wunsch">💡 Wunsch</option>
+                    <option value="Bug / Fehler">🐛 Bug / Fehler</option>
+                    <option value="Verbesserung">⚡ Verbesserung</option>
+                    <option value="Sonstiges">📋 Sonstiges</option>
+                </select>
+
+                <label for="fbTitle">Titel / Zusammenfassung:</label>
+                <input type="text" id="fbTitle" placeholder="Z.B. Schriftgröße im Funkbereich oder Berechnungsfehler..." required>
+
+                <label for="fbDescription">Genaue Beschreibung / Problemablauf:</label>
+                <textarea id="fbDescription" rows="5" placeholder="Beschreibe deinen Wunsch so verständlich wie möglich..." required style="margin-bottom:16px;"></textarea>
+
+                <div style="display:flex; justify-content:flex-end; gap:10px;">
+                    <button type="button" class="btn" style="width:auto; background:var(--text-muted);" onclick="closeFeedbackSubmitModal()">Abbrechen</button>
+                    <button type="submit" class="btn" style="width:auto; background:var(--success); color:#080c14; font-weight:800;">📤 Meldung absenden</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL POPUP: ABLEHNUNG MIT BEGRÜNDUNGSPFLICHT (ADMIN) -->
+    <div id="feedbackRejectModal" class="modal-overlay">
+        <div class="modal-card" style="max-width: 580px; width: 95vw;">
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:12px; margin-bottom:14px;">
+                <h3 style="margin:0; color:var(--danger);">❌ Meldung ablehnen (Begründungspflicht)</h3>
+                <button type="button" class="btn-close" onclick="closeFeedbackRejectModal()">✖</button>
+            </div>
+            <p style="font-size:12px; color:var(--text-muted); margin-top:0;">
+                Eine Ablehnung darf nicht ohne sachliche Erklärung erfolgen. Die Begründung wird zusammen mit Datum und Prüfer dauerhaft im Archiv hinterlegt.
+            </p>
+            <form onsubmit="event.preventDefault(); saveFeedbackRejection();">
+                <label for="rejectReasonPreset">Standard-Begründung wählen (optional):</label>
+                <select id="rejectReasonPreset" onchange="applyRejectPresetReason()">
+                    <option value="">-- Eigene Begründung formulieren --</option>
+                    <option value="Für den aktuellen Arbeitsablauf nicht sinnvoll.">Für den aktuellen Arbeitsablauf nicht sinnvoll.</option>
+                    <option value="Die gewünschte Funktion existiert bereits.">Die gewünschte Funktion existiert bereits.</option>
+                    <option value="Technisch nicht sinnvoll umsetzbar.">Technisch nicht sinnvoll umsetzbar.</option>
+                    <option value="Passt nicht zum Konzept der Homepage.">Passt nicht zum Konzept der Homepage.</option>
+                    <option value="Zu hoher Aufwand im Verhältnis zum Nutzen.">Zu hoher Aufwand im Verhältnis zum Nutzen.</option>
+                    <option value="Wird aktuell nicht benötigt.">Wird aktuell nicht benötigt.</option>
+                </select>
+
+                <label for="rejectReasonCustom">Verbindliche Begründung der Ablehnung:</label>
+                <textarea id="rejectReasonCustom" rows="4" placeholder="Begründung eingeben..." required style="margin-bottom:16px;"></textarea>
+
+                <div style="display:flex; justify-content:flex-end; gap:10px;">
+                    <button type="button" class="btn" style="width:auto; background:var(--text-muted);" onclick="closeFeedbackRejectModal()">Abbrechen</button>
+                    <button type="submit" class="btn" style="width:auto; background:var(--danger); color:#ffffff; font-weight:800;">Speichern & Ablehnen</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL POPUP: CHANGELOG HISTORIE -->
     <div id="changelogModal" class="modal-overlay">
         <div class="modal-card" style="max-width: 900px; width: 95vw; max-height: 90vh; overflow-y:auto;">
             <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:12px; margin-bottom:16px;">
@@ -793,8 +860,8 @@
             <form onsubmit="event.preventDefault(); saveCustomChangelogEntry();">
                 <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:12px;">
                     <div>
-                        <label for="clNewVersion">Version (z.B. v6.0.0):</label>
-                        <input type="text" id="clNewVersion" placeholder="v6.0.0" required>
+                        <label for="clNewVersion">Version (z.B. v6.1.0):</label>
+                        <input type="text" id="clNewVersion" placeholder="v6.1.0" required>
                     </div>
                     <div>
                         <label for="clNewCategory">Kategorie:</label>
@@ -979,7 +1046,6 @@
                     </div>
                 </div>
 
-                <!-- Dynamisches Ersteller-Unterfeld -->
                 <div id="calEventSubCreatorContainer" style="display:none; margin-top:10px; background:rgba(30,41,59,0.35); border:1px solid var(--border); border-radius:10px; padding:10px;">
                     <label for="calEventSubCreatorName" style="margin-top:0; color:var(--primary);">👤 Ansprechpartner / Name des Erstellers:</label>
                     <input type="text" id="calEventSubCreatorName" placeholder="Z.B. Tim Sanddorn oder Vorname Nachname">
@@ -1003,7 +1069,6 @@
                 <label for="calEventDesc">Beschreibung / Details (optional):</label>
                 <textarea id="calEventDesc" rows="3" placeholder="Z.B. Treffpunkt Besprechungsraum, Anwesenheitspflicht..."></textarea>
 
-                <!-- Einladungs-Funktion für Mitarbeiter -->
                 <div style="margin-top:14px;">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
                         <span style="font-size:11px; color:var(--primary); font-weight:800; text-transform:uppercase;">👥 Spezifische Mitarbeiter einladen:</span>
@@ -1014,7 +1079,6 @@
 
                 <div class="counter-title" style="margin-top:14px; margin-bottom:6px;">Sichtbarkeit des Termins:</div>
                 
-                <!-- Private Termin-Option -->
                 <div style="background:rgba(8,12,20,0.6); padding:10px; border-radius:10px; border:1px solid var(--border); margin-bottom:10px;">
                     <label for="calEventIsPrivate" style="display:flex; align-items:center; gap:8px; cursor:pointer; margin:0; text-transform:none; font-size:13px;">
                         <input type="checkbox" id="calEventIsPrivate" onchange="togglePrivateEventOption(this.checked)">
@@ -1068,7 +1132,6 @@
                 <button type="button" class="btn-close" onclick="closeStaffPhotoUploadModal()">✖</button>
             </div>
 
-            <!-- FOTO-LEITFADEN PLATZHALTER -->
             <div style="background:rgba(15,23,42,0.8); border:1px solid var(--border); border-radius:12px; padding:14px; margin-bottom:16px;">
                 <h4 style="margin:0 0 8px 0; color:var(--warning); font-size:14px;">📍 Foto-Anleitung (1. Stock MD)</h4>
                 <p style="margin:0 0 10px 0; font-size:12px; color:var(--text-muted); line-height:1.5;">
@@ -1193,7 +1256,7 @@
                     <div style="font-size:24px;">🔑</div>
                     <div>
                         <h2 style="margin:0; color:var(--warning); font-size:22px;">Admin-Zentralverwaltung</h2>
-                        <span style="font-size:12px; color:var(--text-muted);">Zentrale System- und Mitarbeiterkonfiguration</span>
+                        <span style="font-size:12px; color:var(--text-muted);">Zentrale System-, Feedback- und Mitarbeiterkonfiguration</span>
                     </div>
                 </div>
                 <button type="button" class="btn-close" onclick="closeAdminManagementModal()">✖</button>
@@ -1202,6 +1265,7 @@
             <div class="admin-subtabs">
                 <button type="button" class="admin-tab-btn active" id="btnAdminSubUsers" onclick="switchAdminTab('adminSubTabUsers', this)">👥 Mitarbeiter Kartei</button>
                 <button type="button" class="admin-tab-btn" id="btnAdminSubRoles" onclick="switchAdminTab('adminSubTabRoles', this)">🎭 Rollen & Berechtigungs-Matrix</button>
+                <button type="button" class="admin-tab-btn" id="btnAdminSubFeedback" onclick="switchAdminTab('adminSubTabFeedback', this)">💡 Wünsche & Bugs</button>
                 <button type="button" class="admin-tab-btn" id="btnAdminSubSystem" onclick="switchAdminTab('adminSubTabSystem', this)">💾 Backup & Wiederherstellung</button>
                 <button type="button" class="admin-tab-btn" id="btnAdminSubAudit" onclick="switchAdminTab('adminSubTabAudit', this)">📋 System-Protokoll (Heute)</button>
             </div>
@@ -1354,7 +1418,59 @@
                 </div>
             </div>
 
-            <!-- SUB-TAB 3: BACKUP & WIEDERHERSTELLUNG -->
+            <!-- SUB-TAB 3: WÜNSCHE & BUGS (ADMIN PRÜFCENTER) -->
+            <div id="adminSubTabFeedback" class="admin-subtab-content">
+                <div style="background:rgba(15, 23, 42, 0.7); padding:20px 24px; border-radius:16px; border:1px solid var(--border);">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:12px;">
+                        <div>
+                            <h3 style="margin:0; color:var(--warning); font-size:16px;">💡 Wünsche, Verbesserungen & Bug-Meldungen</h3>
+                            <span style="color:var(--text-muted); font-size:12px;">Verwaltung aller Mitarbeiter-Einreichungen mit Statusverfolgung und Begründungspflicht</span>
+                        </div>
+                        <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+                            <button type="button" class="btn" style="width:auto; margin:0; padding:8px 16px; background:rgba(56,189,248,0.15); color:var(--primary); border:1px solid var(--primary); font-size:12px; font-weight:800;" onclick="exportFeedbackListMarkdown()">📥 Aufgabenliste exportieren (.md)</button>
+                        </div>
+                    </div>
+
+                    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:10px; margin-bottom:14px;">
+                        <input type="text" id="searchFeedbackInput" class="form-input" placeholder="🔍 Suche nach Titel, Text oder Einreicher..." oninput="renderAdminFeedbackTable()">
+                        <select id="filterFeedbackCategory" onchange="renderAdminFeedbackTable()">
+                            <option value="all">Alle Kategorien</option>
+                            <option value="Wunsch">💡 Wunsch</option>
+                            <option value="Bug / Fehler">🐛 Bug / Fehler</option>
+                            <option value="Verbesserung">⚡ Verbesserung</option>
+                            <option value="Sonstiges">📋 Sonstiges</option>
+                        </select>
+                        <select id="filterFeedbackStatus" onchange="renderAdminFeedbackTable()">
+                            <option value="all">Alle Status</option>
+                            <option value="Neu">Neu</option>
+                            <option value="In Prüfung">In Prüfung</option>
+                            <option value="Angenommen">Angenommen</option>
+                            <option value="In Umsetzung">In Umsetzung</option>
+                            <option value="Erledigt">Erledigt</option>
+                            <option value="Abgelehnt">Abgelehnt</option>
+                        </select>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Datum</th>
+                                    <th>Einreicher</th>
+                                    <th>Kategorie</th>
+                                    <th>Titel & Beschreibung</th>
+                                    <th>Status</th>
+                                    <th>Status ändern</th>
+                                    <th style="text-align:right;">Aktion</th>
+                                </tr>
+                            </thead>
+                            <tbody id="adminFeedbackTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SUB-TAB 4: BACKUP & WIEDERHERSTELLUNG -->
             <div id="adminSubTabSystem" class="admin-subtab-content">
                 <div style="background:rgba(56, 189, 248, 0.05); padding:20px; border-radius:16px; border:1px solid rgba(56, 189, 248, 0.25); margin-bottom:20px;">
                     <h3 style="margin:0 0 10px 0; color:var(--primary);">💾 Cloud-Backup & Wiederherstellung</h3>
@@ -1373,7 +1489,7 @@
                 </div>
             </div>
 
-            <!-- SUB-TAB 4: SYSTEM-PROTOKOLL -->
+            <!-- SUB-TAB 5: SYSTEM-PROTOKOLL -->
             <div id="adminSubTabAudit" class="admin-subtab-content">
                 <div style="background:rgba(15, 23, 42, 0.7); padding:20px 24px; border-radius:16px; border:1px solid var(--border);">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:10px;">
@@ -1433,7 +1549,7 @@
             <div id="assignRolesContainer" style="max-height:320px; overflow-y:auto; display:flex; flex-direction:column; gap:8px;"></div>
             <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:20px;">
                 <button type="button" class="btn" style="width:auto; background:var(--text-muted);" onclick="closeAssignRolesModal()">Abbrechen</button>
-                <button type="button" class="btn" style="width:auto; background:var(--success); color:#080c14; font-weight:800;" onclick="saveAssignedRoles()">💾 Speichern</button>
+                <button type="submit" class="btn" style="width:auto; background:var(--success); color:#080c14; font-weight:800;" onclick="saveAssignedRoles()">💾 Speichern</button>
             </div>
         </div>
     </div>
@@ -1463,6 +1579,6 @@
         </div>
     </div>
 
-    <script src="app.js?v=6.0.0"></script>
+    <script src="app.js?v=6.1.0"></script>
 </body>
 </html>

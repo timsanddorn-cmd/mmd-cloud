@@ -1,7 +1,7 @@
 // ============================================================
-//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.0.0
+//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.1.0
 //  Firebase Realtime Database (Compat SDK v10)
-//  [TEIL 1 VON 2]
+//  [TEIL 1 VON 3]
 // ============================================================
 
 /* ── XSS-Schutz: HTML Sanitization Helper ───────────────────── */
@@ -77,6 +77,7 @@ let cachedPhotos      = {};
 let cachedCustomChangelogs = {};
 let cachedCommands    = {};
 let cachedLinks       = {};
+let cachedFeedback    = {};
 let activeExam        = null;
 let activeExamTimerInterval = null;
 let activeExamSecondsElapsed = 0;
@@ -116,6 +117,33 @@ let hierarchieDaten = JSON.parse(JSON.stringify(defaultHierarchieData));
 
 /* ── Vollständiger Gesamt-Changelog (Entwicklungsverlauf) ───── */
 const systemChangelogs = [
+    {
+        id: "sys_v6_1_0",
+        version: "v6.1.0",
+        date: "12.09.2026",
+        ts: 1789249200000,
+        category: "Neue Funktion",
+        title: "Einführung des Wünsche- & Bug-Meldesystems",
+        changes: [
+            "Wünsche & Bugs: Mitarbeiter können nun direkt Verbesserungsvorschläge, Ideen und Fehlerberichte einreichen.",
+            "Geschützte Einsicht: Eingereichte Meldungen sind nur für Administratoren und Master-Admins einsehbar.",
+            "Begründungspflicht bei Ablehnung: Entscheidungen gegen einen Vorschlag werden zwingend begründet und im Archiv erfasst.",
+            "Aufgabenlisten-Export: Einreichungen können für künftige Entwicklungsphasen heruntergeladen werden."
+        ]
+    },
+    {
+        id: "sys_v6_0_1",
+        version: "v6.0.1",
+        date: "12.09.2026",
+        ts: 1789243200000,
+        category: "Bugfix",
+        title: "Sicherheits- & Stabilitätsoptimierungen",
+        changes: [
+            "Passwort-Änderung: Das Eingabefeld in den persönlichen Einstellungen funktioniert nun wieder einwandfrei.",
+            "Audit-Log: Das Löschen archivierter Schichten wird nun lückenlos und nachvollziehbar im System-Protokoll erfasst.",
+            "Mitarbeiterverwaltung: Beim Bearbeiten eines Kontos bleibt das bestehende Passwort sicher erhalten, falls das Feld leer gelassen wird."
+        ]
+    },
     {
         id: "sys_v6_0_0",
         version: "v6.0.0",
@@ -445,6 +473,12 @@ function logAdminAudit(action, details) {
     });
 }
 
+// ============================================================
+//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.1.0
+//  Firebase Realtime Database (Compat SDK v10)
+//  [TEIL 2 VON 3]
+// ============================================================
+
 /* ── Rollen & Berechtigungen (Single Source of Truth) ──────── */
 function getUserRolesList(user) {
     if (!user) return [];
@@ -489,8 +523,8 @@ function getUserEffectivePermissions(user) {
         const linkKats = normalizeKats(role.allowedLinkKats);
 
         if (role.isAdmin || role.isMasterAdmin) {
-    hasUnrestrictedRole = true;
-}
+            hasUnrestrictedRole = true;
+        }
 
         Object.keys(eff).forEach(prop => {
             if (prop === 'allowedCmdKats') {
@@ -725,6 +759,18 @@ function applyUserPermissions(user) {
 
     const changelogWriterBtn = document.getElementById('btnOpenChangelogWriter');
     if (changelogWriterBtn) changelogWriterBtn.style.display = isMaster ? 'inline-flex' : 'none';
+
+    /* Wünsche & Bugs: Daten-Listener ausschließlich für Leitung/Admins */
+    if (isAdminOrMaster) {
+        db.ref('data/feedback').off();
+        db.ref('data/feedback').on('value', s => {
+            cachedFeedback = s.val() || {};
+            renderAdminFeedbackTable();
+        });
+    } else {
+        db.ref('data/feedback').off();
+        cachedFeedback = {};
+    }
 }
 
 function initDienstEintritt(user) {
@@ -898,27 +944,21 @@ function startFirebaseListeners() {
         if (s.val()) szenarioTemplates = Object.assign({}, szenarioTemplates, s.val());
     });
     db.ref('data/dienstLinks').on('value', s => {
-    // Speichere die empfangenen Links in der Variablen ab:
-    cachedLinks = s.val() || defaultLinks;
-    renderLinksTab(cachedLinks);
-});
-
-db.ref('data/dienstCommands').on('value', s => {
-    // Speichere die empfangenen Commands in der Variablen ab:
-    cachedCommands = s.val() || defaultCommands;
-    renderCommandsTab(cachedCommands);
-});
-
-db.ref('data/roles').on('value', s => {
-    cachedRoles = s.val() ? Object.assign({}, defaultRoles, s.val()) : Object.assign({}, defaultRoles);
-    if (sessionUser) applyUserPermissions(sessionUser);
-    renderCalendarMonth();
-    renderStaffDirectory();
-    
-    // Statt "null" übergibst du nun die zuvor gespeicherten Daten:
-    renderCommandsTab(cachedCommands);
-    renderLinksTab(cachedLinks);
-});
+        cachedLinks = s.val() || defaultLinks;
+        renderLinksTab(cachedLinks);
+    });
+    db.ref('data/dienstCommands').on('value', s => {
+        cachedCommands = s.val() || defaultCommands;
+        renderCommandsTab(cachedCommands);
+    });
+    db.ref('data/roles').on('value', s => {
+        cachedRoles = s.val() ? Object.assign({}, defaultRoles, s.val()) : Object.assign({}, defaultRoles);
+        if (sessionUser) applyUserPermissions(sessionUser);
+        renderCalendarMonth();
+        renderStaffDirectory();
+        renderCommandsTab(cachedCommands);
+        renderLinksTab(cachedLinks);
+    });
     db.ref('data/users').on('value', s => {
         cachedUsers = s.val() || {};
         if (sessionUser) {
@@ -1344,6 +1384,12 @@ function saveAllSzenarienWorkflows() {
     });
 }
 
+// ============================================================
+//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.1.0
+//  Firebase Realtime Database (Compat SDK v10)
+//  [TEIL 3 VON 3]
+// ============================================================
+
 /* ── REITER 2: STATISTIK & ARCHIV ─────────────────────────── */
 function renderProtokoll(obj) {
     const tbody = document.getElementById('logTableBody'); if (!tbody) return;
@@ -1620,8 +1666,11 @@ function deleteArchivSchicht(k) {
         alert('Keine Berechtigung zum Löschen von Archiven!');
         return;
     }
-    if (confirm('Soll dieser archivierte Schichteintrag wirklich gelöscht werden?')) {
+    const s = cachedArchiv[k];
+    const schichtDatum = s?.datum || (s?.ts ? new Date(s.ts).toLocaleDateString('de-DE') : k);
+    if (confirm(`Soll der archivierte Schichteintrag vom ${schichtDatum} wirklich gelöscht werden?`)) {
         db.ref('data/archiv/' + k).remove().then(() => {
+            logAdminAudit('Schichtarchiv gelöscht', `${sessionUser.vorname} ${sessionUser.nachname} hat Schicht ${schichtDatum} gelöscht.`);
             alert('✅ Schichteintrag erfolgreich gelöscht!');
         }).catch(err => {
             alert('Fehler beim Löschen: ' + err.message);
@@ -2007,14 +2056,14 @@ function saveCalendarEvent() {
 
     if (editId) {
         const existingEv = cachedCalendar[editId] || {};
-const mergedStatus = Object.assign({}, existingEv.invitationStatus || {});
+        const mergedStatus = Object.assign({}, existingEv.invitationStatus || {});
 
-invitedUsers.forEach(uId => {
-    if (!mergedStatus[uId]) {
-        mergedStatus[uId] = 'pending';
-    }
-});
-mergedStatus[myId] = 'accepted';
+        invitedUsers.forEach(uId => {
+            if (!mergedStatus[uId]) {
+                mergedStatus[uId] = 'pending';
+            }
+        });
+        mergedStatus[myId] = 'accepted';
 
         const updateData = {
             date: startDateStr,
@@ -2610,11 +2659,6 @@ function deleteSubmittedRawPhoto(uId) {
         });
     }
 }
-// ============================================================
-//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.0.0
-//  Firebase Realtime Database (Compat SDK v10)
-//  [TEIL 2 VON 2]
-// ============================================================
 
 /* ── REITER: HIERARCHIE BOARD ────────────────---------------- */
 function renderHierarchieBoard(hData) {
@@ -2710,15 +2754,15 @@ function saveHierarchieInline() {
     }
 
     const allInputs = document.querySelectorAll('#hierarchieInlineEditorContainer input');
-   allInputs.forEach(inp => {
-    const key = inp.id.replace('inline_h_', '');
-    const val = inp.value.trim();
-    if (key.endsWith('_sub')) {
-        hierarchieDaten[key] = val; // Leerstring wenn kein Stellvertreter/Zusatz
-    } else {
-        hierarchieDaten[key] = val || 'Aktuell nicht belegt';
-    }
-});
+    allInputs.forEach(inp => {
+        const key = inp.id.replace('inline_h_', '');
+        const val = inp.value.trim();
+        if (key.endsWith('_sub')) {
+            hierarchieDaten[key] = val;
+        } else {
+            hierarchieDaten[key] = val || 'Aktuell nicht belegt';
+        }
+    });
 
     db.ref('data/hierarchie').set(hierarchieDaten).then(() => {
         logAdminAudit('Hierarchie vor Ort aktualisiert', `${sessionUser.vorname} ${sessionUser.nachname} hat das Hierarchie-Board gespeichert.`);
@@ -3603,11 +3647,20 @@ function deleteNews(k) {
 /* ── REITER 5: EINSTELLUNGEN / DIENSTTAGE ───────────────────── */
 function passwortAendern() {
     if (!sessionUser) return;
-    const np = document.getElementById('newPasswordInput')?.value.trim(); if (!np) return;
+    const inp = document.getElementById('newPasswordInput');
+    const np = (inp?.value || '').trim();
+    if (!np) {
+        alert('Bitte ein neues Passwort eingeben!');
+        return;
+    }
     const uId = generateUserId(sessionUser.vorname, sessionUser.nachname);
-    db.ref('data/users/'+uId+'/pass').set(np).then(() => {
+    db.ref('data/users/' + uId + '/pass').set(np).then(() => {
         sessionUser.pass = np;
+        if (inp) inp.value = '';
+        logAdminAudit('Eigenes Passwort geändert', `${sessionUser.vorname} ${sessionUser.nachname} hat das Passwort aktualisiert.`);
         alert('✅ Passwort erfolgreich geändert!');
+    }).catch(err => {
+        alert('Fehler beim Ändern des Passworts: ' + err.message);
     });
 }
 
@@ -3733,7 +3786,6 @@ function renderInstructorUnlocks() {
         return nameA.localeCompare(nameB, 'de');
     });
 
-    // 1. Array für alle Zeilen vorbereiten
     let rowsHtml = '';
 
     userList.forEach(([uId, u]) => {
@@ -3764,7 +3816,6 @@ function renderInstructorUnlocks() {
             </div>
         `;
 
-        // 2. String im Speicher anfügen (kein DOM-Zugriff in der Schleife)
         rowsHtml += `
             <tr class="user-unlock-row" data-name="${escapeHtml((u.vorname+' '+u.nachname+' '+u.dn).toLowerCase())}">
                 <td style="width:200px;vertical-align:top;padding:10px;">
@@ -3777,7 +3828,6 @@ function renderInstructorUnlocks() {
         `;
     });
 
-    // 3. Nur ein einziges Mal ins DOM schreiben
     tbody.innerHTML = rowsHtml;
 }
 
@@ -3899,7 +3949,7 @@ function openExamSubmissionDetailsModal(subId) {
             if (ans.isInfo) {
                 return `
                     <div style="background:rgba(30,41,59,0.5);padding:12px;border-radius:8px;border-left:4px solid var(--primary);">
-                        <div style="font-weight:700;font-size:12px;color:var(--primary);text-transform:uppercase;">📋 Stammdaten / Prüfungs-Angabe</div>
+                        <div style="font-weight:800;font-size:12px;color:var(--primary);text-transform:uppercase;">📋 Stammdaten / Prüfungs-Angabe</div>
                         <div style="font-weight:700;font-size:13px;color:var(--text-main);margin-top:2px;">${escapeHtml(qText)}</div>
                         <div style="font-size:13px;margin-top:4px;color:var(--text-main);background:rgba(8,12,20,0.6);padding:6px 10px;border-radius:6px;">
                             ${escapeHtml(chosen)}
@@ -4320,6 +4370,7 @@ function verifyAdminKeyPassword() {
         document.getElementById('adminManagementModal').style.display = 'flex';
         renderAdminUserTable(cachedUsers);
         renderAdminRolesList();
+        renderAdminFeedbackTable();
     } else {
         alert('Falsches Admin-Passwort!');
     }
@@ -4414,16 +4465,22 @@ function closeUserPermissionsModal() { document.getElementById('userPermissionsM
 
 function saveUserPermissions() {
     const uId = document.getElementById('permUserId')?.value; if (!uId) return;
+    const newPass = document.getElementById('permPassword')?.value.trim();
     const upd = {
         vorname: document.getElementById('permVorname').value.trim(),
         nachname: document.getElementById('permNachname').value.trim(),
         dn: document.getElementById('permDN').value.trim(),
-        pass: document.getElementById('permPassword').value.trim(),
         status: document.getElementById('permStatus').value
     };
+    if (newPass) {
+        upd.pass = newPass;
+    }
     db.ref('data/users/' + uId).update(upd).then(() => {
         closeUserPermissionsModal();
         logAdminAudit('Mitarbeiterdaten bearbeitet', `Account ${uId} angepasst von ${sessionUser.vorname} ${sessionUser.nachname}`);
+        alert('✅ Mitarbeiterdaten erfolgreich gespeichert!');
+    }).catch(err => {
+        alert('Fehler beim Speichern: ' + err.message);
     });
 }
 
@@ -4463,20 +4520,19 @@ function saveAssignedRoles() {
     const uId = document.getElementById('assignRoleUserId')?.value; if (!uId) return;
     let cleanRoles = {};
 
-const existingUser = cachedUsers[uId] || {};
-const existingRoleList = getUserRolesList(existingUser);
+    const existingUser = cachedUsers[uId] || {};
+    const existingRoleList = getUserRolesList(existingUser);
 
-Object.keys(cachedRoles).forEach(rId => {
-    const el = document.getElementById('assignRoleInput_' + rId);
-    if (el) {
-        if (el.checked) cleanRoles[rId] = true;
-    } else {
-        // Rolle war im Modal ausgeblendet -> bestehenden Status beibehalten
-        if (existingRoleList.includes(rId)) {
-            cleanRoles[rId] = true;
+    Object.keys(cachedRoles).forEach(rId => {
+        const el = document.getElementById('assignRoleInput_' + rId);
+        if (el) {
+            if (el.checked) cleanRoles[rId] = true;
+        } else {
+            if (existingRoleList.includes(rId)) {
+                cleanRoles[rId] = true;
+            }
         }
-    }
-});
+    });
 
     const myId = generateUserId(sessionUser.vorname, sessionUser.nachname);
     if (uId === myId && sessionUser.isMasterAdmin) {
@@ -4673,15 +4729,15 @@ function speichereRolle() {
     document.querySelectorAll('.roleLinksCategoriesContainer_check:checked').forEach(c => allowedLnks.push(c.value));
 
     const existingRole = cachedRoles[id] || defaultRoles[id];
-const r = {
-    id,
-    name: document.getElementById('roleEditName')?.value.trim() || id,
-    color: document.getElementById('roleEditColor')?.value || '#38bdf8',
-    icon: document.getElementById('roleEditIcon')?.value.trim() || '🎭',
-    isSystem: !!(existingRole && existingRole.isSystem),
-    allowedCmdKats: isMaster ? [] : allowedCmds,
-    allowedLinkKats: isMaster ? [] : allowedLnks
-};
+    const r = {
+        id,
+        name: document.getElementById('roleEditName')?.value.trim() || id,
+        color: document.getElementById('roleEditColor')?.value || '#38bdf8',
+        icon: document.getElementById('roleEditIcon')?.value.trim() || '🎭',
+        isSystem: !!(existingRole && existingRole.isSystem),
+        allowedCmdKats: isMaster ? [] : allowedCmds,
+        allowedLinkKats: isMaster ? [] : allowedLnks
+    };
 
     Object.keys(ROLE_PROPERTY_MAP).forEach(elementId => {
         const propName = ROLE_PROPERTY_MAP[elementId];
@@ -4815,6 +4871,253 @@ function openAuditLogArchiveModal() {
 }
 function closeAuditArchiveModal() { document.getElementById('auditArchiveModal').style.display = 'none'; }
 
+/* ══════════════════════════════════════════════════════════════
+   WÜNSCHE & BUGS: MELDESYSTEM & INTERNE VERWALTUNG
+══════════════════════════════════════════════════════════════ */
+let activeRejectFeedbackId = null;
+
+function openFeedbackSubmitModal() {
+    if (!sessionUser) return;
+    const modal = document.getElementById('feedbackSubmitModal');
+    if (!modal) return;
+    document.getElementById('fbCategory').value = 'Wunsch';
+    document.getElementById('fbTitle').value = '';
+    document.getElementById('fbDescription').value = '';
+    modal.style.display = 'flex';
+}
+
+function closeFeedbackSubmitModal() {
+    const modal = document.getElementById('feedbackSubmitModal');
+    if (modal) modal.style.display = 'none';
+}
+
+function submitUserFeedback() {
+    if (!sessionUser) return;
+    const cat = document.getElementById('fbCategory')?.value || 'Wunsch';
+    const title = document.getElementById('fbTitle')?.value.trim();
+    const desc = document.getElementById('fbDescription')?.value.trim();
+
+    if (!title || !desc) {
+        alert('Bitte gib einen Titel und eine genaue Beschreibung ein!');
+        return;
+    }
+
+    const myId = generateUserId(sessionUser.vorname, sessionUser.nachname);
+    const feedbackId = 'fb_' + Date.now();
+
+    const entry = {
+        id: feedbackId,
+        category: cat,
+        title: title,
+        description: desc,
+        status: 'Neu',
+        author: `${sessionUser.vorname} ${sessionUser.nachname}`,
+        authorDN: sessionUser.dn || '--',
+        authorId: myId,
+        date: new Date().toLocaleDateString('de-DE'),
+        ts: Date.now()
+    };
+
+    db.ref('data/feedback/' + feedbackId).set(entry).then(() => {
+        closeFeedbackSubmitModal();
+        alert('✅ Vielen Dank! Deine Meldung wurde sicher und vertraulich an die Klinikleitung übermittelt.');
+    }).catch(err => {
+        alert('Fehler beim Übermitteln: ' + err.message);
+    });
+}
+
+function renderAdminFeedbackTable() {
+    const tbody = document.getElementById('adminFeedbackTableBody');
+    if (!tbody) return;
+
+    const eff = sessionUser ? getUserEffectivePermissions(sessionUser) : {};
+    if (!eff.isAdmin && !eff.isMasterAdmin) return;
+
+    const q = (document.getElementById('searchFeedbackInput')?.value || '').trim().toLowerCase();
+    const filterCat = document.getElementById('filterFeedbackCategory')?.value || 'all';
+    const filterStatus = document.getElementById('filterFeedbackStatus')?.value || 'all';
+
+    let list = Object.values(cachedFeedback || {}).sort((a, b) => (b.ts || 0) - (a.ts || 0));
+
+    if (filterCat !== 'all') {
+        list = list.filter(item => item.category === filterCat);
+    }
+
+    if (filterStatus !== 'all') {
+        list = list.filter(item => item.status === filterStatus);
+    }
+
+    if (q) {
+        list = list.filter(item => {
+            const t = (item.title || '').toLowerCase();
+            const d = (item.description || '').toLowerCase();
+            const a = (item.author || '').toLowerCase();
+            const dn = (item.authorDN || '').toLowerCase();
+            return t.includes(q) || d.includes(q) || a.includes(q) || dn.includes(q);
+        });
+    }
+
+    const badgeClassMap = {
+        'Neu': 'badge-status-neu',
+        'In Prüfung': 'badge-status-pruefung',
+        'Angenommen': 'badge-status-angenommen',
+        'In Umsetzung': 'badge-status-umsetzung',
+        'Erledigt': 'badge-status-erledigt',
+        'Abgelehnt': 'badge-status-abgelehnt'
+    };
+
+    if (!list.length) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--text-muted);">Keine Wünsche oder Fehlermeldungen vorhanden.</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = list.map(item => {
+        const bClass = badgeClassMap[item.status] || 'badge-status-neu';
+        let rejectNoteHtml = '';
+        if (item.status === 'Abgelehnt' && item.rejectionReason) {
+            rejectNoteHtml = `
+                <div style="background:rgba(244,63,94,0.1);border-left:3px solid var(--danger);padding:6px 10px;border-radius:6px;margin-top:6px;font-size:11px;color:#fecdd3;">
+                    <b>Begründung der Ablehnung:</b> ${escapeHtml(item.rejectionReason)}<br>
+                    <span style="color:var(--text-muted);font-size:10px;">Entschieden von ${escapeHtml(item.rejectedBy || 'Leitung')} am ${escapeHtml(item.rejectedDate || '--')}</span>
+                </div>
+            `;
+        }
+
+        return `
+            <tr>
+                <td style="font-size:11px;color:var(--text-muted);">${escapeHtml(item.date || '--')}</td>
+                <td><b>${escapeHtml(item.author || '--')}</b> <span style="color:var(--primary);font-size:11px;">(DN: ${escapeHtml(item.authorDN || '--')})</span></td>
+                <td><span class="feedback-category-badge">${escapeHtml(item.category || 'Wunsch')}</span></td>
+                <td>
+                    <b>${escapeHtml(item.title || '--')}</b>
+                    <div style="font-size:12px;color:var(--text-muted);margin-top:4px;white-space:pre-wrap;">${formatTextWithLinks(item.description || '')}</div>
+                    ${rejectNoteHtml}
+                </td>
+                <td>
+                    <span class="feedback-status-badge ${bClass}">${escapeHtml(item.status || 'Neu')}</span>
+                </td>
+                <td>
+                    <select onchange="handleFeedbackStatusChange('${item.id}', this.value)" style="padding:4px 8px;font-size:11px;width:auto;margin:0;">
+                        <option value="Neu" ${item.status === 'Neu' ? 'selected' : ''}>Neu</option>
+                        <option value="In Prüfung" ${item.status === 'In Prüfung' ? 'selected' : ''}>In Prüfung</option>
+                        <option value="Angenommen" ${item.status === 'Angenommen' ? 'selected' : ''}>Angenommen</option>
+                        <option value="In Umsetzung" ${item.status === 'In Umsetzung' ? 'selected' : ''}>In Umsetzung</option>
+                        <option value="Erledigt" ${item.status === 'Erledigt' ? 'selected' : ''}>Erledigt</option>
+                        <option value="Abgelehnt" ${item.status === 'Abgelehnt' ? 'selected' : ''}>❌ Ablehnen</option>
+                    </select>
+                </td>
+                <td style="text-align:right;">
+                    ${eff.isMasterAdmin ? `<button type="button" class="btn-delete-row" onclick="deleteFeedbackEntry('${item.id}')" title="Eintrag endgültig löschen">🗑️</button>` : '--'}
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+function handleFeedbackStatusChange(fbId, newStatus) {
+    if (!sessionUser) return;
+    const eff = getUserEffectivePermissions(sessionUser);
+    if (!eff.isAdmin && !eff.isMasterAdmin) return;
+
+    if (newStatus === 'Abgelehnt') {
+        openFeedbackRejectModal(fbId);
+        return;
+    }
+
+    db.ref('data/feedback/' + fbId).update({
+        status: newStatus,
+        lastStatusUpdateBy: `${sessionUser.vorname} ${sessionUser.nachname}`,
+        lastStatusUpdateTs: Date.now()
+    }).then(() => {
+        logAdminAudit('Feedback-Status geändert', `${sessionUser.vorname} ${sessionUser.nachname} setzte Meldung ${fbId} auf "${newStatus}".`);
+    });
+}
+
+function openFeedbackRejectModal(fbId) {
+    activeRejectFeedbackId = fbId;
+    const modal = document.getElementById('feedbackRejectModal');
+    if (!modal) return;
+    document.getElementById('rejectReasonPreset').value = '';
+    document.getElementById('rejectReasonCustom').value = '';
+    modal.style.display = 'flex';
+}
+
+function closeFeedbackRejectModal() {
+    const modal = document.getElementById('feedbackRejectModal');
+    if (modal) modal.style.display = 'none';
+    activeRejectFeedbackId = null;
+    renderAdminFeedbackTable();
+}
+
+function applyRejectPresetReason() {
+    const preset = document.getElementById('rejectReasonPreset')?.value;
+    const custom = document.getElementById('rejectReasonCustom');
+    if (preset && custom) {
+        custom.value = preset;
+    }
+}
+
+function saveFeedbackRejection() {
+    if (!activeRejectFeedbackId || !sessionUser) return;
+    const customReason = document.getElementById('rejectReasonCustom')?.value.trim();
+
+    if (!customReason) {
+        alert('⚠️ Begründungspflicht: Eine Ablehnung darf nicht ohne sachliche Erklärung gespeichert werden!');
+        return;
+    }
+
+    const todayFormatted = new Date().toLocaleDateString('de-DE');
+
+    db.ref('data/feedback/' + activeRejectFeedbackId).update({
+        status: 'Abgelehnt',
+        rejectionReason: customReason,
+        rejectedBy: `${sessionUser.vorname} ${sessionUser.nachname}`,
+        rejectedDate: todayFormatted,
+        rejectedTs: Date.now()
+    }).then(() => {
+        logAdminAudit('Meldung abgelehnt', `${sessionUser.vorname} ${sessionUser.nachname} lehnte Meldung ${activeRejectFeedbackId} ab. Begründung: ${customReason}`);
+        closeFeedbackRejectModal();
+        alert('✅ Meldung wurde als abgelehnt markiert und die Begründung revisionssicher hinterlegt.');
+    });
+}
+
+function deleteFeedbackEntry(fbId) {
+    if (!sessionUser || !getUserEffectivePermissions(sessionUser).isMasterAdmin) return;
+    if (confirm('Möchtest du diese Meldung wirklich dauerhaft aus der Datenbank entfernen?')) {
+        db.ref('data/feedback/' + fbId).remove().then(() => {
+            logAdminAudit('Feedback gelöscht', `Eintrag ${fbId} gelöscht durch ${sessionUser.vorname} ${sessionUser.nachname}`);
+            alert('✅ Eintrag gelöscht!');
+        });
+    }
+}
+
+function exportFeedbackListMarkdown() {
+    const list = Object.values(cachedFeedback || {}).sort((a, b) => (b.ts || 0) - (a.ts || 0));
+    if (!list.length) {
+        alert('Keine Einträge zum Exportieren vorhanden.');
+        return;
+    }
+
+    let md = '# Aufgabenliste: Wünsche & Fehlermeldungen (MD-Homepage)\n\n';
+    md += `Stand: ${new Date().toLocaleDateString('de-DE')} um ${new Date().toLocaleTimeString('de-DE')} Uhr\n\n`;
+    md += '| ID | Datum | Kategorie | Titel & Beschreibung | Status | Einreicher | Begründung (bei Ablehnung) |\n';
+    md += '|---|---|---|---|---|---|---|\n';
+
+    list.forEach(item => {
+        const cleanTitle = (item.title || '').replace(/\|/g, '-');
+        const cleanDesc = (item.description || '').replace(/\r?\n|\r/g, ' ').replace(/\|/g, '-');
+        const cleanReason = (item.rejectionReason || '--').replace(/\r?\n|\r/g, ' ').replace(/\|/g, '-');
+        md += `| ${item.id} | ${item.date || '--'} | ${item.category || 'Wunsch'} | **${cleanTitle}**: ${cleanDesc} | ${item.status || 'Neu'} | ${item.author || '--'} (${item.authorDN || '--'}) | ${cleanReason} |\n`;
+    });
+
+    const blob = new Blob([md], { type: 'text/markdown;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `wuensche_und_bugs_${new Date().toISOString().split('T')[0]}.md`;
+    a.click();
+}
+
 /* ── Navigation & Global Helpers ───────────────────────────── */
 function switchTab(tabId, btn) {
     document.querySelectorAll('.tab-content').forEach(e => e.classList.remove('active'));
@@ -4930,3 +5233,14 @@ _w.downloadStaffOriginalPhoto = downloadStaffOriginalPhoto;
 _w.uploadProcessedStaffPhoto = uploadProcessedStaffPhoto;
 _w.resetStaffPhotoToDefault = resetStaffPhotoToDefault;
 _w.toggleBuilderCorrectAnswer = toggleBuilderCorrectAnswer;
+_w.openFeedbackSubmitModal = openFeedbackSubmitModal;
+_w.closeFeedbackSubmitModal = closeFeedbackSubmitModal;
+_w.submitUserFeedback = submitUserFeedback;
+_w.renderAdminFeedbackTable = renderAdminFeedbackTable;
+_w.handleFeedbackStatusChange = handleFeedbackStatusChange;
+_w.openFeedbackRejectModal = openFeedbackRejectModal;
+_w.closeFeedbackRejectModal = closeFeedbackRejectModal;
+_w.applyRejectPresetReason = applyRejectPresetReason;
+_w.saveFeedbackRejection = saveFeedbackRejection;
+_w.deleteFeedbackEntry = deleteFeedbackEntry;
+_w.exportFeedbackListMarkdown = exportFeedbackListMarkdown;
