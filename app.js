@@ -3719,7 +3719,6 @@ function renderStudentUnlockedExams() {
 
 function renderInstructorUnlocks() {
     const tbody = document.getElementById('instructorUserUnlocksTableBody'); if (!tbody) return;
-    tbody.innerHTML = '';
     
     const sortedExamIds = sortExamIds(Object.keys(cachedExams)).filter(eId => canInstructorAccessExam(eId));
 
@@ -3733,6 +3732,9 @@ function renderInstructorUnlocks() {
         const nameB = ((b[1].nachname || '') + ' ' + (b[1].vorname || '')).trim().toLowerCase();
         return nameA.localeCompare(nameB, 'de');
     });
+
+    // 1. Array für alle Zeilen vorbereiten
+    let rowsHtml = '';
 
     userList.forEach(([uId, u]) => {
         const unlocked = u.unlockedExams || {};
@@ -3762,7 +3764,8 @@ function renderInstructorUnlocks() {
             </div>
         `;
 
-        tbody.innerHTML += `
+        // 2. String im Speicher anfügen (kein DOM-Zugriff in der Schleife)
+        rowsHtml += `
             <tr class="user-unlock-row" data-name="${escapeHtml((u.vorname+' '+u.nachname+' '+u.dn).toLowerCase())}">
                 <td style="width:200px;vertical-align:top;padding:10px;">
                     <b>${escapeHtml(u.vorname||'')} ${escapeHtml(u.nachname||'')}</b><br>
@@ -3773,6 +3776,9 @@ function renderInstructorUnlocks() {
             </tr>
         `;
     });
+
+    // 3. Nur ein einziges Mal ins DOM schreiben
+    tbody.innerHTML = rowsHtml;
 }
 
 function filterUnlocksTable() {
