@@ -1,5 +1,5 @@
 ﻿/* ============================================================
-   MMD CLOUD – Medical Center Web-App  |  style.css  v6.0.0
+   MMD CLOUD – Medical Center Web-App  |  style.css  v6.1.0
    ============================================================ */
 
 :root {
@@ -108,6 +108,28 @@ body {
 .btn-logout:hover { background: var(--danger); color: #ffffff; }
 .btn-admin-key { background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.3); color: var(--warning); padding: 8px 16px; border-radius: 8px; font-size: 13px; cursor: pointer; font-weight: 700; transition: all 0.2s; user-select: none; }
 .btn-admin-key:hover { background: var(--warning); color: #080c14; box-shadow: 0 0 12px rgba(245, 158, 11, 0.4); }
+
+/* WÜNSCHE & BUGS TRIGGER */
+.btn-feedback-trigger {
+    background: rgba(245, 158, 11, 0.12);
+    border: 1px solid rgba(245, 158, 11, 0.25);
+    color: var(--warning);
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    cursor: pointer;
+    font-weight: 700;
+    transition: all 0.2s ease;
+    user-select: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+.btn-feedback-trigger:hover {
+    background: var(--warning);
+    color: #080c14;
+    box-shadow: 0 0 12px rgba(245, 158, 11, 0.35);
+}
 
 .date-display { color: var(--warning); background: rgba(251, 191, 36, 0.08); padding: 8px 16px; border-radius: 10px; border: 1px solid rgba(251, 191, 36, 0.2); font-weight: 600; font-size: 14px; user-select: none; }
 .online-medics { background: rgba(56, 189, 248, 0.06); border: 1px solid rgba(56, 189, 248, 0.2); padding: 8px 16px; border-radius: 10px; display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; }
@@ -288,6 +310,33 @@ body {
 .changelog-items-list li {
     margin-bottom: 4px;
 }
+
+/* WÜNSCHE & BUGS BADGES */
+.feedback-category-badge {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 800;
+    background: rgba(56, 189, 248, 0.1);
+    color: var(--primary);
+    border: 1px solid rgba(56, 189, 248, 0.25);
+}
+
+.feedback-status-badge {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.3px;
+}
+.badge-status-neu { background: rgba(56, 189, 248, 0.15); color: var(--primary); border: 1px solid var(--primary); }
+.badge-status-pruefung { background: rgba(245, 158, 11, 0.15); color: var(--warning); border: 1px solid var(--warning); }
+.badge-status-angenommen { background: rgba(16, 185, 129, 0.15); color: var(--success); border: 1px solid var(--success); }
+.badge-status-umsetzung { background: rgba(168, 85, 247, 0.15); color: #c084fc; border: 1px solid #a855f7; }
+.badge-status-erledigt { background: rgba(16, 185, 129, 0.25); color: #34d399; border: 1px solid #059669; }
+.badge-status-abgelehnt { background: rgba(244, 63, 94, 0.15); color: var(--danger); border: 1px solid var(--danger); }
 
 /* SUB TABS */
 .admin-subtabs { display: flex; gap: 10px; margin-bottom: 22px; flex-wrap: wrap; border-bottom: 1px solid var(--border); padding-bottom: 16px; }
@@ -943,7 +992,6 @@ input[type="checkbox"] { margin-right: 10px; transform: scale(1.2); cursor: poin
     background: rgba(244, 63, 94, 0.18);
     transform: scale(1.1);
 }
-
 
 .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 14px; }
 .stat-card { background: rgba(8, 12, 20, 0.5); padding: 16px; border-radius: 12px; border: 1px solid var(--border); text-align: center; }
