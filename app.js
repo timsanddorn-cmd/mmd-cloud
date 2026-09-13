@@ -723,7 +723,7 @@ function applyUserPermissions(user) {
     const akBtn = document.getElementById('adminKeyBtn');
     if (akBtn) akBtn.style.display = isAdminOrMaster ? 'inline-block' : 'none';
 
-    /* Direkter Prüfcenter-Reiter in der Hauptnavigation */
+    /* Direkter Prüfcenter- & Wünsche-Reiter in der Hauptnavigation */
     const fbDirectBtn = document.getElementById('feedbackDirectTabBtn');
     if (fbDirectBtn) fbDirectBtn.style.display = isAdminOrMaster ? 'flex' : 'none';
 
@@ -5179,7 +5179,9 @@ function saveInlineRejection(prefix, fbId) {
 function deleteFeedbackEntry(fbId) {
     if (!sessionUser) return;
     const eff = getUserEffectivePermissions(sessionUser);
-    if (!eff.isAdmin && !eff.isMasterAdmin && !eff.delFeedback) {
+    const isMaster = !!sessionUser.isMasterAdmin || eff.isMasterAdmin || eff.isAdmin;
+
+    if (!isMaster && !eff.delFeedback) {
         alert('Keine Berechtigung zum Löschen von Meldungen!');
         return;
     }
