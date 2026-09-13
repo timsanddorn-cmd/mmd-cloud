@@ -1283,7 +1283,6 @@
             <div class="admin-subtabs">
                 <button type="button" class="admin-tab-btn active" id="btnAdminSubUsers" onclick="switchAdminTab('adminSubTabUsers', this)">👥 Mitarbeiter Kartei</button>
                 <button type="button" class="admin-tab-btn" id="btnAdminSubRoles" onclick="switchAdminTab('adminSubTabRoles', this)">🎭 Rollen & Berechtigungs-Matrix</button>
-                <button type="button" class="admin-tab-btn" id="btnAdminSubFeedback" onclick="switchAdminTab('adminSubTabFeedback', this)">💡 Wünsche & Bugs</button>
                 <button type="button" class="admin-tab-btn" id="btnAdminSubSystem" onclick="switchAdminTab('adminSubTabSystem', this)">💾 Backup & Wiederherstellung</button>
                 <button type="button" class="admin-tab-btn" id="btnAdminSubAudit" onclick="switchAdminTab('adminSubTabAudit', this)">📋 System-Protokoll (Heute)</button>
             </div>
@@ -1434,58 +1433,6 @@
                                 <button type="button" id="btnDeleteRole" class="btn" style="background:rgba(244,63,94,0.15); color:var(--danger); width:auto; padding:10px 24px;" onclick="loescheRolle()">🗑️ Rolle löschen</button>
                             </div>
                         </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- SUB-TAB 3: WÜNSCHE & BUGS (ADMIN PRÜFCENTER) -->
-            <div id="adminSubTabFeedback" class="admin-subtab-content">
-                <div style="background:rgba(15, 23, 42, 0.7); padding:20px 24px; border-radius:16px; border:1px solid var(--border);">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:12px;">
-                        <div>
-                            <h3 style="margin:0; color:var(--warning); font-size:16px;">💡 Wünsche, Verbesserungen & Bug-Meldungen</h3>
-                            <span style="color:var(--text-muted); font-size:12px;">Verwaltung aller Mitarbeiter-Einreichungen mit Statusverfolgung und Begründungspflicht</span>
-                        </div>
-                        <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
-                            <button type="button" class="btn" style="width:auto; margin:0; padding:8px 16px; background:rgba(56,189,248,0.15); color:var(--primary); border:1px solid var(--primary); font-size:12px; font-weight:800;" onclick="exportFeedbackListMarkdown()">📥 Aufgabenliste exportieren (.md)</button>
-                        </div>
-                    </div>
-
-                    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:10px; margin-bottom:14px;">
-                        <input type="text" id="searchFeedbackInput" class="form-input" placeholder="🔍 Suche nach Titel, Text oder Einreicher..." oninput="renderAdminFeedbackTable()">
-                        <select id="filterFeedbackCategory" onchange="renderAdminFeedbackTable()">
-                            <option value="all">Alle Kategorien</option>
-                            <option value="Wunsch">💡 Wunsch</option>
-                            <option value="Bug / Fehler">🐛 Bug / Fehler</option>
-                            <option value="Verbesserung">⚡ Verbesserung</option>
-                            <option value="Sonstiges">📋 Sonstiges</option>
-                        </select>
-                        <select id="filterFeedbackStatus" onchange="renderAdminFeedbackTable()">
-                            <option value="all">Alle Status</option>
-                            <option value="Neu">Neu</option>
-                            <option value="In Prüfung">In Prüfung</option>
-                            <option value="Angenommen">Angenommen</option>
-                            <option value="In Umsetzung">In Umsetzung</option>
-                            <option value="Erledigt">Erledigt</option>
-                            <option value="Abgelehnt">Abgelehnt</option>
-                        </select>
-                    </div>
-
-                    <div class="table-responsive">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Datum</th>
-                                    <th>Einreicher</th>
-                                    <th>Kategorie</th>
-                                    <th>Titel & Beschreibung</th>
-                                    <th>Status</th>
-                                    <th>Status ändern</th>
-                                    <th style="text-align:right; width:70px;">Aktion</th>
-                                </tr>
-                            </thead>
-                            <tbody id="adminFeedbackTableBody"></tbody>
-                        </table>
                     </div>
                 </div>
             </div>

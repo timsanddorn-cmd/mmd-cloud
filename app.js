@@ -4964,7 +4964,7 @@ function submitUserFeedback() {
 
 function renderFeedbackRowsHtml(list, targetPrefix) {
     const eff = sessionUser ? getUserEffectivePermissions(sessionUser) : {};
-    const canDelete = eff.isAdmin || eff.isMasterAdmin || eff.delFeedback;
+    const canDelete = eff.isAdmin || eff.isMasterAdmin || eff.delFeedback || (sessionUser && sessionUser.isMasterAdmin);
 
     const badgeClassMap = {
         'Neu': 'badge-status-neu',
