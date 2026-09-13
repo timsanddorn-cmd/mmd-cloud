@@ -171,8 +171,8 @@ body {
     margin-top: 24px;
     width: 100%;
     display: flex;
-    align-items: flex-start;
-    justify-content: flex-start;
+    align-items: center;
+    justify-content: center;
 }
 
 .auth-brand-logo {
@@ -180,7 +180,7 @@ body {
     width: min(210px, 72%);
     max-height: 210px;
     object-fit: contain;
-    object-position: left center;
+    object-position: center;
     filter: drop-shadow(0 16px 26px rgba(0, 0, 0, 0.28));
 }
 
@@ -413,13 +413,24 @@ body {
     max-width: 100%;
 }
 .top-bar-controls {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(140px, 1fr));
+    grid-template-rows: repeat(2, minmax(38px, auto));
+    align-items: stretch;
     gap: 10px;
-    flex-wrap: nowrap;
+    min-width: 330px;
     white-space: nowrap;
 }
+.top-bar-controls .date-display {
+    grid-column: 1;
+    grid-row: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.top-bar-controls .btn-logout { grid-column: 2; grid-row: 1; width: 100%; }
+.top-bar-controls .btn-admin-key { grid-column: 1; grid-row: 2; width: 100%; }
+.top-bar-controls .btn-feedback-trigger { grid-column: 2; grid-row: 2; width: 100%; justify-content: center; }
 .btn-logout { background: rgba(244, 63, 94, 0.15); border: 1px solid rgba(244, 63, 94, 0.3); color: var(--danger); padding: 8px 16px; border-radius: 8px; font-size: 13px; cursor: pointer; font-weight: 700; transition: all 0.2s; user-select: none; white-space: nowrap; }
 .btn-logout:hover { background: var(--danger); color: #ffffff; }
 .btn-admin-key { background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.3); color: var(--warning); padding: 8px 16px; border-radius: 8px; font-size: 13px; cursor: pointer; font-weight: 700; transition: all 0.2s; user-select: none; white-space: nowrap; }
@@ -472,14 +483,20 @@ body {
 }
 .online-medics-list {
     min-width: 0;
-    display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
     gap: 6px;
 }
 .online-medic-name {
     min-width: 0;
-    display: block;
-    padding: 5px 7px;
+    flex: 0 1 calc((100% - 24px) / 5);
+    min-width: 90px;
+    max-width: 220px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 5px 9px;
     border-radius: 7px;
     border: 1px solid rgba(56, 189, 248, 0.16);
     background: rgba(8, 12, 20, 0.35);
@@ -488,10 +505,11 @@ body {
     font-weight: 800;
     line-height: 1.25;
     text-align: center;
-    white-space: normal;
-    overflow-wrap: anywhere;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
-.online-medic-empty { grid-column: 1 / -1; color: var(--text-muted); font-weight: 600; }
+.online-medic-empty { flex: 1 1 100%; max-width: none; color: var(--text-muted); font-weight: 600; }
 .online-dot { width: 10px; height: 10px; flex: 0 0 10px; background: var(--success); border-radius: 50%; display: inline-block; box-shadow: 0 0 10px var(--success); }
 
 @media (max-width: 1180px) {
@@ -504,8 +522,8 @@ body {
     .medic-identity-display, .online-medics, .top-bar-controls { grid-column: 1; }
     .online-medics { grid-row: auto; grid-template-columns: 1fr; }
     .online-medics-heading { min-height: auto; }
-    .online-medics-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .top-bar-controls { justify-content: flex-start; flex-wrap: wrap; }
+    .online-medics-list { width: 100%; }
+    .top-bar-controls { min-width: 0; width: 100%; grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 /* TAB NAVIGATION & NEWS BADGE */
