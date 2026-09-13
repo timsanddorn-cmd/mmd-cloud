@@ -139,7 +139,7 @@ const DEFAULT_MD_LOGO_FALLBACK = "data:image/svg+xml;utf8,<svg xmlns='http://www
 
 /* ── Firebase Init ─────────────────────────────────────────── */
 const FIREBASE_CONFIG = {
-    apiKey: "AIzaSyDq_VRrDZG4gK1zHWBPiLn6mPuVe31MFro",
+    apiKey: "AIzaSyDq_VRrDZG4gK1zHWBpiLn6mPuVe31MFro",
     authDomain: "mmd-live.firebaseapp.com",
     databaseURL: "https://mmd-live-default-rtdb.europe-west1.firebasedatabase.app",
     projectId: "mmd-live",
