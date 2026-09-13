@@ -1,6 +1,6 @@
 # 📋 Aufgabenliste: Wünsche, Verbesserungen & Bugs (MD-Portal)
 
-Diese Datei dient als zentrale Dokumentations- und Übergabeliste für zukünftige Weiterentwicklungen der Homepage des Medical Departments (MD). 
+Diese Datei dient als zentrale Dokumentations- und Übergabeliste für zukünftige Weiterentwicklungen der Homepage des Medical Departments (MD).
 Eingetragene Punkte können gesammelt und bei anstehenden System-Updates strukturiert abgearbeitet werden.
 
 ---
@@ -20,10 +20,8 @@ Eingetragene Punkte können gesammelt und bei anstehenden System-Updates struktu
 
 ## 🗂️ Aktuelle Aufgaben- & Einreichungsliste
 
-| ID | Datum | Kategorie | Titel & Beschreibung | Status | Einreicher | Entscheidung / Begründung (bei Ablehnung) |
-|---|---|---|---|---|---|---|
-| *Bsp-01* | 12.09.2026 | *Verbesserung* | **Filter im Archiv**: Zusätzliche Monatsauswahl für alte Schichten | *Angenommen* | Leitung | Sinnvoll für spätere Quartalsberichte. |
-| *Bsp-02* | 12.09.2026 | *Wunsch* | **Sound-Effekt beim Notruf-Klick** | *Abgelehnt* | Max Mustermann | Technisch nicht sinnvoll bzw. stört den Funkablauf. |
+Aktuell sind in dieser manuellen Übergabedatei **keine offenen Einträge hinterlegt**.
+Live eingereichte Wünsche und Bug-Meldungen werden weiterhin über das integrierte Wünsche- & Prüfcenter in Firebase verwaltet und können dort als Markdown exportiert werden.
 
 ---
 
@@ -40,3 +38,4 @@ Kopiere diese Vorlage, wenn du neue Punkte direkt in GitHub notieren möchtest:
 * **Beschreibung:** Detaillierte Schilderung des Anliegens.
 * **Betroffener Bereich:** z.B. Dokumentation, Funk, Kalender, Admin
 * **Entscheidung / Begründung:** (Pflichtfeld bei Ablehnung)
+```

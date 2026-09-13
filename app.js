@@ -1,7 +1,6 @@
 // ============================================================
-//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.1.0
+//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.3.0
 //  Firebase Realtime Database (Compat SDK v10)
-//  [TEIL 1 VON 3]
 // ============================================================
 
 /* ── XSS-Schutz: HTML Sanitization Helper ───────────────────── */
@@ -13,6 +12,15 @@ function escapeHtml(str) {
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#039;');
+}
+
+function escapeJsArg(value) {
+    return escapeHtml(JSON.stringify(String(value ?? '')));
+}
+
+function sanitizeRoleColor(value, fallback = '#38bdf8') {
+    const v = String(value || '').trim();
+    return /^#[0-9a-f]{6}$/i.test(v) ? v : fallback;
 }
 
 /* ── Text-Parser: Links in Texten klickbar machen ─────────── */
@@ -28,10 +36,68 @@ function formatTextWithLinks(text) {
 function sanitizeUrl(url) {
     if (!url) return '#';
     let trimmed = String(url).trim();
-    if (!trimmed.startsWith('http://') && !trimmed.startsWith('https://')) {
-        trimmed = 'https://' + trimmed;
+    if (!/^https?:\/\//i.test(trimmed)) trimmed = 'https://' + trimmed;
+    try {
+        const parsed = new URL(trimmed);
+        if (!['http:', 'https:'].includes(parsed.protocol)) return '#';
+        return parsed.href;
+    } catch (_) {
+        return '#';
     }
-    return encodeURI(trimmed);
+}
+
+/* ── Einmalige Legacy-Passwortprüfung für Firebase-Auth-Migration ── */
+const PASSWORD_HASH_ITERATIONS = 180000;
+
+function bytesToBase64(bytes) {
+    let binary = '';
+    bytes.forEach(b => { binary += String.fromCharCode(b); });
+    return btoa(binary);
+}
+
+function base64ToBytes(base64) {
+    const binary = atob(base64);
+    return Uint8Array.from(binary, c => c.charCodeAt(0));
+}
+
+async function derivePasswordHash(password, saltBase64, iterations = PASSWORD_HASH_ITERATIONS) {
+    if (!window.crypto?.subtle) throw new Error('Sichere Passwortverschlüsselung wird von diesem Browser nicht unterstützt.');
+    const enc = new TextEncoder();
+    const key = await crypto.subtle.importKey('raw', enc.encode(password), { name: 'PBKDF2' }, false, ['deriveBits']);
+    const bits = await crypto.subtle.deriveBits({
+        name: 'PBKDF2',
+        salt: base64ToBytes(saltBase64),
+        iterations: Number(iterations) || PASSWORD_HASH_ITERATIONS,
+        hash: 'SHA-256'
+    }, key, 256);
+    return bytesToBase64(new Uint8Array(bits));
+}
+
+async function verifyUserPassword(user, password) {
+    if (!user || !password) return false;
+    if (user.passwordHash && user.passwordSalt) {
+        const candidate = await derivePasswordHash(password, user.passwordSalt, user.passwordIterations || PASSWORD_HASH_ITERATIONS);
+        return candidate === user.passwordHash;
+    }
+    return typeof user.pass === 'string' && user.pass === password;
+}
+
+function stripSensitiveUserData(user) {
+    if (!user || typeof user !== 'object') return user;
+    const clean = { ...user };
+    delete clean.pass;
+    delete clean.passwordHash;
+    delete clean.passwordSalt;
+    delete clean.passwordAlgo;
+    delete clean.passwordIterations;
+    delete clean.passwordVersion;
+    delete clean.passwordUpdatedAt;
+    return clean;
+}
+
+function clearStoredSessionData() {
+    ['mmd_session_active', 'mmd_session_user', 'mmd_session_date', 'mmd_session_user_id'].forEach(k => sessionStorage.removeItem(k));
+    ['mmd_session_active', 'mmd_session_user', 'mmd_session_date', 'mmd_session_user_id'].forEach(k => localStorage.removeItem(k));
 }
 
 /* ── Robuste, einheitliche Benutzer-ID Normalisierung ──────── */
@@ -41,6 +107,24 @@ function generateUserId(vorname, nachname) {
     const cleanN = (nachname || '').trim().toLowerCase()
         .replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue').replace(/ß/g, 'ss');
     return (cleanV + '_' + cleanN).replace(/[^a-z0-9_]/g, '');
+}
+
+/* Die technische Account-ID bleibt dauerhaft stabil, auch wenn Name oder DN geändert werden. */
+function getUserAccountId(user = sessionUser) {
+    if (!user) return '';
+    const stableId = String(user.accountId || '').trim();
+    return stableId || generateUserId(user.vorname, user.nachname);
+}
+
+function withStableAccountId(uId, user) {
+    if (!user || typeof user !== 'object') return user;
+    return Object.assign({}, stripSensitiveUserData(user), { accountId: uId });
+}
+
+function canCurrentUserManageFeedback() {
+    if (!sessionUser) return false;
+    const eff = getUserEffectivePermissions(sessionUser);
+    return !!(eff.isAdmin || eff.isMasterAdmin || eff.canManageFeedback);
 }
 
 function normalizeKats(raw) {
@@ -54,9 +138,45 @@ function normalizeKats(raw) {
 const DEFAULT_MD_LOGO_FALLBACK = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%230f172a'/><path d='M42 20h16v22h22v16H58v22H42V58H20V42h22V20z' fill='%2338bdf8'/><circle cx='50' cy='50' r='46' fill='none' stroke='%2338bdf8' stroke-width='4'/></svg>";
 
 /* ── Firebase Init ─────────────────────────────────────────── */
-const FIREBASE_DB_URL = "https://mmd-live-default-rtdb.europe-west1.firebasedatabase.app";
-firebase.initializeApp({ databaseURL: FIREBASE_DB_URL });
+const FIREBASE_CONFIG = {
+    apiKey: "AIzaSyDq_VRrDZG4gK1zHWBPiLn6mPuVe31MFro",
+    authDomain: "mmd-live.firebaseapp.com",
+    databaseURL: "https://mmd-live-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "mmd-live",
+    storageBucket: "mmd-live.firebasestorage.app",
+    messagingSenderId: "485210653639",
+    appId: "1:485210653639:web:804c42fffe48749bf38fe2"
+};
+firebase.initializeApp(FIREBASE_CONFIG);
 const db = firebase.database();
+const auth = firebase.auth();
+const FIREBASE_AUTH_EMAIL_DOMAIN = 'mmd-login.invalid';
+
+async function configureFirebaseAuthPersistence() {
+    try {
+        await auth.setPersistence(firebase.auth.Auth.Persistence.SESSION);
+    } catch (err) {
+        console.warn('Firebase-Auth-Persistenz konnte nicht gesetzt werden:', err);
+    }
+}
+
+function getTechnicalAuthEmail(uId, version = 1) {
+    const safeId = String(uId || '').toLowerCase().replace(/[^a-z0-9_]/g, '');
+    const safeVersion = Math.max(1, Number(version) || 1);
+    return `${safeId}.v${safeVersion}@${FIREBASE_AUTH_EMAIL_DOMAIN}`;
+}
+
+function waitForFirebaseAuthReady() {
+    return new Promise(resolve => {
+        const unsubscribe = auth.onAuthStateChanged(user => {
+            unsubscribe();
+            resolve(user || null);
+        }, () => {
+            unsubscribe();
+            resolve(null);
+        });
+    });
+}
 
 /* ── Session-State ─────────────────────────────────────────── */
 let sessionUser       = null;
@@ -117,6 +237,47 @@ let hierarchieDaten = JSON.parse(JSON.stringify(defaultHierarchieData));
 
 /* ── Vollständiger Gesamt-Changelog (Entwicklungsverlauf) ───── */
 const systemChangelogs = [
+    {
+        id: "sys_v6_3_0",
+        version: "v6.3.0",
+        date: "13.09.2026",
+        ts: 1789335600001,
+        category: "Bugfix",
+        title: "Stabilitäts-, Sicherheits- & Navigationsbereinigung",
+        changes: [
+            "Navigation repariert: Einstellungen und Ausbildungsbereich sind wieder zuverlässig erreichbar.",
+            "Prüfcenter bereinigt: Doppelte Element-IDs und fehlerhafte Unterreiter wurden getrennt, sodass beide Prüfungsansichten korrekt arbeiten.",
+            "Anmeldung grundlegend abgesichert: Passwörter werden jetzt von Firebase Authentication verwaltet und nicht mehr in der Realtime Database gespeichert.",
+            "Sitzungsschutz verbessert: Die Anmeldung wird über eine echte Firebase-Sitzung geprüft; sensible Benutzer- und Passwortdaten werden nicht mehr im Browser gespeichert.",
+            "Berechtigungen gehärtet: Kritische Schreib-, Rollen-, Prüfungs- und Backup-Funktionen prüfen ihre Rechte nun direkt beim Ausführen und werden zusätzlich durch Firebase-Zugriffsregeln abgesichert.",
+            "Direktzugriffe abgesichert: Kalender-, News-, Feedback- und Prüfungsaktionen prüfen nun auch bei direktem Funktionsaufruf die jeweilige Berechtigung.",
+            "Master-Admin-Schutz: Namensbasierte Sonderrechte wurden entfernt und privilegierte Rollen können nur noch durch Master-Admins vergeben oder verändert werden.",
+            "Archivierung abgesichert: Neue Einträge während der Mitternachtsarchivierung werden nicht mehr versehentlich mitgelöscht.",
+            "Altlasten entfernt: Verwaiste Feedback-Verwaltung und weitere tote Referenzen wurden aus dem laufenden Code entfernt.",
+            "Login-Design überarbeitet: Die Anmelde- und Registrierungsseite wurde vollständig an die dunkle MMD-Optik mit blauen Akzenten, Kartenstil und mobiler Darstellung angepasst.",
+            "Dienstleiste stabilisiert: Die Liste der im Dienst befindlichen Mitarbeiter zeigt höchstens fünf Personen pro Zeile und wächst bei mehr Kollegen nur nach unten; Datum und Aktionsbuttons bleiben an ihrem festen Platz.",
+            "Wünsche & Bugs neu geordnet: Meldungen werden jetzt in einem eigenen Bereich eingereicht; berechtigte Rollen erhalten dort einen zusätzlichen Verwaltungsreiter. Der doppelte Admin-Prüfcenter-Bereich wurde entfernt.",
+            "Alte Wunsch-/Bug-Einträge repariert: Auch unvollständige Alt-Einträge ohne gespeicherte interne ID können wieder eindeutig erkannt und gelöscht werden.",
+            "Mitarbeiterdaten flexibel: Dienstnummer, Vorname und Nachname können bei Beförderung, Heirat oder Namensänderung angepasst werden, ohne dass Rollen, Prüfungen, Fotos, News-Lesebestätigungen oder das Konto ihre feste Zuordnung verlieren.",
+            "Neue Systemrolle Chief-Ebene: Die Rolle übernimmt den vollständigen Funktionsumfang der Admin-Rolle, bleibt aber unterhalb des Master-Admins."
+        ]
+    },
+    {
+        id: "sys_v6_2_0",
+        version: "v6.2.0",
+        date: "13.09.2026",
+        ts: 1789335600000,
+        category: "Update",
+        title: "Direktes Prüfcenter, Tabellen-Schrift & Workflow-Optimierungen",
+        changes: [
+            "Prüfcenter-Direktzugriff: Admins und Master-Admins können Wünsche und Bug-Meldungen direkt über die Hauptleiste aufrufen – ohne Passwort-Eingabe.",
+            "Direkte Inline-Ablehnung: Die Begründung bei einer Ablehnung wird nun direkt in der Zeile eingegeben, ohne störende Hintergrundfenster.",
+            "Mülleimer-Reparatur: Abgelehnte oder erledigte Meldungen können nun verlässlich und fehlerfrei von Administratoren gelöscht werden.",
+            "Lesbarkeit verbessert: Schriftgrößen in allen Tabellen wurden spürbar auf 15px vergrößert für ein ruhigeres und augenschonendes Arbeiten.",
+            "Mitarbeiter-Kartei: Porträtfotos und Dienstlogos wurden um 20 % vergrößert und füllen den Kartenrahmen harmonischer aus.",
+            "Code-Audit & Bereinigung: Fehlende Button-Styles nachgerüstet und Browser-Hinweise zu Formularfeldern vollständig bereinigt."
+        ]
+    },
     {
         id: "sys_v6_1_0",
         version: "v6.1.0",
@@ -224,108 +385,118 @@ const defaultRoles = {
     masteradmin: {
         id:'masteradmin', name:'Master-Admin', color:'#eab308', icon:'👑', isSystem:true,
         isAdmin:true, isMasterAdmin:true, canViewArchive:true, canEditAllPatients:true,
-        canCreateCalendar:true, delCalendar:true, canManagePhotos:true,
+        canCreateCalendar:true, delCalendar:true, canManagePhotos:true, delPhotos:true,
         isInstructor:true, canManageInstructors:true, canManageExams:true,
         canPostNews:true, canApproveNews:true, canViewNewsRead:true,
         canEditPrices:true, canEditGuide:true, canEditCommands:true, canEditLinks:true,
-        delPatient:true, delArchiv:true, delGuide:true, delCommands:true, delLinks:true, delNews:true, delExams:true, delUsers:true,
+        delPatient:true, delArchiv:true, delGuide:true, delCommands:true, delLinks:true, delNews:true, delExams:true, delUsers:true, canManageFeedback:true, delFeedback:true,
         allowedCmdKats: [], allowedLinkKats: []
     },
     admin: {
         id:'admin', name:'Admin', color:'#f59e0b', icon:'🛡️', isSystem:true,
         isAdmin:true, isMasterAdmin:false, canViewArchive:true, canEditAllPatients:true,
-        canCreateCalendar:true, delCalendar:true, canManagePhotos:true,
+        canCreateCalendar:true, delCalendar:true, canManagePhotos:true, delPhotos:true,
         isInstructor:true, canManageInstructors:true, canManageExams:true,
         canPostNews:true, canApproveNews:true, canViewNewsRead:true,
         canEditPrices:true, canEditGuide:true, canEditCommands:true, canEditLinks:true,
-        delPatient:true, delArchiv:true, delGuide:true, delCommands:true, delLinks:true, delNews:true, delExams:true, delUsers:false,
+        delPatient:true, delArchiv:true, delGuide:true, delCommands:true, delLinks:true, delNews:true, delExams:true, delUsers:false, canManageFeedback:true, delFeedback:true,
+        allowedCmdKats: [], allowedLinkKats: []
+    },
+    chiefebene: {
+        id:'chiefebene', name:'Chief-Ebene', color:'#fbbf24', icon:'⭐', isSystem:true,
+        isAdmin:true, isMasterAdmin:false, canViewArchive:true, canEditAllPatients:true,
+        canCreateCalendar:true, delCalendar:true, canManagePhotos:true, delPhotos:true,
+        isInstructor:true, canManageInstructors:true, canManageExams:true,
+        canPostNews:true, canApproveNews:true, canViewNewsRead:true,
+        canEditPrices:true, canEditGuide:true, canEditCommands:true, canEditLinks:true,
+        delPatient:true, delArchiv:true, delGuide:true, delCommands:true, delLinks:true, delNews:true, delExams:true, delUsers:false, canManageFeedback:true, delFeedback:true,
         allowedCmdKats: [], allowedLinkKats: []
     },
     ausbildungsleitung: {
         id:'ausbildungsleitung', name:'Ausbildungsleitung', color:'#c084fc', icon:'⚙️', isSystem:true,
         isAdmin:false, isMasterAdmin:false, canViewArchive:false, canEditAllPatients:false,
-        canCreateCalendar:true, delCalendar:false, canManagePhotos:false,
+        canCreateCalendar:true, delCalendar:false, canManagePhotos:false, delPhotos:false,
         isInstructor:true, canManageInstructors:true, canManageExams:true,
         canPostNews:true, canApproveNews:true, canViewNewsRead:true,
         canEditPrices:false, canEditGuide:false, canEditCommands:false, canEditLinks:false,
-        delPatient:false, delArchiv:false, delGuide:false, delCommands:false, delLinks:false, delNews:false, delExams:true, delUsers:false,
+        delPatient:false, delArchiv:false, delGuide:false, delCommands:false, delLinks:false, delNews:false, delExams:true, delUsers:false, canManageFeedback:false, delFeedback:false,
         allowedCmdKats: ['Ausbildung', 'Ausbildungsabteilung', 'Abkürzungen & Dokumente', 'T-Codes'],
         allowedLinkKats: ['Allgemein', 'Ausbildung', 'MD Intern']
     },
     ausbilder: {
         id:'ausbilder', name:'Ausbilder', color:'#8b5cf6', icon:'🎓', isSystem:true,
         isAdmin:false, isMasterAdmin:false, canViewArchive:false, canEditAllPatients:false,
-        canCreateCalendar:true, delCalendar:false, canManagePhotos:false,
+        canCreateCalendar:true, delCalendar:false, canManagePhotos:false, delPhotos:false,
         isInstructor:true, canManageInstructors:false, canManageExams:false,
         canPostNews:false, canApproveNews:false, canViewNewsRead:false,
         canEditPrices:false, canEditGuide:false, canEditCommands:false, canEditLinks:false,
-        delPatient:false, delArchiv:false, delGuide:false, delCommands:false, delLinks:false, delNews:false, delExams:false, delUsers:false,
+        delPatient:false, delArchiv:false, delGuide:false, delCommands:false, delLinks:false, delNews:false, delExams:false, delUsers:false, canManageFeedback:false, delFeedback:false,
         allowedCmdKats: ['Ausbildung', 'Ausbildungsabteilung', 'Abkürzungen & Dokumente', 'T-Codes'],
         allowedLinkKats: ['Allgemein', 'MD Intern']
     },
     cls: {
         id:'cls', name:'CLS-Ausbilder', color:'#06b6d4', icon:'💉', isSystem:true,
         isAdmin:false, isMasterAdmin:false, canViewArchive:false, canEditAllPatients:false,
-        canCreateCalendar:false, delCalendar:false, canManagePhotos:false,
+        canCreateCalendar:false, delCalendar:false, canManagePhotos:false, delPhotos:false,
         isInstructor:false, canManageInstructors:false, canManageExams:false,
         canPostNews:false, canApproveNews:false, canViewNewsRead:false,
         canEditPrices:false, canEditGuide:false, canEditCommands:false, canEditLinks:false,
-        delPatient:false, delArchiv:false, delGuide:false, delCommands:false, delLinks:false, delNews:false, delExams:false, delUsers:false,
+        delPatient:false, delArchiv:false, delGuide:false, delCommands:false, delLinks:false, delNews:false, delExams:false, delUsers:false, canManageFeedback:false, delFeedback:false,
         allowedCmdKats: ['Abkürzungen & Dokumente', 'T-Codes'],
         allowedLinkKats: ['Allgemein', 'CLS', 'MD Intern']
     },
     ehk: {
         id:'ehk', name:'EHK-Ausbilder', color:'#10b981', icon:'🩺', isSystem:true,
         isAdmin:false, isMasterAdmin:false, canViewArchive:false, canEditAllPatients:false,
-        canCreateCalendar:false, delCalendar:false, canManagePhotos:false,
+        canCreateCalendar:false, delCalendar:false, canManagePhotos:false, delPhotos:false,
         isInstructor:false, canManageInstructors:false, canManageExams:false,
         canPostNews:false, canApproveNews:false, canViewNewsRead:false,
         canEditPrices:false, canEditGuide:false, canEditCommands:false, canEditLinks:false,
-        delPatient:false, delArchiv:false, delGuide:false, delCommands:false, delLinks:false, delNews:false, delExams:false, delUsers:false,
+        delPatient:false, delArchiv:false, delGuide:false, delCommands:false, delLinks:false, delNews:false, delExams:false, delUsers:false, canManageFeedback:false, delFeedback:false,
         allowedCmdKats: ['Abkürzungen & Dokumente', 'T-Codes'],
         allowedLinkKats: ['Allgemein', 'EHK', 'MD Intern']
     },
     luftrettung: {
         id:'luftrettung', name:'Luftrettung', color:'#0284c7', icon:'🚁', isSystem:true,
         isAdmin:false, isMasterAdmin:false, canViewArchive:false, canEditAllPatients:false,
-        canCreateCalendar:true, delCalendar:false, canManagePhotos:false,
+        canCreateCalendar:true, delCalendar:false, canManagePhotos:false, delPhotos:false,
         isInstructor:false, canManageInstructors:false, canManageExams:false,
         canPostNews:false, canApproveNews:false, canViewNewsRead:false,
         canEditPrices:false, canEditGuide:false, canEditCommands:false, canEditLinks:false,
-        delPatient:false, delArchiv:false, delGuide:false, delCommands:false, delLinks:false, delNews:false, delExams:false, delUsers:false,
+        delPatient:false, delArchiv:false, delGuide:false, delCommands:false, delLinks:false, delNews:false, delExams:false, delUsers:false, canManageFeedback:false, delFeedback:false,
         allowedCmdKats: ['Abkürzungen & Dokumente', 'Allgemein', 'T-Codes'],
         allowedLinkKats: ['MD Intern']
     },
     psychologie: {
         id:'psychologie', name:'Psychologie', color:'#ec4899', icon:'🧠', isSystem:true,
         isAdmin:false, isMasterAdmin:false, canViewArchive:false, canEditAllPatients:false,
-        canCreateCalendar:true, delCalendar:true, canManagePhotos:false,
+        canCreateCalendar:true, delCalendar:true, canManagePhotos:false, delPhotos:false,
         isInstructor:false, canManageInstructors:false, canManageExams:false,
         canPostNews:true, canApproveNews:false, canViewNewsRead:true,
         canEditPrices:false, canEditGuide:false, canEditCommands:false, canEditLinks:false,
-        delPatient:false, delArchiv:false, delGuide:false, delCommands:false, delLinks:false, delNews:false, delExams:false, delUsers:false,
+        delPatient:false, delArchiv:false, delGuide:false, delCommands:false, delLinks:false, delNews:false, delExams:false, delUsers:false, canManageFeedback:false, delFeedback:false,
         allowedCmdKats: ['Abkürzungen & Dokumente', 'Psychologie', 'T-Codes'],
         allowedLinkKats: ['Allgemein', 'MD Intern', 'Psychologie']
     },
     personalabteilung: {
         id:'personalabteilung', name:'Personalabteilung', color:'#ec4899', icon:'💼', isSystem:true,
         isAdmin:false, isMasterAdmin:false, canViewArchive:false, canEditAllPatients:false,
-        canCreateCalendar:true, delCalendar:false, canManagePhotos:false,
+        canCreateCalendar:true, delCalendar:false, canManagePhotos:true, delPhotos:true,
         isInstructor:false, canManageInstructors:false, canManageExams:false,
         canPostNews:true, canApproveNews:true, canViewNewsRead:true,
         canEditPrices:false, canEditGuide:false, canEditCommands:false, canEditLinks:false,
-        delPatient:false, delArchiv:false, delGuide:false, delCommands:false, delLinks:false, delNews:true, delExams:false, delUsers:false,
+        delPatient:false, delArchiv:false, delGuide:false, delCommands:false, delLinks:false, delNews:true, delExams:false, delUsers:false, canManageFeedback:false, delFeedback:false,
         allowedCmdKats: ['Abkürzungen & Dokumente', 'T-Codes'],
         allowedLinkKats: ['Allgemein', 'MD Intern']
     },
     mitarbeiter: {
         id:'mitarbeiter', name:'Mitarbeiter', color:'#64748b', icon:'👨‍⚕️', isSystem:true,
         isAdmin:false, isMasterAdmin:false, canViewArchive:false, canEditAllPatients:false,
-        canCreateCalendar:true, delCalendar:false, canManagePhotos:false,
+        canCreateCalendar:true, delCalendar:false, canManagePhotos:false, delPhotos:false,
         isInstructor:false, canManageInstructors:false, canManageExams:false,
         canPostNews:false, canApproveNews:false, canViewNewsRead:false,
         canEditPrices:false, canEditGuide:false, canEditCommands:false, canEditLinks:false,
-        delPatient:false, delArchiv:false, delGuide:false, delCommands:false, delLinks:false, delNews:false, delExams:false, delUsers:false,
+        delPatient:false, delArchiv:false, delGuide:false, delCommands:false, delLinks:false, delNews:false, delExams:false, delUsers:false, canManageFeedback:false, delFeedback:false,
         allowedCmdKats: ['Abkürzungen & Dokumente', 'T-Codes'],
         allowedLinkKats: ['Allgemein', 'MD Intern']
     }
@@ -336,12 +507,15 @@ const ROLE_PROPERTY_MAP = {
     roleFlagAdmin: 'isAdmin',
     roleFlagMasterAdmin: 'isMasterAdmin',
     delFlagUsers: 'delUsers',
+    roleFlagManageFeedback: 'canManageFeedback',
+    delFlagFeedback: 'delFeedback',
     roleFlagEditPrices: 'canEditPrices',
     roleFlagArchive: 'canViewArchive',
     roleFlagEditAllPatients: 'canEditAllPatients',
     delFlagPatient: 'delPatient',
     delFlagArchiv: 'delArchiv',
     roleFlagManagePhotos: 'canManagePhotos',
+    delFlagPhotos: 'delPhotos',
     roleFlagCreateCalendar: 'canCreateCalendar',
     delFlagCalendar: 'delCalendar',
     roleFlagPostNews: 'canPostNews',
@@ -471,12 +645,11 @@ function logAdminAudit(action, details) {
         admin: (sessionUser.vorname || '') + ' ' + (sessionUser.nachname || ''),
         ts: Date.now()
     });
-}
+};
 
 // ============================================================
-//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.1.0
+//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.3.0
 //  Firebase Realtime Database (Compat SDK v10)
-//  [TEIL 2 VON 3]
 // ============================================================
 
 /* ── Rollen & Berechtigungen (Single Source of Truth) ──────── */
@@ -490,8 +663,7 @@ function getUserRolesList(user) {
             list = Object.keys(user.roles).filter(k => user.roles[k] === true);
         }
     }
-    const v = (user.vorname||'').trim().toLowerCase(), n = (user.nachname||'').trim().toLowerCase();
-    if ((user.isMasterAdmin || (v === 'tim' && n === 'sanddorn')) && !list.includes('masteradmin')) {
+    if (user.isMasterAdmin && !list.includes('masteradmin')) {
         list.unshift('masteradmin');
     }
     return [...new Set(list)];
@@ -500,11 +672,11 @@ function getUserRolesList(user) {
 function getUserEffectivePermissions(user) {
     const eff = {
         isAdmin:false, isMasterAdmin:false, canViewArchive:false, canEditAllPatients:false,
-        canCreateCalendar:true, delCalendar:false, canManagePhotos:false,
+        canCreateCalendar:true, delCalendar:false, canManagePhotos:false, delPhotos:false,
         isInstructor:false, canManageInstructors:false, canManageExams:false,
         canPostNews:false, canApproveNews:false, canViewNewsRead:false,
         canEditPrices:false, canEditGuide:false, canEditCommands:false, canEditLinks:false,
-        delPatient:false, delArchiv:false, delGuide:false, delCommands:false, delLinks:false, delNews:false, delExams:false, delUsers:false,
+        delPatient:false, delArchiv:false, delGuide:false, delCommands:false, delLinks:false, delNews:false, delExams:false, delUsers:false, canManageFeedback:false, delFeedback:false,
         allowedCmdKats: [],
         allowedLinkKats: []
     };
@@ -537,8 +709,7 @@ function getUserEffectivePermissions(user) {
         });
     });
 
-    const v = (user.vorname||'').trim().toLowerCase(), n = (user.nachname||'').trim().toLowerCase();
-    const isMaster = user.isMasterAdmin || (v === 'tim' && n === 'sanddorn') || roleIds.includes('masteradmin');
+    const isMaster = !!user.isMasterAdmin || roleIds.includes('masteradmin');
 
     if (isMaster || eff.isAdmin || hasUnrestrictedRole) {
         eff.allowedCmdKats = [];
@@ -556,6 +727,94 @@ function getUserEffectivePermissions(user) {
         eff.allowedLinkKats = [];
     }
     return eff;
+}
+
+const SERVER_PERMISSION_KEYS = [
+    'isAdmin','isMasterAdmin','canViewArchive','canEditAllPatients',
+    'canCreateCalendar','delCalendar','canManagePhotos','delPhotos',
+    'isInstructor','canManageInstructors','canManageExams',
+    'canPostNews','canApproveNews','canViewNewsRead',
+    'canEditPrices','canEditGuide','canEditCommands','canEditLinks',
+    'delPatient','delArchiv','delGuide','delCommands','delLinks',
+    'delNews','delExams','delUsers','canManageFeedback','delFeedback'
+];
+
+function buildServerPermissions(user) {
+    const eff = getUserEffectivePermissions(user || {});
+    const out = {};
+    SERVER_PERMISSION_KEYS.forEach(key => { out[key] = !!eff[key]; });
+    return out;
+}
+
+async function syncServerPermissionsForUser(uId, userOverride = null) {
+    if (!uId) return;
+    const user = userOverride || cachedUsers[uId];
+    if (!user) return;
+    await db.ref(`data/users/${uId}/serverPermissions`).set(buildServerPermissions(user));
+}
+
+async function syncServerPermissionsForAllUsers() {
+    if (!sessionUser) return;
+    const eff = getUserEffectivePermissions(sessionUser);
+    if (!eff.isAdmin && !eff.isMasterAdmin) return;
+    const snap = await db.ref('data/users').once('value');
+    const users = snap.val() || {};
+    const updates = {};
+    Object.entries(users).forEach(([uId, user]) => {
+        updates[`data/users/${uId}/serverPermissions`] = buildServerPermissions(user);
+    });
+    if (Object.keys(updates).length) await db.ref().update(updates);
+}
+
+function requirePermission(permissionNames, message = 'Keine Berechtigung für diese Aktion!') {
+    if (!sessionUser) {
+        alert('Bitte zuerst anmelden.');
+        return false;
+    }
+    const eff = getUserEffectivePermissions(sessionUser);
+    const names = Array.isArray(permissionNames) ? permissionNames : [permissionNames];
+    if (names.some(name => !!eff[name])) return true;
+    alert(message);
+    return false;
+}
+
+function requireAdminAccess(message = 'Diese Funktion ist nur für Administratoren verfügbar!') {
+    return requirePermission(['isAdmin', 'isMasterAdmin'], message);
+}
+
+function requireMasterAdminAccess(message = 'Diese Funktion ist nur für Master-Admins verfügbar!') {
+    return requirePermission('isMasterAdmin', message);
+}
+
+function isPrivilegedUser(user) {
+    if (!user) return false;
+    const roles = getUserRolesList(user);
+    const hasPrivilegedRole = roles.some(rId => {
+        const role = cachedRoles[rId] || defaultRoles[rId];
+        return !!(role?.isAdmin || role?.isMasterAdmin || rId === 'admin' || rId === 'masteradmin');
+    });
+    return !!(user.isAdmin || user.isMasterAdmin || hasPrivilegedRole);
+}
+
+function canCurrentUserManageTargetUser(uId) {
+    if (!sessionUser) return false;
+    const eff = getUserEffectivePermissions(sessionUser);
+    if (!eff.isAdmin && !eff.isMasterAdmin && !eff.canManageInstructors) return false;
+    const target = cachedUsers[uId];
+    if (target && isPrivilegedUser(target) && !eff.isMasterAdmin) return false;
+    return true;
+}
+
+function requireTargetUserManagement(uId) {
+    if (canCurrentUserManageTargetUser(uId)) return true;
+    alert('Privilegierte Admin-Konten dürfen nur von einem Master-Admin verändert werden!');
+    return false;
+}
+
+function canCurrentUserManageExams() {
+    if (!sessionUser) return false;
+    const eff = getUserEffectivePermissions(sessionUser);
+    return !!(eff.canManageExams || eff.isAdmin || eff.isMasterAdmin);
 }
 
 function canUserManageEmployeePhotos() {
@@ -578,7 +837,7 @@ function canInstructorAccessExam(examId) {
     if (eff.isAdmin || eff.isMasterAdmin || eff.canManageInstructors || eff.canManageExams) {
         return true;
     }
-    const myPassed = (sessionUser.passedExams) || (cachedUsers[generateUserId(sessionUser.vorname, sessionUser.nachname)]?.passedExams) || {};
+    const myPassed = (sessionUser.passedExams) || (cachedUsers[getUserAccountId(sessionUser)]?.passedExams) || {};
     return !!myPassed[examId];
 }
 
@@ -594,8 +853,8 @@ function renderUserRoleBadges(user, isTopBar = false) {
         const badgesHtml = topRoles.map(rId => {
             const r = cachedRoles[rId] || defaultRoles[rId];
             if (!r) return '';
-            const c = r.color || '#38bdf8';
-            return `<span class="user-role-badge" style="background:${c}22;color:${c};border:1px solid ${c}44;font-size:11px;padding:2px 8px;border-radius:6px;white-space:nowrap;">${r.icon ? r.icon + ' ' : ''}${escapeHtml(r.name)}</span>`;
+            const c = sanitizeRoleColor(r.color);
+            return `<span class="user-role-badge" style="background:${c}22;color:${c};border:1px solid ${c}44;font-size:11px;padding:2px 8px;border-radius:6px;white-space:nowrap;">${r.icon ? escapeHtml(r.icon) + ' ' : ''}${escapeHtml(r.name)}</span>`;
         }).join('');
         return badgesHtml + `<span class="user-role-badge" title="${allNames}" style="background:rgba(255,255,255,0.1);color:var(--text-muted);border:1px solid var(--border);font-size:10px;padding:2px 6px;border-radius:6px;cursor:pointer;white-space:nowrap;">+${remaining} weitere</span>`;
     }
@@ -603,57 +862,284 @@ function renderUserRoleBadges(user, isTopBar = false) {
     return roleIds.map(rId => {
         const r = cachedRoles[rId] || defaultRoles[rId];
         if (!r) return '';
-        const c = r.color || '#38bdf8';
-        return `<span class="user-role-badge" style="background:${c}22;color:${c};border:1px solid ${c}44;font-size:11px;padding:2px 8px;border-radius:6px;white-space:nowrap;display:inline-block;margin:2px;">${r.icon ? r.icon + ' ' : ''}${escapeHtml(r.name)}</span>`;
+        const c = sanitizeRoleColor(r.color);
+        return `<span class="user-role-badge" style="background:${c}22;color:${c};border:1px solid ${c}44;font-size:11px;padding:2px 8px;border-radius:6px;white-space:nowrap;display:inline-block;margin:2px;">${r.icon ? escapeHtml(r.icon) + ' ' : ''}${escapeHtml(r.name)}</span>`;
     }).join('');
 }
 
 /* ── Authentifizierung ─────────────────────────────────────── */
 function toggleAuthTab(tab) {
     currentAuthTab = tab;
-    document.getElementById('tabLoginBtn').classList.toggle('active', tab==='login');
-    document.getElementById('tabRegisterBtn').classList.toggle('active', tab==='register');
-    document.getElementById('mainAuthActionBtn').textContent = tab==='login' ? 'Dienst antreten' : 'Account beantragen';
-    document.getElementById('authPassword').placeholder = tab==='login' ? 'Passwort' : 'Passwort ausdenken';
+    const loginBtn = document.getElementById('tabLoginBtn');
+    const registerBtn = document.getElementById('tabRegisterBtn');
+    loginBtn?.classList.toggle('active', tab === 'login');
+    registerBtn?.classList.toggle('active', tab === 'register');
+    loginBtn?.setAttribute('aria-selected', tab === 'login' ? 'true' : 'false');
+    registerBtn?.setAttribute('aria-selected', tab === 'register' ? 'true' : 'false');
+    document.getElementById('mainAuthActionBtn').textContent = tab === 'login' ? 'Dienst antreten' : 'Account beantragen';
+    document.getElementById('authPassword').placeholder = tab === 'login' ? 'Passwort' : 'Passwort ausdenken';
     const dnC = document.getElementById('authDNContainer');
-    if (dnC) dnC.style.display = tab==='login' ? 'none' : 'block';
+    if (dnC) dnC.style.display = tab === 'login' ? 'none' : 'block';
 }
 
-function handleAuthAction() {
-    const v = (document.getElementById('authVorname')?.value||'').trim();
-    const n = (document.getElementById('authNachname')?.value||'').trim();
-    const p = (document.getElementById('authPassword')?.value||'').trim();
-    if (!v || !n || !p) { alert('Bitte alle Felder ausfüllen!'); return; }
-    const uId = generateUserId(v, n);
+async function readLoginDirectory(loginKey) {
+    try {
+        const snap = await db.ref(`data/loginDirectory/${loginKey}`).once('value');
+        const raw = snap.val();
+        if (!raw || typeof raw !== 'object') return { loginKey, accountId: loginKey, version: 0, exists: false };
+        const versionRaw = Number(raw.version);
+        const version = Number.isFinite(versionRaw) && versionRaw >= 1 ? Math.floor(versionRaw) : 0;
+        const accountId = (typeof raw.accountId === 'string' && raw.accountId.trim()) ? raw.accountId.trim() : loginKey;
+        return { loginKey, accountId, version, exists: true, deleted: !!raw.deleted };
+    } catch (_) {
+        return { loginKey, accountId: loginKey, version: 0, exists: false };
+    }
+}
 
-    if (currentAuthTab === 'register') {
-        const dn = (document.getElementById('authDN')?.value||'').trim();
-        if (!dn) { alert('Bitte Dienstnummer eingeben!'); return; }
-        db.ref('data/users/'+uId).once('value', snap => {
-            if (snap.val()) { alert('Dieser Name ist bereits registriert!'); return; }
-            const todayIso = new Date().toISOString().split('T')[0];
-            const newUser = {
-                vorname: v, nachname: n, pass: p, dn: dn, status: 'pending',
-                date: new Date().toLocaleDateString('de-DE'),
-                einstellungsDatum: todayIso,
-                roles: { mitarbeiter: true },
-                photoUrl: 'mdlogo.png'
-            };
-            db.ref('data/users/'+uId).set(newUser).then(() => {
-                alert('Registrierung erfolgreich! Bitte warten Sie auf die Freischaltung durch die Leitung.');
-                location.reload();
-            });
-        });
-    } else {
-        db.ref('data/users/'+uId).once('value', snap => {
-            const user = snap.val();
-            if (!user || user.pass !== p) { alert('Falscher Name oder falsches Passwort!'); return; }
-            if (user.status !== 'approved' && !user.isAdmin && !user.isMasterAdmin) {
-                alert('Dein Account wurde noch nicht freigeschaltet oder ist gesperrt!');
-                return;
+async function readLoginVersion(loginKey) {
+    const directory = await readLoginDirectory(loginKey);
+    return directory.version;
+}
+
+async function loadAuthenticatedProfile(firebaseUser) {
+    if (!firebaseUser) throw new Error('Keine Firebase-Anmeldung vorhanden.');
+    const indexSnap = await db.ref(`data/authIndex/${firebaseUser.uid}`).once('value');
+    const uId = indexSnap.val();
+    if (!uId || typeof uId !== 'string') {
+        throw new Error('Dieser Firebase-Zugang ist keinem MD-Mitarbeiterkonto zugeordnet.');
+    }
+
+    const userSnap = await db.ref(`data/users/${uId}`).once('value');
+    const user = userSnap.val();
+    if (!user) throw new Error('Das zugehörige MD-Mitarbeiterkonto wurde nicht gefunden.');
+    if (user.authUid && user.authUid !== firebaseUser.uid) {
+        throw new Error('Dieser Firebase-Zugang wurde durch einen neueren Zugang ersetzt.');
+    }
+    return { uId, user: withStableAccountId(uId, user) };
+}
+
+async function completeFirebaseAuthMapping(uId, rawUser, firebaseUser, version = 1) {
+    if (!uId || !rawUser || !firebaseUser) throw new Error('Unvollständige Auth-Migration.');
+    const loginKey = generateUserId(rawUser.vorname, rawUser.nachname);
+    const cleanUserForPermissions = Object.assign({}, rawUser, { accountId: uId, loginKey, authUid: firebaseUser.uid, authVersion: version });
+    const updates = {};
+    updates[`data/authIndex/${firebaseUser.uid}`] = uId;
+    updates[`data/loginDirectory/${loginKey}`] = { version: Math.max(1, Number(version) || 1), accountId: uId };
+    updates[`data/users/${uId}/accountId`] = uId;
+    updates[`data/users/${uId}/loginKey`] = loginKey;
+    updates[`data/users/${uId}/authUid`] = firebaseUser.uid;
+    updates[`data/users/${uId}/authVersion`] = Math.max(1, Number(version) || 1);
+    updates[`data/users/${uId}/serverPermissions`] = buildServerPermissions(cleanUserForPermissions);
+    updates[`data/users/${uId}/pass`] = null;
+    updates[`data/users/${uId}/passwordHash`] = null;
+    updates[`data/users/${uId}/passwordSalt`] = null;
+    updates[`data/users/${uId}/passwordAlgo`] = null;
+    updates[`data/users/${uId}/passwordIterations`] = null;
+    updates[`data/users/${uId}/passwordVersion`] = null;
+    updates[`data/users/${uId}/passwordUpdatedAt`] = null;
+
+    const previousLoginKey = rawUser.loginKey || uId;
+    if (previousLoginKey && previousLoginKey !== loginKey) {
+        updates[`data/loginDirectory/${previousLoginKey}`] = null;
+    }
+
+    if (rawUser.authUid && rawUser.authUid !== firebaseUser.uid) {
+        updates[`data/authIndex/${rawUser.authUid}`] = null;
+    }
+    await db.ref().update(updates);
+}
+
+async function migrateLegacyUserOnLogin(uId, password) {
+    let snap;
+    try {
+        snap = await db.ref(`data/users/${uId}`).once('value');
+    } catch (err) {
+        const e = new Error('Dieser ältere Account wurde noch nicht in Firebase Authentication übernommen. Bitte den Master-Admin kontaktieren.');
+        e.code = 'mmd/legacy-migration-locked';
+        throw e;
+    }
+
+    const rawUser = snap.val();
+    if (!rawUser || !(await verifyUserPassword(rawUser, password))) {
+        const e = new Error('Falscher Name oder falsches Passwort!');
+        e.code = 'mmd/invalid-credentials';
+        throw e;
+    }
+
+    const effectiveStatus = rawUser.status || ((rawUser.isAdmin || rawUser.isMasterAdmin) ? 'approved' : 'pending');
+    if (effectiveStatus !== 'approved') {
+        const e = new Error('Dein Account wurde noch nicht freigeschaltet oder ist gesperrt!');
+        e.code = 'mmd/account-not-approved';
+        throw e;
+    }
+
+    let firebasePassword = password;
+    if (firebasePassword.length < 6) {
+        const replacement = prompt(
+            'Dein bisheriges MD-Passwort ist kürzer als die von Firebase vorgeschriebenen 6 Zeichen.\n\n' +
+            'Bitte lege jetzt einmalig ein neues Passwort mit mindestens 6 Zeichen fest. Dieses neue Passwort gilt anschließend für deine MD-Anmeldung.'
+        );
+        if (!replacement || replacement.length < 6) {
+            const e = new Error('Für die sichere Umstellung wird ein neues Passwort mit mindestens 6 Zeichen benötigt.');
+            e.code = 'mmd/password-too-short';
+            throw e;
+        }
+        firebasePassword = replacement;
+    }
+
+    const version = Math.max(1, Number(rawUser.authVersion) || 1);
+    const email = getTechnicalAuthEmail(uId, version);
+    let credential;
+
+    try {
+        credential = await auth.createUserWithEmailAndPassword(email, firebasePassword);
+    } catch (err) {
+        if (err?.code === 'auth/email-already-in-use') {
+            credential = await auth.signInWithEmailAndPassword(email, firebasePassword);
+        } else {
+            throw err;
+        }
+    }
+
+    await completeFirebaseAuthMapping(uId, rawUser, credential.user, version);
+    return { uId, user: withStableAccountId(uId, Object.assign({}, rawUser, {
+        accountId: uId,
+        loginKey: generateUserId(rawUser.vorname, rawUser.nachname),
+        authUid: credential.user.uid,
+        authVersion: version,
+        serverPermissions: buildServerPermissions(rawUser)
+    })) };
+}
+
+async function registerNewFirebaseUser(v, n, p, dn) {
+    const loginKey = generateUserId(v, n);
+    const uId = loginKey; // initiale feste Account-ID; sie bleibt auch bei späteren Namensänderungen bestehen
+    if (!uId) throw new Error('Aus Vor- und Nachname konnte keine gültige Benutzer-ID erzeugt werden.');
+
+    const knownDirectory = await readLoginDirectory(loginKey);
+    if (knownDirectory.exists && !knownDirectory.deleted) {
+        const e = new Error('Dieser Name ist bereits registriert!');
+        e.code = 'mmd/already-registered';
+        throw e;
+    }
+
+    // Während der einmaligen Migration kann ein älterer Datensatz bereits existieren,
+    // obwohl noch kein Login-Verzeichnis angelegt wurde.
+    try {
+        const existingSnap = await db.ref(`data/users/${uId}`).once('value');
+        if (existingSnap.exists()) {
+            const e = new Error('Dieser Name ist bereits registriert!');
+            e.code = 'mmd/already-registered';
+            throw e;
+        }
+    } catch (err) {
+        if (err?.code === 'mmd/already-registered') throw err;
+        // Unter den finalen Regeln darf ein nicht zugeordneter Neu-Account die Benutzerliste
+        // nicht vorab lesen. Dann übernimmt Firebase Auth + authIndex die Kollisionsprüfung.
+    }
+
+    const version = 1;
+    const email = getTechnicalAuthEmail(uId, version);
+    let credential = null;
+
+    try {
+        credential = await auth.createUserWithEmailAndPassword(email, p);
+        const firebaseUser = credential.user;
+        const todayIso = new Date().toLocaleDateString('sv-SE');
+        const baseUser = {
+            accountId: uId,
+            loginKey,
+            vorname: v,
+            nachname: n,
+            dn,
+            status: 'pending',
+            date: new Date().toLocaleDateString('de-DE'),
+            einstellungsDatum: todayIso,
+            roles: { mitarbeiter: true },
+            photoUrl: 'mdlogo.png',
+            authUid: firebaseUser.uid,
+            authVersion: version
+        };
+        baseUser.serverPermissions = buildServerPermissions(baseUser);
+
+        await db.ref(`data/loginDirectory/${loginKey}`).set({ version, accountId: uId });
+        await db.ref(`data/authIndex/${firebaseUser.uid}`).set(uId);
+        await db.ref(`data/users/${uId}`).set(baseUser);
+
+        await auth.signOut();
+        return uId;
+    } catch (err) {
+        if (credential?.user) {
+            try { await credential.user.delete(); } catch (_) {}
+        }
+        try { await db.ref(`data/loginDirectory/${loginKey}`).remove(); } catch (_) {}
+        if (credential?.user?.uid) {
+            try { await db.ref(`data/authIndex/${credential.user.uid}`).remove(); } catch (_) {}
+        }
+        throw err;
+    }
+}
+
+async function handleAuthAction() {
+    const v = (document.getElementById('authVorname')?.value || '').trim();
+    const n = (document.getElementById('authNachname')?.value || '').trim();
+    const p = (document.getElementById('authPassword')?.value || '').trim();
+    if (!v || !n || !p) { alert('Bitte alle Felder ausfüllen!'); return; }
+    const loginKey = generateUserId(v, n);
+
+    try {
+        await configureFirebaseAuthPersistence();
+
+        if (currentAuthTab === 'register') {
+            const dn = (document.getElementById('authDN')?.value || '').trim();
+            if (!dn) { alert('Bitte Dienstnummer eingeben!'); return; }
+            if (p.length < 6) { alert('Das Passwort muss mindestens 6 Zeichen lang sein!'); return; }
+
+            await registerNewFirebaseUser(v, n, p, dn);
+            alert('Registrierung erfolgreich! Bitte warten Sie auf die Freischaltung durch die Leitung.');
+            location.reload();
+            return;
+        }
+
+        const directory = await readLoginDirectory(loginKey);
+        const accountId = directory.accountId || loginKey;
+        const version = directory.version;
+        let profile;
+
+        if (version) {
+            const email = getTechnicalAuthEmail(accountId, version);
+            try {
+                const credential = await auth.signInWithEmailAndPassword(email, p);
+                profile = await loadAuthenticatedProfile(credential.user);
+            } catch (err) {
+                try { await auth.signOut(); } catch (_) {}
+                if (['auth/wrong-password', 'auth/user-not-found', 'auth/invalid-credential', 'auth/invalid-login-credentials'].includes(err?.code)) {
+                    alert('Falscher Name oder falsches Passwort!');
+                    return;
+                }
+                throw err;
             }
-            initDienstEintritt(user);
-        });
+        } else {
+            profile = await migrateLegacyUserOnLogin(accountId, p);
+        }
+
+        const user = profile.user;
+        const effectiveStatus = user.status || ((user.isAdmin || user.isMasterAdmin) ? 'approved' : 'pending');
+        if (effectiveStatus !== 'approved') {
+            await auth.signOut();
+            alert('Dein Account wurde noch nicht freigeschaltet oder ist gesperrt!');
+            return;
+        }
+
+        initDienstEintritt(user);
+    } catch (err) {
+        console.error('Anmeldefehler:', err);
+        try { await auth.signOut(); } catch (_) {}
+        if (err?.code === 'mmd/invalid-credentials') {
+            alert('Falscher Name oder falsches Passwort!');
+        } else {
+            alert(err?.message || 'Anmeldung konnte nicht abgeschlossen werden.');
+        }
     }
 }
 
@@ -680,14 +1166,14 @@ function checkDailyForcedLogout() {
     }
 }
 
-function executeDailyForcedLogout() {
+async function executeDailyForcedLogout() {
     if (mySessionRef) {
-        mySessionRef.remove();
+        try { await mySessionRef.remove(); } catch (_) {}
         mySessionRef = null;
     }
-    sessionStorage.clear();
-    localStorage.clear();
+    clearStoredSessionData();
     sessionUser = null;
+    try { await auth.signOut(); } catch (_) {}
 
     alert('🛑 Täglicher System-Reset (23:59 Uhr):\n\nIhre Schichtsitzung wurde beendet. Bitte melden Sie sich für Ihren nächsten Dienst erneut an.');
     location.reload();
@@ -704,6 +1190,13 @@ function applyUserPermissions(user) {
     
     const akBtn = document.getElementById('adminKeyBtn');
     if (akBtn) akBtn.style.display = isAdminOrMaster ? 'inline-block' : 'none';
+
+    const canManageFeedback = !!(eff.canManageFeedback || isAdminOrMaster);
+    const feedbackManageTabBtn = document.getElementById('feedbackManageTabBtn');
+    if (feedbackManageTabBtn) feedbackManageTabBtn.style.display = canManageFeedback ? 'inline-flex' : 'none';
+    if (!canManageFeedback && document.getElementById('feedbackManagePane')?.classList.contains('active')) {
+        switchFeedbackCenterTab('feedbackSubmitPane', document.getElementById('feedbackSubmitTabBtn'));
+    }
 
     const pEdit = document.getElementById('btnEditPricesInline');
     if (pEdit) pEdit.style.display = (eff.canEditPrices || isMaster) ? 'inline-block' : 'none';
@@ -736,7 +1229,7 @@ function applyUserPermissions(user) {
     if (propNewsBtn) propNewsBtn.style.display = canPostDirect ? 'none' : 'inline-block';
 
     const btnCal = document.getElementById('btnCreateCalendarEvent');
-    if (btnCal) btnCal.style.display = 'inline-block';
+    if (btnCal) btnCal.style.display = (eff.canCreateCalendar || isAdminOrMaster) ? 'inline-block' : 'none';
 
     const btnPhotoAdmin = document.getElementById('btnOpenPhotoAdminModal');
     if (btnPhotoAdmin) btnPhotoAdmin.style.display = canManagePhotos ? 'inline-block' : 'none';
@@ -760,12 +1253,21 @@ function applyUserPermissions(user) {
     const changelogWriterBtn = document.getElementById('btnOpenChangelogWriter');
     if (changelogWriterBtn) changelogWriterBtn.style.display = isMaster ? 'inline-flex' : 'none';
 
-    /* Wünsche & Bugs: Daten-Listener ausschließlich für Leitung/Admins */
-    if (isAdminOrMaster) {
+    const adminSystemTabBtn = document.getElementById('btnAdminSubSystem');
+    if (adminSystemTabBtn) adminSystemTabBtn.style.display = isMaster ? '' : 'none';
+    const fullResetBtn = document.querySelector('#adminSubTabSystem .btn-full-reset');
+    if (fullResetBtn) fullResetBtn.style.display = isMaster ? 'inline-block' : 'none';
+
+    /* Wünsche & Bugs: Verwaltungsdaten nur für Rollen mit entsprechender Berechtigung */
+    if (canManageFeedback) {
         db.ref('data/feedback').off();
         db.ref('data/feedback').on('value', s => {
-            cachedFeedback = s.val() || {};
-            renderAdminFeedbackTable();
+            const raw = s.val() || {};
+            cachedFeedback = Object.fromEntries(Object.entries(raw).map(([fbId, item]) => [
+                fbId,
+                Object.assign({}, item || {}, { storedId: item?.id || '', id: fbId })
+            ]));
+            renderFeedbackManagementTable();
         });
     } else {
         db.ref('data/feedback').off();
@@ -773,24 +1275,28 @@ function applyUserPermissions(user) {
     }
 }
 
+function refreshSessionIdentityDisplay() {
+    if (!sessionUser) return;
+    const top = document.getElementById('topBarMedicName');
+    if (top) top.innerHTML = '<b>' + escapeHtml(sessionUser.vorname || '') + ' ' + escapeHtml(sessionUser.nachname || '') + '</b> ' + renderUserRoleBadges(sessionUser, true);
+    const settingsName = document.getElementById('settingsUserName');
+    if (settingsName) settingsName.textContent = `${sessionUser.vorname || ''} ${sessionUser.nachname || ''}`.trim();
+    const settingsDn = document.getElementById('settingsUserDn');
+    if (settingsDn) settingsDn.textContent = sessionUser.dn || '--';
+}
+
 function initDienstEintritt(user) {
-    sessionUser = user;
+    sessionUser = withStableAccountId(user?.accountId || generateUserId(user?.vorname, user?.nachname), user);
     const todayFormatted = new Date().toLocaleDateString('de-DE');
+    clearStoredSessionData();
     sessionStorage.setItem('mmd_session_active', 'true');
-    sessionStorage.setItem('mmd_session_user', JSON.stringify(user));
     sessionStorage.setItem('mmd_session_date', todayFormatted);
-    localStorage.setItem('mmd_session_active', 'true');
-    localStorage.setItem('mmd_session_user', JSON.stringify(user));
-    localStorage.setItem('mmd_session_date', todayFormatted);
 
     document.getElementById('authView').style.display = 'none';
     document.getElementById('mainAppView').style.display = 'block';
-    document.getElementById('topBarMedicName').innerHTML = '<b>' + escapeHtml(user.vorname) + ' ' + escapeHtml(user.nachname) + '</b> ' + renderUserRoleBadges(user, true);
-    
-    const dEl = document.getElementById('daysMedicName');
-    if (dEl) dEl.textContent = user.vorname + ' ' + user.nachname;
+    refreshSessionIdentityDisplay();
 
-    applyUserPermissions(user);
+    applyUserPermissions(sessionUser);
     startPresenceWatcher();
     updateOnlineStatus();
     updateLiveDate();
@@ -802,12 +1308,16 @@ function initDienstEintritt(user) {
 
     const eDatumEl = document.getElementById('einstellungsDatum');
     if (eDatumEl) {
-        if (user.einstellungsDatum) {
-            eDatumEl.value = user.einstellungsDatum;
+        if (sessionUser.einstellungsDatum) {
+            eDatumEl.value = sessionUser.einstellungsDatum;
             berechneDienstTage(false);
         } else {
-            const gDatum = localStorage.getItem('mmd_einstellungsdatum_' + user.vorname + '_' + user.nachname);
+            const stableStorageKey = 'mmd_einstellungsdatum_' + getUserAccountId(sessionUser);
+            const legacyStorageKey = 'mmd_einstellungsdatum_' + sessionUser.vorname + '_' + sessionUser.nachname;
+            const gDatum = localStorage.getItem(stableStorageKey) || localStorage.getItem(legacyStorageKey);
             if (gDatum) {
+                localStorage.setItem(stableStorageKey, gDatum);
+                if (legacyStorageKey !== stableStorageKey) localStorage.removeItem(legacyStorageKey);
                 eDatumEl.value = gDatum;
                 berechneDienstTage(true);
             }
@@ -828,73 +1338,148 @@ function setupMidnightScheduler() {
 }
 
 function checkMidnightAutoArchive() {
-    const now = new Date();
-    const todayFormatted = now.toLocaleDateString('de-DE');
-    
+    if (!sessionUser) return;
+    const eff = getUserEffectivePermissions(sessionUser);
+    if (!eff.isAdmin && !eff.isMasterAdmin) return;
+
+    const todayFormatted = new Date().toLocaleDateString('de-DE');
     const statusRef = db.ref('data/systemStatus/lastArchiveDate');
+    let previousArchiveDate = null;
+
     statusRef.transaction(currentValue => {
+        previousArchiveDate = currentValue || null;
         if (!currentValue) return todayFormatted;
-        if (currentValue !== todayFormatted) return todayFormatted;
-        return currentValue;
-    }, (error, committed, snapshot) => {
+        if (currentValue === todayFormatted) return;
+        return todayFormatted;
+    }, (error, committed) => {
         if (error) {
             console.error('Transaktionsfehler beim Mitternachts-Archiv:', error);
-        } else if (committed && snapshot.val() === todayFormatted) {
-            db.ref('data/systemStatus/prevArchiveDate').once('value', sPrev => {
-                const prevDate = sPrev.val();
-                if (!prevDate) {
-                    db.ref('data/systemStatus/prevArchiveDate').set(todayFormatted);
-                    return;
-                }
-                if (prevDate !== todayFormatted) {
-                    db.ref('data/systemStatus/prevArchiveDate').set(todayFormatted);
-                    executeMidnightArchive(prevDate);
-                }
-            });
+            return;
+        }
+        if (!committed) return;
+
+        if (previousArchiveDate && previousArchiveDate !== todayFormatted) {
+            executeMidnightArchive(previousArchiveDate);
         }
     });
 }
 
 function executeMidnightArchive(archivedDateLabel) {
+    if (!sessionUser) return;
+    const eff = getUserEffectivePermissions(sessionUser);
+    if (!eff.isAdmin && !eff.isMasterAdmin) return;
+
     const archiveTimestamp = Date.now();
 
     db.ref('data/protokoll').once('value', s => {
         const p = s.val() || {};
-        const entries = Object.values(p);
-        if (entries.length > 0) {
-            let tP = entries.length, tV = 0, tA = 0, tm = {};
-            entries.forEach(x => {
-                tV += Number(x.verletzungen) || 0;
-                tA += Number(x.kosten) || 0;
-                const mObj = x.material || {};
-                Object.keys(mObj).forEach(k => {
-                    tm[k] = (tm[k] || 0) + (Number(mObj[k]) || 0);
-                });
-            });
+        const matchingEntries = Object.entries(p).filter(([, entry]) => {
+            if (!entry?.ts) return true; // ältere Datensätze ohne Zeitstempel werden einmalig mitgenommen
+            return new Date(entry.ts).toLocaleDateString('de-DE') === archivedDateLabel;
+        });
+        if (matchingEntries.length === 0) return;
 
-            db.ref('data/archiv').push({
-                datum: archivedDateLabel,
-                patienten: tP,
-                verletzungen: tV,
-                ausgaben: tA,
-                material: tm,
-                ts: archiveTimestamp,
-                isAutoArchived: true
-            }).then(() => {
-                db.ref('data/protokoll').remove();
+        let tP = matchingEntries.length, tV = 0, tA = 0, tm = {};
+        matchingEntries.forEach(([, x]) => {
+            tV += Number(x.verletzungen) || 0;
+            tA += Number(x.kosten) || 0;
+            const mObj = x.material || {};
+            Object.keys(mObj).forEach(k => {
+                tm[k] = (tm[k] || 0) + (Number(mObj[k]) || 0);
             });
-        }
+        });
+
+        const archiveKey = db.ref('data/archiv').push().key;
+        const updates = {};
+        updates[`data/archiv/${archiveKey}`] = {
+            datum: archivedDateLabel,
+            patienten: tP,
+            verletzungen: tV,
+            ausgaben: tA,
+            material: tm,
+            ts: archiveTimestamp,
+            isAutoArchived: true
+        };
+        matchingEntries.forEach(([k]) => { updates[`data/protokoll/${k}`] = null; });
+        db.ref().update(updates).catch(err => console.error('Fehler bei der Mitternachts-Archivierung:', err));
     });
 
     db.ref('data/auditLogs').once('value', s => {
         const logs = s.val() || {};
-        if (Object.keys(logs).length > 0) {
-            const dateKeySafe = archivedDateLabel.replace(/\./g, '-');
-            db.ref('data/auditLogsArchiv/' + dateKeySafe).set(logs).then(() => {
-                db.ref('data/auditLogs').remove();
-            });
-        }
+        const matchingLogs = Object.entries(logs).filter(([, entry]) => {
+            if (!entry?.ts) return true;
+            return new Date(entry.ts).toLocaleDateString('de-DE') === archivedDateLabel;
+        });
+        if (matchingLogs.length === 0) return;
+
+        const dateKeySafe = archivedDateLabel.replace(/\./g, '-');
+        const updates = {};
+        matchingLogs.forEach(([k, v]) => {
+            updates[`data/auditLogsArchiv/${dateKeySafe}/${k}`] = v;
+            updates[`data/auditLogs/${k}`] = null;
+        });
+        db.ref().update(updates).catch(err => console.error('Fehler bei der Audit-Archivierung:', err));
     });
+}
+
+/* ── Sensible Firebase-Listener nur bei passender Rolle ─────── */
+function refreshSensitiveFirebaseListeners() {
+    db.ref('data/archiv').off();
+    db.ref('data/auditLogs').off();
+    db.ref('data/employeePhotos').off();
+    db.ref('data/examSubmissions').off();
+
+    const eff = sessionUser ? getUserEffectivePermissions(sessionUser) : {};
+    const canArchive = !!(eff.canViewArchive || eff.isAdmin || eff.isMasterAdmin);
+    const canAudit = !!(eff.isAdmin || eff.isMasterAdmin);
+    const canManagePhotos = !!canUserManageEmployeePhotos();
+    const canViewAllExamSubmissions = !!isUserInstructor();
+
+    if (canArchive) {
+        db.ref('data/archiv').on('value', snap => {
+            cachedArchiv = snap.val() || {};
+            renderArchiv(cachedArchiv);
+        });
+    } else {
+        cachedArchiv = {};
+        renderArchiv(cachedArchiv);
+    }
+
+    if (canAudit) {
+        db.ref('data/auditLogs').on('value', snap => {
+            cachedAuditLogs = snap.val() || {};
+            renderAdminAuditLogsData(cachedAuditLogs);
+        });
+    } else {
+        cachedAuditLogs = {};
+    }
+
+    if (canManagePhotos) {
+        db.ref('data/employeePhotos').on('value', snap => {
+            cachedPhotos = snap.val() || {};
+            renderStaffPhotoAdminList();
+        });
+    } else {
+        cachedPhotos = {};
+        renderStaffPhotoAdminList();
+    }
+
+    if (canViewAllExamSubmissions) {
+        db.ref('data/examSubmissions').on('value', snap => {
+            cachedSubmissions = snap.val() || {};
+            renderInstructorSubmissions(cachedSubmissions);
+            renderStudentUnlockedExams();
+        });
+    } else if (sessionUser) {
+        const myId = getUserAccountId(sessionUser);
+        db.ref('data/examSubmissions').orderByChild('userId').equalTo(myId).on('value', snap => {
+            cachedSubmissions = snap.val() || {};
+            renderInstructorSubmissions(cachedSubmissions);
+            renderStudentUnlockedExams();
+        });
+    } else {
+        cachedSubmissions = {};
+    }
 }
 
 /* ── Firebase Listeners ────────────────────────────────────── */
@@ -908,7 +1493,6 @@ function startFirebaseListeners() {
     endpoints.forEach(ep => db.ref(ep).off());
 
     db.ref('data/protokoll').on('value', s => renderProtokoll(s.val() || {}));
-    db.ref('data/archiv').on('value', s => { cachedArchiv = s.val() || {}; renderArchiv(cachedArchiv); });
     db.ref('data/hierarchie').on('value', s => renderHierarchieBoard(s.val() || hierarchieDaten));
     db.ref('data/gehaltstabelle').on('value', s => {
         const serverData = s.val();
@@ -953,20 +1537,42 @@ function startFirebaseListeners() {
     });
     db.ref('data/roles').on('value', s => {
         cachedRoles = s.val() ? Object.assign({}, defaultRoles, s.val()) : Object.assign({}, defaultRoles);
-        if (sessionUser) applyUserPermissions(sessionUser);
+        if (sessionUser) {
+            applyUserPermissions(sessionUser);
+            refreshSensitiveFirebaseListeners();
+        }
         renderCalendarMonth();
         renderStaffDirectory();
         renderCommandsTab(cachedCommands);
         renderLinksTab(cachedLinks);
     });
     db.ref('data/users').on('value', s => {
-        cachedUsers = s.val() || {};
+        const rawUsers = s.val() || {};
+        cachedUsers = Object.fromEntries(Object.entries(rawUsers).map(([uId, u]) => [uId, withStableAccountId(uId, u)]));
         if (sessionUser) {
-            const uId = generateUserId(sessionUser.vorname, sessionUser.nachname);
-            if (cachedUsers[uId]) {
-                sessionUser = cachedUsers[uId];
-                applyUserPermissions(sessionUser);
+            const uId = getUserAccountId(sessionUser);
+            const freshSessionUser = cachedUsers[uId];
+            if (!freshSessionUser) {
+                alert('Dein Account wurde entfernt. Die Sitzung wird beendet.');
+                handleDienstEndeLogout();
+                return;
             }
+            const effectiveStatus = freshSessionUser.status || ((freshSessionUser.isAdmin || freshSessionUser.isMasterAdmin) ? 'approved' : 'pending');
+            if (effectiveStatus !== 'approved') {
+                alert('Dein Account wurde gesperrt. Die Sitzung wird beendet.');
+                handleDienstEndeLogout();
+                return;
+            }
+            if (freshSessionUser.authUid && auth.currentUser && freshSessionUser.authUid !== auth.currentUser.uid) {
+                alert('Dein Login-Zugang wurde ersetzt. Bitte melde dich mit dem neuen Passwort erneut an.');
+                handleDienstEndeLogout();
+                return;
+            }
+            sessionUser = withStableAccountId(uId, freshSessionUser);
+            refreshSessionIdentityDisplay();
+            updateOnlineStatus();
+            applyUserPermissions(sessionUser);
+            refreshSensitiveFirebaseListeners();
         }
         renderExamTab();
         renderAdminUserTable(cachedUsers);
@@ -1009,11 +1615,6 @@ function startFirebaseListeners() {
         });
         renderExamTab();
     });
-    db.ref('data/examSubmissions').on('value', s => {
-        cachedSubmissions = s.val() || {};
-        renderInstructorSubmissions(cachedSubmissions);
-        renderStudentUnlockedExams();
-    });
     db.ref('data/news').on('value', s => {
         cachedNews = s.val() || {};
         renderNewsFeedData(cachedNews);
@@ -1022,35 +1623,56 @@ function startFirebaseListeners() {
         cachedCalendar = s.val() || {};
         renderCalendarMonth();
     });
-    db.ref('data/employeePhotos').on('value', s => {
-        cachedPhotos = s.val() || {};
-        renderStaffPhotoAdminList();
-    });
     db.ref('data/changelogs').on('value', s => {
         cachedCustomChangelogs = s.val() || {};
         renderChangelogModal();
     });
-    db.ref('data/auditLogs').on('value', s => {
-        cachedAuditLogs = s.val() || {};
-        renderAdminAuditLogsData(cachedAuditLogs);
-    });
+    refreshSensitiveFirebaseListeners();
 }
 
 /* ── Presence Watcher ──────────────────────────────────────── */
 function updateOnlineStatus() {
     if (!sessionUser) return;
-    if (!mySessionRef) { mySessionRef = db.ref('data/presence').push(); mySessionRef.onDisconnect().remove(); }
-    mySessionRef.set(sessionUser.vorname + ' ' + sessionUser.nachname);
+    if (!mySessionRef) {
+        mySessionRef = db.ref('data/presence').push();
+        mySessionRef.onDisconnect().remove();
+    }
+    mySessionRef.set({
+        accountId: getUserAccountId(sessionUser),
+        name: `${sessionUser.vorname || ''} ${sessionUser.nachname || ''}`.trim(),
+        dn: sessionUser.dn || '',
+        ts: Date.now()
+    });
 }
 
 function startPresenceWatcher() {
     db.ref('data/presence').off();
     db.ref('data/presence').on('value', snap => {
-        const list = snap.val();
+        const raw = snap.val() || {};
         const d = document.getElementById('onlineMedicsList');
-        if (!list) { if (d) d.textContent = 'Keiner im Dienst'; return; }
-        const names = [...new Set(Object.values(list))].map(escapeHtml).join(', ');
-        if (d) d.innerHTML = names;
+        if (!d) return;
+
+        const unique = new Map();
+        Object.entries(raw).forEach(([presenceId, value]) => {
+            if (value && typeof value === 'object') {
+                const name = String(value.name || '').trim() || 'Unbekannt';
+                const key = String(value.accountId || name.toLowerCase() || presenceId);
+                if (!unique.has(key)) unique.set(key, { name, dn: String(value.dn || '').trim() });
+            } else {
+                const name = String(value || '').trim();
+                if (name && !unique.has(name.toLowerCase())) unique.set(name.toLowerCase(), { name, dn: '' });
+            }
+        });
+
+        const medics = [...unique.values()].sort((a, b) => a.name.localeCompare(b.name, 'de'));
+        if (!medics.length) {
+            d.innerHTML = '<span class="online-medic-name online-medic-empty">Keiner im Dienst</span>';
+            return;
+        }
+
+        d.innerHTML = medics.map(m => `
+            <span class="online-medic-name" title="${escapeHtml(m.dn ? `${m.name} • DN: ${m.dn}` : m.name)}">${escapeHtml(m.name)}</span>
+        `).join('');
     });
 }
 
@@ -1182,7 +1804,7 @@ function patientHinzufuegen() {
     const patName = (nF?.value||'').trim() || 'Patient ' + ((daten.patienten||0)+1);
     const sz = sS?.value || 'Undefinierbar';
     const mat = Object.assign({}, fallMaterial); mat['mat_wasser'] = anzahlVerletzungenFall;
-    const myId = generateUserId(sessionUser.vorname, sessionUser.nachname);
+    const myId = getUserAccountId(sessionUser);
 
     db.ref('data/protokoll').push({
         name: patName,
@@ -1226,6 +1848,7 @@ function baueMaterialUIAuf() {
 
 /* ── PREISE & SZENARIEN VOR ORT ANPASSEN (INLINE) ─────────── */
 function openPricesInlineModal() {
+    if (!requirePermission(['canEditPrices','isMasterAdmin'], 'Keine Berechtigung zur Bearbeitung der Materialpreise!')) return;
     const cont = document.getElementById('pricesInlineContainer');
     if (!cont) return;
     cont.innerHTML = Object.keys(materialKatalog).map(k => `
@@ -1242,6 +1865,7 @@ function openPricesInlineModal() {
 function closePricesInlineModal() { document.getElementById('pricesInlineModal').style.display = 'none'; }
 
 function speicherePreiseInline() {
+    if (!requirePermission(['canEditPrices','isMasterAdmin'], 'Keine Berechtigung zum Speichern der Materialpreise!')) return;
     const upd = {};
     Object.keys(materialKatalog).forEach(k => {
         const inp = document.getElementById('inlinePrice_' + k);
@@ -1300,7 +1924,7 @@ function renderSzenarienEditorHtml() {
                         <div style="background:rgba(30,41,59,0.4);border:1px solid var(--border);border-radius:12px;padding:14px;">
                             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
                                 <h4 style="margin:0;color:var(--primary);font-size:15px;">🏥 ${escapeHtml(szName)}</h4>
-                                <button type="button" class="btn-delete-row" onclick="deleteSzenarioWorkflow('${escapeHtml(szName)}')">🗑️ Szenario löschen</button>
+                                <button type="button" class="btn-delete-row" onclick="deleteSzenarioWorkflow(${escapeJsArg(szName)})">🗑️ Szenario löschen</button>
                             </div>
                             <div style="margin-bottom:8px;">
                                 <label style="font-size:11px;margin-bottom:4px;">Behandlungsschritte (Jede Zeile = 1 Schritt im Ablauf):</label>
@@ -1331,6 +1955,7 @@ function renderSzenarienEditorHtml() {
 }
 
 function addNewSzenarioWorkflow() {
+    if (!requirePermission(['canEditPrices','isMasterAdmin'], 'Keine Berechtigung zur Bearbeitung von Szenarien!')) return;
     const name = document.getElementById('newSzenarioNameInput')?.value.trim();
     if (!name) { alert('Bitte Namen für das Szenario angeben!'); return; }
     if (medicDatenbank[name]) { alert('Dieses Szenario existiert bereits!'); return; }
@@ -1341,6 +1966,7 @@ function addNewSzenarioWorkflow() {
 }
 
 function deleteSzenarioWorkflow(szName) {
+    if (!requirePermission(['canEditPrices','isMasterAdmin'], 'Keine Berechtigung zum Löschen von Szenarien!')) return;
     if (confirm(`Szenario "${szName}" wirklich unwiderruflich löschen?`)) {
         delete medicDatenbank[szName];
         delete szenarioTemplates[szName];
@@ -1349,6 +1975,7 @@ function deleteSzenarioWorkflow(szName) {
 }
 
 function saveAllSzenarienWorkflows() {
+    if (!requirePermission(['canEditPrices','isMasterAdmin'], 'Keine Berechtigung zum Speichern von Szenarien!')) return;
     const updatedSteps = {};
     const updatedTpls = {};
 
@@ -1385,9 +2012,8 @@ function saveAllSzenarienWorkflows() {
 }
 
 // ============================================================
-//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.1.0
+//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.3.0
 //  Firebase Realtime Database (Compat SDK v10)
-//  [TEIL 3 VON 3]
 // ============================================================
 
 /* ── REITER 2: STATISTIK & ARCHIV ─────────────────────────── */
@@ -1395,7 +2021,7 @@ function renderProtokoll(obj) {
     const tbody = document.getElementById('logTableBody'); if (!tbody) return;
     const eff = sessionUser ? getUserEffectivePermissions(sessionUser) : {};
     const myName = sessionUser ? (sessionUser.vorname + ' ' + sessionUser.nachname) : '';
-    const myId = sessionUser ? generateUserId(sessionUser.vorname, sessionUser.nachname) : '';
+    const myId = sessionUser ? getUserAccountId(sessionUser) : '';
     const entries = Object.entries(obj).sort((a,b) => (b[1].ts||0) - (a[1].ts||0));
     
     tbody.innerHTML = entries.length === 0
@@ -1411,10 +2037,12 @@ function renderProtokoll(obj) {
                 <td>${v.verletzungen||0}</td>
                 <td style="color:var(--success);font-weight:800;">$${v.kosten||0}</td>
                 <td>${escapeHtml(v.medic||'-')}</td>
-                <td style="font-size:12px;color:var(--text-muted);">${dateStr}</td>
+                <td style="font-size:13px;color:var(--text-muted);">${dateStr}</td>
                 <td>
-                    ${canEditThis ? `<button class="btn-edit-row" onclick="openEditModal('${k}')" title="Eintrag bearbeiten">✏️</button>` : ''}
-                    ${eff.delPatient ? `<button class="btn-delete-row" onclick="deletePatient('${k}')" title="Eintrag löschen">🗑️</button>` : ''}
+                    <div style="display:flex;gap:6px;align-items:center;">
+                        ${canEditThis ? `<button type="button" class="btn-edit-row" onclick="openEditModal('${k}')" title="Eintrag bearbeiten">✏️</button>` : ''}
+                        ${eff.delPatient ? `<button type="button" class="btn-delete-row" onclick="deletePatient('${k}')" title="Eintrag löschen">🗑️</button>` : ''}
+                    </div>
                 </td>
               </tr>`;
           }).join('');
@@ -1501,7 +2129,7 @@ function renderArchiv(obj) {
         totalV += v; 
         totalCash += cash;
 
-        let mHtml = '<ul class="archiv-details-list" style="margin:0;padding-left:14px;color:var(--text-muted);font-size:11px;list-style-type:square;">';
+        let mHtml = '<ul class="archiv-details-list">';
         const matObj = i.material || i.matDetailsObj || {};
         const matKeys = Object.keys(matObj);
         
@@ -1523,17 +2151,19 @@ function renderArchiv(obj) {
             <td style="font-weight:700;color:var(--text-main);">${escapeHtml(tagLabel)}</td>
             <td style="font-weight:700;">${p}</td>
             <td style="color:var(--warning);font-weight:700;">${v}</td>
-            <td style="color:var(--success);font-weight:800;font-family:monospace;font-size:13px;">$${cash.toLocaleString('de-DE')}</td>
+            <td style="color:var(--success);font-weight:800;font-family:monospace;font-size:14px;">$${cash.toLocaleString('de-DE')}</td>
             <td>${mHtml}</td>
             <td style="text-align:right;white-space:nowrap;">
-                ${isMaster ? `<button class="btn-edit-row" onclick="openArchivEditModal('${k}')" title="Schicht korrigieren">✏️</button>` : ''}
-                ${eff.delArchiv ? `<button class="btn-delete-row" onclick="deleteArchivSchicht('${k}')" title="Schicht löschen">🗑️</button>` : ''}
+                <div style="display:flex;gap:6px;justify-content:flex-end;">
+                    ${isMaster ? `<button type="button" class="btn-edit-row" onclick="openArchivEditModal('${k}')" title="Schicht korrigieren">✏️</button>` : ''}
+                    ${eff.delArchiv ? `<button type="button" class="btn-delete-row" onclick="deleteArchivSchicht('${k}')" title="Schicht löschen">🗑️</button>` : ''}
+                </div>
             </td>
         </tr>`;
     }).join('');
 
     if (tfoot) {
-        let totalMatHtml = '<ul class="archiv-details-list" style="margin:0;padding-left:14px;color:var(--text-muted);font-size:11px;list-style-type:square;">';
+        let totalMatHtml = '<ul class="archiv-details-list">';
         const totalKeys = Object.keys(totalMatObj);
         if (totalKeys.length > 0) {
             totalKeys.sort().forEach(m => {
@@ -1548,9 +2178,9 @@ function renderArchiv(obj) {
             <td><b style="color:var(--primary);">Summe (${currentWeekKey})</b></td>
             <td style="color:var(--primary);">${totalP.toLocaleString('de-DE')}</td>
             <td style="color:var(--warning);">${totalV.toLocaleString('de-DE')}</td>
-            <td style="color:var(--success);font-family:monospace;">$${totalCash.toLocaleString('de-DE')}</td>
+            <td style="color:var(--success);font-family:monospace;font-size:15px;">$${totalCash.toLocaleString('de-DE')}</td>
             <td>${totalMatHtml}</td>
-            <td style="text-align:right;">${isMaster ? '<span style="color:var(--primary);font-size:11px;">👑 Master</span>' : '--'}</td>
+            <td style="text-align:right;">${isMaster ? '<span style="color:var(--primary);font-size:12px;">👑 Master</span>' : '--'}</td>
         </tr>`;
     }
 }
@@ -1613,7 +2243,6 @@ function manualTriggerArchive() {
     db.ref('data/protokoll').once('value', s => {
         const p = s.val() || {};
         const entries = Object.values(p);
-        
         if (entries.length === 0) {
             alert('⚠️ Das Tagesprotokoll ist bereits leer.');
             return;
@@ -1621,7 +2250,6 @@ function manualTriggerArchive() {
 
         const todayFormatted = new Date().toLocaleDateString('de-DE');
         const archiveTimestamp = Date.now();
-
         let tP = entries.length, tV = 0, tA = 0, tm = {};
         let csvContent = 'Patient,Szenario,Verletzungen,Ausgaben,Medic,Datum\n';
 
@@ -1631,9 +2259,7 @@ function manualTriggerArchive() {
             tV += pInj;
             tA += pCost;
             const mObj = x.material || {};
-            Object.keys(mObj).forEach(k => {
-                tm[k] = (tm[k] || 0) + (Number(mObj[k]) || 0);
-            });
+            Object.keys(mObj).forEach(k => { tm[k] = (tm[k] || 0) + (Number(mObj[k]) || 0); });
             csvContent += `"${(x.name||'').replace(/"/g, '""')}","${(x.szenario||'').replace(/"/g, '""')}","${pInj}","$${pCost}","${(x.medic||'').replace(/"/g, '""')}","${todayFormatted}"\n`;
         });
 
@@ -1643,8 +2269,11 @@ function manualTriggerArchive() {
         a.href = url;
         a.download = `MMD_Schichtbericht_${todayFormatted.replace(/\./g, '-')}.csv`;
         a.click();
+        URL.revokeObjectURL(url);
 
-        db.ref('data/archiv').push({
+        const archiveKey = db.ref('data/archiv').push().key;
+        const updates = {};
+        updates[`data/archiv/${archiveKey}`] = {
             datum: todayFormatted,
             patienten: tP,
             verletzungen: tV,
@@ -1652,12 +2281,13 @@ function manualTriggerArchive() {
             material: tm,
             ts: archiveTimestamp,
             isManualProtArchived: true
-        }).then(() => {
-            db.ref('data/protokoll').remove().then(() => {
-                logAdminAudit('Tagesprotokoll als Schicht übernommen & exportiert', `${sessionUser.vorname} ${sessionUser.nachname} hat das Tagesprotokoll übernommen und exportiert.`);
-                alert('✅ Tagesprotokoll wurde archiviert, Schichtbericht heruntergeladen und Protokoll zurückgesetzt!');
-            });
-        });
+        };
+        Object.keys(p).forEach(k => { updates[`data/protokoll/${k}`] = null; });
+
+        db.ref().update(updates).then(() => {
+            logAdminAudit('Tagesprotokoll als Schicht übernommen & exportiert', `${sessionUser.vorname} ${sessionUser.nachname} hat das Tagesprotokoll übernommen und exportiert.`);
+            alert('✅ Tagesprotokoll wurde archiviert, Schichtbericht heruntergeladen und die erfassten Einträge zurückgesetzt!');
+        }).catch(err => alert('Fehler beim Archivieren: ' + (err?.message || err)));
     });
 }
 
@@ -1678,9 +2308,23 @@ function deleteArchivSchicht(k) {
     }
 }
 
+function canCurrentUserEditPatientRecord(record) {
+    if (!sessionUser || !record) return false;
+    const eff = getUserEffectivePermissions(sessionUser);
+    const myId = getUserAccountId(sessionUser);
+    const myName = `${sessionUser.vorname} ${sessionUser.nachname}`;
+    const isOwnEntry = (record.medicId && record.medicId === myId) || record.medic === myName;
+    return !!(isOwnEntry || eff.canEditAllPatients || eff.isMasterAdmin);
+}
+
 function openEditModal(key) {
+    if (!sessionUser) return;
     db.ref('data/protokoll/'+key).once('value', s => {
         const v = s.val(); if (!v) return;
+        if (!canCurrentUserEditPatientRecord(v)) {
+            alert('Keine Berechtigung zum Bearbeiten dieses Patienteneintrags!');
+            return;
+        }
         document.getElementById('editKey').value = key;
         document.getElementById('editName').value = v.name || '';
         document.getElementById('editSzenario').value = v.szenario || '';
@@ -1691,13 +2335,23 @@ function openEditModal(key) {
 }
 function closeEditModal() { document.getElementById('editModal').style.display = 'none'; }
 function speicherePatientEdit() {
+    if (!sessionUser) return;
     const key = document.getElementById('editKey').value; if (!key) return;
-    db.ref('data/protokoll/'+key).update({
-        name: document.getElementById('editName').value.trim(),
-        szenario: document.getElementById('editSzenario').value.trim(),
-        verletzungen: parseInt(document.getElementById('editCount').value) || 1,
-        kosten: parseInt(document.getElementById('editCash').value) || 0
-    }).then(() => closeEditModal());
+    const ref = db.ref('data/protokoll/'+key);
+    ref.once('value', snap => {
+        const current = snap.val();
+        if (!current || !canCurrentUserEditPatientRecord(current)) {
+            alert('Keine Berechtigung zum Bearbeiten dieses Patienteneintrags!');
+            closeEditModal();
+            return;
+        }
+        ref.update({
+            name: document.getElementById('editName').value.trim(),
+            szenario: document.getElementById('editSzenario').value.trim(),
+            verletzungen: parseInt(document.getElementById('editCount').value) || 1,
+            kosten: parseInt(document.getElementById('editCash').value) || 0
+        }).then(() => closeEditModal());
+    });
 }
 function deletePatient(k) {
     if (!sessionUser || !getUserEffectivePermissions(sessionUser).delPatient) return;
@@ -1714,12 +2368,19 @@ function deletePatient(k) {
 }
 
 function exportArchivCSV() {
+    if (!sessionUser) return;
+    const eff = getUserEffectivePermissions(sessionUser);
+    if (!eff.canViewArchive && !eff.isAdmin && !eff.isMasterAdmin) {
+        alert('Keine Berechtigung zum Exportieren des Archivs!');
+        return;
+    }
     db.ref('data/archiv').once('value', s => {
         const a = s.val() || {}, e = Object.entries(a); if (!e.length) return;
         let csv = 'Datum,Patienten,Verletzungen,Ausgaben\n';
         e.forEach(([,v]) => { csv += `"${v.datum||''}","${v.patienten||0}","${v.verletzungen||0}","$${v.ausgaben||0}"\n`; });
         const b = new Blob([csv], { type: 'text/csv;charset=utf-8;' }), u = URL.createObjectURL(b), el = document.createElement('a');
         el.href = u; el.download = 'MMD_Archiv.csv'; el.click();
+        URL.revokeObjectURL(u);
     });
 }
 
@@ -1729,6 +2390,9 @@ function exportArchivCSV() {
 const MONTH_NAMES_DE = ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"];
 
 function cleanOldCalendarEvents() {
+    if (!sessionUser) return;
+    const eff = getUserEffectivePermissions(sessionUser);
+    if (!eff.delCalendar && !eff.isAdmin && !eff.isMasterAdmin) return;
     const oneWeekAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
     db.ref('data/calendar').once('value', snap => {
         const events = snap.val() || {};
@@ -1770,7 +2434,7 @@ function renderCalendarMonth() {
     const myRoleIds = sessionUser ? getUserRolesList(sessionUser) : [];
     const eff = sessionUser ? getUserEffectivePermissions(sessionUser) : {};
     const isSpecialAdmin = eff.isAdmin || eff.isMasterAdmin;
-    const myId = sessionUser ? generateUserId(sessionUser.vorname, sessionUser.nachname) : '';
+    const myId = sessionUser ? getUserAccountId(sessionUser) : '';
 
     const eventsList = Object.entries(cachedCalendar || {}).map(([id, ev]) => {
         return Object.assign({ id }, ev);
@@ -1823,7 +2487,7 @@ function renderCalendarMonth() {
 
         let eventsHtml = '';
         dayEvents.forEach(ev => {
-            const color = ev.roleColor || '#38bdf8';
+            const color = sanitizeRoleColor(ev.roleColor);
             const privIcon = ev.isPrivate ? '🔒 ' : '';
             const isInvited = ev.invitedUsers && Array.isArray(ev.invitedUsers) && ev.invitedUsers.includes(myId);
             const inviteStatus = (ev.invitationStatus && ev.invitationStatus[myId]) ? ev.invitationStatus[myId] : 'pending';
@@ -1887,6 +2551,12 @@ function handleCalendarCreatorSelectionChange() {
 }
 
 function openCreateEventModal(prefillDate = null) {
+    if (!sessionUser) return;
+    const eff = getUserEffectivePermissions(sessionUser);
+    if (!eff.canCreateCalendar && !eff.isAdmin && !eff.isMasterAdmin) {
+        alert('Keine Berechtigung zum Erstellen von Kalenderterminen!');
+        return;
+    }
     const modal = document.getElementById('calendarEventModal');
     if (!modal) return;
 
@@ -1959,20 +2629,20 @@ function openCreateEventModal(prefillDate = null) {
     if (targetRolesContainer) {
         const sortedRoles = Object.values(cachedRoles).sort((a,b) => (a.name||'').localeCompare(b.name||'', 'de'));
         targetRolesContainer.innerHTML = sortedRoles.map(r => `
-            <label for="cal_role_${r.id}" style="display:flex;align-items:center;gap:6px;padding:4px 8px;cursor:pointer;background:rgba(30,41,59,0.4);border-radius:6px;font-size:12px;">
+            <label for="cal_role_${r.id}" style="display:flex;align-items:center;gap:6px;padding:4px 8px;cursor:pointer;background:rgba(30,41,59,0.4);border-radius:6px;font-size:13px;">
                 <input type="checkbox" id="cal_role_${r.id}" class="cal-target-role-cb" value="${escapeHtml(r.id)}">
-                <span style="color:${r.color||'#38bdf8'};font-weight:700;">${r.icon?r.icon+' ':''}${escapeHtml(r.name)}</span>
+                <span style="color:${sanitizeRoleColor(r.color)};font-weight:700;">${r.icon ? escapeHtml(r.icon) + ' ' : ''}${escapeHtml(r.name)}</span>
             </label>
         `).join('');
     }
 
     if (invitedUsersContainer) {
-        const myId = sessionUser ? generateUserId(sessionUser.vorname, sessionUser.nachname) : '';
+        const myId = getUserAccountId(sessionUser);
         const allUsers = Object.entries(cachedUsers).sort((a,b) => (a[1].nachname||'').localeCompare(b[1].nachname||'', 'de'));
         invitedUsersContainer.innerHTML = allUsers.filter(([uId]) => uId !== myId).map(([uId, u]) => `
-            <label for="cal_invite_${uId}" style="display:flex;align-items:center;gap:6px;padding:4px 8px;cursor:pointer;background:rgba(30,41,59,0.4);border-radius:6px;font-size:12px;">
+            <label for="cal_invite_${uId}" style="display:flex;align-items:center;gap:6px;padding:4px 8px;cursor:pointer;background:rgba(30,41,59,0.4);border-radius:6px;font-size:13px;">
                 <input type="checkbox" id="cal_invite_${uId}" class="cal-invited-user-cb" value="${escapeHtml(uId)}">
-                <span><b>${escapeHtml(u.vorname||'')} ${escapeHtml(u.nachname||'')}</b> <span style="color:var(--primary);font-size:10px;">(${escapeHtml(u.dn||'--')})</span></span>
+                <span><b>${escapeHtml(u.vorname||'')} ${escapeHtml(u.nachname||'')}</b> <span style="color:var(--primary);font-size:11px;">(${escapeHtml(u.dn||'--')})</span></span>
             </label>
         `).join('');
     }
@@ -2002,6 +2672,7 @@ function closeCalendarEventModal() {
 
 function saveCalendarEvent() {
     if (!sessionUser) return;
+    const eff = getUserEffectivePermissions(sessionUser);
 
     const editId = document.getElementById('editingCalendarEventId')?.value;
     const startDateStr = document.getElementById('calEventDate')?.value;
@@ -2031,7 +2702,7 @@ function saveCalendarEvent() {
         return;
     }
 
-    const myId = generateUserId(sessionUser.vorname, sessionUser.nachname);
+    const myId = getUserAccountId(sessionUser);
 
     let targetRoles = [];
     if (!isPrivate) {
@@ -2056,6 +2727,13 @@ function saveCalendarEvent() {
 
     if (editId) {
         const existingEv = cachedCalendar[editId] || {};
+        const myName = `${sessionUser.vorname || ''} ${sessionUser.nachname || ''}`.trim().toLowerCase();
+        const legacyOwner = !existingEv.creatorId && ((existingEv.enteredBy || existingEv.creator || '').trim().toLowerCase() === myName);
+        const canEditExisting = existingEv.creatorId === myId || legacyOwner || eff.isAdmin || eff.isMasterAdmin;
+        if (!canEditExisting) {
+            alert('Keine Berechtigung zum Bearbeiten dieses Termins!');
+            return;
+        }
         const mergedStatus = Object.assign({}, existingEv.invitationStatus || {});
 
         invitedUsers.forEach(uId => {
@@ -2085,6 +2763,11 @@ function saveCalendarEvent() {
             logAdminAudit('Kalendertermin bearbeitet', `${creatorDisplay}: ${title} (${startDateStr})`);
             alert('✅ Kalendertermin erfolgreich aktualisiert!');
         });
+        return;
+    }
+
+    if (!eff.canCreateCalendar && !eff.isAdmin && !eff.isMasterAdmin) {
+        alert('Keine Berechtigung zum Erstellen von Kalenderterminen!');
         return;
     }
 
@@ -2146,7 +2829,7 @@ function openCalendarEventDetailsModal(eventId) {
     const editBtn = document.getElementById('btnEditCalendarEvent');
     if (!modal || !bodyEl) return;
 
-    const color = ev.roleColor || '#38bdf8';
+    const color = sanitizeRoleColor(ev.roleColor);
     if (titleEl) titleEl.textContent = (ev.isPrivate ? '🔒 ' : '') + (ev.title || 'Termin');
 
     let targetRoleNames = 'Alle Rollen / Öffentlich';
@@ -2173,9 +2856,11 @@ function openCalendarEventDetailsModal(eventId) {
         }).join('<br>');
     }
 
-    const myId = generateUserId(sessionUser.vorname, sessionUser.nachname);
+    const myId = getUserAccountId(sessionUser);
     const eff = sessionUser ? getUserEffectivePermissions(sessionUser) : {};
-    const isOwnerOrAdmin = (ev.creatorId === myId) || eff.isAdmin || eff.isMasterAdmin;
+    const myName = `${sessionUser.vorname || ''} ${sessionUser.nachname || ''}`.trim().toLowerCase();
+    const legacyOwner = !ev.creatorId && ((ev.enteredBy || ev.creator || '').trim().toLowerCase() === myName);
+    const isOwnerOrAdmin = (ev.creatorId === myId) || legacyOwner || eff.isAdmin || eff.isMasterAdmin;
     const isInvitedGuest = ev.invitedUsers && Array.isArray(ev.invitedUsers) && ev.invitedUsers.includes(myId) && (ev.creatorId !== myId);
     const myCurrentStatus = (ev.invitationStatus && ev.invitationStatus[myId]) ? ev.invitationStatus[myId] : 'pending';
 
@@ -2183,7 +2868,7 @@ function openCalendarEventDetailsModal(eventId) {
     if (isInvitedGuest) {
         rsvpSectionHtml = `
             <div style="background:rgba(56,189,248,0.08);border:1px solid var(--primary);border-radius:10px;padding:12px;margin-bottom:14px;">
-                <div style="font-weight:800;font-size:12px;color:var(--primary);margin-bottom:6px;">📨 Dein Einladungs-Status: <span style="color:var(--text-main);">${myCurrentStatus === 'accepted' ? '✅ Angenommen' : (myCurrentStatus === 'declined' ? '❌ Abgelehnt' : '⏳ Ausstehend')}</span></div>
+                <div style="font-weight:800;font-size:13px;color:var(--primary);margin-bottom:6px;">📨 Dein Einladungs-Status: <span style="color:var(--text-main);">${myCurrentStatus === 'accepted' ? '✅ Angenommen' : (myCurrentStatus === 'declined' ? '❌ Abgelehnt' : '⏳ Ausstehend')}</span></div>
                 <div style="display:flex;gap:10px;">
                     <button type="button" class="btn" style="width:auto;margin:0;padding:6px 14px;background:var(--success);color:#080c14;font-weight:800;font-size:12px;" onclick="respondToCalendarInvite('${eventId}', 'accepted')">✅ Zusagen / Annehmen</button>
                     <button type="button" class="btn" style="width:auto;margin:0;padding:6px 14px;background:rgba(244,63,94,0.2);color:var(--danger);border:1px solid var(--danger);font-weight:800;font-size:12px;" onclick="respondToCalendarInvite('${eventId}', 'declined')">❌ Absagen / Ablehnen</button>
@@ -2199,7 +2884,7 @@ function openCalendarEventDetailsModal(eventId) {
                 <span>📅 <b>Datum:</b> ${escapeHtml(ev.date)}</span>
                 <span>⏰ <b>Uhrzeit:</b> ${escapeHtml(ev.time)} Uhr</span>
             </div>
-            <div style="margin-top:6px;font-size:12px;color:var(--text-muted);">
+            <div style="margin-top:6px;font-size:13px;color:var(--text-muted);">
                 Ersteller / Bereich: <b style="color:${color};">${escapeHtml(ev.creatorDisplay || ev.creator || 'SAMD')}</b>
                 <br>Eingetragen von: <span style="color:var(--text-main);">${escapeHtml(ev.enteredBy || ev.creator || 'System')} (${escapeHtml(ev.enteredByDN || '--')})</span>
                 ${ev.seriesId ? `<br><span style="color:var(--primary);font-weight:700;">🔁 Teil einer Serientermin-Reihe</span>` : ''}
@@ -2207,15 +2892,15 @@ function openCalendarEventDetailsModal(eventId) {
         </div>
         <div style="margin-bottom:10px;">
             <label style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">Sichtbarkeit / Freigabe:</label>
-            <div style="font-size:13px;color:${ev.isPrivate ? 'var(--warning)' : 'var(--primary)'};font-weight:700;">${escapeHtml(targetRoleNames)}</div>
+            <div style="font-size:14px;color:${ev.isPrivate ? 'var(--warning)' : 'var(--primary)'};font-weight:700;">${escapeHtml(targetRoleNames)}</div>
         </div>
         <div style="margin-bottom:14px;">
             <label style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">Eingeladene Mitarbeiter & Status:</label>
-            <div style="font-size:12px;color:var(--text-main);line-height:1.6;">${invitedNames}</div>
+            <div style="font-size:13px;color:var(--text-main);line-height:1.6;">${invitedNames}</div>
         </div>
         <div>
             <label style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">Beschreibung / Notizen:</label>
-            <div style="background:rgba(8,12,20,0.6);border:1px solid var(--border);border-radius:8px;padding:12px;white-space:pre-wrap;color:var(--text-main);font-size:13px;min-height:60px;">${formatTextWithLinks(ev.desc || 'Keine weitere Beschreibung vorhanden.')}</div>
+            <div style="background:rgba(8,12,20,0.6);border:1px solid var(--border);border-radius:8px;padding:12px;white-space:pre-wrap;color:var(--text-main);font-size:14px;min-height:60px;">${formatTextWithLinks(ev.desc || 'Keine weitere Beschreibung vorhanden.')}</div>
         </div>
     `;
 
@@ -2226,8 +2911,13 @@ function openCalendarEventDetailsModal(eventId) {
 }
 
 function respondToCalendarInvite(eventId, status) {
-    if (!sessionUser) return;
-    const myId = generateUserId(sessionUser.vorname, sessionUser.nachname);
+    if (!sessionUser || !['accepted','declined'].includes(status)) return;
+    const myId = getUserAccountId(sessionUser);
+    const ev = cachedCalendar[eventId];
+    if (!ev || !Array.isArray(ev.invitedUsers) || !ev.invitedUsers.includes(myId)) {
+        alert('Du bist für diesen Termin nicht eingeladen.');
+        return;
+    }
     db.ref(`data/calendar/${eventId}/invitationStatus/${myId}`).set(status).then(() => {
         closeCalendarEventDetailsModal();
         alert(status === 'accepted' ? '✅ Du hast den Termin verbindlich angenommen!' : '❌ Du hast die Einladung abgelehnt.');
@@ -2241,9 +2931,17 @@ function closeCalendarEventDetailsModal() {
 }
 
 function editCalendarEventAction() {
-    if (!activeDetailEventId) return;
+    if (!sessionUser || !activeDetailEventId) return;
     const ev = cachedCalendar[activeDetailEventId];
     if (!ev) return;
+    const myId = getUserAccountId(sessionUser);
+    const eff = getUserEffectivePermissions(sessionUser);
+    const myName = `${sessionUser.vorname || ''} ${sessionUser.nachname || ''}`.trim().toLowerCase();
+    const legacyOwner = !ev.creatorId && ((ev.enteredBy || ev.creator || '').trim().toLowerCase() === myName);
+    if (ev.creatorId !== myId && !legacyOwner && !eff.isAdmin && !eff.isMasterAdmin) {
+        alert('Keine Berechtigung zum Bearbeiten dieses Termins!');
+        return;
+    }
 
     const modal = document.getElementById('calendarEventModal');
     if (!modal) return;
@@ -2329,23 +3027,23 @@ function editCalendarEventAction() {
         targetRolesContainer.innerHTML = sortedRoles.map(r => {
             const isChecked = hasAll || (ev.targetRoles && ev.targetRoles.includes(r.id));
             return `
-                <label for="edit_cal_role_${r.id}" style="display:flex;align-items:center;gap:6px;padding:4px 8px;cursor:pointer;background:rgba(30,41,59,0.4);border-radius:6px;font-size:12px;">
+                <label for="edit_cal_role_${r.id}" style="display:flex;align-items:center;gap:6px;padding:4px 8px;cursor:pointer;background:rgba(30,41,59,0.4);border-radius:6px;font-size:13px;">
                     <input type="checkbox" id="edit_cal_role_${r.id}" class="cal-target-role-cb" value="${escapeHtml(r.id)}" ${isChecked ? 'checked' : ''}>
-                    <span style="color:${r.color||'#38bdf8'};font-weight:700;">${r.icon?r.icon+' ':''}${escapeHtml(r.name)}</span>
+                    <span style="color:${sanitizeRoleColor(r.color)};font-weight:700;">${r.icon ? escapeHtml(r.icon) + ' ' : ''}${escapeHtml(r.name)}</span>
                 </label>
             `;
         }).join('');
     }
 
     if (invitedUsersContainer) {
-        const myId = generateUserId(sessionUser.vorname, sessionUser.nachname);
+        const myId = getUserAccountId(sessionUser);
         const allUsers = Object.entries(cachedUsers).sort((a,b) => (a[1].nachname||'').localeCompare(b[1].nachname||'', 'de'));
         invitedUsersContainer.innerHTML = allUsers.filter(([uId]) => uId !== myId).map(([uId, u]) => {
             const isInv = (ev.invitedUsers && Array.isArray(ev.invitedUsers) && ev.invitedUsers.includes(uId));
             return `
-                <label for="edit_cal_invite_${uId}" style="display:flex;align-items:center;gap:6px;padding:4px 8px;cursor:pointer;background:rgba(30,41,59,0.4);border-radius:6px;font-size:12px;">
+                <label for="edit_cal_invite_${uId}" style="display:flex;align-items:center;gap:6px;padding:4px 8px;cursor:pointer;background:rgba(30,41,59,0.4);border-radius:6px;font-size:13px;">
                     <input type="checkbox" id="edit_cal_invite_${uId}" class="cal-invited-user-cb" value="${escapeHtml(uId)}" ${isInv ? 'checked' : ''}>
-                    <span><b>${escapeHtml(u.vorname||'')} ${escapeHtml(u.nachname||'')}</b> <span style="color:var(--primary);font-size:10px;">(${escapeHtml(u.dn||'--')})</span></span>
+                    <span><b>${escapeHtml(u.vorname||'')} ${escapeHtml(u.nachname||'')}</b> <span style="color:var(--primary);font-size:11px;">(${escapeHtml(u.dn||'--')})</span></span>
                 </label>
             `;
         }).join('');
@@ -2359,9 +3057,11 @@ function deleteCalendarEventAction() {
     const ev = cachedCalendar[activeDetailEventId];
     if (!ev) return;
 
-    const myId = generateUserId(sessionUser.vorname, sessionUser.nachname);
+    const myId = getUserAccountId(sessionUser);
     const eff = sessionUser ? getUserEffectivePermissions(sessionUser) : {};
-    const isOwnerOrAdmin = (ev.creatorId === myId) || eff.isAdmin || eff.isMasterAdmin || eff.delCalendar;
+    const myName = `${sessionUser.vorname || ''} ${sessionUser.nachname || ''}`.trim().toLowerCase();
+    const legacyOwner = !ev.creatorId && ((ev.enteredBy || ev.creator || '').trim().toLowerCase() === myName);
+    const isOwnerOrAdmin = (ev.creatorId === myId) || legacyOwner || eff.isAdmin || eff.isMasterAdmin || eff.delCalendar;
 
     if (!isOwnerOrAdmin) {
         alert('Keine Berechtigung zum Löschen dieses Termins!');
@@ -2400,7 +3100,7 @@ function deleteCalendarEventAction() {
 }
 
 /* ══════════════════════════════════════════════════════════════
-   MITARBEITER-KARTEI & FOTO-WORKFLOW
+   MITARBEITER-KARTEI & FOTO-WORKFLOW (FÜLLIGER & CA. 20% GRÖSSER)
 ══════════════════════════════════════════════════════════════ */
 function parseDN(dnStr) {
     if (!dnStr) return 999999;
@@ -2544,7 +3244,7 @@ function previewStaffPhotoUpload(event) {
     const file = event.target.files && event.target.files[0];
     if (!file) return;
 
-    scaleImageProportionally(file, 300, 360, (scaledBase64) => {
+    scaleImageProportionally(file, 360, 430, (scaledBase64) => {
         _currentUploadedBase64 = scaledBase64;
         const prevImg = document.getElementById('staffPhotoPreviewImg');
         const prevCont = document.getElementById('staffPhotoPreviewContainer');
@@ -2559,7 +3259,7 @@ function submitStaffPhotoUpload() {
         return;
     }
 
-    const uId = generateUserId(sessionUser.vorname, sessionUser.nachname);
+    const uId = getUserAccountId(sessionUser);
 
     const photoEntry = {
         userId: uId,
@@ -2603,14 +3303,14 @@ function renderStaffPhotoAdminList() {
 
     c.innerHTML = entries.map(([uId, p]) => `
         <div class="staff-admin-photo-card">
-            <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px;">Eingereicht: ${escapeHtml(p.date || '--')}</div>
+            <div style="font-size:12px;color:var(--text-muted);margin-bottom:6px;">Eingereicht: ${escapeHtml(p.date || '--')}</div>
             <img src="${p.rawPhoto}" 
                  alt="${escapeHtml(p.userName)}" 
                  class="staff-admin-photo-preview"
                  onerror="this.onerror=null; this.src='${DEFAULT_MD_LOGO_FALLBACK}';">
             <div style="margin-top:8px;text-align:center;">
-                <b style="font-size:14px;color:var(--text-main);">${escapeHtml(p.userName)}</b><br>
-                <span style="color:var(--primary);font-weight:700;font-size:12px;">DN: ${escapeHtml(p.userDN)}</span>
+                <b style="font-size:15px;color:var(--text-main);">${escapeHtml(p.userName)}</b><br>
+                <span style="color:var(--primary);font-weight:700;font-size:13px;">DN: ${escapeHtml(p.userDN)}</span>
             </div>
             <div style="display:flex;flex-direction:column;gap:6px;margin-top:12px;width:100%;">
                 <button type="button" class="btn" style="padding:6px;font-size:12px;background:var(--primary);color:#080c14;font-weight:800;margin:0;" onclick="downloadStaffOriginalPhoto('${uId}')">📥 Original herunterladen</button>
@@ -2618,7 +3318,7 @@ function renderStaffPhotoAdminList() {
                     🎨 Bearbeitetes Bild einsetzen
                     <input type="file" accept="image/*" style="display:none;" onchange="uploadProcessedStaffPhoto(event, '${uId}')">
                 </label>
-                <button type="button" class="btn-delete-row" style="font-size:11px;padding:4px;" onclick="deleteSubmittedRawPhoto('${uId}')">🗑️ Aus Ordner löschen</button>
+                <button type="button" class="btn-delete-row" style="font-size:12px;padding:5px;" onclick="deleteSubmittedRawPhoto('${uId}')">🗑️ Aus Ordner löschen</button>
             </div>
         </div>
     `).join('');
@@ -2642,7 +3342,7 @@ function uploadProcessedStaffPhoto(event, uId) {
         return;
     }
 
-    scaleImageProportionally(file, 300, 360, (scaledBase64) => {
+    scaleImageProportionally(file, 360, 430, (scaledBase64) => {
         db.ref('data/users/' + uId + '/photoUrl').set(scaledBase64).then(() => {
             logAdminAudit('Finales Dienstfoto hinterlegt', `Freigestelltes Bild für ${uId} von ${sessionUser.vorname} ${sessionUser.nachname} gespeichert.`);
             alert('✅ Finales Foto erfolgreich in die Mitarbeiter-Kartei eingesetzt!');
@@ -2653,9 +3353,15 @@ function uploadProcessedStaffPhoto(event, uId) {
 
 function deleteSubmittedRawPhoto(uId) {
     if (!canUserManageEmployeePhotos()) return;
+    const eff = sessionUser ? getUserEffectivePermissions(sessionUser) : {};
+    if (!eff.isMasterAdmin && !eff.delPhotos && !eff.isAdmin) {
+        alert('Keine Berechtigung zum Löschen aus dem Foto-Ordner!');
+        return;
+    }
+
     if (confirm('Dieses eingereichte Originalfoto aus dem Ordner entfernen?')) {
         db.ref('data/employeePhotos/' + uId).remove().then(() => {
-            logAdminAudit('Originalfoto aus Ordner entfernt', `Foto-Einreichung von ${uId} gelöscht.`);
+            logAdminAudit('Originalfoto aus Ordner entfernt', `Foto-Einreichung von ${uId} gelöscht durch ${sessionUser.vorname} ${sessionUser.nachname}.`);
         });
     }
 }
@@ -2681,6 +3387,7 @@ function renderHierarchieBoard(hData) {
 }
 
 function openHierarchieInlineModal() {
+    if (!requireAdminAccess('Keine Berechtigung zur Bearbeitung der Hierarchie!')) return;
     const cont = document.getElementById('hierarchieInlineEditorContainer');
     if (!cont) return;
 
@@ -2822,6 +3529,7 @@ function closeGehaltInlineModal() {
 }
 
 function addGehaltRowInline() {
+    if (!requireAdminAccess('Keine Berechtigung zur Bearbeitung der Gehaltstabelle!')) return;
     cachedGehaltData.push({
         id: 'g_' + Date.now(),
         rang: `Rang ${cachedGehaltData.length + 1}`,
@@ -2835,6 +3543,7 @@ function addGehaltRowInline() {
 }
 
 function removeGehaltRowInline(idx) {
+    if (!requireAdminAccess('Keine Berechtigung zur Bearbeitung der Gehaltstabelle!')) return;
     if (confirm('Diesen Gehaltsrang wirklich entfernen?')) {
         cachedGehaltData.splice(idx, 1);
         openGehaltInlineModal();
@@ -2842,6 +3551,7 @@ function removeGehaltRowInline(idx) {
 }
 
 function saveGehaltInline() {
+    if (!requireAdminAccess('Keine Berechtigung zum Speichern der Gehaltstabelle!')) return;
     const updated = [];
     cachedGehaltData.forEach((item, idx) => {
         const rangEl = document.getElementById(`gehalt_rang_${idx}`);
@@ -2888,10 +3598,11 @@ function _renderGuideKeineRechnung() {
     const t = document.getElementById('guideKeineRechnungBody'); if (!t) return;
     const data = cachedGuideData.keineRechnung || [];
     t.innerHTML = !data || !data.length ? '<tr><td colspan="2" style="text-align:center;color:var(--text-muted);padding:14px;">Keine Einträge</td></tr>'
-        : data.map(i => `<tr><td colspan="2"><b>${escapeHtml(i.name||'')}</b>${i.note?` <span style="color:var(--text-muted);font-size:11px;">${escapeHtml(i.note)}</span>`:''}<br><span style="color:var(--text-muted);font-size:12px;">${escapeHtml(i.desc||'')}</span></td></tr>`).join('');
+        : data.map(i => `<tr><td colspan="2"><b>${escapeHtml(i.name||'')}</b>${i.note?` <span style="color:var(--text-muted);font-size:12px;">${escapeHtml(i.note)}</span>`:''}<br><span style="color:var(--text-muted);font-size:13px;">${escapeHtml(i.desc||'')}</span></td></tr>`).join('');
 }
 
 function openGuideInlineModal() {
+    if (!requirePermission(['canEditGuide','isMasterAdmin'], 'Keine Berechtigung zur Bearbeitung von Funk & Codes!')) return;
     const cont = document.getElementById('guideInlineEditorContainer');
     if (!cont) return;
     
@@ -2971,28 +3682,33 @@ function renderKeineRechnungInlineRows() {
 }
 
 function addGuideRow(section) {
+    if (!requirePermission(['canEditGuide','isMasterAdmin'], 'Keine Berechtigung zur Bearbeitung von Funk & Codes!')) return;
     if (!cachedGuideData[section]) cachedGuideData[section] = [];
     cachedGuideData[section].push({ id: 'g_' + Date.now(), code: '', desc: '', color: 'var(--text-main)' });
     renderGuideInlineRows(section);
 }
 function removeGuideRow(section, idx) {
+    if (!requirePermission(['delGuide','isMasterAdmin'], 'Keine Berechtigung zum Löschen von Funk-Codes!')) return;
     if (!sessionUser || !getUserEffectivePermissions(sessionUser).delGuide) return;
     cachedGuideData[section].splice(idx, 1);
     renderGuideInlineRows(section);
 }
 
 function addKeineRechnungRow() {
+    if (!requirePermission(['canEditGuide','isMasterAdmin'], 'Keine Berechtigung zur Bearbeitung von Ausnahmen!')) return;
     if (!cachedGuideData.keineRechnung) cachedGuideData.keineRechnung = [];
     cachedGuideData.keineRechnung.push({ id: 'kr_' + Date.now(), name: '', note: '', desc: 'Im Dienst wird keine Rechnung ausgestellt' });
     renderKeineRechnungInlineRows();
 }
 function removeKeineRechnungRow(idx) {
+    if (!requirePermission(['delGuide','isMasterAdmin'], 'Keine Berechtigung zum Löschen von Ausnahmen!')) return;
     if (!sessionUser || !getUserEffectivePermissions(sessionUser).delGuide) return;
     cachedGuideData.keineRechnung.splice(idx, 1);
     renderKeineRechnungInlineRows();
 }
 
 function saveGuideInline() {
+    if (!requirePermission(['canEditGuide','isMasterAdmin'], 'Keine Berechtigung zum Speichern von Funk & Codes!')) return;
     ['tenCodes', 'statusCodes', 'streifen'].forEach(sec => {
         (cachedGuideData[sec] || []).forEach((item, idx) => {
             const cInp = document.getElementById(`${sec}_code_${idx}`);
@@ -3038,9 +3754,9 @@ function renderCommandsTab(obj) {
         const cmds = validEntries.filter(([,c]) => (c.kat || 'Allgemein') === kat)
                                   .sort((a,b) => (a[1].name||'').localeCompare(b[1].name||'', 'de'));
         const rows = cmds.map(([k,c]) => `<tr>
-            <td style="width:30%;padding:10px 14px;"><span class="cmd-badge">${escapeHtml(c.name||'')}</span></td>
-            <td style="width:60%;padding:10px 14px;color:var(--text-main);font-size:13px;">${formatTextWithLinks(c.desc||c.description||'')}</td>
-            <td style="width:10%;padding:10px 14px;text-align:right;">${eff.delCommands ? `<button type="button" class="btn-delete-row" onclick="deleteDienstCommand('${k}')">🗑️</button>` : ''}</td>
+            <td style="width:30%;padding:12px 14px;"><span class="cmd-badge">${escapeHtml(c.name||'')}</span></td>
+            <td style="width:60%;padding:12px 14px;color:var(--text-main);font-size:14px;">${formatTextWithLinks(c.desc||c.description||'')}</td>
+            <td style="width:10%;padding:12px 14px;text-align:right;">${eff.delCommands ? `<button type="button" class="btn-delete-row" onclick="deleteDienstCommand('${k}')">🗑️</button>` : ''}</td>
         </tr>`).join('');
         const gId = 'cmd_' + kat.replace(/\W/g, '_');
         return `<div class="theme-accordion-group" id="${gId}" style="margin-bottom:12px;">
@@ -3053,6 +3769,7 @@ function renderCommandsTab(obj) {
 }
 
 function openCommandsInlineModal() {
+    if (!requirePermission(['canEditCommands','isMasterAdmin'], 'Keine Berechtigung zur Bearbeitung der Commands!')) return;
     const cont = document.getElementById('commandsInlineEditorContainer');
     if (!cont) return;
 
@@ -3110,6 +3827,7 @@ function openCommandsInlineModal() {
 function closeCommandsInlineModal() { document.getElementById('commandsInlineModal').style.display = 'none'; }
 
 function addCommandInline() {
+    if (!requirePermission(['canEditCommands','isMasterAdmin'], 'Keine Berechtigung zum Anlegen von Commands!')) return;
     const name = document.getElementById('inlineNewCmdName')?.value.trim();
     const desc = document.getElementById('inlineNewCmdDesc')?.value.trim();
     const kat = document.getElementById('inlineNewCmdKat')?.value.trim() || 'Allgemein';
@@ -3122,6 +3840,7 @@ function addCommandInline() {
 }
 
 function editCommandInline(k) {
+    if (!requirePermission(['canEditCommands','isMasterAdmin'], 'Keine Berechtigung zum Bearbeiten von Commands!')) return;
     const name = document.getElementById('cmd_name_' + k)?.value.trim();
     const desc = document.getElementById('cmd_desc_' + k)?.value.trim();
     const kat = document.getElementById('cmd_kat_' + k)?.value.trim() || 'Allgemein';
@@ -3179,9 +3898,9 @@ function renderLinksTab(obj) {
         if (!lnks.length) return '';
 
         const rows = lnks.map(([k, l]) => `<tr>
-            <td style="width:35%;padding:10px 14px;word-break:break-word;"><a class="link-btn-clickable" href="${sanitizeUrl(l.url)}" target="_blank" rel="noopener noreferrer">🔗 ${escapeHtml(l.name||l.url)}</a></td>
-            <td style="width:55%;padding:10px 14px;color:var(--text-main);font-size:13px;line-height:1.5;">${formatTextWithLinks(l.desc||l.description||'Keine Beschreibung')}</td>
-            <td style="width:10%;padding:10px 14px;text-align:right;">${eff.delLinks ? `<button type="button" class="btn-delete-row" onclick="deleteDienstLink('${k}')">🗑️</button>` : ''}</td>
+            <td style="width:35%;padding:12px 14px;word-break:break-word;"><a class="link-btn-clickable" href="${sanitizeUrl(l.url)}" target="_blank" rel="noopener noreferrer">🔗 ${escapeHtml(l.name||l.url)}</a></td>
+            <td style="width:55%;padding:12px 14px;color:var(--text-main);font-size:14px;line-height:1.5;">${formatTextWithLinks(l.desc||l.description||'Keine Beschreibung')}</td>
+            <td style="width:10%;padding:12px 14px;text-align:right;">${eff.delLinks ? `<button type="button" class="btn-delete-row" onclick="deleteDienstLink('${k}')">🗑️</button>` : ''}</td>
         </tr>`).join('');
         
         const gId = 'lnk_' + kat.replace(/\W/g, '_');
@@ -3195,6 +3914,7 @@ function renderLinksTab(obj) {
 }
 
 function openLinksInlineModal() {
+    if (!requirePermission(['canEditLinks','isMasterAdmin'], 'Keine Berechtigung zur Bearbeitung der Links!')) return;
     const cont = document.getElementById('linksInlineEditorContainer');
     if (!cont) return;
 
@@ -3260,6 +3980,7 @@ function openLinksInlineModal() {
 function closeLinksInlineModal() { document.getElementById('linksInlineModal').style.display = 'none'; }
 
 function addLinkInline() {
+    if (!requirePermission(['canEditLinks','isMasterAdmin'], 'Keine Berechtigung zum Anlegen von Links!')) return;
     const name = document.getElementById('inlineNewLinkName')?.value.trim();
     let url = document.getElementById('inlineNewLinkUrl')?.value.trim();
     const desc = document.getElementById('inlineNewLinkDesc')?.value.trim();
@@ -3275,6 +3996,7 @@ function addLinkInline() {
 }
 
 function editLinkInline(k) {
+    if (!requirePermission(['canEditLinks','isMasterAdmin'], 'Keine Berechtigung zum Bearbeiten von Links!')) return;
     const name = document.getElementById('link_name_' + k)?.value.trim();
     let url = document.getElementById('link_url_' + k)?.value.trim();
     const desc = document.getElementById('link_desc_' + k)?.value.trim();
@@ -3316,6 +4038,7 @@ function closeChangelogModal() {
 }
 
 function openChangelogWriterModal() {
+    if (!requireMasterAdminAccess('Nur Master-Admins dürfen den Changelog bearbeiten!')) return;
     const eff = sessionUser ? getUserEffectivePermissions(sessionUser) : {};
     if (!eff.isMasterAdmin) {
         alert('Nur Master-Admins können neue Changelogs direkt eintragen!');
@@ -3332,6 +4055,7 @@ function closeChangelogWriterModal() {
 }
 
 function saveCustomChangelogEntry() {
+    if (!requireMasterAdminAccess('Nur Master-Admins dürfen Changelog-Einträge speichern!')) return;
     if (!sessionUser || !getUserEffectivePermissions(sessionUser).isMasterAdmin) return;
     const version = document.getElementById('clNewVersion')?.value.trim();
     const category = document.getElementById('clNewCategory')?.value || 'Update';
@@ -3388,7 +4112,7 @@ function renderChangelogModal() {
                     <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
                         <span class="changelog-version-tag">${escapeHtml(entry.version)}</span>
                         <span class="changelog-badge ${bClass}">${escapeHtml(entry.category)}</span>
-                        <b style="color:var(--text-main);font-size:14px;">${escapeHtml(entry.title)}</b>
+                        <b style="color:var(--text-main);font-size:15px;">${escapeHtml(entry.title)}</b>
                     </div>
                     <span class="changelog-date">📅 ${escapeHtml(entry.date)}</span>
                 </div>
@@ -3409,14 +4133,15 @@ function renderNewsFeedData(obj) {
     const allNews = Object.entries(obj || {}).filter(([, n]) => !n.deleted);
     const eff = sessionUser ? getUserEffectivePermissions(sessionUser) : {};
     const myName = sessionUser ? `${sessionUser.vorname || ''} ${sessionUser.nachname || ''}`.trim().toLowerCase() : '';
-    const myId = sessionUser ? generateUserId(sessionUser.vorname, sessionUser.nachname) : '';
-    const myKey = sessionUser ? (sessionUser.dn ? ('dn_' + sessionUser.dn) : myId) : '';
+    const myId = sessionUser ? getUserAccountId(sessionUser) : '';
+    const myKey = myId;
+    const legacyReadKey = sessionUser?.dn ? ('dn_' + sessionUser.dn) : '';
 
     const approvedNews = allNews.filter(([, n]) => n.status !== 'pending_approval');
     let unreadCount = 0;
     approvedNews.forEach(([, n]) => {
         const readBy = n.readBy || {};
-        if (!readBy[myKey]) unreadCount++;
+        if (!readBy[myKey] && !(legacyReadKey && readBy[legacyReadKey])) unreadCount++;
     });
 
     if (unreadBadge) {
@@ -3440,11 +4165,11 @@ function renderNewsFeedData(obj) {
                             ${pendingList.map(([k, n]) => `
                                 <div style="background:rgba(15,23,42,0.8);padding:12px;border-radius:10px;display:flex;justify-content:space-between;align-items:center;">
                                     <div>
-                                        <b>${escapeHtml(n.title)}</b> <span style="font-size:11px;color:var(--text-muted);">von ${escapeHtml(n.author)}</span>
-                                        <p style="margin:4px 0 0 0;font-size:12px;color:var(--text-main);">${escapeHtml(n.content)}</p>
+                                        <b>${escapeHtml(n.title)}</b> <span style="font-size:12px;color:var(--text-muted);">von ${escapeHtml(n.author)}</span>
+                                        <p style="margin:4px 0 0 0;font-size:13px;color:var(--text-main);">${escapeHtml(n.content)}</p>
                                     </div>
                                     <div style="display:flex;gap:6px;">
-                                        <button type="button" class="btn" style="width:auto;margin:0;padding:6px 12px;font-size:11px;background:var(--success);color:#080c14;font-weight:800;" onclick="approveNewsProposal('${k}')">✅ Freigeben</button>
+                                        <button type="button" class="btn" style="width:auto;margin:0;padding:6px 12px;font-size:12px;background:var(--success);color:#080c14;font-weight:800;" onclick="approveNewsProposal('${k}')">✅ Freigeben</button>
                                         <button type="button" class="btn-delete-row" onclick="deleteNews('${k}')">🗑️</button>
                                     </div>
                                 </div>
@@ -3468,7 +4193,7 @@ function renderNewsFeedData(obj) {
 
     c.innerHTML = published.map(([k, n]) => {
         const readBy = n.readBy || {};
-        const hasRead = myKey && readBy[myKey];
+        const hasRead = myKey && (readBy[myKey] || (legacyReadKey && readBy[legacyReadKey]));
         const readCount = Object.keys(readBy).length;
         const authorNormalized = (n.author || '').trim().toLowerCase();
         const isAuthor = (n.authorId && n.authorId === myId) || (authorNormalized === myName && myName.length > 0);
@@ -3478,20 +4203,20 @@ function renderNewsFeedData(obj) {
             <div class="news-feed-card" style="background:rgba(15,23,42,0.7);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:16px;">
                 <div style="padding:16px 20px;background:rgba(30,41,59,0.6);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
                     <div>
-                        <span style="font-weight:800;font-size:16px;color:var(--primary);">${escapeHtml(n.title)}</span>
-                        <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">
+                        <span style="font-weight:800;font-size:17px;color:var(--primary);">${escapeHtml(n.title)}</span>
+                        <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">
                             👤 <b>${escapeHtml(n.author||'Klinikleitung')}</b> • 🏷️ ${escapeHtml(n.category||'Allgemein')}
                             ${n.edited ? `<span style="color:var(--warning);margin-left:6px;">(Bearbeitet)</span>` : ''}
                         </div>
                     </div>
                     <div style="display:flex;gap:8px;align-items:center;">
-                        ${hasRead ? '<span style="color:var(--success);font-weight:800;font-size:11px;">✅ Gelesen</span>' : `<button type="button" class="btn" style="width:auto;margin:0;padding:5px 12px;font-size:11px;" onclick="markNewsAsRead('${k}')">👁️ Als gelesen markieren</button>`}
+                        ${hasRead ? '<span style="color:var(--success);font-weight:800;font-size:12px;">✅ Gelesen</span>' : `<button type="button" class="btn" style="width:auto;margin:0;padding:5px 12px;font-size:12px;" onclick="markNewsAsRead('${k}')">👁️ Als gelesen markieren</button>`}
                         ${canEditThisNews ? `<button type="button" class="btn-edit-row" onclick="openEditNewsModal('${k}')" title="Beitrag bearbeiten">✏️</button>` : ''}
-                        ${eff.canViewNewsRead ? `<button type="button" class="btn" style="width:auto;margin:0;padding:5px 10px;font-size:11px;background:rgba(56,189,248,0.15);color:var(--primary);border:1px solid var(--primary);" onclick="openNewsReadersModal('${k}')">👥 Gelesen (${readCount})</button>` : ''}
+                        ${eff.canViewNewsRead ? `<button type="button" class="btn" style="width:auto;margin:0;padding:5px 10px;font-size:12px;background:rgba(56,189,248,0.15);color:var(--primary);border:1px solid var(--primary);" onclick="openNewsReadersModal('${k}')">👥 Gelesen (${readCount})</button>` : ''}
                         ${(eff.delNews || isAuthor) ? `<button type="button" class="btn-delete-row" onclick="deleteNews('${k}')">🗑️</button>` : ''}
                     </div>
                 </div>
-                <div style="padding:20px;white-space:pre-wrap;font-size:13px;line-height:1.6;">${formatTextWithLinks(n.content)}</div>
+                <div style="padding:20px;white-space:pre-wrap;font-size:14px;line-height:1.6;">${formatTextWithLinks(n.content)}</div>
             </div>
         `;
     }).join('');
@@ -3499,15 +4224,30 @@ function renderNewsFeedData(obj) {
 
 function markNewsAsRead(newsId) {
     if (!sessionUser) return;
-    const myKey = sessionUser.dn ? ('dn_' + sessionUser.dn) : generateUserId(sessionUser.vorname, sessionUser.nachname);
-    db.ref('data/news/' + newsId + '/readBy/' + myKey).set({
+    const newsItem = cachedNews[newsId];
+    if (!newsItem || (newsItem.status && newsItem.status !== 'published')) return;
+    const myKey = getUserAccountId(sessionUser);
+    if (!myKey) return;
+    const legacyKey = sessionUser.dn ? ('dn_' + sessionUser.dn) : '';
+    const updates = {};
+    updates[`data/news/${newsId}/readBy/${myKey}`] = {
         name: sessionUser.vorname + ' ' + sessionUser.nachname,
         dn: sessionUser.dn || '--',
         ts: Date.now()
-    });
+    };
+    if (legacyKey && legacyKey !== myKey && newsItem.readBy?.[legacyKey]) {
+        updates[`data/news/${newsId}/readBy/${legacyKey}`] = null;
+    }
+    db.ref().update(updates);
 }
 
 function openNewsReadersModal(newsId) {
+    if (!sessionUser) return;
+    const eff = getUserEffectivePermissions(sessionUser);
+    if (!eff.canViewNewsRead && !eff.isAdmin && !eff.isMasterAdmin) {
+        alert('Keine Berechtigung zur Einsicht der Leseliste!');
+        return;
+    }
     const n = cachedNews[newsId]; if (!n) return;
     const cont = document.getElementById('newsReadersListContainer');
     const modal = document.getElementById('newsReadersModal');
@@ -3522,9 +4262,17 @@ function openNewsReadersModal(newsId) {
 function closeNewsReadersModal() { document.getElementById('newsReadersModal').style.display = 'none'; }
 
 function togglePostNewsForm() {
+    if (!sessionUser) return;
     const e = document.getElementById('postNewsContainer');
     if (!e) return;
     const isHidden = (e.style.display === 'none' || !e.style.display);
+    if (isHidden) {
+        const eff = getUserEffectivePermissions(sessionUser);
+        if (!eff.canPostNews && !eff.isAdmin && !eff.isMasterAdmin) {
+            alert('Keine Berechtigung zum Veröffentlichen von News!');
+            return;
+        }
+    }
     if (isHidden) {
         document.getElementById('editingNewsId').value = '';
         document.getElementById('newNewsTitle').value = '';
@@ -3543,8 +4291,17 @@ function toggleProposeNewsForm() {
 }
 
 function openEditNewsModal(newsId) {
+    if (!sessionUser) return;
     const n = cachedNews[newsId];
     if (!n) return;
+    const eff = getUserEffectivePermissions(sessionUser);
+    const myId = getUserAccountId(sessionUser);
+    const myName = `${sessionUser.vorname || ''} ${sessionUser.nachname || ''}`.trim().toLowerCase();
+    const isAuthor = (n.authorId && n.authorId === myId) || ((n.author || '').trim().toLowerCase() === myName && myName.length > 0);
+    if (!isAuthor && !eff.canPostNews && !eff.isAdmin && !eff.isMasterAdmin) {
+        alert('Keine Berechtigung zum Bearbeiten dieses News-Beitrags!');
+        return;
+    }
 
     const e = document.getElementById('postNewsContainer');
     if (!e) return;
@@ -3568,26 +4325,39 @@ function speichereNeueNews() {
     const c = document.getElementById('newNewsContent')?.value.trim();
     const cat = document.getElementById('newNewsCategory')?.value || 'Allgemein';
     const editId = document.getElementById('editingNewsId')?.value;
-    const myId = generateUserId(sessionUser.vorname, sessionUser.nachname);
+    const myId = getUserAccountId(sessionUser);
 
     if (!t || !c) { alert('Bitte Titel und Inhalt eingeben!'); return; }
 
     if (editId) {
+        const existing = cachedNews[editId] || {};
+        const eff = getUserEffectivePermissions(sessionUser);
+        const isOwn = (existing.authorId && existing.authorId === myId) || ((existing.author || '').trim().toLowerCase() === `${sessionUser.vorname} ${sessionUser.nachname}`.trim().toLowerCase());
+        if (!isOwn && !eff.canPostNews && !eff.isAdmin && !eff.isMasterAdmin) {
+            alert('Keine Berechtigung zum Bearbeiten dieses News-Beitrags!');
+            return;
+        }
+        const auditRoleDesc = isOwn ? 'Eigener Beitrag bearbeitet' : 'Leitungs-Bearbeitung';
+
         db.ref('data/news/' + editId).update({
             title: t,
             content: c,
             category: cat,
             edited: true,
-            editedTs: Date.now()
+            editedTs: Date.now(),
+            lastEditedBy: `${sessionUser.vorname} ${sessionUser.nachname}`
         }).then(() => {
             togglePostNewsForm();
-            logAdminAudit('News bearbeitet', `${sessionUser.vorname} ${sessionUser.nachname}: ${t}`);
+            logAdminAudit(`News angepasst (${auditRoleDesc})`, `${sessionUser.vorname} ${sessionUser.nachname}: ${t}`);
             alert('✅ News-Beitrag erfolgreich aktualisiert!');
         });
         return;
     }
 
-    if (!getUserEffectivePermissions(sessionUser).canPostNews) return;
+    {
+        const eff = getUserEffectivePermissions(sessionUser);
+        if (!eff.canPostNews && !eff.isAdmin && !eff.isMasterAdmin) return;
+    }
 
     db.ref('data/news').push({
         title: t, content: c, category: cat, status: 'published',
@@ -3604,7 +4374,7 @@ function submitNewsProposal() {
     if (!sessionUser) return;
     const t = document.getElementById('propNewsTitle')?.value.trim();
     const c = document.getElementById('propNewsContent')?.value.trim();
-    const myId = generateUserId(sessionUser.vorname, sessionUser.nachname);
+    const myId = getUserAccountId(sessionUser);
 
     if (!t || !c) { alert('Bitte Titel und Inhalt angeben!'); return; }
     db.ref('data/news').push({
@@ -3621,6 +4391,14 @@ function submitNewsProposal() {
 }
 
 function approveNewsProposal(newsId) {
+    if (!sessionUser) return;
+    const item = cachedNews[newsId];
+    if (!item || item.status !== 'pending_approval') return;
+    const eff = getUserEffectivePermissions(sessionUser);
+    if (!eff.canApproveNews && !eff.isAdmin && !eff.isMasterAdmin) {
+        alert('Keine Berechtigung zum Freigeben von News-Vorschlägen!');
+        return;
+    }
     db.ref('data/news/' + newsId).update({ status: 'published', ts: Date.now() }).then(() => {
         logAdminAudit('News-Vorschlag genehmigt', `ID ${newsId} freigegeben von ${sessionUser.vorname} ${sessionUser.nachname}`);
     });
@@ -3630,7 +4408,7 @@ function deleteNews(k) {
     if (!sessionUser) return;
     const eff = getUserEffectivePermissions(sessionUser);
     const n = cachedNews[k];
-    const myId = generateUserId(sessionUser.vorname, sessionUser.nachname);
+    const myId = getUserAccountId(sessionUser);
     const myName = `${sessionUser.vorname || ''} ${sessionUser.nachname || ''}`.trim().toLowerCase();
     const authorNormalized = (n?.author || '').trim().toLowerCase();
     const isAuthor = n && ((n.authorId && n.authorId === myId) || (authorNormalized === myName && myName.length > 0));
@@ -3645,23 +4423,32 @@ function deleteNews(k) {
 }
 
 /* ── REITER 5: EINSTELLUNGEN / DIENSTTAGE ───────────────────── */
-function passwortAendern() {
-    if (!sessionUser) return;
+async function passwortAendern() {
+    if (!sessionUser || !auth.currentUser) return;
     const inp = document.getElementById('newPasswordInput');
     const np = (inp?.value || '').trim();
     if (!np) {
         alert('Bitte ein neues Passwort eingeben!');
         return;
     }
-    const uId = generateUserId(sessionUser.vorname, sessionUser.nachname);
-    db.ref('data/users/' + uId + '/pass').set(np).then(() => {
-        sessionUser.pass = np;
+    if (np.length < 6) {
+        alert('Das Passwort muss mindestens 6 Zeichen lang sein!');
+        return;
+    }
+
+    try {
+        await auth.currentUser.updatePassword(np);
         if (inp) inp.value = '';
-        logAdminAudit('Eigenes Passwort geändert', `${sessionUser.vorname} ${sessionUser.nachname} hat das Passwort aktualisiert.`);
+        logAdminAudit('Eigenes Passwort geändert', `${sessionUser.vorname} ${sessionUser.nachname} hat das Firebase-Login-Passwort aktualisiert.`);
         alert('✅ Passwort erfolgreich geändert!');
-    }).catch(err => {
-        alert('Fehler beim Ändern des Passworts: ' + err.message);
-    });
+    } catch (err) {
+        console.error('Passwortänderung fehlgeschlagen:', err);
+        if (err?.code === 'auth/requires-recent-login') {
+            alert('Aus Sicherheitsgründen ist eine erneute Anmeldung erforderlich. Bitte Dienst beenden, erneut anmelden und die Passwortänderung direkt danach wiederholen.');
+            return;
+        }
+        alert('Fehler beim Ändern des Passworts: ' + (err?.message || err));
+    }
 }
 
 function berechneDienstTage(shouldPersist = false) {
@@ -3669,9 +4456,9 @@ function berechneDienstTage(shouldPersist = false) {
     const f = document.getElementById('einstellungsDatum'); if (!f || !f.value) return;
     
     if (shouldPersist) {
-        const uId = generateUserId(sessionUser.vorname, sessionUser.nachname);
+        const uId = getUserAccountId(sessionUser);
         db.ref('data/users/' + uId + '/einstellungsDatum').set(f.value);
-        localStorage.setItem('mmd_einstellungsdatum_' + sessionUser.vorname + '_' + sessionUser.nachname, f.value);
+        localStorage.setItem('mmd_einstellungsdatum_' + uId, f.value);
     }
 
     const ed = new Date(f.value); ed.setHours(0,0,0,0);
@@ -3680,9 +4467,15 @@ function berechneDienstTage(shouldPersist = false) {
     const e = document.getElementById('val_dienstTage'); if (e) e.textContent = t;
 }
 
-function handleDienstEndeLogout() {
-    if (mySessionRef) mySessionRef.remove();
-    sessionStorage.clear(); localStorage.clear(); location.reload();
+async function handleDienstEndeLogout() {
+    if (mySessionRef) {
+        try { await mySessionRef.remove(); } catch (_) {}
+        mySessionRef = null;
+    }
+    clearStoredSessionData();
+    sessionUser = null;
+    try { await auth.signOut(); } catch (_) {}
+    location.reload();
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -3732,7 +4525,7 @@ function renderStudentUnlockedExams() {
         return;
     }
 
-    const uId = sessionUser ? generateUserId(sessionUser.vorname, sessionUser.nachname) : '';
+    const uId = sessionUser ? getUserAccountId(sessionUser) : '';
     const user = cachedUsers[uId] || sessionUser || {};
     const unlocked = user.unlockedExams || {};
     const passed = user.passedExams || {};
@@ -3744,14 +4537,14 @@ function renderStudentUnlockedExams() {
 
         let badge = '', btnHtml = '';
         if (isPassed) {
-            badge = '<span style="color:var(--success);font-weight:800;font-size:11px;">✅ Bestanden</span>';
-            btnHtml = '<div style="font-size:11px;color:var(--text-muted);margin-top:6px;">Erfolgreich abgeschlossen.</div>';
+            badge = '<span style="color:var(--success);font-weight:800;font-size:12px;">✅ Bestanden</span>';
+            btnHtml = '<div style="font-size:12px;color:var(--text-muted);margin-top:6px;">Erfolgreich abgeschlossen.</div>';
         } else if (isU) {
-            badge = '<span style="color:var(--primary);font-weight:800;font-size:11px;">⚡ Freigeschaltet</span>';
-            btnHtml = `<button type="button" class="btn" style="margin-top:8px;padding:6px 12px;font-size:12px;background:var(--primary);color:#080c14;font-weight:800;" onclick="startExam('${eid}')">📝 Prüfung starten</button>`;
+            badge = '<span style="color:var(--primary);font-weight:800;font-size:12px;">⚡ Freigeschaltet</span>';
+            btnHtml = `<button type="button" class="btn" style="margin-top:8px;padding:6px 12px;font-size:13px;background:var(--primary);color:#080c14;font-weight:800;" onclick="startExam('${eid}')">📝 Prüfung starten</button>`;
         } else {
-            badge = '<span style="color:var(--danger);font-weight:800;font-size:11px;">🔒 Gesperrt</span>';
-            btnHtml = '<div style="font-size:11px;color:var(--danger);margin-top:6px;">Nicht freigeschaltet oder durchgefallen.</div>';
+            badge = '<span style="color:var(--danger);font-weight:800;font-size:12px;">🔒 Gesperrt</span>';
+            btnHtml = '<div style="font-size:12px;color:var(--danger);margin-top:6px;">Nicht freigeschaltet oder durchgefallen.</div>';
         }
 
         const questionCount = (ex.questions || []).filter(q => !q.isInfo).length;
@@ -3759,11 +4552,11 @@ function renderStudentUnlockedExams() {
         return `
             <div class="exam-card-compact ${isPassed ? 'completed' : (isU ? 'unlocked' : 'locked')}">
                 <div style="display:flex;justify-content:space-between;align-items:center;">
-                    <span style="font-size:10px;color:var(--primary);text-transform:uppercase;font-weight:800;">${escapeHtml(ex.kat||'Allgemein')}</span>
+                    <span style="font-size:11px;color:var(--primary);text-transform:uppercase;font-weight:800;">${escapeHtml(ex.kat||'Allgemein')}</span>
                     ${badge}
                 </div>
-                <h4 style="margin:4px 0;font-size:13px;color:var(--text-main);">${escapeHtml(ex.title)}</h4>
-                <div style="font-size:11px;color:var(--text-muted);">⏱️ ${ex.timeLimitMinutes||30} Min • ❓ ${questionCount} Fachfragen</div>
+                <h4 style="margin:4px 0;font-size:14px;color:var(--text-main);">${escapeHtml(ex.title)}</h4>
+                <div style="font-size:12px;color:var(--text-muted);">⏱️ ${ex.timeLimitMinutes||30} Min • ❓ ${questionCount} Fachfragen</div>
                 ${btnHtml}
             </div>
         `;
@@ -3771,11 +4564,12 @@ function renderStudentUnlockedExams() {
 }
 
 function renderInstructorUnlocks() {
-    const tbody = document.getElementById('instructorUserUnlocksTableBody'); if (!tbody) return;
+    const tbody = document.getElementById('instructorUserUnlocksTableBody');
+    if (!tbody) return;
     
     const sortedExamIds = sortExamIds(Object.keys(cachedExams)).filter(eId => canInstructorAccessExam(eId));
 
-    const myId = sessionUser ? generateUserId(sessionUser.vorname, sessionUser.nachname) : '';
+    const myId = sessionUser ? getUserAccountId(sessionUser) : '';
     const myPassed = (cachedUsers[myId]?.passedExams) || {};
     const eff = sessionUser ? getUserEffectivePermissions(sessionUser) : {};
     const isLeitung = eff.canManageInstructors || eff.isAdmin || eff.isMasterAdmin;
@@ -3801,12 +4595,12 @@ function renderInstructorUnlocks() {
 
                     return `
                         <div class="exam-unlock-box ${unlocked[eId] ? 'active' : ''}">
-                            <div style="font-weight:700;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(ex.title)}</div>
+                            <div style="font-weight:700;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(ex.title)}</div>
                             <div style="display:flex;gap:8px;align-items:center;margin-top:2px;">
-                                <label style="font-size:10px;color:var(--primary);cursor:pointer;">
+                                <label style="font-size:11px;color:var(--primary);cursor:pointer;">
                                     <input type="checkbox" ${unlocked[eId]?'checked':''} ${disabledAttr} onchange="toggleExamUnlockForUser('${uId}','${eId}',this.checked)"> Freigabe
                                 </label>
-                                <label style="font-size:10px;color:var(--success);cursor:pointer;">
+                                <label style="font-size:11px;color:var(--success);cursor:pointer;">
                                     <input type="checkbox" ${passedMap[eId]?'checked':''} ${disabledAttr} onchange="toggleExamPassedForUser('${uId}','${eId}',this.checked)"> Bestanden
                                 </label>
                             </div>
@@ -3820,28 +4614,32 @@ function renderInstructorUnlocks() {
             <tr class="user-unlock-row" data-name="${escapeHtml((u.vorname+' '+u.nachname+' '+u.dn).toLowerCase())}">
                 <td style="width:200px;vertical-align:top;padding:10px;">
                     <b>${escapeHtml(u.vorname||'')} ${escapeHtml(u.nachname||'')}</b><br>
-                    <span style="color:var(--primary);font-size:11px;">DN: ${escapeHtml(u.dn||'--')}</span>
+                    <span style="color:var(--primary);font-size:12px;">DN: ${escapeHtml(u.dn||'--')}</span>
                 </td>
-                <td style="width:90px;vertical-align:top;padding:10px;color:var(--text-muted);font-size:11px;">${escapeHtml(u.date||'--')}</td>
-                <td style="vertical-align:top;padding:10px;">${sortedExamIds.length > 0 ? examGridHtml : '<span style="color:var(--text-muted);font-size:12px;">Keine Prüfungen autorisiert.</span>'}</td>
+                <td style="width:100px;vertical-align:top;padding:10px;color:var(--text-muted);font-size:12px;">${escapeHtml(u.date||'--')}</td>
+                <td style="vertical-align:top;padding:10px;">${sortedExamIds.length > 0 ? examGridHtml : '<span style="color:var(--text-muted);font-size:13px;">Keine Prüfungen autorisiert.</span>'}</td>
             </tr>
         `;
     });
 
     tbody.innerHTML = rowsHtml;
+    filterUnlocksTable();
 }
 
 function filterUnlocksTable() {
     const q = (document.getElementById('searchUnlocksUser')?.value||'').toLowerCase();
-    document.querySelectorAll('.user-unlock-row').forEach(row => {
+    document.querySelectorAll('#instrTabUnlocks .user-unlock-row').forEach(row => {
         row.style.display = row.getAttribute('data-name').includes(q) ? '' : 'none';
     });
 }
 
 function toggleExamUnlockForUser(uId, examId, isUnlocked) {
-    if (!sessionUser) return;
+    if (!sessionUser || !isUserInstructor()) {
+        alert('Keine Berechtigung zur Prüfungsfreischaltung!');
+        return;
+    }
     const eff = getUserEffectivePermissions(sessionUser);
-    const myId = generateUserId(sessionUser.vorname, sessionUser.nachname);
+    const myId = getUserAccountId(sessionUser);
     const myPassed = (cachedUsers[myId]?.passedExams) || {};
     const isLeitung = eff.canManageInstructors || eff.isAdmin || eff.isMasterAdmin;
 
@@ -3854,9 +4652,12 @@ function toggleExamUnlockForUser(uId, examId, isUnlocked) {
 }
 
 function toggleExamPassedForUser(uId, examId, isPassed) {
-    if (!sessionUser) return;
+    if (!sessionUser || !isUserInstructor()) {
+        alert('Keine Berechtigung zur Änderung von Prüfungsergebnissen!');
+        return;
+    }
     const eff = getUserEffectivePermissions(sessionUser);
-    const myId = generateUserId(sessionUser.vorname, sessionUser.nachname);
+    const myId = getUserAccountId(sessionUser);
     const myPassed = (cachedUsers[myId]?.passedExams) || {};
     const isLeitung = eff.canManageInstructors || eff.isAdmin || eff.isMasterAdmin;
 
@@ -3868,11 +4669,11 @@ function toggleExamPassedForUser(uId, examId, isPassed) {
     db.ref(`data/users/${uId}/passedExams/${examId}`).set(isPassed);
 }
 
-function renderInstructorSubmissions(subs) {
-    const t = document.getElementById('instructorSubmissionsTableBody'); if (!t) return;
+function renderInstructorSubmissionsInto(subs, tbodyId, searchInputId) {
+    const t = document.getElementById(tbodyId); if (!t) return;
     const eff = sessionUser ? getUserEffectivePermissions(sessionUser) : {};
-    const myId = sessionUser ? generateUserId(sessionUser.vorname, sessionUser.nachname) : '';
-    const q = (document.getElementById('searchSubmissionsInput')?.value || '').trim().toLowerCase();
+    const myId = sessionUser ? getUserAccountId(sessionUser) : '';
+    const q = (document.getElementById(searchInputId)?.value || '').trim().toLowerCase();
 
     let ee = Object.entries(subs || {}).sort((a,b) => (b[1].ts||0) - (a[1].ts||0));
 
@@ -3894,27 +4695,39 @@ function renderInstructorSubmissions(subs) {
     t.innerHTML = !ee.length ? '<tr><td colspan="8" style="text-align:center;padding:24px;">Keine Prüfungsergebnisse gefunden.</td></tr>'
         : ee.map(([subId, sub]) => `
             <tr>
-                <td style="font-size:11px;color:var(--text-muted);">${escapeHtml(sub.datum||'--')}</td>
-                <td><b>${escapeHtml(sub.userName||'--')}</b> <span style="color:var(--primary);font-size:11px;">(${escapeHtml(sub.userDN||'--')})</span></td>
+                <td style="font-size:12px;color:var(--text-muted);">${escapeHtml(sub.datum||'--')}</td>
+                <td><b>${escapeHtml(sub.userName||'--')}</b> <span style="color:var(--primary);font-size:12px;">(${escapeHtml(sub.userDN||'--')})</span></td>
                 <td style="font-weight:700;color:var(--primary);">${escapeHtml(sub.examTitle||'--')}</td>
                 <td style="font-family:monospace;color:var(--warning);">${escapeHtml(sub.durationFormatted||'--')}</td>
                 <td><b>${sub.percentage||0}%</b></td>
                 <td><span style="color:${sub.passed?'var(--success)':'var(--danger)'};font-weight:800;">${sub.passed?'✅ Bestanden':'⛔ Nicht bestanden'}</span></td>
                 <td>
-                    ${isUserInstructor() ? `<button type="button" class="btn" style="width:auto;margin:0;padding:4px 10px;font-size:11px;" onclick="openExamSubmissionDetailsModal('${subId}')">👁️ Details</button>` : '--'}
+                    ${isUserInstructor() ? `<button type="button" class="btn" style="width:auto;margin:0;padding:4px 10px;font-size:12px;" onclick="openExamSubmissionDetailsModal('${subId}')">👁️ Details</button>` : '--'}
                 </td>
                 <td>${eff.delExams ? `<button type="button" class="btn-delete-row" onclick="deleteExamSubmission('${subId}')">🗑️</button>` : '--'}</td>
             </tr>
         `).join('');
 }
 
+function renderInstructorSubmissions(subs) {
+    renderInstructorSubmissionsInto(subs, 'instructorSubmissionsTableBody', 'searchSubmissionsInput');
+}
+
 function filterSubmissionsTable() {
-    renderInstructorSubmissions(cachedSubmissions);
+    renderInstructorSubmissionsInto(cachedSubmissions, 'instructorSubmissionsTableBody', 'searchSubmissionsInput');
 }
 
 function openExamSubmissionDetailsModal(subId) {
+    if (!sessionUser || !isUserInstructor()) {
+        alert('Keine Berechtigung zur Einsicht dieser Prüfungsauswertung!');
+        return;
+    }
     const sub = cachedSubmissions[subId]; 
     if (!sub) return;
+    if (!canInstructorAccessExam(sub.examId)) {
+        alert('Keine Berechtigung zur Einsicht dieser Prüfung!');
+        return;
+    }
     
     const cont = document.getElementById('examSubDetailsContent');
     const modal = document.getElementById('examSubmissionDetailsModal');
@@ -3950,7 +4763,7 @@ function openExamSubmissionDetailsModal(subId) {
                 return `
                     <div style="background:rgba(30,41,59,0.5);padding:12px;border-radius:8px;border-left:4px solid var(--primary);">
                         <div style="font-weight:800;font-size:12px;color:var(--primary);text-transform:uppercase;">📋 Stammdaten / Prüfungs-Angabe</div>
-                        <div style="font-weight:700;font-size:13px;color:var(--text-main);margin-top:2px;">${escapeHtml(qText)}</div>
+                        <div style="font-weight:700;font-size:14px;color:var(--text-main);margin-top:2px;">${escapeHtml(qText)}</div>
                         <div style="font-size:13px;margin-top:4px;color:var(--text-main);background:rgba(8,12,20,0.6);padding:6px 10px;border-radius:6px;">
                             ${escapeHtml(chosen)}
                         </div>
@@ -3961,8 +4774,8 @@ function openExamSubmissionDetailsModal(subId) {
             const isCorrect = !!ans.isCorrect;
             return `
                 <div style="background:rgba(15,23,42,0.7);padding:12px;border-radius:8px;border-left:4px solid ${isCorrect ? 'var(--success)' : 'var(--danger)'};">
-                    <div style="font-weight:700;font-size:13px;color:var(--text-main);">${escapeHtml(qText)}</div>
-                    <div style="font-size:12px;margin-top:4px;color:${isCorrect ? 'var(--success)' : 'var(--danger)'};font-weight:700;">
+                    <div style="font-weight:700;font-size:14px;color:var(--text-main);">${escapeHtml(qText)}</div>
+                    <div style="font-size:13px;margin-top:4px;color:${isCorrect ? 'var(--success)' : 'var(--danger)'};font-weight:700;">
                         Ausgewählt: <span style="color:var(--text-main);font-weight:normal;">${escapeHtml(chosen)}</span> ${isCorrect ? '✅ (Richtig)' : '❌ (Falsch)'}
                     </div>
                 </div>
@@ -3996,11 +4809,12 @@ function deleteExamSubmission(subId) {
 }
 
 function renderInstructorExistingExams() {
-    const c = document.getElementById('instructorExistingExamsList'); if (!c) return;
+    const container = document.getElementById('instructorExistingExamsList');
+    if (!container) return;
     const validIds = sortExamIds(Object.keys(cachedExams)).filter(eId => canInstructorAccessExam(eId));
     const eff = sessionUser ? getUserEffectivePermissions(sessionUser) : {};
 
-    c.innerHTML = `
+    const html = `
         <div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(260px, 1fr));gap:12px;">
             ${validIds.map(k => {
                 const e = cachedExams[k]; if (!e) return '';
@@ -4008,12 +4822,12 @@ function renderInstructorExistingExams() {
                 return `
                     <div style="background:rgba(15,23,42,0.8);border:1px solid var(--border);border-radius:12px;padding:12px;display:flex;flex-direction:column;justify-content:space-between;gap:8px;">
                         <div>
-                            <span style="font-size:10px;color:var(--primary);font-weight:800;text-transform:uppercase;">${escapeHtml(e.kat||'Allgemein')}</span>
+                            <span style="font-size:11px;color:var(--primary);font-weight:800;text-transform:uppercase;">${escapeHtml(e.kat||'Allgemein')}</span>
                             <h5 style="margin:4px 0 6px 0;font-size:14px;color:var(--text-main);">${escapeHtml(e.title)}</h5>
-                            <div style="font-size:11px;color:var(--text-muted);">⏱️ ${e.timeLimitMinutes||30} Min • ❓ ${qCount} Fachfragen (+3 Stammdaten) • 🎯 ${e.passPercentage||60}%</div>
+                            <div style="font-size:12px;color:var(--text-muted);">⏱️ ${e.timeLimitMinutes||30} Min • ❓ ${qCount} Fachfragen (+3 Stammdaten) • 🎯 ${e.passPercentage||60}%</div>
                         </div>
                         <div style="display:flex;gap:6px;justify-content:flex-end;border-top:1px solid rgba(255,255,255,0.06);padding-top:8px;">
-                            ${eff.canManageExams ? `<button type="button" class="btn" style="width:auto;margin:0;padding:4px 10px;font-size:11px;" onclick="editExam('${k}')">✏️ Bearbeiten</button>` : ''}
+                            ${eff.canManageExams ? `<button type="button" class="btn" style="width:auto;margin:0;padding:4px 10px;font-size:12px;" onclick="editExam('${k}')">✏️ Bearbeiten</button>` : ''}
                             ${eff.delExams ? `<button type="button" class="btn-delete-row" onclick="deleteExam('${k}')" title="Prüfung löschen">🗑️</button>` : ''}
                         </div>
                     </div>
@@ -4021,11 +4835,13 @@ function renderInstructorExistingExams() {
             }).join('')}
         </div>
     `;
+    container.innerHTML = html;
 }
 
 let _examBuilderQuestions = [];
 
 function openExamBuilderModal() {
+    if (!canCurrentUserManageExams()) { alert('Keine Berechtigung zum Erstellen von Prüfungen!'); return; }
     resetExamBuilderForm();
     document.getElementById('examBuilderModalHeading').textContent = '📝 Neue Prüfung erstellen';
     document.getElementById('examBuilderModal').style.display = 'flex';
@@ -4065,7 +4881,7 @@ function refreshExamQuestionsDisplay() {
             return `
                 <div style="background:rgba(30,41,59,0.5);border:1px solid var(--primary);border-radius:10px;padding:12px;">
                     <div style="font-weight:800;color:var(--primary);font-size:12px;">📋 Stammdaten-Pflichtfeld ${idx+1} (Fest vorgegeben)</div>
-                    <div style="font-size:13px;font-weight:700;margin-top:4px;">${escapeHtml(q.text)}</div>
+                    <div style="font-size:14px;font-weight:700;margin-top:4px;">${escapeHtml(q.text)}</div>
                 </div>
             `;
         }
@@ -4082,7 +4898,7 @@ function refreshExamQuestionsDisplay() {
             return `
                 <div style="display:flex;align-items:center;gap:6px;">
                     <input type="checkbox" id="chk_bld_${idx}_${oIdx}" ${isChecked ? 'checked' : ''} onchange="toggleBuilderCorrectAnswer(${idx}, ${oIdx}, this.checked)">
-                    <label for="chk_bld_${idx}_${oIdx}" style="margin:0;cursor:pointer;font-size:11px;color:var(--text-muted);">Richtig</label>
+                    <label for="chk_bld_${idx}_${oIdx}" style="margin:0;cursor:pointer;font-size:12px;color:var(--text-muted);">Richtig</label>
                     <input type="text" value="${escapeHtml(opt||'')}" oninput="_examBuilderQuestions[${idx}].options[${oIdx}]=this.value" placeholder="Antwort ${oIdx+1}" style="flex:1;">
                 </div>
             `;
@@ -4091,7 +4907,7 @@ function refreshExamQuestionsDisplay() {
         return `
             <div style="background:rgba(15,23,42,0.6);border:1px solid var(--border);border-radius:10px;padding:12px;">
                 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-                    <b>Fachfrage ${currentFachNumber} <span style="font-size:11px;color:var(--primary);">(Mehrfachauswahl aktiv)</span></b>
+                    <b>Fachfrage ${currentFachNumber} <span style="font-size:12px;color:var(--primary);">(Mehrfachauswahl aktiv)</span></b>
                     <button class="btn-delete-row" type="button" onclick="_examBuilderQuestions.splice(${idx},1);refreshExamQuestionsDisplay();">🗑️</button>
                 </div>
                 <input type="text" value="${escapeHtml(q.text||'')}" oninput="_examBuilderQuestions[${idx}].text=this.value" placeholder="Fragetext..." style="margin-bottom:8px;">
@@ -4117,6 +4933,7 @@ function toggleBuilderCorrectAnswer(qIdx, oIdx, isChecked) {
 }
 
 function neuePruefungSpeichern() {
+    if (!canCurrentUserManageExams()) { alert('Keine Berechtigung zum Speichern von Prüfungen!'); return; }
     const title = document.getElementById('newExamTitle')?.value.trim();
     if (!title) { alert('Bitte Titel angeben!'); return; }
     
@@ -4164,6 +4981,7 @@ function neuePruefungSpeichern() {
 }
 
 function editExam(eid) {
+    if (!canCurrentUserManageExams()) { alert('Keine Berechtigung zum Bearbeiten von Prüfungen!'); return; }
     const ex = cachedExams[eid]; if (!ex) return;
     document.getElementById('editingExamId').value = eid;
     document.getElementById('newExamTitle').value = ex.title || '';
@@ -4207,6 +5025,9 @@ function deleteExam(eid) {
 
 function renderInstructorAllowedExams() {
     const mt = document.getElementById('instructorMembersApprovalTableBody'); if (!mt) return;
+    if (!sessionUser) { mt.innerHTML = ''; return; }
+    const eff = getUserEffectivePermissions(sessionUser);
+    if (!eff.canManageInstructors && !eff.isAdmin && !eff.isMasterAdmin) { mt.innerHTML = ''; return; }
     const userList = Object.entries(cachedUsers).sort((a, b) => {
         const nameA = ((a[1].nachname || '') + ' ' + (a[1].vorname || '')).trim().toLowerCase();
         const nameB = ((b[1].nachname || '') + ' ' + (b[1].vorname || '')).trim().toLowerCase();
@@ -4222,10 +5043,10 @@ function renderInstructorAllowedExams() {
             <td style="text-align:right;padding:10px;">
                 <div style="display:flex;gap:6px;justify-content:flex-end;">
                     ${u.status !== 'approved'
-                        ? `<button type="button" class="btn" style="width:auto;margin:0;padding:5px 12px;font-size:11px;background:var(--success);color:#080c14;font-weight:800;" onclick="approveUser('${uId}')">✅ Freischalten</button>`
-                        : `<button type="button" class="btn" style="width:auto;margin:0;padding:5px 12px;font-size:11px;background:rgba(244,63,94,0.15);color:var(--danger);border:1px solid var(--danger);" onclick="revokeUser('${uId}')">⛔ Sperren</button>`
+                        ? `<button type="button" class="btn" style="width:auto;margin:0;padding:5px 12px;font-size:12px;background:var(--success);color:#080c14;font-weight:800;" onclick="approveUser('${uId}')">✅ Freischalten</button>`
+                        : `<button type="button" class="btn" style="width:auto;margin:0;padding:5px 12px;font-size:12px;background:rgba(244,63,94,0.15);color:var(--danger);border:1px solid var(--danger);" onclick="revokeUser('${uId}')">⛔ Sperren</button>`
                     }
-                    <button type="button" class="btn" style="width:auto;margin:0;padding:5px 12px;font-size:11px;" onclick="openAssignRolesModal('${uId}','${escapeHtml(u.vorname)} ${escapeHtml(u.nachname)}', true)">🎭 Rollen</button>
+                    <button type="button" class="btn" style="width:auto;margin:0;padding:5px 12px;font-size:12px;" onclick="openAssignRolesModal('${uId}', null, true)">🎭 Rollen</button>
                 </div>
             </td>
         </tr>
@@ -4233,6 +5054,17 @@ function renderInstructorAllowedExams() {
 }
 
 function startExam(eid) {
+    if (!sessionUser) return;
+    const myId = getUserAccountId(sessionUser);
+    const me = cachedUsers[myId] || sessionUser || {};
+    if (me.passedExams?.[eid]) {
+        alert('Diese Prüfung wurde bereits bestanden.');
+        return;
+    }
+    if (!me.unlockedExams?.[eid]) {
+        alert('Diese Prüfung ist nicht freigeschaltet!');
+        return;
+    }
     const ex = cachedExams[eid]; if (!ex || !ex.questions) return;
     activeExam = { id: eid, exam: ex }; activeExamSecondsElapsed = 0;
     clearInterval(activeExamTimerInterval);
@@ -4259,7 +5091,7 @@ function startExam(eid) {
             fachIndex++;
             return `
                 <div class="exam-q-box">
-                    <p style="font-weight:800;margin:0 0 8px 0;">❓ Frage ${fachIndex}: ${escapeHtml(q.text)} <span style="font-size:11px;color:var(--warning);font-weight:normal;float:right;">(Mehrfachauswahl möglich)</span></p>
+                    <p style="font-weight:800;margin:0 0 8px 0;">❓ Frage ${fachIndex}: ${escapeHtml(q.text)} <span style="font-size:12px;color:var(--warning);font-weight:normal;float:right;">(Mehrfachauswahl möglich)</span></p>
                     ${(q.options || []).map((opt, oIdx) => `
                         <label class="exam-opt-label">
                             <input type="checkbox" name="q_${idx}" value="${oIdx}">
@@ -4283,9 +5115,16 @@ function cancelActiveExam() {
 }
 
 function submitActiveExam() {
-    if (!activeExam) return;
-    clearInterval(activeExamTimerInterval);
+    if (!sessionUser || !activeExam) return;
     const ex = activeExam.exam, eid = activeExam.id;
+    const myId = getUserAccountId(sessionUser);
+    const me = cachedUsers[myId] || sessionUser || {};
+    if (!me.unlockedExams?.[eid] || me.passedExams?.[eid]) {
+        cancelActiveExam();
+        alert('Die Freigabe dieser Prüfung ist nicht mehr gültig.');
+        return;
+    }
+    clearInterval(activeExamTimerInterval);
     let totalQ = 0, correctQ = 0;
     const recordedAnswers = [];
 
@@ -4323,7 +5162,6 @@ function submitActiveExam() {
 
     const pct = totalQ > 0 ? Math.round((correctQ / totalQ) * 100) : 0;
     const passed = pct >= (ex.passPercentage || 60);
-    const myId = generateUserId(sessionUser.vorname, sessionUser.nachname);
     const m = Math.floor(activeExamSecondsElapsed / 60).toString().padStart(2, '0');
     const s = (activeExamSecondsElapsed % 60).toString().padStart(2, '0');
 
@@ -4363,18 +5201,27 @@ function openAdminKeyModal() {
 }
 function closeAdminAuthModal() { document.getElementById('adminAuthModal').style.display = 'none'; }
 
-function verifyAdminKeyPassword() {
+async function verifyAdminKeyPassword() {
     const p = (document.getElementById('adminAuthPassInput')?.value || '').trim();
-    if (sessionUser && p === sessionUser.pass) {
+    if (!sessionUser || !requireAdminAccess() || !auth.currentUser) return;
+    try {
+        const credential = firebase.auth.EmailAuthProvider.credential(auth.currentUser.email, p);
+        await auth.currentUser.reauthenticateWithCredential(credential);
         closeAdminAuthModal();
         document.getElementById('adminManagementModal').style.display = 'flex';
         renderAdminUserTable(cachedUsers);
         renderAdminRolesList();
-        renderAdminFeedbackTable();
-    } else {
-        alert('Falsches Admin-Passwort!');
+        refreshFirebaseAuthMigrationPanel();
+    } catch (err) {
+        console.error('Admin-Verifizierung fehlgeschlagen:', err);
+        if (['auth/wrong-password', 'auth/invalid-credential', 'auth/invalid-login-credentials'].includes(err?.code)) {
+            alert('Falsches Admin-Passwort!');
+            return;
+        }
+        alert('Admin-Verifizierung fehlgeschlagen: ' + (err?.message || err));
     }
 }
+
 function closeAdminManagementModal() { document.getElementById('adminManagementModal').style.display = 'none'; }
 
 function switchAdminTab(tabId, btnEl) {
@@ -4404,17 +5251,17 @@ function renderAdminUserTable(obj) {
             </td>
             <td>
                 ${renderUserRoleBadges(u)}<br>
-                <span style="color:${u.status==='approved'?'var(--success)':'var(--danger)'};font-weight:700;font-size:11px;">${u.status==='approved'?'✅ Aktiv':'⛔ Gesperrt'}</span>
+                <span style="color:${u.status==='approved'?'var(--success)':'var(--danger)'};font-weight:700;font-size:12px;">${u.status==='approved'?'✅ Aktiv':'⛔ Gesperrt'}</span>
             </td>
-            <td style="color:var(--text-muted);font-size:11px;">${escapeHtml(u.date||'--')}</td>
+            <td style="color:var(--text-muted);font-size:12px;">${escapeHtml(u.date||'--')}</td>
             <td style="text-align:right;">
                 <div style="display:flex;gap:6px;justify-content:flex-end;">
                     ${u.status !== 'approved'
-                        ? `<button type="button" class="btn" style="width:auto;margin:0;padding:4px 10px;font-size:11px;background:var(--success);color:#080c14;font-weight:800;" onclick="approveUser('${uId}')">✅ Freischalten</button>`
-                        : `<button type="button" class="btn" style="width:auto;margin:0;padding:4px 10px;font-size:11px;background:rgba(244,63,94,0.15);color:var(--danger);border:1px solid var(--danger);" onclick="revokeUser('${uId}')">⛔ Sperren</button>`
+                        ? `<button type="button" class="btn" style="width:auto;margin:0;padding:4px 10px;font-size:12px;background:var(--success);color:#080c14;font-weight:800;" onclick="approveUser('${uId}')">✅ Freischalten</button>`
+                        : `<button type="button" class="btn" style="width:auto;margin:0;padding:4px 10px;font-size:12px;background:rgba(244,63,94,0.15);color:var(--danger);border:1px solid var(--danger);" onclick="revokeUser('${uId}')">⛔ Sperren</button>`
                     }
-                    <button type="button" class="btn" style="width:auto;margin:0;padding:4px 10px;font-size:11px;" onclick="openAssignRolesModal('${uId}','${escapeHtml(u.vorname)} ${escapeHtml(u.nachname)}', false)">🎭 Rollen</button>
-                    <button type="button" class="btn" style="width:auto;margin:0;padding:4px 10px;font-size:11px;background:rgba(168,85,247,0.15);color:#a855f7;border:1px solid #a855f7;" onclick="openUserPermissionsModal('${uId}')">✏️ Edit</button>
+                    <button type="button" class="btn" style="width:auto;margin:0;padding:4px 10px;font-size:12px;" onclick="openAssignRolesModal('${uId}', null, false)">🎭 Rollen</button>
+                    <button type="button" class="btn" style="width:auto;margin:0;padding:4px 10px;font-size:12px;background:rgba(168,85,247,0.15);color:#a855f7;border:1px solid #a855f7;" onclick="openUserPermissionsModal('${uId}')">✏️ Edit</button>
                     ${eff.delUsers ? `<button type="button" class="btn-delete-row" onclick="deleteUserAccount('${uId}')" title="Mitarbeiter löschen">🗑️</button>` : ''}
                 </div>
             </td>
@@ -4429,12 +5276,270 @@ function filterAdminUserTable() {
     });
 }
 
+
+async function createSecondaryAuthAccount(uId, version, password, allowExistingLogin = true) {
+    const appName = `mmd-auth-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    const secondaryApp = firebase.initializeApp(FIREBASE_CONFIG, appName);
+    const secondaryAuth = secondaryApp.auth();
+    await secondaryAuth.setPersistence(firebase.auth.Auth.Persistence.NONE);
+    const email = getTechnicalAuthEmail(uId, version);
+
+    let credential;
+    let created = false;
+    try {
+        credential = await secondaryAuth.createUserWithEmailAndPassword(email, password);
+        created = true;
+    } catch (err) {
+        if (allowExistingLogin && err?.code === 'auth/email-already-in-use') {
+            credential = await secondaryAuth.signInWithEmailAndPassword(email, password);
+        } else {
+            try { await secondaryApp.delete(); } catch (_) {}
+            throw err;
+        }
+    }
+
+    return {
+        app: secondaryApp,
+        auth: secondaryAuth,
+        user: credential.user,
+        created,
+        email
+    };
+}
+
+async function closeSecondaryAuthAccount(ctx) {
+    if (!ctx) return;
+    try { await ctx.auth?.signOut(); } catch (_) {}
+    try { await ctx.app?.delete(); } catch (_) {}
+}
+
+async function resetFirebaseAuthForUser(uId, newPassword) {
+    if (!requireMasterAdminAccess('Nur der Master-Admin darf das Login-Passwort anderer Mitarbeiter zurücksetzen.')) return false;
+    if (!uId || !newPassword || newPassword.length < 6) {
+        alert('Das neue Passwort muss mindestens 6 Zeichen lang sein!');
+        return false;
+    }
+
+    const target = cachedUsers[uId];
+    if (!target) {
+        alert('Mitarbeiterkonto wurde nicht gefunden.');
+        return false;
+    }
+
+    const loginKey = target.loginKey || generateUserId(target.vorname, target.nachname);
+    const directoryVersion = (await readLoginDirectory(loginKey)).version;
+    let nextVersion = Math.max(directoryVersion, Number(target.authVersion) || 0) + 1;
+    if (nextVersion < 1) nextVersion = 1;
+
+    let ctx = null;
+    for (let attempt = 0; attempt < 5; attempt++) {
+        try {
+            ctx = await createSecondaryAuthAccount(uId, nextVersion, newPassword, false);
+            break;
+        } catch (err) {
+            if (err?.code === 'auth/email-already-in-use') {
+                nextVersion++;
+                continue;
+            }
+            throw err;
+        }
+    }
+    if (!ctx) throw new Error('Es konnte kein neuer Firebase-Zugang angelegt werden.');
+
+    const oldAuthUid = target.authUid || null;
+    const updates = {};
+    if (oldAuthUid && oldAuthUid !== ctx.user.uid) {
+        updates[`data/authIndex/${oldAuthUid}`] = null;
+    }
+    updates[`data/authIndex/${ctx.user.uid}`] = uId;
+    updates[`data/loginDirectory/${loginKey}`] = { version: nextVersion, accountId: uId };
+    updates[`data/users/${uId}/accountId`] = uId;
+    updates[`data/users/${uId}/loginKey`] = loginKey;
+    updates[`data/users/${uId}/authUid`] = ctx.user.uid;
+    updates[`data/users/${uId}/authVersion`] = nextVersion;
+    updates[`data/users/${uId}/pass`] = null;
+    updates[`data/users/${uId}/passwordHash`] = null;
+    updates[`data/users/${uId}/passwordSalt`] = null;
+    updates[`data/users/${uId}/passwordAlgo`] = null;
+    updates[`data/users/${uId}/passwordIterations`] = null;
+    updates[`data/users/${uId}/passwordVersion`] = null;
+    updates[`data/users/${uId}/passwordUpdatedAt`] = null;
+    updates[`data/users/${uId}/serverPermissions`] = buildServerPermissions(target);
+
+    try {
+        await db.ref().update(updates);
+        await closeSecondaryAuthAccount(ctx);
+        logAdminAudit('Firebase-Zugang zurückgesetzt', `Login-Zugang für ${uId} wurde durch ${sessionUser.vorname} ${sessionUser.nachname} neu gesetzt.`);
+        return true;
+    } catch (err) {
+        try {
+            if (ctx.created && ctx.user) await ctx.user.delete();
+        } catch (_) {}
+        await closeSecondaryAuthAccount(ctx);
+        throw err;
+    }
+}
+
+async function refreshFirebaseAuthMigrationPanel() {
+    const panel = document.getElementById('firebaseAuthMigrationPanel');
+    const statusEl = document.getElementById('firebaseAuthMigrationStatus');
+    const runBtn = document.getElementById('btnRunFirebaseAuthMigration');
+    const eff = sessionUser ? getUserEffectivePermissions(sessionUser) : {};
+    if (!panel || !eff.isMasterAdmin) {
+        if (panel) panel.style.display = 'none';
+        return;
+    }
+
+    try {
+        const [flagSnap, usersSnap] = await Promise.all([
+            db.ref('data/system/authMigrationComplete').once('value'),
+            db.ref('data/users').once('value')
+        ]);
+        const users = usersSnap.val() || {};
+        const entries = Object.entries(users);
+        const pending = entries.filter(([, u]) => !u?.authUid || u?.pass || u?.passwordHash || u?.passwordSalt);
+        const complete = flagSnap.val() === true && pending.length === 0;
+
+        panel.style.display = complete ? 'none' : 'block';
+        if (complete) return;
+
+        if (statusEl) {
+            statusEl.innerHTML = `<b>${entries.length - pending.length}</b> von <b>${entries.length}</b> Konten sind vollständig auf Firebase Authentication umgestellt. ${pending.length ? `<span style="color:var(--warning);">${pending.length} Konto/Konten benötigen noch die Migration.</span>` : 'Die Konten sind migriert; der Abschlussstatus kann jetzt gesetzt werden.'}`;
+        }
+        if (runBtn) runBtn.disabled = false;
+    } catch (err) {
+        panel.style.display = 'block';
+        if (statusEl) statusEl.textContent = 'Migrationsstatus konnte nicht gelesen werden: ' + (err?.message || err);
+    }
+}
+
+async function runFirebaseAuthMigration() {
+    if (!requireMasterAdminAccess('Nur der Master-Admin darf die Firebase-Auth-Migration ausführen.')) return;
+    if (!auth.currentUser) {
+        alert('Keine aktive Firebase-Anmeldung vorhanden.');
+        return;
+    }
+
+    const ok = confirm(
+        'Sicherheitsmigration jetzt starten?\n\n' +
+        'Dabei werden bestehende Mitarbeiterkonten in Firebase Authentication angelegt und alte Passwortfelder aus der Realtime Database entfernt.\n\n' +
+        'Vorher sollte ein aktuelles Firebase-Backup vorhanden sein.'
+    );
+    if (!ok) return;
+
+    const btn = document.getElementById('btnRunFirebaseAuthMigration');
+    const statusEl = document.getElementById('firebaseAuthMigrationStatus');
+    if (btn) btn.disabled = true;
+
+    const failures = [];
+    let migrated = 0;
+    let cleaned = 0;
+
+    try {
+        const [rolesSnap, snap] = await Promise.all([
+            db.ref('data/roles').once('value'),
+            db.ref('data/users').once('value')
+        ]);
+        cachedRoles = rolesSnap.val() ? Object.assign({}, defaultRoles, rolesSnap.val()) : Object.assign({}, defaultRoles);
+        const users = snap.val() || {};
+        const myId = getUserAccountId(sessionUser);
+
+        for (const [uId, rawUser] of Object.entries(users)) {
+            if (statusEl) statusEl.textContent = `Bearbeite ${uId} …`;
+
+            let firebaseUid = rawUser?.authUid || null;
+            const loginKey = rawUser?.loginKey || generateUserId(rawUser?.vorname, rawUser?.nachname);
+            let version = Math.max(1, Number(rawUser?.authVersion) || (await readLoginDirectory(loginKey)).version || 1);
+            let secondaryCtx = null;
+
+            try {
+                if (uId === myId && auth.currentUser) {
+                    firebaseUid = auth.currentUser.uid;
+                }
+
+                if (!firebaseUid) {
+                    const legacyPassword = typeof rawUser?.pass === 'string' ? rawUser.pass : '';
+                    if (legacyPassword.length < 6) {
+                        throw new Error('Kein migrierbares Klartextpasswort mit mindestens 6 Zeichen vorhanden.');
+                    }
+
+                    secondaryCtx = await createSecondaryAuthAccount(uId, version, legacyPassword, true);
+                    firebaseUid = secondaryCtx.user.uid;
+                    migrated++;
+                }
+
+                const cleanForPermissions = Object.assign({}, rawUser, { accountId: uId, loginKey, authUid: firebaseUid, authVersion: version });
+                const updates = {};
+                updates[`data/authIndex/${firebaseUid}`] = uId;
+                updates[`data/loginDirectory/${loginKey}`] = { version, accountId: uId };
+                updates[`data/users/${uId}/accountId`] = uId;
+                updates[`data/users/${uId}/loginKey`] = loginKey;
+                updates[`data/users/${uId}/authUid`] = firebaseUid;
+                updates[`data/users/${uId}/authVersion`] = version;
+                updates[`data/users/${uId}/serverPermissions`] = buildServerPermissions(cleanForPermissions);
+                updates[`data/users/${uId}/pass`] = null;
+                updates[`data/users/${uId}/passwordHash`] = null;
+                updates[`data/users/${uId}/passwordSalt`] = null;
+                updates[`data/users/${uId}/passwordAlgo`] = null;
+                updates[`data/users/${uId}/passwordIterations`] = null;
+                updates[`data/users/${uId}/passwordVersion`] = null;
+                updates[`data/users/${uId}/passwordUpdatedAt`] = null;
+
+                await db.ref().update(updates);
+                cleaned++;
+                await closeSecondaryAuthAccount(secondaryCtx);
+            } catch (err) {
+                if (secondaryCtx?.created && secondaryCtx.user) {
+                    try { await secondaryCtx.user.delete(); } catch (_) {}
+                }
+                await closeSecondaryAuthAccount(secondaryCtx);
+                failures.push(`${uId}: ${err?.message || err}`);
+            }
+        }
+
+        if (failures.length === 0) {
+            await db.ref('data/system').update({
+                authMigrationComplete: true,
+                authMigrationCompletedAt: Date.now(),
+                authMigrationCompletedBy: `${sessionUser.vorname} ${sessionUser.nachname}`
+            });
+            await syncServerPermissionsForAllUsers();
+            if (statusEl) statusEl.innerHTML = `✅ Migration abgeschlossen: ${cleaned} Konten geprüft, ${migrated} Firebase-Zugänge neu angelegt.`;
+            alert('✅ Firebase-Authentication-Migration vollständig abgeschlossen.\n\nJetzt können die FINALEN Realtime-Database-Regeln veröffentlicht werden.');
+        } else {
+            await db.ref('data/system/authMigrationComplete').set(false);
+            if (statusEl) statusEl.innerHTML = `⚠️ Migration nicht vollständig. ${failures.length} Konto/Konten benötigen manuelle Prüfung.`;
+            alert('⚠️ Die Migration konnte nicht für alle Konten abgeschlossen werden:\n\n' + failures.join('\n') + '\n\nBitte die finalen Regeln noch NICHT veröffentlichen.');
+        }
+    } catch (err) {
+        console.error('Firebase-Auth-Migration fehlgeschlagen:', err);
+        alert('Migration fehlgeschlagen: ' + (err?.message || err));
+    } finally {
+        if (btn) btn.disabled = false;
+        refreshFirebaseAuthMigrationPanel();
+    }
+}
+
 function approveUser(uId) {
+    if (!sessionUser) return;
+    const eff = getUserEffectivePermissions(sessionUser);
+    if (!eff.canManageInstructors && !eff.isAdmin && !eff.isMasterAdmin) {
+        alert('Keine Berechtigung zum Freischalten von Mitarbeitern!');
+        return;
+    }
+    if (!requireTargetUserManagement(uId)) return;
     db.ref('data/users/'+uId+'/status').set('approved').then(() => {
         logAdminAudit('Mitarbeiter freigeschaltet', `Account ${uId} aktiviert von ${sessionUser.vorname} ${sessionUser.nachname}`);
     });
 }
 function revokeUser(uId) {
+    if (!sessionUser) return;
+    const eff = getUserEffectivePermissions(sessionUser);
+    if (!eff.canManageInstructors && !eff.isAdmin && !eff.isMasterAdmin) {
+        alert('Keine Berechtigung zum Sperren von Mitarbeitern!');
+        return;
+    }
+    if (!requireTargetUserManagement(uId)) return;
     if (confirm('Mitarbeiter wirklich sperren? Der Account bleibt bestehen, kann sich aber nicht mehr einloggen.')) {
         db.ref('data/users/'+uId+'/status').set('revoked').then(() => {
             logAdminAudit('Mitarbeiter gesperrt', `Account ${uId} gesperrt von ${sessionUser.vorname} ${sessionUser.nachname}`);
@@ -4443,61 +5548,209 @@ function revokeUser(uId) {
 }
 function deleteUserAccount(uId) {
     if (!sessionUser || !getUserEffectivePermissions(sessionUser).delUsers) return;
-    if (confirm('ACHTUNG: Mitarbeiter endgültig aus der Datenbank löschen? Dadurch wird er auch sofort aus der Mitarbeiter-Kartei entfernt.')) {
-        db.ref('data/users/' + uId).remove().then(() => {
-            db.ref('data/employeePhotos/' + uId).remove();
-            logAdminAudit('Mitarbeiter gelöscht', `Account ${uId} unwiderruflich gelöscht von ${sessionUser.vorname} ${sessionUser.nachname}`);
+    if (!requireTargetUserManagement(uId)) return;
+    const target = cachedUsers[uId] || {};
+    if (confirm('ACHTUNG: Mitarbeiter endgültig aus der Datenbank löschen? Dadurch wird er sofort aus der Mitarbeiter-Kartei entfernt und sein Firebase-Zugang verliert den Datenbankzugriff.')) {
+        const updates = {};
+        updates[`data/users/${uId}`] = null;
+        updates[`data/employeePhotos/${uId}`] = null;
+        if (target.authUid) updates[`data/authIndex/${target.authUid}`] = null;
+        const targetLoginKey = target.loginKey || generateUserId(target.vorname, target.nachname) || uId;
+        if (target.authVersion || targetLoginKey) {
+            updates[`data/loginDirectory/${targetLoginKey}`] = {
+                version: Number(target.authVersion) || 1,
+                accountId: uId,
+                deleted: true,
+                deletedAt: Date.now()
+            };
+        }
+        db.ref().update(updates).then(() => {
+            logAdminAudit('Mitarbeiter gelöscht', `Account ${uId} wurde von ${sessionUser.vorname} ${sessionUser.nachname} aus der MD-Datenbank entfernt und sein Datenbankzugriff widerrufen.`);
+        }).catch(err => {
+            alert('Fehler beim Löschen des Mitarbeiters: ' + (err?.message || err));
         });
     }
 }
 
 function openUserPermissionsModal(uId) {
+    if (!requireAdminAccess()) return;
+    if (!requireTargetUserManagement(uId)) return;
     const u = cachedUsers[uId]; if (!u) return;
     document.getElementById('permUserId').value = uId;
     document.getElementById('permVorname').value = u.vorname || '';
     document.getElementById('permNachname').value = u.nachname || '';
     document.getElementById('permDN').value = u.dn || '';
-    document.getElementById('permPassword').value = u.pass || '';
+    document.getElementById('permPassword').value = '';
+    const passwordResetContainer = document.getElementById('permPasswordResetContainer');
+    if (passwordResetContainer) {
+        const eff = getUserEffectivePermissions(sessionUser);
+        passwordResetContainer.style.display = eff.isMasterAdmin ? 'block' : 'none';
+    }
     document.getElementById('permStatus').value = u.status || 'approved';
     document.getElementById('userPermissionsModal').style.display = 'flex';
 }
 function closeUserPermissionsModal() { document.getElementById('userPermissionsModal').style.display = 'none'; }
 
-function saveUserPermissions() {
-    const uId = document.getElementById('permUserId')?.value; if (!uId) return;
-    const newPass = document.getElementById('permPassword')?.value.trim();
-    const upd = {
-        vorname: document.getElementById('permVorname').value.trim(),
-        nachname: document.getElementById('permNachname').value.trim(),
-        dn: document.getElementById('permDN').value.trim(),
-        status: document.getElementById('permStatus').value
-    };
-    if (newPass) {
-        upd.pass = newPass;
+async function migrateLegacyNewsReadKeyForUser(uId, oldDn, newProfile) {
+    if (!uId || !oldDn || String(oldDn).trim() === '') return;
+    const legacyKey = 'dn_' + String(oldDn).trim();
+    if (legacyKey === uId) return;
+    try {
+        const newsSnap = await db.ref('data/news').once('value');
+        const news = newsSnap.val() || {};
+        const updates = {};
+        Object.entries(news).forEach(([newsId, item]) => {
+            const oldReceipt = item?.readBy?.[legacyKey];
+            if (!oldReceipt) return;
+            if (!item?.readBy?.[uId]) {
+                updates[`data/news/${newsId}/readBy/${uId}`] = Object.assign({}, oldReceipt, {
+                    name: `${newProfile?.vorname || ''} ${newProfile?.nachname || ''}`.trim() || oldReceipt.name || '--',
+                    dn: newProfile?.dn || oldReceipt.dn || '--'
+                });
+            }
+            updates[`data/news/${newsId}/readBy/${legacyKey}`] = null;
+        });
+        if (Object.keys(updates).length) await db.ref().update(updates);
+    } catch (err) {
+        console.warn('Alte News-Lesebestätigungen konnten nicht vollständig auf die feste Account-ID umgestellt werden:', err);
     }
-    db.ref('data/users/' + uId).update(upd).then(() => {
+}
+
+async function saveUserPermissions() {
+    if (!requireAdminAccess()) return;
+    const uId = document.getElementById('permUserId')?.value;
+    if (!uId) return;
+    if (!requireTargetUserManagement(uId)) return;
+
+    const newPass = document.getElementById('permPassword')?.value.trim();
+    if (newPass && newPass.length < 6) {
+        alert('Das neue Passwort muss mindestens 6 Zeichen lang sein!');
+        return;
+    }
+
+    const original = cachedUsers[uId] || {};
+    const vorname = document.getElementById('permVorname')?.value.trim() || '';
+    const nachname = document.getElementById('permNachname')?.value.trim() || '';
+    const dn = document.getElementById('permDN')?.value.trim() || '';
+    const status = document.getElementById('permStatus')?.value || 'approved';
+
+    if (!vorname || !nachname) {
+        alert('Vorname und Nachname dürfen nicht leer sein!');
+        return;
+    }
+    if (!dn) {
+        alert('Bitte eine Dienstnummer eintragen!');
+        return;
+    }
+
+    const oldLoginKey = original.loginKey || generateUserId(original.vorname, original.nachname) || uId;
+    const newLoginKey = generateUserId(vorname, nachname);
+    if (!newLoginKey) {
+        alert('Aus dem neuen Vor- und Nachnamen konnte kein gültiger Loginname erstellt werden.');
+        return;
+    }
+
+    try {
+        if (newLoginKey !== oldLoginKey) {
+            const conflictingUser = Object.entries(cachedUsers).find(([otherId, otherUser]) =>
+                otherId !== uId && generateUserId(otherUser?.vorname, otherUser?.nachname) === newLoginKey
+            );
+            if (conflictingUser) {
+                alert('Dieser Vor- und Nachname wird bereits von einem anderen Mitarbeiter als Login verwendet.');
+                return;
+            }
+
+            const existingDirectory = await readLoginDirectory(newLoginKey);
+            if (existingDirectory.exists && !existingDirectory.deleted && existingDirectory.accountId !== uId) {
+                alert('Dieser Vor- und Nachname wird bereits von einem anderen Mitarbeiter als Login verwendet.');
+                return;
+            }
+        }
+
+        if (newPass) {
+            const eff = getUserEffectivePermissions(sessionUser);
+            if (!eff.isMasterAdmin) {
+                alert('Nur der Master-Admin darf das Login-Passwort anderer Mitarbeiter zurücksetzen.');
+                return;
+            }
+            const resetOk = await resetFirebaseAuthForUser(uId, newPass);
+            if (!resetOk) return;
+        }
+
+        const freshTarget = cachedUsers[uId] || original;
+        // Vor Abschluss der einmaligen Auth-Migration darf der Alias Version 0 tragen.
+        // Nach erfolgter Migration ist authVersion >= 1 und die finalen Rules verlangen genau das.
+        const version = Math.max(0, Number(freshTarget.authVersion || original.authVersion) || 0);
+        const updates = {};
+        updates[`data/users/${uId}/accountId`] = uId;
+        updates[`data/users/${uId}/loginKey`] = newLoginKey;
+        updates[`data/users/${uId}/vorname`] = vorname;
+        updates[`data/users/${uId}/nachname`] = nachname;
+        updates[`data/users/${uId}/dn`] = dn;
+        updates[`data/users/${uId}/status`] = status;
+        updates[`data/loginDirectory/${newLoginKey}`] = { version, accountId: uId };
+        if (oldLoginKey && oldLoginKey !== newLoginKey) updates[`data/loginDirectory/${oldLoginKey}`] = null;
+
+        await db.ref().update(updates);
+        if ((original.dn || '') !== dn && original.dn) {
+            await migrateLegacyNewsReadKeyForUser(uId, original.dn, { vorname, nachname, dn });
+        }
         closeUserPermissionsModal();
-        logAdminAudit('Mitarbeiterdaten bearbeitet', `Account ${uId} angepasst von ${sessionUser.vorname} ${sessionUser.nachname}`);
-        alert('✅ Mitarbeiterdaten erfolgreich gespeichert!');
-    }).catch(err => {
-        alert('Fehler beim Speichern: ' + err.message);
-    });
+
+        const changes = [];
+        if ((original.vorname || '') !== vorname) changes.push(`Vorname: ${original.vorname || '--'} → ${vorname}`);
+        if ((original.nachname || '') !== nachname) changes.push(`Nachname: ${original.nachname || '--'} → ${nachname}`);
+        if ((original.dn || '') !== dn) changes.push(`Dienstnummer: ${original.dn || '--'} → ${dn}`);
+        if ((original.status || 'approved') !== status) changes.push(`Status: ${original.status || 'approved'} → ${status}`);
+        if (newPass) changes.push('Login-Passwort zurückgesetzt');
+        logAdminAudit('Mitarbeiterdaten bearbeitet', `${vorname} ${nachname} (${uId}) angepasst von ${sessionUser.vorname} ${sessionUser.nachname}${changes.length ? ': ' + changes.join(' | ') : ''}`);
+        alert(newPass ? '✅ Mitarbeiterdaten, Loginname und Firebase-Zugang erfolgreich aktualisiert!' : '✅ Mitarbeiterdaten und Loginname erfolgreich gespeichert!');
+    } catch (err) {
+        alert('Fehler beim Speichern: ' + (err?.message || err));
+    }
+}
+
+
+let activeRoleAssignmentRestricted = false;
+
+function isRoleAssignableByTrainingLead(roleDef) {
+    if (!roleDef || roleDef.isAdmin || roleDef.isMasterAdmin || roleDef.id === 'admin' || roleDef.id === 'masteradmin') return false;
+    const allowed = new Set(['isInstructor', 'canManageInstructors', 'canManageExams', 'delExams', 'canCreateCalendar', 'canPostNews', 'canApproveNews', 'canViewNewsRead']);
+    return SERVER_PERMISSION_KEYS.every(key => !roleDef[key] || allowed.has(key));
 }
 
 function openAssignRolesModal(uId, name, isRestrictedByLeitung = false) {
+    if (!sessionUser) return;
+    const eff = getUserEffectivePermissions(sessionUser);
+    const target = cachedUsers[uId];
+    if (target && isPrivilegedUser(target) && !eff.isMasterAdmin) {
+        alert('Privilegierte Admin-Konten dürfen nur von einem Master-Admin verändert werden!');
+        return;
+    }
+    const isMasterOperator = !!eff.isMasterAdmin;
+    const canAdminManage = !!(eff.isAdmin || eff.isMasterAdmin);
+    const canLeitungManage = !!eff.canManageInstructors;
+    if (!canAdminManage && !canLeitungManage) {
+        alert('Keine Berechtigung zur Rollenvergabe!');
+        return;
+    }
+
+    activeRoleAssignmentRestricted = !canAdminManage || !!isRestrictedByLeitung;
     const m = document.getElementById('assignRolesModal'); if (!m) return;
     document.getElementById('assignRoleUserId').value = uId;
-    document.getElementById('assignRoleUserName').textContent = name;
-    const u = cachedUsers[uId] || {}, rids = getUserRolesList(u);
+    const u = cachedUsers[uId] || {};
+    const displayName = name || `${u.vorname || ''} ${u.nachname || ''}`.trim() || uId;
+    document.getElementById('assignRoleUserName').textContent = displayName;
+    const rids = getUserRolesList(u);
 
     const rolesToShow = Object.values(cachedRoles).filter(r => {
-        if (isRestrictedByLeitung) {
-            return !r.isAdmin && !r.isMasterAdmin && r.id !== 'admin' && r.id !== 'masteradmin';
-        }
+        if ((r.id === 'masteradmin' || r.id === 'admin' || r.isAdmin || r.isMasterAdmin) && !isMasterOperator) return false;
+        if (activeRoleAssignmentRestricted && (r.isAdmin || r.isMasterAdmin || r.id === 'admin' || r.id === 'masteradmin')) return false;
+        if (!canAdminManage && canLeitungManage && !isRoleAssignableByTrainingLead(r)) return false;
         return true;
     }).sort((a,b) => (a.name||'').localeCompare(b.name||'', 'de'));
 
-    const myId = generateUserId(sessionUser.vorname, sessionUser.nachname);
+    const myId = getUserAccountId(sessionUser);
     const isSelfMasterAdmin = (uId === myId) && (rids.includes('masteradmin') || sessionUser.isMasterAdmin);
 
     document.getElementById('assignRolesContainer').innerHTML = rolesToShow.map(r => {
@@ -4506,8 +5759,8 @@ function openAssignRolesModal(uId, name, isRestrictedByLeitung = false) {
         return `
             <label for="assignRoleInput_${r.id}" style="display:flex;align-items:center;gap:10px;padding:8px;cursor:pointer;background:rgba(30,41,59,0.3);border-radius:8px;">
                 <input type="checkbox" ${isChecked ? 'checked' : ''} ${isSelfMasterProtection ? 'disabled checked title="Selbstausschluss-Schutz: Du kannst dir als Master-Admin deine eigene Rolle nicht entziehen."' : ''} id="assignRoleInput_${r.id}">
-                <b style="color:${r.color||'#38bdf8'};">${r.icon||''} ${escapeHtml(r.name)}</b>
-                ${isSelfMasterProtection ? '<span style="font-size:10px;color:var(--warning);margin-left:auto;">🔒 Geschützt</span>' : ''}
+                <b style="color:${sanitizeRoleColor(r.color)};">${r.icon ? escapeHtml(r.icon) : ''} ${escapeHtml(r.name)}</b>
+                ${isSelfMasterProtection ? '<span style="font-size:11px;color:var(--warning);margin-left:auto;">🔒 Geschützt</span>' : ''}
             </label>
         `;
     }).join('');
@@ -4517,74 +5770,98 @@ function openAssignRolesModal(uId, name, isRestrictedByLeitung = false) {
 function closeAssignRolesModal() { document.getElementById('assignRolesModal').style.display = 'none'; }
 
 function saveAssignedRoles() {
-    const uId = document.getElementById('assignRoleUserId')?.value; if (!uId) return;
-    let cleanRoles = {};
+    if (!sessionUser) return;
+    const eff = getUserEffectivePermissions(sessionUser);
+    const isMasterOperator = !!eff.isMasterAdmin;
+    const canAdminManage = !!(eff.isAdmin || eff.isMasterAdmin);
+    const canLeitungManage = !!eff.canManageInstructors;
+    if (!canAdminManage && !canLeitungManage) {
+        alert('Keine Berechtigung zur Rollenvergabe!');
+        return;
+    }
 
+    const uId = document.getElementById('assignRoleUserId')?.value; if (!uId) return;
+    const target = cachedUsers[uId];
+    if (target && isPrivilegedUser(target) && !isMasterOperator) {
+        alert('Privilegierte Admin-Konten dürfen nur von einem Master-Admin verändert werden!');
+        return;
+    }
+    let cleanRoles = {};
     const existingUser = cachedUsers[uId] || {};
     const existingRoleList = getUserRolesList(existingUser);
 
     Object.keys(cachedRoles).forEach(rId => {
+        const roleDef = cachedRoles[rId] || defaultRoles[rId] || {};
+        const isPrivilegedRole = rId === 'admin' || rId === 'masteradmin' || roleDef.isAdmin || roleDef.isMasterAdmin;
+        if (isPrivilegedRole && !isMasterOperator) {
+            if (existingRoleList.includes(rId)) cleanRoles[rId] = true;
+            return;
+        }
+        if (!canAdminManage && canLeitungManage && !isRoleAssignableByTrainingLead(roleDef)) {
+            if (existingRoleList.includes(rId)) cleanRoles[rId] = true;
+            return;
+        }
+
         const el = document.getElementById('assignRoleInput_' + rId);
         if (el) {
             if (el.checked) cleanRoles[rId] = true;
-        } else {
-            if (existingRoleList.includes(rId)) {
-                cleanRoles[rId] = true;
-            }
+        } else if (existingRoleList.includes(rId)) {
+            cleanRoles[rId] = true;
         }
     });
 
-    const myId = generateUserId(sessionUser.vorname, sessionUser.nachname);
-    if (uId === myId && sessionUser.isMasterAdmin) {
-        cleanRoles['masteradmin'] = true;
-    }
+    const myId = getUserAccountId(sessionUser);
+    if (uId === myId && eff.isMasterAdmin) cleanRoles.masteradmin = true;
+    if (Object.keys(cleanRoles).length === 0) cleanRoles = { mitarbeiter: true };
 
-    if (Object.keys(cleanRoles).length === 0) {
-        cleanRoles = { mitarbeiter: true };
-    }
-
+    const assignedRoleDefs = Object.keys(cleanRoles).map(rId => cachedRoles[rId] || defaultRoles[rId] || {});
     const updates = {
         roles: cleanRoles,
-        isAdmin: !!(cleanRoles.admin || cleanRoles.masteradmin),
-        isMasterAdmin: !!cleanRoles.masteradmin,
+        isAdmin: assignedRoleDefs.some(r => r.isAdmin || r.isMasterAdmin),
+        isMasterAdmin: assignedRoleDefs.some(r => r.isMasterAdmin),
         isInstructor: null,
         canManageInstructors: null,
         canManageExams: null
     };
+    updates.serverPermissions = buildServerPermissions(Object.assign({}, existingUser, updates));
 
     db.ref('data/users/' + uId + '/roles').set(cleanRoles).then(() => {
-        db.ref('data/users/' + uId).update(updates).then(() => {
-            if (cachedUsers[uId]) {
-                cachedUsers[uId].roles = cleanRoles;
-                cachedUsers[uId].isAdmin = updates.isAdmin;
-                cachedUsers[uId].isMasterAdmin = updates.isMasterAdmin;
-                delete cachedUsers[uId].isInstructor;
-                delete cachedUsers[uId].canManageInstructors;
-                delete cachedUsers[uId].canManageExams;
-            }
-            if (sessionUser && generateUserId(sessionUser.vorname, sessionUser.nachname) === uId) {
-                sessionUser = Object.assign({}, sessionUser, updates, { roles: cleanRoles });
-                applyUserPermissions(sessionUser);
-            }
-            closeAssignRolesModal();
-            renderAdminUserTable(cachedUsers);
-            renderStaffDirectory();
-            renderExamTab();
-            logAdminAudit('Rollen angepasst & bereinigt', `Rollen für ${uId} von ${sessionUser.vorname} ${sessionUser.nachname} gespeichert.`);
-            alert('✅ Rollen erfolgreich und dauerhaft aktualisiert!');
-        });
-    });
+        return db.ref('data/users/' + uId).update(updates);
+    }).then(() => {
+        if (cachedUsers[uId]) {
+            cachedUsers[uId].roles = cleanRoles;
+            cachedUsers[uId].isAdmin = updates.isAdmin;
+            cachedUsers[uId].isMasterAdmin = updates.isMasterAdmin;
+            cachedUsers[uId].serverPermissions = updates.serverPermissions;
+            delete cachedUsers[uId].isInstructor;
+            delete cachedUsers[uId].canManageInstructors;
+            delete cachedUsers[uId].canManageExams;
+        }
+        if (sessionUser && getUserAccountId(sessionUser) === uId) {
+            sessionUser = Object.assign({}, sessionUser, updates, { roles: cleanRoles });
+            applyUserPermissions(sessionUser);
+        }
+        closeAssignRolesModal();
+        renderAdminUserTable(cachedUsers);
+        renderStaffDirectory();
+        renderExamTab();
+        logAdminAudit('Rollen angepasst & bereinigt', `Rollen für ${uId} von ${sessionUser.vorname} ${sessionUser.nachname} gespeichert.`);
+        alert('✅ Rollen erfolgreich und dauerhaft aktualisiert!');
+    }).catch(err => alert('Fehler beim Speichern der Rollen: ' + (err?.message || err)));
 }
 
 function renderAdminRolesList() {
     const sb = document.getElementById('adminRolesSidebarList'); if (!sb) return;
+    if (!sessionUser || !requireAdminAccess()) { sb.innerHTML = ''; return; }
     const sortedRoles = Object.values(cachedRoles).sort((a,b) => (a.name||'').localeCompare(b.name||'', 'de'));
-    sb.innerHTML = sortedRoles.map(r => `
-        <div style="display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:10px;border:1px solid ${r.color||'#38bdf8'}33;background:${r.color||'#38bdf8'}0d;cursor:pointer;" onclick="selectRole('${r.id}')">
-            <span>${r.icon||'🎭'}</span>
-            <b style="color:${r.color||'#38bdf8'};font-size:13px;">${escapeHtml(r.name)}</b>
-        </div>
-    `).join('');
+    sb.innerHTML = sortedRoles.map(r => {
+        const color = sanitizeRoleColor(r.color);
+        return `
+        <div style="display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:10px;border:1px solid ${color}33;background:${color}0d;cursor:pointer;" onclick="selectRole(${escapeJsArg(r.id)})">
+            <span>${escapeHtml(r.icon || '🎭')}</span>
+            <b style="color:${color};font-size:14px;">${escapeHtml(r.name)}</b>
+        </div>`;
+    }).join('');
 }
 
 function renderRoleCategoryCheckboxes(containerId, allItems, selectedList = []) {
@@ -4594,11 +5871,11 @@ function renderRoleCategoryCheckboxes(containerId, allItems, selectedList = []) 
     const safeSelected = normalizeKats(selectedList);
 
     if (!kats.length) {
-        cont.innerHTML = '<span style="color:var(--text-muted);font-size:12px;">Keine Kategorien vorhanden.</span>';
+        cont.innerHTML = '<span style="color:var(--text-muted);font-size:13px;">Keine Kategorien vorhanden.</span>';
         return;
     }
     cont.innerHTML = kats.map((k, idx) => `
-        <label for="${containerId}_item_${idx}" style="display:inline-flex;align-items:center;gap:6px;background:rgba(30,41,59,0.5);padding:4px 10px;border-radius:6px;font-size:12px;cursor:pointer;">
+        <label for="${containerId}_item_${idx}" style="display:inline-flex;align-items:center;gap:6px;background:rgba(30,41,59,0.5);padding:4px 10px;border-radius:6px;font-size:13px;cursor:pointer;">
             <input type="checkbox" id="${containerId}_item_${idx}" class="cat-checkbox-item ${containerId}_check" value="${escapeHtml(k)}" ${safeSelected.includes(k) ? 'checked' : ''}>
             <span>${escapeHtml(k)}</span>
         </label>
@@ -4622,12 +5899,18 @@ function refreshOpenRoleCategoryCheckboxes() {
 }
 
 function selectRole(roleId) {
+    if (!requireAdminAccess()) return;
     const r = cachedRoles[roleId] || defaultRoles[roleId]; 
     if (!r) return;
+    const operatorEff = getUserEffectivePermissions(sessionUser);
+    if ((r.isAdmin || r.isMasterAdmin || roleId === 'admin' || roleId === 'masteradmin') && !operatorEff.isMasterAdmin) {
+        alert('Rollen mit Admin- oder Master-Admin-Rechten dürfen nur von einem Master-Admin verändert werden!');
+        return;
+    }
     
     document.getElementById('editingRoleId').value = roleId;
     document.getElementById('roleEditName').value = r.name || '';
-    document.getElementById('roleEditColor').value = r.color || '#38bdf8';
+    document.getElementById('roleEditColor').value = sanitizeRoleColor(r.color);
     document.getElementById('roleEditIcon').value = r.icon || '🎭';
 
     const tEl = document.getElementById('editingRoleTitle');
@@ -4636,6 +5919,10 @@ function selectRole(roleId) {
     }
 
     const isMaster = (roleId === 'masteradmin');
+    const privilegeAdminEl = document.getElementById('roleFlagAdmin');
+    const privilegeMasterEl = document.getElementById('roleFlagMasterAdmin');
+    if (privilegeAdminEl) privilegeAdminEl.disabled = !operatorEff.isMasterAdmin;
+    if (privilegeMasterEl) privilegeMasterEl.disabled = !operatorEff.isMasterAdmin;
 
     Object.keys(ROLE_PROPERTY_MAP).forEach(elementId => {
         const propName = ROLE_PROPERTY_MAP[elementId];
@@ -4676,7 +5963,7 @@ function selectRole(roleId) {
 
 function updateRoleBadgePreview() {
     const n = document.getElementById('roleEditName')?.value || 'Rolle';
-    const c = document.getElementById('roleEditColor')?.value || '#38bdf8';
+    const c = sanitizeRoleColor(document.getElementById('roleEditColor')?.value);
     const i = document.getElementById('roleEditIcon')?.value || '🎭';
     const p = document.getElementById('editingRoleBadgePreview'); if (!p) return;
     p.textContent = `${i} ${n}`.trim();
@@ -4684,6 +5971,7 @@ function updateRoleBadgePreview() {
 }
 
 function neueRolleErstellen() {
+    if (!requireAdminAccess()) return;
     const newId = 'role_' + Date.now();
     document.getElementById('editingRoleId').value = newId;
     document.getElementById('roleEditName').value = '';
@@ -4699,6 +5987,11 @@ function neueRolleErstellen() {
     if (btnDel) btnDel.style.display = 'none';
     
     document.querySelectorAll('#adminRoleEditorCard input[type="checkbox"]').forEach(c => c.checked = false);
+    const operatorEff = getUserEffectivePermissions(sessionUser);
+    const privilegeAdminEl = document.getElementById('roleFlagAdmin');
+    const privilegeMasterEl = document.getElementById('roleFlagMasterAdmin');
+    if (privilegeAdminEl) privilegeAdminEl.disabled = !operatorEff.isMasterAdmin;
+    if (privilegeMasterEl) privilegeMasterEl.disabled = !operatorEff.isMasterAdmin;
 
     db.ref('data/dienstCommands').once('value', sCmd => {
         const allCmds = Object.assign({}, defaultCommands, sCmd.val() || {});
@@ -4714,9 +6007,16 @@ function neueRolleErstellen() {
 }
 
 function speichereRolle() {
+    if (!requireAdminAccess()) return;
     const id = document.getElementById('editingRoleId')?.value; 
     if (!id) {
         alert('Bitte wähle zuerst eine Rolle aus oder erstelle eine neue Rolle!');
+        return;
+    }
+    const operatorEff = getUserEffectivePermissions(sessionUser);
+    const existingRole = cachedRoles[id] || defaultRoles[id];
+    if ((id === 'masteradmin' || id === 'admin' || existingRole?.isAdmin || existingRole?.isMasterAdmin) && !operatorEff.isMasterAdmin) {
+        alert('Rollen mit Admin- oder Master-Admin-Rechten dürfen nur von einem Master-Admin verändert werden!');
         return;
     }
 
@@ -4728,11 +6028,10 @@ function speichereRolle() {
     const allowedLnks = [];
     document.querySelectorAll('.roleLinksCategoriesContainer_check:checked').forEach(c => allowedLnks.push(c.value));
 
-    const existingRole = cachedRoles[id] || defaultRoles[id];
     const r = {
         id,
         name: document.getElementById('roleEditName')?.value.trim() || id,
-        color: document.getElementById('roleEditColor')?.value || '#38bdf8',
+        color: sanitizeRoleColor(document.getElementById('roleEditColor')?.value),
         icon: document.getElementById('roleEditIcon')?.value.trim() || '🎭',
         isSystem: !!(existingRole && existingRole.isSystem),
         allowedCmdKats: isMaster ? [] : allowedCmds,
@@ -4745,8 +6044,15 @@ function speichereRolle() {
         r[propName] = isMaster ? true : !!(el && el.checked);
     });
 
-    db.ref('data/roles/' + id).set(r).then(() => {
+    if (!operatorEff.isMasterAdmin) {
+        r.isAdmin = false;
+        r.isMasterAdmin = false;
+        r.delUsers = false;
+    }
+
+    db.ref('data/roles/' + id).set(r).then(async () => {
         cachedRoles[id] = r;
+        await syncServerPermissionsForAllUsers();
         renderAdminRolesList();
         logAdminAudit('Rolle gespeichert', `${sessionUser.vorname} ${sessionUser.nachname} hat Rolle "${r.name}" gespeichert.`);
         alert(`✅ Rolle "${r.name}" erfolgreich gespeichert!`);
@@ -4755,77 +6061,205 @@ function speichereRolle() {
     });
 }
 
-function loescheRolle() {
+async function loescheRolle() {
+    if (!requireAdminAccess()) return;
     const id = document.getElementById('editingRoleId')?.value;
     if (!id) { alert('Keine Rolle ausgewählt!'); return; }
 
     const role = cachedRoles[id] || defaultRoles[id];
+    const operatorEff = getUserEffectivePermissions(sessionUser);
+    if ((role?.isAdmin || role?.isMasterAdmin || id === 'admin' || id === 'masteradmin') && !operatorEff.isMasterAdmin) {
+        alert('Rollen mit Admin- oder Master-Admin-Rechten dürfen nur von einem Master-Admin gelöscht werden!');
+        return;
+    }
     const protectedSystemRoles = ['masteradmin', 'admin', 'mitarbeiter', 'ausbilder', 'ausbildungsleitung'];
     if (protectedSystemRoles.includes(id) || role?.isSystem) {
         alert(`⛔ Die Standard-Systemrolle "${role?.name || id}" kann nicht gelöscht werden!`);
         return;
     }
 
-    if (confirm(`Möchtest du die Rolle "${role?.name || id}" wirklich dauerhaft löschen?\n\nHinweis: Sie wird auch automatisch bei allen Mitarbeitern entfernt.`)) {
-        db.ref('data/roles/' + id).remove().then(() => {
-            delete cachedRoles[id];
+    if (!confirm(`Möchtest du die Rolle "${role?.name || id}" wirklich dauerhaft löschen?\n\nHinweis: Sie wird auch automatisch bei allen Mitarbeitern entfernt.`)) return;
 
-            db.ref('data/users').once('value', snap => {
-                const users = snap.val() || {};
-                Object.keys(users).forEach(uId => {
-                    if (users[uId]?.roles && users[uId].roles[id]) {
-                        db.ref(`data/users/${uId}/roles/${id}`).remove();
-                    }
-                });
-            });
+    try {
+        await db.ref('data/roles/' + id).remove();
+        delete cachedRoles[id];
 
-            renderAdminRolesList();
-            neueRolleErstellen();
-            logAdminAudit('Rolle gelöscht', `${sessionUser.vorname} ${sessionUser.nachname} hat die Rolle "${role?.name || id}" gelöscht.`);
-            alert('✅ Rolle erfolgreich gelöscht!');
+        const snap = await db.ref('data/users').once('value');
+        const users = snap.val() || {};
+        const updates = {};
+        Object.entries(users).forEach(([uId, user]) => {
+            if (user?.roles && user.roles[id]) {
+                const newRoles = Object.assign({}, user.roles);
+                delete newRoles[id];
+                if (Object.keys(newRoles).length === 0) newRoles.mitarbeiter = true;
+                const updatedUser = Object.assign({}, user, { roles: newRoles });
+                updates[`data/users/${uId}/roles`] = newRoles;
+                updates[`data/users/${uId}/serverPermissions`] = buildServerPermissions(updatedUser);
+            }
         });
+        if (Object.keys(updates).length) await db.ref().update(updates);
+
+        renderAdminRolesList();
+        neueRolleErstellen();
+        logAdminAudit('Rolle gelöscht', `${sessionUser.vorname} ${sessionUser.nachname} hat die Rolle "${role?.name || id}" gelöscht.`);
+        alert('✅ Rolle erfolgreich gelöscht!');
+    } catch (err) {
+        alert('Fehler beim Löschen der Rolle: ' + (err?.message || err));
     }
 }
 
+function stripCredentialsFromBackupUser(user) {
+    if (!user || typeof user !== 'object') return user;
+    const clean = Object.assign({}, user);
+    ['pass','passwordHash','passwordSalt','passwordAlgo','passwordIterations','passwordVersion','passwordUpdatedAt'].forEach(k => delete clean[k]);
+    return clean;
+}
+
 function downloadSystemBackup() {
+    if (!requireMasterAdminAccess('Backups dürfen nur von Master-Admins heruntergeladen werden!')) return;
     db.ref('data').once('value', s => {
-        const json = JSON.stringify(s.val() || {}, null, 2);
-        const b = new Blob([json], { type: 'application/json' }), el = document.createElement('a');
-        el.href = URL.createObjectURL(b); el.download = 'MMD_Backup_' + new Date().toISOString().split('T')[0] + '.json'; el.click();
+        const data = s.val() || {};
+        if (data.users) {
+            data.users = Object.fromEntries(Object.entries(data.users).map(([uId, user]) => [uId, stripCredentialsFromBackupUser(user)]));
+        }
+        const backup = {
+            meta: {
+                app: 'MMD Cloud',
+                version: '6.3.0',
+                createdAt: Date.now(),
+                note: 'Passwörter und alte Passwort-Hashes werden aus Sicherheitsgründen nicht exportiert.'
+            },
+            data
+        };
+        const json = JSON.stringify(backup, null, 2);
+        const b = new Blob([json], { type: 'application/json' });
+        const url = URL.createObjectURL(b);
+        const el = document.createElement('a');
+        el.href = url;
+        el.download = 'MMD_Backup_' + new Date().toLocaleDateString('sv-SE') + '.json';
+        el.click();
+        URL.revokeObjectURL(url);
     });
 }
 
 function restoreSystemBackupFromFile(event) {
+    if (!requireMasterAdminAccess('Backups dürfen nur von Master-Admins eingespielt werden!')) {
+        if (event?.target) event.target.value = '';
+        return;
+    }
     const file = event.target.files && event.target.files[0]; if (!file) return;
     const reader = new FileReader();
-    reader.onload = e => {
+
+    reader.onload = async e => {
         try {
-            const data = JSON.parse(e.target.result);
-            db.ref('data').update(data.data ? data.data : data).then(() => {
-                alert('✅ Backup erfolgreich eingespielt!');
-                location.reload();
+            const parsed = JSON.parse(e.target.result);
+            const restoreDataRaw = parsed.data ? parsed.data : parsed;
+            if (!restoreDataRaw || typeof restoreDataRaw !== 'object' || Array.isArray(restoreDataRaw)) {
+                throw new Error('Ungültiges Backup-Format.');
+            }
+            if (!confirm('Das Backup ersetzt die Fachdaten. Aktuelle Firebase-Anmeldungen und Sicherheitszuordnungen bleiben geschützt erhalten. Wirklich fortfahren?')) return;
+
+            const currentSnap = await db.ref('data').once('value');
+            const current = currentSnap.val() || {};
+            const restoreData = JSON.parse(JSON.stringify(restoreDataRaw));
+
+            // Authentifizierungs-Zuordnungen niemals aus einem alten Backup zurückrollen.
+            restoreData.authIndex = current.authIndex || {};
+            restoreData.loginDirectory = current.loginDirectory || {};
+
+            const currentSystem = current.system || {};
+            restoreData.system = Object.assign({}, restoreData.system || {}, {
+                authMigrationComplete: currentSystem.authMigrationComplete === true,
+                authMigrationCompletedAt: currentSystem.authMigrationCompletedAt || null,
+                authMigrationCompletedBy: currentSystem.authMigrationCompletedBy || null
             });
-        } catch(err) { alert('Fehler: ' + err.message); }
+
+            const currentUsers = current.users || {};
+            const incomingUsers = restoreData.users || {};
+            const mergedUsers = {};
+
+            Object.entries(incomingUsers).forEach(([uId, incomingUser]) => {
+                const cleaned = stripCredentialsFromBackupUser(incomingUser);
+                const currentUser = currentUsers[uId];
+                if (currentUser?.authUid) {
+                    cleaned.authUid = currentUser.authUid;
+                    cleaned.authVersion = currentUser.authVersion || 1;
+                } else {
+                    delete cleaned.authUid;
+                    delete cleaned.authVersion;
+                    cleaned.status = 'pending';
+                }
+                mergedUsers[uId] = cleaned;
+            });
+
+            // Aktuell vorhandene Auth-Konten werden nicht durch ein älteres Backup gelöscht.
+            Object.entries(currentUsers).forEach(([uId, currentUser]) => {
+                if (!mergedUsers[uId]) mergedUsers[uId] = stripCredentialsFromBackupUser(currentUser);
+            });
+
+            const previousRoles = cachedRoles;
+            cachedRoles = Object.assign({}, defaultRoles, restoreData.roles || {});
+            Object.entries(mergedUsers).forEach(([uId, user]) => {
+                user.serverPermissions = buildServerPermissions(user);
+            });
+            cachedRoles = previousRoles;
+
+            restoreData.users = mergedUsers;
+            await db.ref('data').set(restoreData);
+            alert('✅ Backup wiederhergestellt. Firebase-Anmeldungen und Sicherheitszuordnungen wurden geschützt beibehalten.');
+            location.reload();
+        } catch(err) {
+            alert('Fehler: ' + (err?.message || err));
+        } finally {
+            if (event?.target) event.target.value = '';
+        }
     };
     reader.readAsText(file);
 }
 
-function vollstaendigerReset() {
-    if (sessionUser && getUserEffectivePermissions(sessionUser).isMasterAdmin && confirm('ACHTUNG: Wirklich das KOMPLETTE System leeren?') && confirm('ALLE Einsätze, Nutzer und Prüfungen werden gelöscht! Fortfahren?')) {
-        db.ref('data').remove().then(() => location.reload());
+async function vollstaendigerReset() {
+    if (!sessionUser || !getUserEffectivePermissions(sessionUser).isMasterAdmin) return;
+    if (!confirm('ACHTUNG: Wirklich alle Fachdaten zurücksetzen?\n\nMitarbeiterkonten, Rollen und Firebase-Anmeldungen bleiben erhalten.')) return;
+    if (!confirm('Patienten, Archive, Termine, Prüfungen, News, Feedback und weitere Fachdaten werden gelöscht. Fortfahren?')) return;
+
+    try {
+        const snap = await db.ref('data').once('value');
+        const current = snap.val() || {};
+        const system = current.system || {};
+        const preserved = {
+            users: current.users || {},
+            roles: current.roles || {},
+            authIndex: current.authIndex || {},
+            loginDirectory: current.loginDirectory || {},
+            employeePhotos: current.employeePhotos || {},
+            system: {
+                authMigrationComplete: system.authMigrationComplete === true,
+                authMigrationCompletedAt: system.authMigrationCompletedAt || null,
+                authMigrationCompletedBy: system.authMigrationCompletedBy || null
+            }
+        };
+        await db.ref('data').set(preserved);
+        alert('✅ Fachdaten wurden zurückgesetzt. Mitarbeiterkonten und Firebase-Anmeldungen sind erhalten geblieben.');
+        location.reload();
+    } catch (err) {
+        alert('Reset fehlgeschlagen: ' + (err?.message || err));
     }
 }
 
 function renderAdminAuditLogs() {
+    if (!requireAdminAccess('System-Protokoll')) return;
     db.ref('data/auditLogs').once('value', s => renderAdminAuditLogsData(s.val() || {}));
 }
 
 function renderAdminAuditLogsData(logsObj) {
+    if (!sessionUser) return;
+    const eff = getUserEffectivePermissions(sessionUser);
+    if (!eff.isAdmin && !eff.isMasterAdmin) return;
     const tbody = document.getElementById('adminAuditLogTableBody'); if (!tbody) return;
     const entries = Object.entries(logsObj).sort((a,b) => (b[1].ts||0) - (a[1].ts||0));
     tbody.innerHTML = !entries.length ? '<tr><td colspan="4" style="text-align:center;">Keine Protokolle für den heutigen Tag.</td></tr>'
         : entries.map(([, l]) => `<tr>
-            <td style="font-size:11px;">⏰ ${l.ts ? new Date(l.ts).toLocaleTimeString('de-DE') : '-'}</td>
+            <td style="font-size:12px;">⏰ ${l.ts ? new Date(l.ts).toLocaleTimeString('de-DE') : '-'}</td>
             <td><b>${escapeHtml(l.admin||'System')}</b></td>
             <td><span style="color:var(--primary);font-weight:700;">${escapeHtml(l.action||'-')}</span></td>
             <td>${escapeHtml(l.details||'-')}</td>
@@ -4833,6 +6267,7 @@ function renderAdminAuditLogsData(logsObj) {
 }
 
 function openAuditLogArchiveModal() {
+    if (!requireAdminAccess('System-Protokoll-Archiv')) return;
     const modal = document.getElementById('auditArchiveModal');
     const cont = document.getElementById('auditArchiveContent');
     if (!modal || !cont) return;
@@ -4872,23 +6307,42 @@ function openAuditLogArchiveModal() {
 function closeAuditArchiveModal() { document.getElementById('auditArchiveModal').style.display = 'none'; }
 
 /* ══════════════════════════════════════════════════════════════
-   WÜNSCHE & BUGS: MELDESYSTEM & INTERNE VERWALTUNG
+   WÜNSCHE & BUGS: MELDESYSTEM, VERWALTUNG & INLINE-ABLEHNUNG
 ══════════════════════════════════════════════════════════════ */
-let activeRejectFeedbackId = null;
-
-function openFeedbackSubmitModal() {
+function openFeedbackCenter() {
     if (!sessionUser) return;
-    const modal = document.getElementById('feedbackSubmitModal');
-    if (!modal) return;
-    document.getElementById('fbCategory').value = 'Wunsch';
-    document.getElementById('fbTitle').value = '';
-    document.getElementById('fbDescription').value = '';
-    modal.style.display = 'flex';
+    switchTab('feedbackTab', null);
+    switchFeedbackCenterTab('feedbackSubmitPane', document.getElementById('feedbackSubmitTabBtn'));
 }
 
-function closeFeedbackSubmitModal() {
-    const modal = document.getElementById('feedbackSubmitModal');
-    if (modal) modal.style.display = 'none';
+function switchFeedbackCenterTab(tabId, btnEl) {
+    if (tabId === 'feedbackManagePane' && !canCurrentUserManageFeedback()) {
+        alert('Keine Berechtigung zum Bearbeiten von Wünsche- und Bug-Meldungen!');
+        return;
+    }
+    document.querySelectorAll('#feedbackTab .admin-subtab-content').forEach(e => e.classList.remove('active'));
+    document.querySelectorAll('#feedbackTab .feedback-center-tabs .admin-tab-btn').forEach(e => e.classList.remove('active'));
+    const tab = document.getElementById(tabId);
+    if (tab) tab.classList.add('active');
+    if (btnEl) btnEl.classList.add('active');
+    if (tabId === 'feedbackManagePane') renderFeedbackManagementTable();
+}
+
+function resetFeedbackSubmitForm() {
+    const category = document.getElementById('fbCategory');
+    const title = document.getElementById('fbTitle');
+    const description = document.getElementById('fbDescription');
+    if (category) category.value = 'Wunsch';
+    if (title) title.value = '';
+    if (description) description.value = '';
+}
+
+function getFeedbackList() {
+    // Die Firebase-Node-ID ist die verbindliche technische ID. Dadurch bleiben auch
+    // alte/unvollständige Datensätze ohne eigenes `id`-Feld sicher bearbeit- und löschbar.
+    return Object.entries(cachedFeedback || {}).map(([fbId, item]) =>
+        Object.assign({}, item || {}, { storedId: item?.id || '', id: fbId })
+    );
 }
 
 function submitUserFeedback() {
@@ -4902,7 +6356,7 @@ function submitUserFeedback() {
         return;
     }
 
-    const myId = generateUserId(sessionUser.vorname, sessionUser.nachname);
+    const myId = getUserAccountId(sessionUser);
     const feedbackId = 'fb_' + Date.now();
 
     const entry = {
@@ -4919,43 +6373,16 @@ function submitUserFeedback() {
     };
 
     db.ref('data/feedback/' + feedbackId).set(entry).then(() => {
-        closeFeedbackSubmitModal();
-        alert('✅ Vielen Dank! Deine Meldung wurde sicher und vertraulich an die Klinikleitung übermittelt.');
+        resetFeedbackSubmitForm();
+        alert('✅ Vielen Dank! Deine Meldung wurde sicher an die berechtigten Mitarbeiter übermittelt.');
     }).catch(err => {
         alert('Fehler beim Übermitteln: ' + err.message);
     });
 }
 
-function renderAdminFeedbackTable() {
-    const tbody = document.getElementById('adminFeedbackTableBody');
-    if (!tbody) return;
-
+function renderFeedbackRowsHtml(list, targetPrefix) {
     const eff = sessionUser ? getUserEffectivePermissions(sessionUser) : {};
-    if (!eff.isAdmin && !eff.isMasterAdmin) return;
-
-    const q = (document.getElementById('searchFeedbackInput')?.value || '').trim().toLowerCase();
-    const filterCat = document.getElementById('filterFeedbackCategory')?.value || 'all';
-    const filterStatus = document.getElementById('filterFeedbackStatus')?.value || 'all';
-
-    let list = Object.values(cachedFeedback || {}).sort((a, b) => (b.ts || 0) - (a.ts || 0));
-
-    if (filterCat !== 'all') {
-        list = list.filter(item => item.category === filterCat);
-    }
-
-    if (filterStatus !== 'all') {
-        list = list.filter(item => item.status === filterStatus);
-    }
-
-    if (q) {
-        list = list.filter(item => {
-            const t = (item.title || '').toLowerCase();
-            const d = (item.description || '').toLowerCase();
-            const a = (item.author || '').toLowerCase();
-            const dn = (item.authorDN || '').toLowerCase();
-            return t.includes(q) || d.includes(q) || a.includes(q) || dn.includes(q);
-        });
-    }
+    const canDelete = eff.isAdmin || eff.isMasterAdmin || eff.delFeedback || (sessionUser && sessionUser.isMasterAdmin);
 
     const badgeClassMap = {
         'Neu': 'badge-status-neu',
@@ -4966,38 +6393,57 @@ function renderAdminFeedbackTable() {
         'Abgelehnt': 'badge-status-abgelehnt'
     };
 
-    if (!list.length) {
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--text-muted);">Keine Wünsche oder Fehlermeldungen vorhanden.</td></tr>';
-        return;
-    }
-
-    tbody.innerHTML = list.map(item => {
+    return list.map(item => {
         const bClass = badgeClassMap[item.status] || 'badge-status-neu';
         let rejectNoteHtml = '';
         if (item.status === 'Abgelehnt' && item.rejectionReason) {
             rejectNoteHtml = `
-                <div style="background:rgba(244,63,94,0.1);border-left:3px solid var(--danger);padding:6px 10px;border-radius:6px;margin-top:6px;font-size:11px;color:#fecdd3;">
+                <div style="background:rgba(244,63,94,0.1);border-left:3px solid var(--danger);padding:6px 10px;border-radius:6px;margin-top:6px;font-size:12px;color:#fecdd3;">
                     <b>Begründung der Ablehnung:</b> ${escapeHtml(item.rejectionReason)}<br>
-                    <span style="color:var(--text-muted);font-size:10px;">Entschieden von ${escapeHtml(item.rejectedBy || 'Leitung')} am ${escapeHtml(item.rejectedDate || '--')}</span>
+                    <span style="color:var(--text-muted);font-size:11px;">Entschieden von ${escapeHtml(item.rejectedBy || 'Leitung')} am ${escapeHtml(item.rejectedDate || '--')}</span>
                 </div>
             `;
         }
 
+        const inlineRejectBoxHtml = `
+            <div id="${targetPrefix}_rejectBox_${item.id}" class="feedback-inline-reject-box" style="display:none;">
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                    <b style="color:var(--danger);font-size:12px;">❌ Ablehnung begründen:</b>
+                    <button type="button" class="btn-close" style="width:24px;height:24px;font-size:12px;" onclick="closeInlineRejectBox('${targetPrefix}', '${item.id}')">✖</button>
+                </div>
+                <select id="${targetPrefix}_preset_${item.id}" onchange="applyInlinePreset('${targetPrefix}', '${item.id}', this.value)" style="font-size:12px;padding:4px 8px;">
+                    <option value="">-- Schnellbegründung wählen (optional) --</option>
+                    <option value="Für den aktuellen Arbeitsablauf nicht sinnvoll.">Für den aktuellen Arbeitsablauf nicht sinnvoll.</option>
+                    <option value="Die gewünschte Funktion existiert bereits.">Die gewünschte Funktion existiert bereits.</option>
+                    <option value="Technisch nicht sinnvoll umsetzbar.">Technisch nicht sinnvoll umsetzbar.</option>
+                    <option value="Passt nicht zum Konzept der Homepage.">Passt nicht zum Konzept der Homepage.</option>
+                    <option value="Zu hoher Aufwand im Verhältnis zum Nutzen.">Zu hoher Aufwand im Verhältnis zum Nutzen.</option>
+                    <option value="Wird aktuell nicht benötigt.">Wird aktuell nicht benötigt.</option>
+                </select>
+                <textarea id="${targetPrefix}_reason_${item.id}" rows="2" placeholder="Verbindliche Begründung der Ablehnung..." style="font-size:13px;"></textarea>
+                <div style="display:flex;gap:6px;justify-content:flex-end;">
+                    <button type="button" class="btn" style="width:auto;margin:0;padding:4px 10px;font-size:12px;background:var(--text-muted);" onclick="closeInlineRejectBox('${targetPrefix}', '${item.id}')">Abbrechen</button>
+                    <button type="button" class="btn" style="width:auto;margin:0;padding:4px 14px;font-size:12px;background:var(--danger);color:#fff;font-weight:800;" onclick="saveInlineRejection('${targetPrefix}', '${item.id}')">Speichern & Ablehnen</button>
+                </div>
+            </div>
+        `;
+
         return `
             <tr>
-                <td style="font-size:11px;color:var(--text-muted);">${escapeHtml(item.date || '--')}</td>
-                <td><b>${escapeHtml(item.author || '--')}</b> <span style="color:var(--primary);font-size:11px;">(DN: ${escapeHtml(item.authorDN || '--')})</span></td>
+                <td style="font-size:13px;color:var(--text-muted);white-space:nowrap;">${escapeHtml(item.date || '--')}</td>
+                <td><b>${escapeHtml(item.author || '--')}</b> <span style="color:var(--primary);font-size:12px;">(DN: ${escapeHtml(item.authorDN || '--')})</span></td>
                 <td><span class="feedback-category-badge">${escapeHtml(item.category || 'Wunsch')}</span></td>
                 <td>
                     <b>${escapeHtml(item.title || '--')}</b>
-                    <div style="font-size:12px;color:var(--text-muted);margin-top:4px;white-space:pre-wrap;">${formatTextWithLinks(item.description || '')}</div>
+                    <div style="font-size:13px;color:var(--text-muted);margin-top:4px;white-space:pre-wrap;">${formatTextWithLinks(item.description || '')}</div>
                     ${rejectNoteHtml}
+                    ${inlineRejectBoxHtml}
                 </td>
                 <td>
                     <span class="feedback-status-badge ${bClass}">${escapeHtml(item.status || 'Neu')}</span>
                 </td>
                 <td>
-                    <select onchange="handleFeedbackStatusChange('${item.id}', this.value)" style="padding:4px 8px;font-size:11px;width:auto;margin:0;">
+                    <select id="${targetPrefix}_selStatus_${item.id}" onchange="handleFeedbackStatusSelect('${targetPrefix}', '${item.id}', this.value)" style="padding:6px 8px;font-size:13px;width:auto;margin:0;">
                         <option value="Neu" ${item.status === 'Neu' ? 'selected' : ''}>Neu</option>
                         <option value="In Prüfung" ${item.status === 'In Prüfung' ? 'selected' : ''}>In Prüfung</option>
                         <option value="Angenommen" ${item.status === 'Angenommen' ? 'selected' : ''}>Angenommen</option>
@@ -5007,22 +6453,66 @@ function renderAdminFeedbackTable() {
                     </select>
                 </td>
                 <td style="text-align:right;">
-                    ${eff.isMasterAdmin ? `<button type="button" class="btn-delete-row" onclick="deleteFeedbackEntry('${item.id}')" title="Eintrag endgültig löschen">🗑️</button>` : '--'}
+                    ${canDelete ? `<button type="button" class="btn-delete-row" onclick="deleteFeedbackEntry('${item.id}')" title="Meldung endgültig löschen">🗑️</button>` : '--'}
                 </td>
             </tr>
         `;
     }).join('');
 }
 
-function handleFeedbackStatusChange(fbId, newStatus) {
-    if (!sessionUser) return;
-    const eff = getUserEffectivePermissions(sessionUser);
-    if (!eff.isAdmin && !eff.isMasterAdmin) return;
+function renderFeedbackManagementTable() {
+    const tbody = document.getElementById('feedbackManagementTableBody');
+    if (!tbody) return;
 
-    if (newStatus === 'Abgelehnt') {
-        openFeedbackRejectModal(fbId);
+    const eff = sessionUser ? getUserEffectivePermissions(sessionUser) : {};
+    if (!eff.isAdmin && !eff.isMasterAdmin && !eff.canManageFeedback) {
+        tbody.innerHTML = '';
         return;
     }
+
+    const q = (document.getElementById('searchFeedbackInput')?.value || '').trim().toLowerCase();
+    const filterCat = document.getElementById('filterFeedbackCategory')?.value || 'all';
+    const filterStatus = document.getElementById('filterFeedbackStatus')?.value || 'all';
+
+    let list = getFeedbackList().sort((a, b) => (b.ts || 0) - (a.ts || 0));
+
+    if (filterCat !== 'all') list = list.filter(item => item.category === filterCat);
+    if (filterStatus !== 'all') list = list.filter(item => item.status === filterStatus);
+    if (q) {
+        list = list.filter(item => {
+            const t = (item.title || '').toLowerCase();
+            const d = (item.description || '').toLowerCase();
+            const a = (item.author || '').toLowerCase();
+            const dn = (item.authorDN || '').toLowerCase();
+            return t.includes(q) || d.includes(q) || a.includes(q) || dn.includes(q);
+        });
+    }
+
+    if (!list.length) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--text-muted);">Keine Wünsche oder Fehlermeldungen vorhanden.</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = renderFeedbackRowsHtml(list, 'manageFb');
+}
+
+function handleFeedbackStatusSelect(prefix, fbId, newStatus) {
+    if (!sessionUser) return;
+    const eff = getUserEffectivePermissions(sessionUser);
+    if (!eff.isAdmin && !eff.isMasterAdmin && !eff.canManageFeedback) return;
+
+    const rejectBox = document.getElementById(`${prefix}_rejectBox_${fbId}`);
+
+    if (newStatus === 'Abgelehnt') {
+        if (rejectBox) {
+            rejectBox.style.display = 'flex';
+            const reasonInput = document.getElementById(`${prefix}_reason_${fbId}`);
+            if (reasonInput) reasonInput.focus();
+        }
+        return;
+    }
+
+    if (rejectBox) rejectBox.style.display = 'none';
 
     db.ref('data/feedback/' + fbId).update({
         status: newStatus,
@@ -5030,69 +6520,89 @@ function handleFeedbackStatusChange(fbId, newStatus) {
         lastStatusUpdateTs: Date.now()
     }).then(() => {
         logAdminAudit('Feedback-Status geändert', `${sessionUser.vorname} ${sessionUser.nachname} setzte Meldung ${fbId} auf "${newStatus}".`);
+    }).catch(err => {
+        console.error('Feedback-Status konnte nicht gespeichert werden:', err);
+        const sel = document.getElementById(`${prefix}_selStatus_${fbId}`);
+        if (sel && cachedFeedback[fbId]) sel.value = cachedFeedback[fbId].status || 'Neu';
+        alert('Der Status konnte nicht gespeichert werden: ' + (err?.message || err));
     });
 }
 
-function openFeedbackRejectModal(fbId) {
-    activeRejectFeedbackId = fbId;
-    const modal = document.getElementById('feedbackRejectModal');
-    if (!modal) return;
-    document.getElementById('rejectReasonPreset').value = '';
-    document.getElementById('rejectReasonCustom').value = '';
-    modal.style.display = 'flex';
-}
-
-function closeFeedbackRejectModal() {
-    const modal = document.getElementById('feedbackRejectModal');
-    if (modal) modal.style.display = 'none';
-    activeRejectFeedbackId = null;
-    renderAdminFeedbackTable();
-}
-
-function applyRejectPresetReason() {
-    const preset = document.getElementById('rejectReasonPreset')?.value;
-    const custom = document.getElementById('rejectReasonCustom');
-    if (preset && custom) {
-        custom.value = preset;
+function applyInlinePreset(prefix, fbId, val) {
+    const reasonInp = document.getElementById(`${prefix}_reason_${fbId}`);
+    if (reasonInp && val) {
+        reasonInp.value = val;
     }
 }
 
-function saveFeedbackRejection() {
-    if (!activeRejectFeedbackId || !sessionUser) return;
-    const customReason = document.getElementById('rejectReasonCustom')?.value.trim();
+function closeInlineRejectBox(prefix, fbId) {
+    const rejectBox = document.getElementById(`${prefix}_rejectBox_${fbId}`);
+    if (rejectBox) rejectBox.style.display = 'none';
+    const sel = document.getElementById(`${prefix}_selStatus_${fbId}`);
+    if (sel && cachedFeedback[fbId]) {
+        sel.value = cachedFeedback[fbId].status || 'Neu';
+    }
+}
 
-    if (!customReason) {
+function saveInlineRejection(prefix, fbId) {
+    if (!fbId || !sessionUser) return;
+    const eff = getUserEffectivePermissions(sessionUser);
+    if (!eff.isAdmin && !eff.isMasterAdmin && !eff.canManageFeedback) {
+        alert('Keine Berechtigung zum Ablehnen von Meldungen!');
+        return;
+    }
+    const reasonInp = document.getElementById(`${prefix}_reason_${fbId}`);
+    const reasonText = (reasonInp?.value || '').trim();
+
+    if (!reasonText) {
         alert('⚠️ Begründungspflicht: Eine Ablehnung darf nicht ohne sachliche Erklärung gespeichert werden!');
         return;
     }
 
     const todayFormatted = new Date().toLocaleDateString('de-DE');
 
-    db.ref('data/feedback/' + activeRejectFeedbackId).update({
+    db.ref('data/feedback/' + fbId).update({
         status: 'Abgelehnt',
-        rejectionReason: customReason,
+        rejectionReason: reasonText,
         rejectedBy: `${sessionUser.vorname} ${sessionUser.nachname}`,
         rejectedDate: todayFormatted,
         rejectedTs: Date.now()
     }).then(() => {
-        logAdminAudit('Meldung abgelehnt', `${sessionUser.vorname} ${sessionUser.nachname} lehnte Meldung ${activeRejectFeedbackId} ab. Begründung: ${customReason}`);
-        closeFeedbackRejectModal();
+        logAdminAudit('Meldung abgelehnt', `${sessionUser.vorname} ${sessionUser.nachname} lehnte Meldung ${fbId} ab. Begründung: ${reasonText}`);
+        closeInlineRejectBox(prefix, fbId);
         alert('✅ Meldung wurde als abgelehnt markiert und die Begründung revisionssicher hinterlegt.');
+    }).catch(err => {
+        console.error('Ablehnung konnte nicht gespeichert werden:', err);
+        alert('Die Ablehnung konnte nicht gespeichert werden: ' + (err?.message || err));
     });
 }
 
 function deleteFeedbackEntry(fbId) {
-    if (!sessionUser || !getUserEffectivePermissions(sessionUser).isMasterAdmin) return;
-    if (confirm('Möchtest du diese Meldung wirklich dauerhaft aus der Datenbank entfernen?')) {
+    if (!sessionUser) return;
+    const eff = getUserEffectivePermissions(sessionUser);
+    const canDelete = !!(sessionUser.isMasterAdmin || eff.isMasterAdmin || eff.isAdmin || eff.delFeedback);
+
+    if (!canDelete) {
+        alert('Keine Berechtigung zum Löschen von Meldungen!');
+        return;
+    }
+
+    const item = cachedFeedback[fbId];
+    const itemTitle = item ? (item.title || fbId) : fbId;
+
+    if (confirm(`Möchtest du diese Meldung ("${itemTitle}") wirklich dauerhaft aus der Datenbank entfernen?`)) {
         db.ref('data/feedback/' + fbId).remove().then(() => {
-            logAdminAudit('Feedback gelöscht', `Eintrag ${fbId} gelöscht durch ${sessionUser.vorname} ${sessionUser.nachname}`);
-            alert('✅ Eintrag gelöscht!');
+            logAdminAudit('Feedback gelöscht', `Eintrag "${itemTitle}" (${fbId}) gelöscht durch ${sessionUser.vorname} ${sessionUser.nachname}`);
+            alert('✅ Eintrag erfolgreich gelöscht!');
+        }).catch(err => {
+            alert('Fehler beim Löschen: ' + err.message);
         });
     }
 }
 
 function exportFeedbackListMarkdown() {
-    const list = Object.values(cachedFeedback || {}).sort((a, b) => (b.ts || 0) - (a.ts || 0));
+    if (!canCurrentUserManageFeedback()) { alert('Keine Berechtigung zum Exportieren der Meldungen!'); return; }
+    const list = getFeedbackList().sort((a, b) => (b.ts || 0) - (a.ts || 0));
     if (!list.length) {
         alert('Keine Einträge zum Exportieren vorhanden.');
         return;
@@ -5114,8 +6624,9 @@ function exportFeedbackListMarkdown() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `wuensche_und_bugs_${new Date().toISOString().split('T')[0]}.md`;
+    a.download = `wuensche_und_bugs_${new Date().toLocaleDateString('sv-SE')}.md`;
     a.click();
+    URL.revokeObjectURL(url);
 }
 
 /* ── Navigation & Global Helpers ───────────────────────────── */
@@ -5127,6 +6638,12 @@ function switchTab(tabId, btn) {
     if (tabId === 'calendarTab') renderCalendarMonth();
     if (tabId === 'staffTab') renderStaffDirectory();
     if (tabId === 'miscTab') renderGehaltTab(cachedGehaltData);
+    if (tabId === 'examTab') renderExamTab();
+    if (tabId === 'settingsTab' && sessionUser) {
+        const eDatumEl = document.getElementById('einstellungsDatum');
+        if (eDatumEl?.value) berechneDienstTage(false);
+    }
+    if (tabId === 'feedbackTab' && canCurrentUserManageFeedback()) renderFeedbackManagementTable();
 }
 function settingsTabClick() { switchTab('settingsTab', document.getElementById('adminMainTabHeader')); }
 function switchInstructorTab(tabId, btnEl) {
@@ -5135,35 +6652,40 @@ function switchInstructorTab(tabId, btnEl) {
     const t = document.getElementById(tabId); if (t) t.classList.add('active');
     if (btnEl) btnEl.classList.add('active');
 }
+
 function toggleGroupCollapse(gId) { const g = document.getElementById(gId); if (g) g.classList.toggle('collapsed'); }
 
 /* ── DOM Ready & Exports ────────────────────────────────     */
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     updateLiveDate(); setInterval(updateLiveDate, 60000);
     renderGuideTab(); renderHierarchieBoard(hierarchieDaten); baueMaterialUIAuf();
     renderGehaltTab(cachedGehaltData);
 
-    const su = sessionStorage.getItem('mmd_session_user') || localStorage.getItem('mmd_session_user');
-    if (su) {
-        try {
-            const localUser = JSON.parse(su);
-            const uId = generateUserId(localUser.vorname, localUser.nachname);
+    clearStoredSessionData();
+    const authView = document.getElementById('authView');
+    const mainView = document.getElementById('mainAppView');
+    if (authView) authView.style.display = 'flex';
+    if (mainView) mainView.style.display = 'none';
 
-            db.ref('data/users/' + uId).once('value', snap => {
-                const freshUser = snap.val();
-                if (freshUser && (freshUser.status === 'approved' || freshUser.isAdmin || freshUser.isMasterAdmin)) {
-                    initDienstEintritt(freshUser);
-                } else {
-                    sessionStorage.clear();
-                    localStorage.clear();
-                    document.getElementById('authView').style.display = 'flex';
-                    document.getElementById('mainAppView').style.display = 'none';
-                }
-            });
-        } catch (e) {
-            sessionStorage.clear();
-            localStorage.clear();
+    try {
+        await configureFirebaseAuthPersistence();
+        const firebaseUser = await waitForFirebaseAuthReady();
+        if (!firebaseUser) return;
+
+        const profile = await loadAuthenticatedProfile(firebaseUser);
+        const user = profile.user;
+        const effectiveStatus = user.status || ((user.isAdmin || user.isMasterAdmin) ? 'approved' : 'pending');
+        if (effectiveStatus !== 'approved') {
+            await auth.signOut();
+            return;
         }
+
+        initDienstEintritt(user);
+    } catch (err) {
+        console.warn('Firebase-Sitzung konnte nicht wiederhergestellt werden:', err);
+        try { await auth.signOut(); } catch (_) {}
+        if (authView) authView.style.display = 'flex';
+        if (mainView) mainView.style.display = 'none';
     }
 });
 
@@ -5180,7 +6702,7 @@ _w.openSzenarienInlineModal = openSzenarienInlineModal; _w.closeSzenarienInlineM
 _w.openGuideInlineModal = openGuideInlineModal; _w.closeGuideInlineModal = closeGuideInlineModal; _w.addGuideRow = addGuideRow; _w.removeGuideRow = removeGuideRow; _w.saveGuideInline = saveGuideInline; _w.addKeineRechnungRow = addKeineRechnungRow; _w.removeKeineRechnungRow = removeKeineRechnungRow;
 _w.openCommandsInlineModal = openCommandsInlineModal; _w.closeCommandsInlineModal = closeCommandsInlineModal; _w.addCommandInline = addCommandInline;
 _w.openLinksInlineModal = openLinksInlineModal; _w.closeLinksInlineModal = closeLinksInlineModal; _w.addLinkInline = addLinkInline;
-_w.renderNewsFeed = () => renderNewsFeedData(cachedNews); _w.togglePostNewsForm = togglePostNewsForm; _w.speichereNeueNews = speichereNeueNews; _w.deleteNews = deleteNews;
+_w.togglePostNewsForm = togglePostNewsForm; _w.speichereNeueNews = speichereNeueNews; _w.deleteNews = deleteNews;
 _w.toggleProposeNewsForm = toggleProposeNewsForm; _w.submitNewsProposal = submitNewsProposal; _w.approveNewsProposal = approveNewsProposal;
 _w.markNewsAsRead = markNewsAsRead; _w.openNewsReadersModal = openNewsReadersModal; _w.closeNewsReadersModal = closeNewsReadersModal;
 _w.openEditNewsModal = openEditNewsModal;
@@ -5196,7 +6718,7 @@ _w.downloadSystemBackup = downloadSystemBackup; _w.restoreSystemBackupFromFile =
 _w.speichereHierarchieDaten = saveHierarchieInline;
 _w.approveUser = approveUser; _w.revokeUser = revokeUser; _w.deleteUserAccount = deleteUserAccount; _w.filterAdminUserTable = filterAdminUserTable;
 _w.openAssignRolesModal = openAssignRolesModal; _w.closeAssignRolesModal = closeAssignRolesModal; _w.saveAssignedRoles = saveAssignedRoles;
-_w.openUserPermissionsModal = openUserPermissionsModal; _w.closeUserPermissionsModal = closeUserPermissionsModal; _w.saveUserPermissions = saveUserPermissions;
+_w.openUserPermissionsModal = openUserPermissionsModal; _w.closeUserPermissionsModal = closeUserPermissionsModal; _w.saveUserPermissions = saveUserPermissions; _w.runFirebaseAuthMigration = runFirebaseAuthMigration;
 _w.neueRolleErstellen = neueRolleErstellen; _w.selectRole = selectRole; _w.updateRoleBadgePreview = updateRoleBadgePreview; _w.speichereRolle = speichereRolle; _w.loescheRolle = loescheRolle;
 _w.vollstaendigerReset = vollstaendigerReset; _w.renderAdminAuditLogs = renderAdminAuditLogs;
 _w.openAuditLogArchiveModal = openAuditLogArchiveModal; _w.closeAuditLogArchiveModal = closeAuditArchiveModal;
@@ -5233,14 +6755,14 @@ _w.downloadStaffOriginalPhoto = downloadStaffOriginalPhoto;
 _w.uploadProcessedStaffPhoto = uploadProcessedStaffPhoto;
 _w.resetStaffPhotoToDefault = resetStaffPhotoToDefault;
 _w.toggleBuilderCorrectAnswer = toggleBuilderCorrectAnswer;
-_w.openFeedbackSubmitModal = openFeedbackSubmitModal;
-_w.closeFeedbackSubmitModal = closeFeedbackSubmitModal;
+_w.openFeedbackCenter = openFeedbackCenter;
+_w.switchFeedbackCenterTab = switchFeedbackCenterTab;
+_w.resetFeedbackSubmitForm = resetFeedbackSubmitForm;
 _w.submitUserFeedback = submitUserFeedback;
-_w.renderAdminFeedbackTable = renderAdminFeedbackTable;
-_w.handleFeedbackStatusChange = handleFeedbackStatusChange;
-_w.openFeedbackRejectModal = openFeedbackRejectModal;
-_w.closeFeedbackRejectModal = closeFeedbackRejectModal;
-_w.applyRejectPresetReason = applyRejectPresetReason;
-_w.saveFeedbackRejection = saveFeedbackRejection;
+_w.renderFeedbackManagementTable = renderFeedbackManagementTable;
+_w.handleFeedbackStatusSelect = handleFeedbackStatusSelect;
+_w.applyInlinePreset = applyInlinePreset;
+_w.closeInlineRejectBox = closeInlineRejectBox;
+_w.saveInlineRejection = saveInlineRejection;
 _w.deleteFeedbackEntry = deleteFeedbackEntry;
 _w.exportFeedbackListMarkdown = exportFeedbackListMarkdown;
