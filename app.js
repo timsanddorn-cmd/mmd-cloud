@@ -73,6 +73,25 @@ async function derivePasswordHash(password, saltBase64, iterations = PASSWORD_HA
     return bytesToBase64(new Uint8Array(bits));
 }
 
+
+function createRandomSaltBase64(byteLength = 16) {
+    if (!window.crypto?.getRandomValues) throw new Error('Sichere Zufallswerte werden von diesem Browser nicht unterstützt.');
+    const bytes = new Uint8Array(byteLength);
+    window.crypto.getRandomValues(bytes);
+    return bytesToBase64(bytes);
+}
+
+async function deriveTransitionFirebasePassword(passwordHashBase64, accountId, version = 1) {
+    if (!window.crypto?.subtle) throw new Error('Sichere Passwortableitung wird von diesem Browser nicht unterstützt.');
+    const payload = `MMD-AUTH-TRANSITION-V1|${String(accountId || '')}|${Number(version) || 1}|${String(passwordHashBase64 || '')}`;
+    const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(payload));
+    const token = bytesToBase64(new Uint8Array(digest))
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=+$/g, '');
+    return `MMDv1-${token}`;
+}
+
 async function verifyUserPassword(user, password) {
     if (!user || !password) return false;
     if (user.passwordHash && user.passwordSalt) {
@@ -890,7 +909,19 @@ async function readLoginDirectory(loginKey) {
         const versionRaw = Number(raw.version);
         const version = Number.isFinite(versionRaw) && versionRaw >= 1 ? Math.floor(versionRaw) : 0;
         const accountId = (typeof raw.accountId === 'string' && raw.accountId.trim()) ? raw.accountId.trim() : loginKey;
-        return { loginKey, accountId, version, exists: true, deleted: !!raw.deleted };
+        const transitionIterationsRaw = Number(raw.transitionIterations);
+        return {
+            loginKey,
+            accountId,
+            version,
+            exists: true,
+            deleted: !!raw.deleted,
+            transitionMode: raw.transitionMode === 'legacy-kdf-v1',
+            transitionSalt: typeof raw.transitionSalt === 'string' ? raw.transitionSalt : '',
+            transitionIterations: Number.isFinite(transitionIterationsRaw) && transitionIterationsRaw > 0
+                ? Math.floor(transitionIterationsRaw)
+                : PASSWORD_HASH_ITERATIONS
+        };
     } catch (_) {
         return { loginKey, accountId: loginKey, version: 0, exists: false };
     }
@@ -1011,6 +1042,59 @@ async function migrateLegacyUserOnLogin(uId, password) {
     })) };
 }
 
+async function signInWithLegacyTransition(directory, enteredPassword) {
+    if (!directory?.transitionMode || !directory.transitionSalt || !directory.version || !directory.accountId) {
+        const e = new Error('Für dieses Konto ist kein gültiger Übergangslogin hinterlegt.');
+        e.code = 'mmd/no-transition-login';
+        throw e;
+    }
+
+    const verifierHash = await derivePasswordHash(
+        enteredPassword,
+        directory.transitionSalt,
+        directory.transitionIterations || PASSWORD_HASH_ITERATIONS
+    );
+    const transitionPassword = await deriveTransitionFirebasePassword(verifierHash, directory.accountId, directory.version);
+    const email = getTechnicalAuthEmail(directory.accountId, directory.version);
+    return auth.signInWithEmailAndPassword(email, transitionPassword);
+}
+
+async function forcePasswordChangeAfterTransition(profile) {
+    if (!profile?.user?.mustChangePassword) return profile;
+    if (!auth.currentUser) throw new Error('Keine aktive Firebase-Anmeldung für die Passwortänderung vorhanden.');
+
+    alert('🔐 Dein MD-Konto wurde auf die neue sichere Anmeldung umgestellt.\n\nBevor du fortfahren kannst, musst du jetzt ein neues persönliches Passwort festlegen.');
+
+    while (true) {
+        const first = prompt('Neues Passwort festlegen (mindestens 6 Zeichen):');
+        if (first === null) {
+            const e = new Error('Die Anmeldung wurde abgebrochen. Für dieses Konto ist zuerst eine Passwortänderung erforderlich.');
+            e.code = 'mmd/password-change-required';
+            throw e;
+        }
+        if (first.length < 6) {
+            alert('Das neue Passwort muss mindestens 6 Zeichen lang sein.');
+            continue;
+        }
+        const second = prompt('Neues Passwort zur Bestätigung erneut eingeben:');
+        if (second === null) {
+            const e = new Error('Die Anmeldung wurde abgebrochen. Für dieses Konto ist zuerst eine Passwortänderung erforderlich.');
+            e.code = 'mmd/password-change-required';
+            throw e;
+        }
+        if (first !== second) {
+            alert('Die beiden Passwörter stimmen nicht überein. Bitte erneut versuchen.');
+            continue;
+        }
+
+        await auth.currentUser.updatePassword(first);
+        await db.ref(`data/users/${profile.uId}/mustChangePassword`).set(false);
+        profile.user.mustChangePassword = false;
+        alert('✅ Neues Passwort gespeichert. Du kannst dich ab jetzt mit diesem Passwort anmelden.');
+        return profile;
+    }
+}
+
 async function registerNewFirebaseUser(v, n, p, dn) {
     const loginKey = generateUserId(v, n);
     const uId = loginKey; // initiale feste Account-ID; sie bleibt auch bei späteren Namensänderungen bestehen
@@ -1113,11 +1197,25 @@ async function handleAuthAction() {
                 profile = await loadAuthenticatedProfile(credential.user);
             } catch (err) {
                 try { await auth.signOut(); } catch (_) {}
-                if (['auth/wrong-password', 'auth/user-not-found', 'auth/invalid-credential', 'auth/invalid-login-credentials'].includes(err?.code)) {
+                const wrongCredential = ['auth/wrong-password', 'auth/user-not-found', 'auth/invalid-credential', 'auth/invalid-login-credentials'].includes(err?.code);
+                if (wrongCredential && directory.transitionMode) {
+                    try {
+                        const credential = await signInWithLegacyTransition(directory, p);
+                        profile = await loadAuthenticatedProfile(credential.user);
+                    } catch (transitionErr) {
+                        try { await auth.signOut(); } catch (_) {}
+                        if (['auth/wrong-password', 'auth/user-not-found', 'auth/invalid-credential', 'auth/invalid-login-credentials'].includes(transitionErr?.code)) {
+                            alert('Falscher Name oder falsches Passwort!');
+                            return;
+                        }
+                        throw transitionErr;
+                    }
+                } else if (wrongCredential) {
                     alert('Falscher Name oder falsches Passwort!');
                     return;
+                } else {
+                    throw err;
                 }
-                throw err;
             }
         } else {
             profile = await migrateLegacyUserOnLogin(accountId, p);
@@ -1131,12 +1229,15 @@ async function handleAuthAction() {
             return;
         }
 
-        initDienstEintritt(user);
+        profile = await forcePasswordChangeAfterTransition(profile);
+        initDienstEintritt(profile.user);
     } catch (err) {
         console.error('Anmeldefehler:', err);
         try { await auth.signOut(); } catch (_) {}
         if (err?.code === 'mmd/invalid-credentials') {
             alert('Falscher Name oder falsches Passwort!');
+        } else if (err?.code === 'mmd/password-change-required') {
+            alert(err.message);
         } else {
             alert(err?.message || 'Anmeldung konnte nicht abgeschlossen werden.');
         }
@@ -5422,7 +5523,9 @@ async function runFirebaseAuthMigration() {
 
     const ok = confirm(
         'Sicherheitsmigration jetzt starten?\n\n' +
-        'Dabei werden bestehende Mitarbeiterkonten in Firebase Authentication angelegt und alte Passwortfelder aus der Realtime Database entfernt.\n\n' +
+        'Alle noch nicht umgestellten Mitarbeiterkonten werden jetzt sofort in Firebase Authentication angelegt.\n' +
+        'Die Mitarbeiter behalten für den ersten Login ihr bisheriges Passwort und müssen anschließend direkt ein neues persönliches Passwort festlegen.\n\n' +
+        'Es werden keine Übergangspasswörter an Mitarbeiter ausgegeben.\n\n' +
         'Vorher sollte ein aktuelles Firebase-Backup vorhanden sein.'
     );
     if (!ok) return;
@@ -5434,6 +5537,7 @@ async function runFirebaseAuthMigration() {
     const failures = [];
     let migrated = 0;
     let cleaned = 0;
+    let transitionAccounts = 0;
 
     try {
         const [rolesSnap, snap] = await Promise.all([
@@ -5449,8 +5553,10 @@ async function runFirebaseAuthMigration() {
 
             let firebaseUid = rawUser?.authUid || null;
             const loginKey = rawUser?.loginKey || generateUserId(rawUser?.vorname, rawUser?.nachname);
-            let version = Math.max(1, Number(rawUser?.authVersion) || (await readLoginDirectory(loginKey)).version || 1);
+            const existingDirectory = await readLoginDirectory(loginKey);
+            let version = Math.max(1, Number(rawUser?.authVersion) || existingDirectory.version || 1);
             let secondaryCtx = null;
+            let transitionMeta = null;
 
             try {
                 if (uId === myId && auth.currentUser) {
@@ -5458,25 +5564,52 @@ async function runFirebaseAuthMigration() {
                 }
 
                 if (!firebaseUid) {
-                    const legacyPassword = typeof rawUser?.pass === 'string' ? rawUser.pass : '';
-                    if (legacyPassword.length < 6) {
-                        throw new Error('Kein migrierbares Klartextpasswort mit mindestens 6 Zeichen vorhanden.');
+                    let verifierHash = '';
+                    let transitionSalt = '';
+                    let transitionIterations = PASSWORD_HASH_ITERATIONS;
+
+                    if (rawUser?.passwordHash && rawUser?.passwordSalt) {
+                        verifierHash = String(rawUser.passwordHash);
+                        transitionSalt = String(rawUser.passwordSalt);
+                        transitionIterations = Number(rawUser.passwordIterations) || PASSWORD_HASH_ITERATIONS;
+                    } else if (typeof rawUser?.pass === 'string' && rawUser.pass.length > 0) {
+                        transitionSalt = createRandomSaltBase64(16);
+                        transitionIterations = PASSWORD_HASH_ITERATIONS;
+                        verifierHash = await derivePasswordHash(rawUser.pass, transitionSalt, transitionIterations);
+                    } else {
+                        throw new Error('Kein altes Passwort oder Passwort-Hash für die sichere Selbstmigration vorhanden.');
                     }
 
-                    secondaryCtx = await createSecondaryAuthAccount(uId, version, legacyPassword, true);
+                    const transitionPassword = await deriveTransitionFirebasePassword(verifierHash, uId, version);
+                    secondaryCtx = await createSecondaryAuthAccount(uId, version, transitionPassword, true);
                     firebaseUid = secondaryCtx.user.uid;
                     migrated++;
+                    transitionAccounts++;
+                    transitionMeta = {
+                        transitionMode: 'legacy-kdf-v1',
+                        transitionSalt,
+                        transitionIterations
+                    };
                 }
 
                 const cleanForPermissions = Object.assign({}, rawUser, { accountId: uId, loginKey, authUid: firebaseUid, authVersion: version });
+                const directoryData = { version, accountId: uId };
+                if (transitionMeta) Object.assign(directoryData, transitionMeta);
+                else if (existingDirectory.transitionMode) {
+                    directoryData.transitionMode = 'legacy-kdf-v1';
+                    directoryData.transitionSalt = existingDirectory.transitionSalt;
+                    directoryData.transitionIterations = existingDirectory.transitionIterations;
+                }
+
                 const updates = {};
                 updates[`data/authIndex/${firebaseUid}`] = uId;
-                updates[`data/loginDirectory/${loginKey}`] = { version, accountId: uId };
+                updates[`data/loginDirectory/${loginKey}`] = directoryData;
                 updates[`data/users/${uId}/accountId`] = uId;
                 updates[`data/users/${uId}/loginKey`] = loginKey;
                 updates[`data/users/${uId}/authUid`] = firebaseUid;
                 updates[`data/users/${uId}/authVersion`] = version;
                 updates[`data/users/${uId}/serverPermissions`] = buildServerPermissions(cleanForPermissions);
+                if (transitionMeta) updates[`data/users/${uId}/mustChangePassword`] = true;
                 updates[`data/users/${uId}/pass`] = null;
                 updates[`data/users/${uId}/passwordHash`] = null;
                 updates[`data/users/${uId}/passwordSalt`] = null;
@@ -5504,8 +5637,8 @@ async function runFirebaseAuthMigration() {
                 authMigrationCompletedBy: `${sessionUser.vorname} ${sessionUser.nachname}`
             });
             await syncServerPermissionsForAllUsers();
-            if (statusEl) statusEl.innerHTML = `✅ Migration abgeschlossen: ${cleaned} Konten geprüft, ${migrated} Firebase-Zugänge neu angelegt.`;
-            alert('✅ Firebase-Authentication-Migration vollständig abgeschlossen.\n\nJetzt können die FINALEN Realtime-Database-Regeln veröffentlicht werden.');
+            if (statusEl) statusEl.innerHTML = `✅ Migration abgeschlossen: ${cleaned} Konten geprüft, ${migrated} Firebase-Zugänge neu angelegt. ${transitionAccounts} Konto/Konten ändern ihr Passwort selbst beim nächsten Login.`;
+            alert('✅ Firebase-Authentication-Migration vollständig abgeschlossen.\n\nAlle Konten sind jetzt technisch umgestellt. Mitarbeiter mit Übergangslogin verwenden beim ersten Login ihr bisheriges Passwort und müssen anschließend sofort ein neues Passwort festlegen.\n\nEs müssen keine Passwörter verteilt werden.\n\nJetzt können die FINALEN Realtime-Database-Regeln veröffentlicht werden.');
         } else {
             await db.ref('data/system/authMigrationComplete').set(false);
             if (statusEl) statusEl.innerHTML = `⚠️ Migration nicht vollständig. ${failures.length} Konto/Konten benötigen manuelle Prüfung.`;
