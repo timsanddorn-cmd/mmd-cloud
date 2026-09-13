@@ -1,5 +1,5 @@
 // ============================================================
-//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.2.0
+//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.1.0
 //  Firebase Realtime Database (Compat SDK v10)
 //  [TEIL 1 VON 3]
 // ============================================================
@@ -118,22 +118,6 @@ let hierarchieDaten = JSON.parse(JSON.stringify(defaultHierarchieData));
 /* ── Vollständiger Gesamt-Changelog (Entwicklungsverlauf) ───── */
 const systemChangelogs = [
     {
-        id: "sys_v6_2_0",
-        version: "v6.2.0",
-        date: "13.09.2026",
-        ts: 1789335600000,
-        category: "Update",
-        title: "Direktes Prüfcenter, Tabellen-Schrift & Workflow-Optimierungen",
-        changes: [
-            "Prüfcenter-Direktzugriff: Admins und Master-Admins können Wünsche und Bug-Meldungen direkt über die Hauptleiste aufrufen – ohne Passwort-Eingabe.",
-            "Direkte Inline-Ablehnung: Die Begründung bei einer Ablehnung wird nun direkt in der Zeile eingegeben, ohne störende Hintergrundfenster.",
-            "Mülleimer-Reparatur: Abgelehnte oder erledigte Meldungen können nun verlässlich und fehlerfrei von Administratoren gelöscht werden.",
-            "Lesbarkeit verbessert: Schriftgrößen in allen Tabellen wurden spürbar auf 15px vergrößert für ein ruhigeres und augenschonendes Arbeiten.",
-            "Mitarbeiter-Kartei: Porträtfotos und Dienstlogos wurden um 20 % vergrößert und füllen den Kartenrahmen harmonischer aus.",
-            "Code-Audit & Bereinigung: Fehlende Button-Styles nachgerüstet und Browser-Hinweise zu Formularfeldern vollständig bereinigt."
-        ]
-    },
-    {
         id: "sys_v6_1_0",
         version: "v6.1.0",
         date: "12.09.2026",
@@ -157,7 +141,7 @@ const systemChangelogs = [
         changes: [
             "Passwort-Änderung: Das Eingabefeld in den persönlichen Einstellungen funktioniert nun wieder einwandfrei.",
             "Audit-Log: Das Löschen archivierter Schichten wird nun lückenlos und nachvollziehbar im System-Protokoll erfasst.",
-            "Mitarbeiterverwaltung: Beim Bearbeiten eines Kontos bleibt das bestebestehende Passwort sicher erhalten, falls das Feld leer gelassen wird."
+            "Mitarbeiterverwaltung: Beim Bearbeiten eines Kontos bleibt das bestehende Passwort sicher erhalten, falls das Feld leer gelassen wird."
         ]
     },
     {
@@ -240,108 +224,108 @@ const defaultRoles = {
     masteradmin: {
         id:'masteradmin', name:'Master-Admin', color:'#eab308', icon:'👑', isSystem:true,
         isAdmin:true, isMasterAdmin:true, canViewArchive:true, canEditAllPatients:true,
-        canCreateCalendar:true, delCalendar:true, canManagePhotos:true, delPhotos:true,
+        canCreateCalendar:true, delCalendar:true, canManagePhotos:true,
         isInstructor:true, canManageInstructors:true, canManageExams:true,
         canPostNews:true, canApproveNews:true, canViewNewsRead:true,
         canEditPrices:true, canEditGuide:true, canEditCommands:true, canEditLinks:true,
-        delPatient:true, delArchiv:true, delGuide:true, delCommands:true, delLinks:true, delNews:true, delExams:true, delUsers:true, delFeedback:true,
+        delPatient:true, delArchiv:true, delGuide:true, delCommands:true, delLinks:true, delNews:true, delExams:true, delUsers:true,
         allowedCmdKats: [], allowedLinkKats: []
     },
     admin: {
         id:'admin', name:'Admin', color:'#f59e0b', icon:'🛡️', isSystem:true,
         isAdmin:true, isMasterAdmin:false, canViewArchive:true, canEditAllPatients:true,
-        canCreateCalendar:true, delCalendar:true, canManagePhotos:true, delPhotos:true,
+        canCreateCalendar:true, delCalendar:true, canManagePhotos:true,
         isInstructor:true, canManageInstructors:true, canManageExams:true,
         canPostNews:true, canApproveNews:true, canViewNewsRead:true,
         canEditPrices:true, canEditGuide:true, canEditCommands:true, canEditLinks:true,
-        delPatient:true, delArchiv:true, delGuide:true, delCommands:true, delLinks:true, delNews:true, delExams:true, delUsers:false, delFeedback:true,
+        delPatient:true, delArchiv:true, delGuide:true, delCommands:true, delLinks:true, delNews:true, delExams:true, delUsers:false,
         allowedCmdKats: [], allowedLinkKats: []
     },
     ausbildungsleitung: {
         id:'ausbildungsleitung', name:'Ausbildungsleitung', color:'#c084fc', icon:'⚙️', isSystem:true,
         isAdmin:false, isMasterAdmin:false, canViewArchive:false, canEditAllPatients:false,
-        canCreateCalendar:true, delCalendar:false, canManagePhotos:false, delPhotos:false,
+        canCreateCalendar:true, delCalendar:false, canManagePhotos:false,
         isInstructor:true, canManageInstructors:true, canManageExams:true,
         canPostNews:true, canApproveNews:true, canViewNewsRead:true,
         canEditPrices:false, canEditGuide:false, canEditCommands:false, canEditLinks:false,
-        delPatient:false, delArchiv:false, delGuide:false, delCommands:false, delLinks:false, delNews:false, delExams:true, delUsers:false, delFeedback:false,
+        delPatient:false, delArchiv:false, delGuide:false, delCommands:false, delLinks:false, delNews:false, delExams:true, delUsers:false,
         allowedCmdKats: ['Ausbildung', 'Ausbildungsabteilung', 'Abkürzungen & Dokumente', 'T-Codes'],
         allowedLinkKats: ['Allgemein', 'Ausbildung', 'MD Intern']
     },
     ausbilder: {
         id:'ausbilder', name:'Ausbilder', color:'#8b5cf6', icon:'🎓', isSystem:true,
         isAdmin:false, isMasterAdmin:false, canViewArchive:false, canEditAllPatients:false,
-        canCreateCalendar:true, delCalendar:false, canManagePhotos:false, delPhotos:false,
+        canCreateCalendar:true, delCalendar:false, canManagePhotos:false,
         isInstructor:true, canManageInstructors:false, canManageExams:false,
         canPostNews:false, canApproveNews:false, canViewNewsRead:false,
         canEditPrices:false, canEditGuide:false, canEditCommands:false, canEditLinks:false,
-        delPatient:false, delArchiv:false, delGuide:false, delCommands:false, delLinks:false, delNews:false, delExams:false, delUsers:false, delFeedback:false,
+        delPatient:false, delArchiv:false, delGuide:false, delCommands:false, delLinks:false, delNews:false, delExams:false, delUsers:false,
         allowedCmdKats: ['Ausbildung', 'Ausbildungsabteilung', 'Abkürzungen & Dokumente', 'T-Codes'],
         allowedLinkKats: ['Allgemein', 'MD Intern']
     },
     cls: {
         id:'cls', name:'CLS-Ausbilder', color:'#06b6d4', icon:'💉', isSystem:true,
         isAdmin:false, isMasterAdmin:false, canViewArchive:false, canEditAllPatients:false,
-        canCreateCalendar:false, delCalendar:false, canManagePhotos:false, delPhotos:false,
+        canCreateCalendar:false, delCalendar:false, canManagePhotos:false,
         isInstructor:false, canManageInstructors:false, canManageExams:false,
         canPostNews:false, canApproveNews:false, canViewNewsRead:false,
         canEditPrices:false, canEditGuide:false, canEditCommands:false, canEditLinks:false,
-        delPatient:false, delArchiv:false, delGuide:false, delCommands:false, delLinks:false, delNews:false, delExams:false, delUsers:false, delFeedback:false,
+        delPatient:false, delArchiv:false, delGuide:false, delCommands:false, delLinks:false, delNews:false, delExams:false, delUsers:false,
         allowedCmdKats: ['Abkürzungen & Dokumente', 'T-Codes'],
         allowedLinkKats: ['Allgemein', 'CLS', 'MD Intern']
     },
     ehk: {
         id:'ehk', name:'EHK-Ausbilder', color:'#10b981', icon:'🩺', isSystem:true,
         isAdmin:false, isMasterAdmin:false, canViewArchive:false, canEditAllPatients:false,
-        canCreateCalendar:false, delCalendar:false, canManagePhotos:false, delPhotos:false,
+        canCreateCalendar:false, delCalendar:false, canManagePhotos:false,
         isInstructor:false, canManageInstructors:false, canManageExams:false,
         canPostNews:false, canApproveNews:false, canViewNewsRead:false,
         canEditPrices:false, canEditGuide:false, canEditCommands:false, canEditLinks:false,
-        delPatient:false, delArchiv:false, delGuide:false, delCommands:false, delLinks:false, delNews:false, delExams:false, delUsers:false, delFeedback:false,
+        delPatient:false, delArchiv:false, delGuide:false, delCommands:false, delLinks:false, delNews:false, delExams:false, delUsers:false,
         allowedCmdKats: ['Abkürzungen & Dokumente', 'T-Codes'],
         allowedLinkKats: ['Allgemein', 'EHK', 'MD Intern']
     },
     luftrettung: {
         id:'luftrettung', name:'Luftrettung', color:'#0284c7', icon:'🚁', isSystem:true,
         isAdmin:false, isMasterAdmin:false, canViewArchive:false, canEditAllPatients:false,
-        canCreateCalendar:true, delCalendar:false, canManagePhotos:false, delPhotos:false,
+        canCreateCalendar:true, delCalendar:false, canManagePhotos:false,
         isInstructor:false, canManageInstructors:false, canManageExams:false,
         canPostNews:false, canApproveNews:false, canViewNewsRead:false,
         canEditPrices:false, canEditGuide:false, canEditCommands:false, canEditLinks:false,
-        delPatient:false, delArchiv:false, delGuide:false, delCommands:false, delLinks:false, delNews:false, delExams:false, delUsers:false, delFeedback:false,
+        delPatient:false, delArchiv:false, delGuide:false, delCommands:false, delLinks:false, delNews:false, delExams:false, delUsers:false,
         allowedCmdKats: ['Abkürzungen & Dokumente', 'Allgemein', 'T-Codes'],
         allowedLinkKats: ['MD Intern']
     },
     psychologie: {
         id:'psychologie', name:'Psychologie', color:'#ec4899', icon:'🧠', isSystem:true,
         isAdmin:false, isMasterAdmin:false, canViewArchive:false, canEditAllPatients:false,
-        canCreateCalendar:true, delCalendar:true, canManagePhotos:false, delPhotos:false,
+        canCreateCalendar:true, delCalendar:true, canManagePhotos:false,
         isInstructor:false, canManageInstructors:false, canManageExams:false,
         canPostNews:true, canApproveNews:false, canViewNewsRead:true,
         canEditPrices:false, canEditGuide:false, canEditCommands:false, canEditLinks:false,
-        delPatient:false, delArchiv:false, delGuide:false, delCommands:false, delLinks:false, delNews:false, delExams:false, delUsers:false, delFeedback:false,
+        delPatient:false, delArchiv:false, delGuide:false, delCommands:false, delLinks:false, delNews:false, delExams:false, delUsers:false,
         allowedCmdKats: ['Abkürzungen & Dokumente', 'Psychologie', 'T-Codes'],
         allowedLinkKats: ['Allgemein', 'MD Intern', 'Psychologie']
     },
     personalabteilung: {
         id:'personalabteilung', name:'Personalabteilung', color:'#ec4899', icon:'💼', isSystem:true,
         isAdmin:false, isMasterAdmin:false, canViewArchive:false, canEditAllPatients:false,
-        canCreateCalendar:true, delCalendar:false, canManagePhotos:false, delPhotos:false,
+        canCreateCalendar:true, delCalendar:false, canManagePhotos:false,
         isInstructor:false, canManageInstructors:false, canManageExams:false,
         canPostNews:true, canApproveNews:true, canViewNewsRead:true,
         canEditPrices:false, canEditGuide:false, canEditCommands:false, canEditLinks:false,
-        delPatient:false, delArchiv:false, delGuide:false, delCommands:false, delLinks:false, delNews:true, delExams:false, delUsers:false, delFeedback:false,
+        delPatient:false, delArchiv:false, delGuide:false, delCommands:false, delLinks:false, delNews:true, delExams:false, delUsers:false,
         allowedCmdKats: ['Abkürzungen & Dokumente', 'T-Codes'],
         allowedLinkKats: ['Allgemein', 'MD Intern']
     },
     mitarbeiter: {
         id:'mitarbeiter', name:'Mitarbeiter', color:'#64748b', icon:'👨‍⚕️', isSystem:true,
         isAdmin:false, isMasterAdmin:false, canViewArchive:false, canEditAllPatients:false,
-        canCreateCalendar:true, delCalendar:false, canManagePhotos:false, delPhotos:false,
+        canCreateCalendar:true, delCalendar:false, canManagePhotos:false,
         isInstructor:false, canManageInstructors:false, canManageExams:false,
         canPostNews:false, canApproveNews:false, canViewNewsRead:false,
         canEditPrices:false, canEditGuide:false, canEditCommands:false, canEditLinks:false,
-        delPatient:false, delArchiv:false, delGuide:false, delCommands:false, delLinks:false, delNews:false, delExams:false, delUsers:false, delFeedback:false,
+        delPatient:false, delArchiv:false, delGuide:false, delCommands:false, delLinks:false, delNews:false, delExams:false, delUsers:false,
         allowedCmdKats: ['Abkürzungen & Dokumente', 'T-Codes'],
         allowedLinkKats: ['Allgemein', 'MD Intern']
     }
@@ -352,14 +336,12 @@ const ROLE_PROPERTY_MAP = {
     roleFlagAdmin: 'isAdmin',
     roleFlagMasterAdmin: 'isMasterAdmin',
     delFlagUsers: 'delUsers',
-    delFlagFeedback: 'delFeedback',
     roleFlagEditPrices: 'canEditPrices',
     roleFlagArchive: 'canViewArchive',
     roleFlagEditAllPatients: 'canEditAllPatients',
     delFlagPatient: 'delPatient',
     delFlagArchiv: 'delArchiv',
     roleFlagManagePhotos: 'canManagePhotos',
-    delFlagPhotos: 'delPhotos',
     roleFlagCreateCalendar: 'canCreateCalendar',
     delFlagCalendar: 'delCalendar',
     roleFlagPostNews: 'canPostNews',
@@ -489,10 +471,10 @@ function logAdminAudit(action, details) {
         admin: (sessionUser.vorname || '') + ' ' + (sessionUser.nachname || ''),
         ts: Date.now()
     });
-};
+}
 
 // ============================================================
-//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.2.0
+//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.1.0
 //  Firebase Realtime Database (Compat SDK v10)
 //  [TEIL 2 VON 3]
 // ============================================================
@@ -518,11 +500,11 @@ function getUserRolesList(user) {
 function getUserEffectivePermissions(user) {
     const eff = {
         isAdmin:false, isMasterAdmin:false, canViewArchive:false, canEditAllPatients:false,
-        canCreateCalendar:true, delCalendar:false, canManagePhotos:false, delPhotos:false,
+        canCreateCalendar:true, delCalendar:false, canManagePhotos:false,
         isInstructor:false, canManageInstructors:false, canManageExams:false,
         canPostNews:false, canApproveNews:false, canViewNewsRead:false,
         canEditPrices:false, canEditGuide:false, canEditCommands:false, canEditLinks:false,
-        delPatient:false, delArchiv:false, delGuide:false, delCommands:false, delLinks:false, delNews:false, delExams:false, delUsers:false, delFeedback:false,
+        delPatient:false, delArchiv:false, delGuide:false, delCommands:false, delLinks:false, delNews:false, delExams:false, delUsers:false,
         allowedCmdKats: [],
         allowedLinkKats: []
     };
@@ -723,10 +705,6 @@ function applyUserPermissions(user) {
     const akBtn = document.getElementById('adminKeyBtn');
     if (akBtn) akBtn.style.display = isAdminOrMaster ? 'inline-block' : 'none';
 
-    /* Direkter Prüfcenter- & Wünsche-Reiter in der Hauptnavigation */
-    const fbDirectBtn = document.getElementById('feedbackDirectTabBtn');
-    if (fbDirectBtn) fbDirectBtn.style.display = isAdminOrMaster ? 'flex' : 'none';
-
     const pEdit = document.getElementById('btnEditPricesInline');
     if (pEdit) pEdit.style.display = (eff.canEditPrices || isMaster) ? 'inline-block' : 'none';
 
@@ -782,13 +760,12 @@ function applyUserPermissions(user) {
     const changelogWriterBtn = document.getElementById('btnOpenChangelogWriter');
     if (changelogWriterBtn) changelogWriterBtn.style.display = isMaster ? 'inline-flex' : 'none';
 
-    /* Wünsche & Bugs: Daten-Listener für Leitung & Admins */
+    /* Wünsche & Bugs: Daten-Listener ausschließlich für Leitung/Admins */
     if (isAdminOrMaster) {
         db.ref('data/feedback').off();
         db.ref('data/feedback').on('value', s => {
             cachedFeedback = s.val() || {};
             renderAdminFeedbackTable();
-            renderDirectFeedbackTable();
         });
     } else {
         db.ref('data/feedback').off();
@@ -1408,7 +1385,7 @@ function saveAllSzenarienWorkflows() {
 }
 
 // ============================================================
-//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.2.0
+//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.1.0
 //  Firebase Realtime Database (Compat SDK v10)
 //  [TEIL 3 VON 3]
 // ============================================================
@@ -1434,12 +1411,10 @@ function renderProtokoll(obj) {
                 <td>${v.verletzungen||0}</td>
                 <td style="color:var(--success);font-weight:800;">$${v.kosten||0}</td>
                 <td>${escapeHtml(v.medic||'-')}</td>
-                <td style="font-size:13px;color:var(--text-muted);">${dateStr}</td>
+                <td style="font-size:12px;color:var(--text-muted);">${dateStr}</td>
                 <td>
-                    <div style="display:flex;gap:6px;align-items:center;">
-                        ${canEditThis ? `<button type="button" class="btn-edit-row" onclick="openEditModal('${k}')" title="Eintrag bearbeiten">✏️</button>` : ''}
-                        ${eff.delPatient ? `<button type="button" class="btn-delete-row" onclick="deletePatient('${k}')" title="Eintrag löschen">🗑️</button>` : ''}
-                    </div>
+                    ${canEditThis ? `<button class="btn-edit-row" onclick="openEditModal('${k}')" title="Eintrag bearbeiten">✏️</button>` : ''}
+                    ${eff.delPatient ? `<button class="btn-delete-row" onclick="deletePatient('${k}')" title="Eintrag löschen">🗑️</button>` : ''}
                 </td>
               </tr>`;
           }).join('');
@@ -1526,7 +1501,7 @@ function renderArchiv(obj) {
         totalV += v; 
         totalCash += cash;
 
-        let mHtml = '<ul class="archiv-details-list">';
+        let mHtml = '<ul class="archiv-details-list" style="margin:0;padding-left:14px;color:var(--text-muted);font-size:11px;list-style-type:square;">';
         const matObj = i.material || i.matDetailsObj || {};
         const matKeys = Object.keys(matObj);
         
@@ -1548,19 +1523,17 @@ function renderArchiv(obj) {
             <td style="font-weight:700;color:var(--text-main);">${escapeHtml(tagLabel)}</td>
             <td style="font-weight:700;">${p}</td>
             <td style="color:var(--warning);font-weight:700;">${v}</td>
-            <td style="color:var(--success);font-weight:800;font-family:monospace;font-size:14px;">$${cash.toLocaleString('de-DE')}</td>
+            <td style="color:var(--success);font-weight:800;font-family:monospace;font-size:13px;">$${cash.toLocaleString('de-DE')}</td>
             <td>${mHtml}</td>
             <td style="text-align:right;white-space:nowrap;">
-                <div style="display:flex;gap:6px;justify-content:flex-end;">
-                    ${isMaster ? `<button type="button" class="btn-edit-row" onclick="openArchivEditModal('${k}')" title="Schicht korrigieren">✏️</button>` : ''}
-                    ${eff.delArchiv ? `<button type="button" class="btn-delete-row" onclick="deleteArchivSchicht('${k}')" title="Schicht löschen">🗑️</button>` : ''}
-                </div>
+                ${isMaster ? `<button class="btn-edit-row" onclick="openArchivEditModal('${k}')" title="Schicht korrigieren">✏️</button>` : ''}
+                ${eff.delArchiv ? `<button class="btn-delete-row" onclick="deleteArchivSchicht('${k}')" title="Schicht löschen">🗑️</button>` : ''}
             </td>
         </tr>`;
     }).join('');
 
     if (tfoot) {
-        let totalMatHtml = '<ul class="archiv-details-list">';
+        let totalMatHtml = '<ul class="archiv-details-list" style="margin:0;padding-left:14px;color:var(--text-muted);font-size:11px;list-style-type:square;">';
         const totalKeys = Object.keys(totalMatObj);
         if (totalKeys.length > 0) {
             totalKeys.sort().forEach(m => {
@@ -1575,9 +1548,9 @@ function renderArchiv(obj) {
             <td><b style="color:var(--primary);">Summe (${currentWeekKey})</b></td>
             <td style="color:var(--primary);">${totalP.toLocaleString('de-DE')}</td>
             <td style="color:var(--warning);">${totalV.toLocaleString('de-DE')}</td>
-            <td style="color:var(--success);font-family:monospace;font-size:15px;">$${totalCash.toLocaleString('de-DE')}</td>
+            <td style="color:var(--success);font-family:monospace;">$${totalCash.toLocaleString('de-DE')}</td>
             <td>${totalMatHtml}</td>
-            <td style="text-align:right;">${isMaster ? '<span style="color:var(--primary);font-size:12px;">👑 Master</span>' : '--'}</td>
+            <td style="text-align:right;">${isMaster ? '<span style="color:var(--primary);font-size:11px;">👑 Master</span>' : '--'}</td>
         </tr>`;
     }
 }
@@ -1986,7 +1959,7 @@ function openCreateEventModal(prefillDate = null) {
     if (targetRolesContainer) {
         const sortedRoles = Object.values(cachedRoles).sort((a,b) => (a.name||'').localeCompare(b.name||'', 'de'));
         targetRolesContainer.innerHTML = sortedRoles.map(r => `
-            <label for="cal_role_${r.id}" style="display:flex;align-items:center;gap:6px;padding:4px 8px;cursor:pointer;background:rgba(30,41,59,0.4);border-radius:6px;font-size:13px;">
+            <label for="cal_role_${r.id}" style="display:flex;align-items:center;gap:6px;padding:4px 8px;cursor:pointer;background:rgba(30,41,59,0.4);border-radius:6px;font-size:12px;">
                 <input type="checkbox" id="cal_role_${r.id}" class="cal-target-role-cb" value="${escapeHtml(r.id)}">
                 <span style="color:${r.color||'#38bdf8'};font-weight:700;">${r.icon?r.icon+' ':''}${escapeHtml(r.name)}</span>
             </label>
@@ -1994,12 +1967,12 @@ function openCreateEventModal(prefillDate = null) {
     }
 
     if (invitedUsersContainer) {
-        const myId = generateUserId(sessionUser.vorname, sessionUser.nachname);
+        const myId = sessionUser ? generateUserId(sessionUser.vorname, sessionUser.nachname) : '';
         const allUsers = Object.entries(cachedUsers).sort((a,b) => (a[1].nachname||'').localeCompare(b[1].nachname||'', 'de'));
         invitedUsersContainer.innerHTML = allUsers.filter(([uId]) => uId !== myId).map(([uId, u]) => `
-            <label for="cal_invite_${uId}" style="display:flex;align-items:center;gap:6px;padding:4px 8px;cursor:pointer;background:rgba(30,41,59,0.4);border-radius:6px;font-size:13px;">
+            <label for="cal_invite_${uId}" style="display:flex;align-items:center;gap:6px;padding:4px 8px;cursor:pointer;background:rgba(30,41,59,0.4);border-radius:6px;font-size:12px;">
                 <input type="checkbox" id="cal_invite_${uId}" class="cal-invited-user-cb" value="${escapeHtml(uId)}">
-                <span><b>${escapeHtml(u.vorname||'')} ${escapeHtml(u.nachname||'')}</b> <span style="color:var(--primary);font-size:11px;">(${escapeHtml(u.dn||'--')})</span></span>
+                <span><b>${escapeHtml(u.vorname||'')} ${escapeHtml(u.nachname||'')}</b> <span style="color:var(--primary);font-size:10px;">(${escapeHtml(u.dn||'--')})</span></span>
             </label>
         `).join('');
     }
@@ -2210,7 +2183,7 @@ function openCalendarEventDetailsModal(eventId) {
     if (isInvitedGuest) {
         rsvpSectionHtml = `
             <div style="background:rgba(56,189,248,0.08);border:1px solid var(--primary);border-radius:10px;padding:12px;margin-bottom:14px;">
-                <div style="font-weight:800;font-size:13px;color:var(--primary);margin-bottom:6px;">📨 Dein Einladungs-Status: <span style="color:var(--text-main);">${myCurrentStatus === 'accepted' ? '✅ Angenommen' : (myCurrentStatus === 'declined' ? '❌ Abgelehnt' : '⏳ Ausstehend')}</span></div>
+                <div style="font-weight:800;font-size:12px;color:var(--primary);margin-bottom:6px;">📨 Dein Einladungs-Status: <span style="color:var(--text-main);">${myCurrentStatus === 'accepted' ? '✅ Angenommen' : (myCurrentStatus === 'declined' ? '❌ Abgelehnt' : '⏳ Ausstehend')}</span></div>
                 <div style="display:flex;gap:10px;">
                     <button type="button" class="btn" style="width:auto;margin:0;padding:6px 14px;background:var(--success);color:#080c14;font-weight:800;font-size:12px;" onclick="respondToCalendarInvite('${eventId}', 'accepted')">✅ Zusagen / Annehmen</button>
                     <button type="button" class="btn" style="width:auto;margin:0;padding:6px 14px;background:rgba(244,63,94,0.2);color:var(--danger);border:1px solid var(--danger);font-weight:800;font-size:12px;" onclick="respondToCalendarInvite('${eventId}', 'declined')">❌ Absagen / Ablehnen</button>
@@ -2226,7 +2199,7 @@ function openCalendarEventDetailsModal(eventId) {
                 <span>📅 <b>Datum:</b> ${escapeHtml(ev.date)}</span>
                 <span>⏰ <b>Uhrzeit:</b> ${escapeHtml(ev.time)} Uhr</span>
             </div>
-            <div style="margin-top:6px;font-size:13px;color:var(--text-muted);">
+            <div style="margin-top:6px;font-size:12px;color:var(--text-muted);">
                 Ersteller / Bereich: <b style="color:${color};">${escapeHtml(ev.creatorDisplay || ev.creator || 'SAMD')}</b>
                 <br>Eingetragen von: <span style="color:var(--text-main);">${escapeHtml(ev.enteredBy || ev.creator || 'System')} (${escapeHtml(ev.enteredByDN || '--')})</span>
                 ${ev.seriesId ? `<br><span style="color:var(--primary);font-weight:700;">🔁 Teil einer Serientermin-Reihe</span>` : ''}
@@ -2234,15 +2207,15 @@ function openCalendarEventDetailsModal(eventId) {
         </div>
         <div style="margin-bottom:10px;">
             <label style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">Sichtbarkeit / Freigabe:</label>
-            <div style="font-size:14px;color:${ev.isPrivate ? 'var(--warning)' : 'var(--primary)'};font-weight:700;">${escapeHtml(targetRoleNames)}</div>
+            <div style="font-size:13px;color:${ev.isPrivate ? 'var(--warning)' : 'var(--primary)'};font-weight:700;">${escapeHtml(targetRoleNames)}</div>
         </div>
         <div style="margin-bottom:14px;">
             <label style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">Eingeladene Mitarbeiter & Status:</label>
-            <div style="font-size:13px;color:var(--text-main);line-height:1.6;">${invitedNames}</div>
+            <div style="font-size:12px;color:var(--text-main);line-height:1.6;">${invitedNames}</div>
         </div>
         <div>
             <label style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">Beschreibung / Notizen:</label>
-            <div style="background:rgba(8,12,20,0.6);border:1px solid var(--border);border-radius:8px;padding:12px;white-space:pre-wrap;color:var(--text-main);font-size:14px;min-height:60px;">${formatTextWithLinks(ev.desc || 'Keine weitere Beschreibung vorhanden.')}</div>
+            <div style="background:rgba(8,12,20,0.6);border:1px solid var(--border);border-radius:8px;padding:12px;white-space:pre-wrap;color:var(--text-main);font-size:13px;min-height:60px;">${formatTextWithLinks(ev.desc || 'Keine weitere Beschreibung vorhanden.')}</div>
         </div>
     `;
 
@@ -2356,7 +2329,7 @@ function editCalendarEventAction() {
         targetRolesContainer.innerHTML = sortedRoles.map(r => {
             const isChecked = hasAll || (ev.targetRoles && ev.targetRoles.includes(r.id));
             return `
-                <label for="edit_cal_role_${r.id}" style="display:flex;align-items:center;gap:6px;padding:4px 8px;cursor:pointer;background:rgba(30,41,59,0.4);border-radius:6px;font-size:13px;">
+                <label for="edit_cal_role_${r.id}" style="display:flex;align-items:center;gap:6px;padding:4px 8px;cursor:pointer;background:rgba(30,41,59,0.4);border-radius:6px;font-size:12px;">
                     <input type="checkbox" id="edit_cal_role_${r.id}" class="cal-target-role-cb" value="${escapeHtml(r.id)}" ${isChecked ? 'checked' : ''}>
                     <span style="color:${r.color||'#38bdf8'};font-weight:700;">${r.icon?r.icon+' ':''}${escapeHtml(r.name)}</span>
                 </label>
@@ -2370,9 +2343,9 @@ function editCalendarEventAction() {
         invitedUsersContainer.innerHTML = allUsers.filter(([uId]) => uId !== myId).map(([uId, u]) => {
             const isInv = (ev.invitedUsers && Array.isArray(ev.invitedUsers) && ev.invitedUsers.includes(uId));
             return `
-                <label for="edit_cal_invite_${uId}" style="display:flex;align-items:center;gap:6px;padding:4px 8px;cursor:pointer;background:rgba(30,41,59,0.4);border-radius:6px;font-size:13px;">
+                <label for="edit_cal_invite_${uId}" style="display:flex;align-items:center;gap:6px;padding:4px 8px;cursor:pointer;background:rgba(30,41,59,0.4);border-radius:6px;font-size:12px;">
                     <input type="checkbox" id="edit_cal_invite_${uId}" class="cal-invited-user-cb" value="${escapeHtml(uId)}" ${isInv ? 'checked' : ''}>
-                    <span><b>${escapeHtml(u.vorname||'')} ${escapeHtml(u.nachname||'')}</b> <span style="color:var(--primary);font-size:11px;">(${escapeHtml(u.dn||'--')})</span></span>
+                    <span><b>${escapeHtml(u.vorname||'')} ${escapeHtml(u.nachname||'')}</b> <span style="color:var(--primary);font-size:10px;">(${escapeHtml(u.dn||'--')})</span></span>
                 </label>
             `;
         }).join('');
@@ -2427,7 +2400,7 @@ function deleteCalendarEventAction() {
 }
 
 /* ══════════════════════════════════════════════════════════════
-   MITARBEITER-KARTEI & FOTO-WORKFLOW (FÜLLIGER & CA. 20% GRÖSSER)
+   MITARBEITER-KARTEI & FOTO-WORKFLOW
 ══════════════════════════════════════════════════════════════ */
 function parseDN(dnStr) {
     if (!dnStr) return 999999;
@@ -2571,7 +2544,7 @@ function previewStaffPhotoUpload(event) {
     const file = event.target.files && event.target.files[0];
     if (!file) return;
 
-    scaleImageProportionally(file, 360, 430, (scaledBase64) => {
+    scaleImageProportionally(file, 300, 360, (scaledBase64) => {
         _currentUploadedBase64 = scaledBase64;
         const prevImg = document.getElementById('staffPhotoPreviewImg');
         const prevCont = document.getElementById('staffPhotoPreviewContainer');
@@ -2630,14 +2603,14 @@ function renderStaffPhotoAdminList() {
 
     c.innerHTML = entries.map(([uId, p]) => `
         <div class="staff-admin-photo-card">
-            <div style="font-size:12px;color:var(--text-muted);margin-bottom:6px;">Eingereicht: ${escapeHtml(p.date || '--')}</div>
+            <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px;">Eingereicht: ${escapeHtml(p.date || '--')}</div>
             <img src="${p.rawPhoto}" 
                  alt="${escapeHtml(p.userName)}" 
                  class="staff-admin-photo-preview"
                  onerror="this.onerror=null; this.src='${DEFAULT_MD_LOGO_FALLBACK}';">
             <div style="margin-top:8px;text-align:center;">
-                <b style="font-size:15px;color:var(--text-main);">${escapeHtml(p.userName)}</b><br>
-                <span style="color:var(--primary);font-weight:700;font-size:13px;">DN: ${escapeHtml(p.userDN)}</span>
+                <b style="font-size:14px;color:var(--text-main);">${escapeHtml(p.userName)}</b><br>
+                <span style="color:var(--primary);font-weight:700;font-size:12px;">DN: ${escapeHtml(p.userDN)}</span>
             </div>
             <div style="display:flex;flex-direction:column;gap:6px;margin-top:12px;width:100%;">
                 <button type="button" class="btn" style="padding:6px;font-size:12px;background:var(--primary);color:#080c14;font-weight:800;margin:0;" onclick="downloadStaffOriginalPhoto('${uId}')">📥 Original herunterladen</button>
@@ -2645,7 +2618,7 @@ function renderStaffPhotoAdminList() {
                     🎨 Bearbeitetes Bild einsetzen
                     <input type="file" accept="image/*" style="display:none;" onchange="uploadProcessedStaffPhoto(event, '${uId}')">
                 </label>
-                <button type="button" class="btn-delete-row" style="font-size:12px;padding:5px;" onclick="deleteSubmittedRawPhoto('${uId}')">🗑️ Aus Ordner löschen</button>
+                <button type="button" class="btn-delete-row" style="font-size:11px;padding:4px;" onclick="deleteSubmittedRawPhoto('${uId}')">🗑️ Aus Ordner löschen</button>
             </div>
         </div>
     `).join('');
@@ -2669,7 +2642,7 @@ function uploadProcessedStaffPhoto(event, uId) {
         return;
     }
 
-    scaleImageProportionally(file, 360, 430, (scaledBase64) => {
+    scaleImageProportionally(file, 300, 360, (scaledBase64) => {
         db.ref('data/users/' + uId + '/photoUrl').set(scaledBase64).then(() => {
             logAdminAudit('Finales Dienstfoto hinterlegt', `Freigestelltes Bild für ${uId} von ${sessionUser.vorname} ${sessionUser.nachname} gespeichert.`);
             alert('✅ Finales Foto erfolgreich in die Mitarbeiter-Kartei eingesetzt!');
@@ -2680,15 +2653,9 @@ function uploadProcessedStaffPhoto(event, uId) {
 
 function deleteSubmittedRawPhoto(uId) {
     if (!canUserManageEmployeePhotos()) return;
-    const eff = sessionUser ? getUserEffectivePermissions(sessionUser) : {};
-    if (!eff.isMasterAdmin && !eff.delPhotos && !eff.isAdmin) {
-        alert('Keine Berechtigung zum Löschen aus dem Foto-Ordner!');
-        return;
-    }
-
     if (confirm('Dieses eingereichte Originalfoto aus dem Ordner entfernen?')) {
         db.ref('data/employeePhotos/' + uId).remove().then(() => {
-            logAdminAudit('Originalfoto aus Ordner entfernt', `Foto-Einreichung von ${uId} gelöscht durch ${sessionUser.vorname} ${sessionUser.nachname}.`);
+            logAdminAudit('Originalfoto aus Ordner entfernt', `Foto-Einreichung von ${uId} gelöscht.`);
         });
     }
 }
@@ -2921,7 +2888,7 @@ function _renderGuideKeineRechnung() {
     const t = document.getElementById('guideKeineRechnungBody'); if (!t) return;
     const data = cachedGuideData.keineRechnung || [];
     t.innerHTML = !data || !data.length ? '<tr><td colspan="2" style="text-align:center;color:var(--text-muted);padding:14px;">Keine Einträge</td></tr>'
-        : data.map(i => `<tr><td colspan="2"><b>${escapeHtml(i.name||'')}</b>${i.note?` <span style="color:var(--text-muted);font-size:12px;">${escapeHtml(i.note)}</span>`:''}<br><span style="color:var(--text-muted);font-size:13px;">${escapeHtml(i.desc||'')}</span></td></tr>`).join('');
+        : data.map(i => `<tr><td colspan="2"><b>${escapeHtml(i.name||'')}</b>${i.note?` <span style="color:var(--text-muted);font-size:11px;">${escapeHtml(i.note)}</span>`:''}<br><span style="color:var(--text-muted);font-size:12px;">${escapeHtml(i.desc||'')}</span></td></tr>`).join('');
 }
 
 function openGuideInlineModal() {
@@ -3071,9 +3038,9 @@ function renderCommandsTab(obj) {
         const cmds = validEntries.filter(([,c]) => (c.kat || 'Allgemein') === kat)
                                   .sort((a,b) => (a[1].name||'').localeCompare(b[1].name||'', 'de'));
         const rows = cmds.map(([k,c]) => `<tr>
-            <td style="width:30%;padding:12px 14px;"><span class="cmd-badge">${escapeHtml(c.name||'')}</span></td>
-            <td style="width:60%;padding:12px 14px;color:var(--text-main);font-size:14px;">${formatTextWithLinks(c.desc||c.description||'')}</td>
-            <td style="width:10%;padding:12px 14px;text-align:right;">${eff.delCommands ? `<button type="button" class="btn-delete-row" onclick="deleteDienstCommand('${k}')">🗑️</button>` : ''}</td>
+            <td style="width:30%;padding:10px 14px;"><span class="cmd-badge">${escapeHtml(c.name||'')}</span></td>
+            <td style="width:60%;padding:10px 14px;color:var(--text-main);font-size:13px;">${formatTextWithLinks(c.desc||c.description||'')}</td>
+            <td style="width:10%;padding:10px 14px;text-align:right;">${eff.delCommands ? `<button type="button" class="btn-delete-row" onclick="deleteDienstCommand('${k}')">🗑️</button>` : ''}</td>
         </tr>`).join('');
         const gId = 'cmd_' + kat.replace(/\W/g, '_');
         return `<div class="theme-accordion-group" id="${gId}" style="margin-bottom:12px;">
@@ -3212,9 +3179,9 @@ function renderLinksTab(obj) {
         if (!lnks.length) return '';
 
         const rows = lnks.map(([k, l]) => `<tr>
-            <td style="width:35%;padding:12px 14px;word-break:break-word;"><a class="link-btn-clickable" href="${sanitizeUrl(l.url)}" target="_blank" rel="noopener noreferrer">🔗 ${escapeHtml(l.name||l.url)}</a></td>
-            <td style="width:55%;padding:12px 14px;color:var(--text-main);font-size:14px;line-height:1.5;">${formatTextWithLinks(l.desc||l.description||'Keine Beschreibung')}</td>
-            <td style="width:10%;padding:12px 14px;text-align:right;">${eff.delLinks ? `<button type="button" class="btn-delete-row" onclick="deleteDienstLink('${k}')">🗑️</button>` : ''}</td>
+            <td style="width:35%;padding:10px 14px;word-break:break-word;"><a class="link-btn-clickable" href="${sanitizeUrl(l.url)}" target="_blank" rel="noopener noreferrer">🔗 ${escapeHtml(l.name||l.url)}</a></td>
+            <td style="width:55%;padding:10px 14px;color:var(--text-main);font-size:13px;line-height:1.5;">${formatTextWithLinks(l.desc||l.description||'Keine Beschreibung')}</td>
+            <td style="width:10%;padding:10px 14px;text-align:right;">${eff.delLinks ? `<button type="button" class="btn-delete-row" onclick="deleteDienstLink('${k}')">🗑️</button>` : ''}</td>
         </tr>`).join('');
         
         const gId = 'lnk_' + kat.replace(/\W/g, '_');
@@ -3421,7 +3388,7 @@ function renderChangelogModal() {
                     <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
                         <span class="changelog-version-tag">${escapeHtml(entry.version)}</span>
                         <span class="changelog-badge ${bClass}">${escapeHtml(entry.category)}</span>
-                        <b style="color:var(--text-main);font-size:15px;">${escapeHtml(entry.title)}</b>
+                        <b style="color:var(--text-main);font-size:14px;">${escapeHtml(entry.title)}</b>
                     </div>
                     <span class="changelog-date">📅 ${escapeHtml(entry.date)}</span>
                 </div>
@@ -3473,11 +3440,11 @@ function renderNewsFeedData(obj) {
                             ${pendingList.map(([k, n]) => `
                                 <div style="background:rgba(15,23,42,0.8);padding:12px;border-radius:10px;display:flex;justify-content:space-between;align-items:center;">
                                     <div>
-                                        <b>${escapeHtml(n.title)}</b> <span style="font-size:12px;color:var(--text-muted);">von ${escapeHtml(n.author)}</span>
-                                        <p style="margin:4px 0 0 0;font-size:13px;color:var(--text-main);">${escapeHtml(n.content)}</p>
+                                        <b>${escapeHtml(n.title)}</b> <span style="font-size:11px;color:var(--text-muted);">von ${escapeHtml(n.author)}</span>
+                                        <p style="margin:4px 0 0 0;font-size:12px;color:var(--text-main);">${escapeHtml(n.content)}</p>
                                     </div>
                                     <div style="display:flex;gap:6px;">
-                                        <button type="button" class="btn" style="width:auto;margin:0;padding:6px 12px;font-size:12px;background:var(--success);color:#080c14;font-weight:800;" onclick="approveNewsProposal('${k}')">✅ Freigeben</button>
+                                        <button type="button" class="btn" style="width:auto;margin:0;padding:6px 12px;font-size:11px;background:var(--success);color:#080c14;font-weight:800;" onclick="approveNewsProposal('${k}')">✅ Freigeben</button>
                                         <button type="button" class="btn-delete-row" onclick="deleteNews('${k}')">🗑️</button>
                                     </div>
                                 </div>
@@ -3511,20 +3478,20 @@ function renderNewsFeedData(obj) {
             <div class="news-feed-card" style="background:rgba(15,23,42,0.7);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:16px;">
                 <div style="padding:16px 20px;background:rgba(30,41,59,0.6);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
                     <div>
-                        <span style="font-weight:800;font-size:17px;color:var(--primary);">${escapeHtml(n.title)}</span>
-                        <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">
+                        <span style="font-weight:800;font-size:16px;color:var(--primary);">${escapeHtml(n.title)}</span>
+                        <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">
                             👤 <b>${escapeHtml(n.author||'Klinikleitung')}</b> • 🏷️ ${escapeHtml(n.category||'Allgemein')}
                             ${n.edited ? `<span style="color:var(--warning);margin-left:6px;">(Bearbeitet)</span>` : ''}
                         </div>
                     </div>
                     <div style="display:flex;gap:8px;align-items:center;">
-                        ${hasRead ? '<span style="color:var(--success);font-weight:800;font-size:12px;">✅ Gelesen</span>' : `<button type="button" class="btn" style="width:auto;margin:0;padding:5px 12px;font-size:12px;" onclick="markNewsAsRead('${k}')">👁️ Als gelesen markieren</button>`}
+                        ${hasRead ? '<span style="color:var(--success);font-weight:800;font-size:11px;">✅ Gelesen</span>' : `<button type="button" class="btn" style="width:auto;margin:0;padding:5px 12px;font-size:11px;" onclick="markNewsAsRead('${k}')">👁️ Als gelesen markieren</button>`}
                         ${canEditThisNews ? `<button type="button" class="btn-edit-row" onclick="openEditNewsModal('${k}')" title="Beitrag bearbeiten">✏️</button>` : ''}
-                        ${eff.canViewNewsRead ? `<button type="button" class="btn" style="width:auto;margin:0;padding:5px 10px;font-size:12px;background:rgba(56,189,248,0.15);color:var(--primary);border:1px solid var(--primary);" onclick="openNewsReadersModal('${k}')">👥 Gelesen (${readCount})</button>` : ''}
+                        ${eff.canViewNewsRead ? `<button type="button" class="btn" style="width:auto;margin:0;padding:5px 10px;font-size:11px;background:rgba(56,189,248,0.15);color:var(--primary);border:1px solid var(--primary);" onclick="openNewsReadersModal('${k}')">👥 Gelesen (${readCount})</button>` : ''}
                         ${(eff.delNews || isAuthor) ? `<button type="button" class="btn-delete-row" onclick="deleteNews('${k}')">🗑️</button>` : ''}
                     </div>
                 </div>
-                <div style="padding:20px;white-space:pre-wrap;font-size:14px;line-height:1.6;">${formatTextWithLinks(n.content)}</div>
+                <div style="padding:20px;white-space:pre-wrap;font-size:13px;line-height:1.6;">${formatTextWithLinks(n.content)}</div>
             </div>
         `;
     }).join('');
@@ -3606,20 +3573,15 @@ function speichereNeueNews() {
     if (!t || !c) { alert('Bitte Titel und Inhalt eingeben!'); return; }
 
     if (editId) {
-        const existing = cachedNews[editId] || {};
-        const isOwn = (existing.authorId && existing.authorId === myId) || (existing.author === `${sessionUser.vorname} ${sessionUser.nachname}`);
-        const auditRoleDesc = isOwn ? 'Eigener Beitrag bearbeitet' : 'Leitungs-Bearbeitung';
-
         db.ref('data/news/' + editId).update({
             title: t,
             content: c,
             category: cat,
             edited: true,
-            editedTs: Date.now(),
-            lastEditedBy: `${sessionUser.vorname} ${sessionUser.nachname}`
+            editedTs: Date.now()
         }).then(() => {
             togglePostNewsForm();
-            logAdminAudit(`News angepasst (${auditRoleDesc})`, `${sessionUser.vorname} ${sessionUser.nachname}: ${t}`);
+            logAdminAudit('News bearbeitet', `${sessionUser.vorname} ${sessionUser.nachname}: ${t}`);
             alert('✅ News-Beitrag erfolgreich aktualisiert!');
         });
         return;
@@ -3782,14 +3744,14 @@ function renderStudentUnlockedExams() {
 
         let badge = '', btnHtml = '';
         if (isPassed) {
-            badge = '<span style="color:var(--success);font-weight:800;font-size:12px;">✅ Bestanden</span>';
-            btnHtml = '<div style="font-size:12px;color:var(--text-muted);margin-top:6px;">Erfolgreich abgeschlossen.</div>';
+            badge = '<span style="color:var(--success);font-weight:800;font-size:11px;">✅ Bestanden</span>';
+            btnHtml = '<div style="font-size:11px;color:var(--text-muted);margin-top:6px;">Erfolgreich abgeschlossen.</div>';
         } else if (isU) {
-            badge = '<span style="color:var(--primary);font-weight:800;font-size:12px;">⚡ Freigeschaltet</span>';
-            btnHtml = `<button type="button" class="btn" style="margin-top:8px;padding:6px 12px;font-size:13px;background:var(--primary);color:#080c14;font-weight:800;" onclick="startExam('${eid}')">📝 Prüfung starten</button>`;
+            badge = '<span style="color:var(--primary);font-weight:800;font-size:11px;">⚡ Freigeschaltet</span>';
+            btnHtml = `<button type="button" class="btn" style="margin-top:8px;padding:6px 12px;font-size:12px;background:var(--primary);color:#080c14;font-weight:800;" onclick="startExam('${eid}')">📝 Prüfung starten</button>`;
         } else {
-            badge = '<span style="color:var(--danger);font-weight:800;font-size:12px;">🔒 Gesperrt</span>';
-            btnHtml = '<div style="font-size:12px;color:var(--danger);margin-top:6px;">Nicht freigeschaltet oder durchgefallen.</div>';
+            badge = '<span style="color:var(--danger);font-weight:800;font-size:11px;">🔒 Gesperrt</span>';
+            btnHtml = '<div style="font-size:11px;color:var(--danger);margin-top:6px;">Nicht freigeschaltet oder durchgefallen.</div>';
         }
 
         const questionCount = (ex.questions || []).filter(q => !q.isInfo).length;
@@ -3797,11 +3759,11 @@ function renderStudentUnlockedExams() {
         return `
             <div class="exam-card-compact ${isPassed ? 'completed' : (isU ? 'unlocked' : 'locked')}">
                 <div style="display:flex;justify-content:space-between;align-items:center;">
-                    <span style="font-size:11px;color:var(--primary);text-transform:uppercase;font-weight:800;">${escapeHtml(ex.kat||'Allgemein')}</span>
+                    <span style="font-size:10px;color:var(--primary);text-transform:uppercase;font-weight:800;">${escapeHtml(ex.kat||'Allgemein')}</span>
                     ${badge}
                 </div>
-                <h4 style="margin:4px 0;font-size:14px;color:var(--text-main);">${escapeHtml(ex.title)}</h4>
-                <div style="font-size:12px;color:var(--text-muted);">⏱️ ${ex.timeLimitMinutes||30} Min • ❓ ${questionCount} Fachfragen</div>
+                <h4 style="margin:4px 0;font-size:13px;color:var(--text-main);">${escapeHtml(ex.title)}</h4>
+                <div style="font-size:11px;color:var(--text-muted);">⏱️ ${ex.timeLimitMinutes||30} Min • ❓ ${questionCount} Fachfragen</div>
                 ${btnHtml}
             </div>
         `;
@@ -3839,12 +3801,12 @@ function renderInstructorUnlocks() {
 
                     return `
                         <div class="exam-unlock-box ${unlocked[eId] ? 'active' : ''}">
-                            <div style="font-weight:700;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(ex.title)}</div>
+                            <div style="font-weight:700;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(ex.title)}</div>
                             <div style="display:flex;gap:8px;align-items:center;margin-top:2px;">
-                                <label style="font-size:11px;color:var(--primary);cursor:pointer;">
+                                <label style="font-size:10px;color:var(--primary);cursor:pointer;">
                                     <input type="checkbox" ${unlocked[eId]?'checked':''} ${disabledAttr} onchange="toggleExamUnlockForUser('${uId}','${eId}',this.checked)"> Freigabe
                                 </label>
-                                <label style="font-size:11px;color:var(--success);cursor:pointer;">
+                                <label style="font-size:10px;color:var(--success);cursor:pointer;">
                                     <input type="checkbox" ${passedMap[eId]?'checked':''} ${disabledAttr} onchange="toggleExamPassedForUser('${uId}','${eId}',this.checked)"> Bestanden
                                 </label>
                             </div>
@@ -3858,10 +3820,10 @@ function renderInstructorUnlocks() {
             <tr class="user-unlock-row" data-name="${escapeHtml((u.vorname+' '+u.nachname+' '+u.dn).toLowerCase())}">
                 <td style="width:200px;vertical-align:top;padding:10px;">
                     <b>${escapeHtml(u.vorname||'')} ${escapeHtml(u.nachname||'')}</b><br>
-                    <span style="color:var(--primary);font-size:12px;">DN: ${escapeHtml(u.dn||'--')}</span>
+                    <span style="color:var(--primary);font-size:11px;">DN: ${escapeHtml(u.dn||'--')}</span>
                 </td>
-                <td style="width:100px;vertical-align:top;padding:10px;color:var(--text-muted);font-size:12px;">${escapeHtml(u.date||'--')}</td>
-                <td style="vertical-align:top;padding:10px;">${sortedExamIds.length > 0 ? examGridHtml : '<span style="color:var(--text-muted);font-size:13px;">Keine Prüfungen autorisiert.</span>'}</td>
+                <td style="width:90px;vertical-align:top;padding:10px;color:var(--text-muted);font-size:11px;">${escapeHtml(u.date||'--')}</td>
+                <td style="vertical-align:top;padding:10px;">${sortedExamIds.length > 0 ? examGridHtml : '<span style="color:var(--text-muted);font-size:12px;">Keine Prüfungen autorisiert.</span>'}</td>
             </tr>
         `;
     });
@@ -3932,14 +3894,14 @@ function renderInstructorSubmissions(subs) {
     t.innerHTML = !ee.length ? '<tr><td colspan="8" style="text-align:center;padding:24px;">Keine Prüfungsergebnisse gefunden.</td></tr>'
         : ee.map(([subId, sub]) => `
             <tr>
-                <td style="font-size:12px;color:var(--text-muted);">${escapeHtml(sub.datum||'--')}</td>
-                <td><b>${escapeHtml(sub.userName||'--')}</b> <span style="color:var(--primary);font-size:12px;">(${escapeHtml(sub.userDN||'--')})</span></td>
+                <td style="font-size:11px;color:var(--text-muted);">${escapeHtml(sub.datum||'--')}</td>
+                <td><b>${escapeHtml(sub.userName||'--')}</b> <span style="color:var(--primary);font-size:11px;">(${escapeHtml(sub.userDN||'--')})</span></td>
                 <td style="font-weight:700;color:var(--primary);">${escapeHtml(sub.examTitle||'--')}</td>
                 <td style="font-family:monospace;color:var(--warning);">${escapeHtml(sub.durationFormatted||'--')}</td>
                 <td><b>${sub.percentage||0}%</b></td>
                 <td><span style="color:${sub.passed?'var(--success)':'var(--danger)'};font-weight:800;">${sub.passed?'✅ Bestanden':'⛔ Nicht bestanden'}</span></td>
                 <td>
-                    ${isUserInstructor() ? `<button type="button" class="btn" style="width:auto;margin:0;padding:4px 10px;font-size:12px;" onclick="openExamSubmissionDetailsModal('${subId}')">👁️ Details</button>` : '--'}
+                    ${isUserInstructor() ? `<button type="button" class="btn" style="width:auto;margin:0;padding:4px 10px;font-size:11px;" onclick="openExamSubmissionDetailsModal('${subId}')">👁️ Details</button>` : '--'}
                 </td>
                 <td>${eff.delExams ? `<button type="button" class="btn-delete-row" onclick="deleteExamSubmission('${subId}')">🗑️</button>` : '--'}</td>
             </tr>
@@ -3988,7 +3950,7 @@ function openExamSubmissionDetailsModal(subId) {
                 return `
                     <div style="background:rgba(30,41,59,0.5);padding:12px;border-radius:8px;border-left:4px solid var(--primary);">
                         <div style="font-weight:800;font-size:12px;color:var(--primary);text-transform:uppercase;">📋 Stammdaten / Prüfungs-Angabe</div>
-                        <div style="font-weight:700;font-size:14px;color:var(--text-main);margin-top:2px;">${escapeHtml(qText)}</div>
+                        <div style="font-weight:700;font-size:13px;color:var(--text-main);margin-top:2px;">${escapeHtml(qText)}</div>
                         <div style="font-size:13px;margin-top:4px;color:var(--text-main);background:rgba(8,12,20,0.6);padding:6px 10px;border-radius:6px;">
                             ${escapeHtml(chosen)}
                         </div>
@@ -3999,8 +3961,8 @@ function openExamSubmissionDetailsModal(subId) {
             const isCorrect = !!ans.isCorrect;
             return `
                 <div style="background:rgba(15,23,42,0.7);padding:12px;border-radius:8px;border-left:4px solid ${isCorrect ? 'var(--success)' : 'var(--danger)'};">
-                    <div style="font-weight:700;font-size:14px;color:var(--text-main);">${escapeHtml(qText)}</div>
-                    <div style="font-size:13px;margin-top:4px;color:${isCorrect ? 'var(--success)' : 'var(--danger)'};font-weight:700;">
+                    <div style="font-weight:700;font-size:13px;color:var(--text-main);">${escapeHtml(qText)}</div>
+                    <div style="font-size:12px;margin-top:4px;color:${isCorrect ? 'var(--success)' : 'var(--danger)'};font-weight:700;">
                         Ausgewählt: <span style="color:var(--text-main);font-weight:normal;">${escapeHtml(chosen)}</span> ${isCorrect ? '✅ (Richtig)' : '❌ (Falsch)'}
                     </div>
                 </div>
@@ -4046,12 +4008,12 @@ function renderInstructorExistingExams() {
                 return `
                     <div style="background:rgba(15,23,42,0.8);border:1px solid var(--border);border-radius:12px;padding:12px;display:flex;flex-direction:column;justify-content:space-between;gap:8px;">
                         <div>
-                            <span style="font-size:11px;color:var(--primary);font-weight:800;text-transform:uppercase;">${escapeHtml(e.kat||'Allgemein')}</span>
+                            <span style="font-size:10px;color:var(--primary);font-weight:800;text-transform:uppercase;">${escapeHtml(e.kat||'Allgemein')}</span>
                             <h5 style="margin:4px 0 6px 0;font-size:14px;color:var(--text-main);">${escapeHtml(e.title)}</h5>
-                            <div style="font-size:12px;color:var(--text-muted);">⏱️ ${e.timeLimitMinutes||30} Min • ❓ ${qCount} Fachfragen (+3 Stammdaten) • 🎯 ${e.passPercentage||60}%</div>
+                            <div style="font-size:11px;color:var(--text-muted);">⏱️ ${e.timeLimitMinutes||30} Min • ❓ ${qCount} Fachfragen (+3 Stammdaten) • 🎯 ${e.passPercentage||60}%</div>
                         </div>
                         <div style="display:flex;gap:6px;justify-content:flex-end;border-top:1px solid rgba(255,255,255,0.06);padding-top:8px;">
-                            ${eff.canManageExams ? `<button type="button" class="btn" style="width:auto;margin:0;padding:4px 10px;font-size:12px;" onclick="editExam('${k}')">✏️ Bearbeiten</button>` : ''}
+                            ${eff.canManageExams ? `<button type="button" class="btn" style="width:auto;margin:0;padding:4px 10px;font-size:11px;" onclick="editExam('${k}')">✏️ Bearbeiten</button>` : ''}
                             ${eff.delExams ? `<button type="button" class="btn-delete-row" onclick="deleteExam('${k}')" title="Prüfung löschen">🗑️</button>` : ''}
                         </div>
                     </div>
@@ -4103,7 +4065,7 @@ function refreshExamQuestionsDisplay() {
             return `
                 <div style="background:rgba(30,41,59,0.5);border:1px solid var(--primary);border-radius:10px;padding:12px;">
                     <div style="font-weight:800;color:var(--primary);font-size:12px;">📋 Stammdaten-Pflichtfeld ${idx+1} (Fest vorgegeben)</div>
-                    <div style="font-size:14px;font-weight:700;margin-top:4px;">${escapeHtml(q.text)}</div>
+                    <div style="font-size:13px;font-weight:700;margin-top:4px;">${escapeHtml(q.text)}</div>
                 </div>
             `;
         }
@@ -4120,7 +4082,7 @@ function refreshExamQuestionsDisplay() {
             return `
                 <div style="display:flex;align-items:center;gap:6px;">
                     <input type="checkbox" id="chk_bld_${idx}_${oIdx}" ${isChecked ? 'checked' : ''} onchange="toggleBuilderCorrectAnswer(${idx}, ${oIdx}, this.checked)">
-                    <label for="chk_bld_${idx}_${oIdx}" style="margin:0;cursor:pointer;font-size:12px;color:var(--text-muted);">Richtig</label>
+                    <label for="chk_bld_${idx}_${oIdx}" style="margin:0;cursor:pointer;font-size:11px;color:var(--text-muted);">Richtig</label>
                     <input type="text" value="${escapeHtml(opt||'')}" oninput="_examBuilderQuestions[${idx}].options[${oIdx}]=this.value" placeholder="Antwort ${oIdx+1}" style="flex:1;">
                 </div>
             `;
@@ -4129,7 +4091,7 @@ function refreshExamQuestionsDisplay() {
         return `
             <div style="background:rgba(15,23,42,0.6);border:1px solid var(--border);border-radius:10px;padding:12px;">
                 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-                    <b>Fachfrage ${currentFachNumber} <span style="font-size:12px;color:var(--primary);">(Mehrfachauswahl aktiv)</span></b>
+                    <b>Fachfrage ${currentFachNumber} <span style="font-size:11px;color:var(--primary);">(Mehrfachauswahl aktiv)</span></b>
                     <button class="btn-delete-row" type="button" onclick="_examBuilderQuestions.splice(${idx},1);refreshExamQuestionsDisplay();">🗑️</button>
                 </div>
                 <input type="text" value="${escapeHtml(q.text||'')}" oninput="_examBuilderQuestions[${idx}].text=this.value" placeholder="Fragetext..." style="margin-bottom:8px;">
@@ -4260,10 +4222,10 @@ function renderInstructorAllowedExams() {
             <td style="text-align:right;padding:10px;">
                 <div style="display:flex;gap:6px;justify-content:flex-end;">
                     ${u.status !== 'approved'
-                        ? `<button type="button" class="btn" style="width:auto;margin:0;padding:5px 12px;font-size:12px;background:var(--success);color:#080c14;font-weight:800;" onclick="approveUser('${uId}')">✅ Freischalten</button>`
-                        : `<button type="button" class="btn" style="width:auto;margin:0;padding:5px 12px;font-size:12px;background:rgba(244,63,94,0.15);color:var(--danger);border:1px solid var(--danger);" onclick="revokeUser('${uId}')">⛔ Sperren</button>`
+                        ? `<button type="button" class="btn" style="width:auto;margin:0;padding:5px 12px;font-size:11px;background:var(--success);color:#080c14;font-weight:800;" onclick="approveUser('${uId}')">✅ Freischalten</button>`
+                        : `<button type="button" class="btn" style="width:auto;margin:0;padding:5px 12px;font-size:11px;background:rgba(244,63,94,0.15);color:var(--danger);border:1px solid var(--danger);" onclick="revokeUser('${uId}')">⛔ Sperren</button>`
                     }
-                    <button type="button" class="btn" style="width:auto;margin:0;padding:5px 12px;font-size:12px;" onclick="openAssignRolesModal('${uId}','${escapeHtml(u.vorname)} ${escapeHtml(u.nachname)}', true)">🎭 Rollen</button>
+                    <button type="button" class="btn" style="width:auto;margin:0;padding:5px 12px;font-size:11px;" onclick="openAssignRolesModal('${uId}','${escapeHtml(u.vorname)} ${escapeHtml(u.nachname)}', true)">🎭 Rollen</button>
                 </div>
             </td>
         </tr>
@@ -4297,7 +4259,7 @@ function startExam(eid) {
             fachIndex++;
             return `
                 <div class="exam-q-box">
-                    <p style="font-weight:800;margin:0 0 8px 0;">❓ Frage ${fachIndex}: ${escapeHtml(q.text)} <span style="font-size:12px;color:var(--warning);font-weight:normal;float:right;">(Mehrfachauswahl möglich)</span></p>
+                    <p style="font-weight:800;margin:0 0 8px 0;">❓ Frage ${fachIndex}: ${escapeHtml(q.text)} <span style="font-size:11px;color:var(--warning);font-weight:normal;float:right;">(Mehrfachauswahl möglich)</span></p>
                     ${(q.options || []).map((opt, oIdx) => `
                         <label class="exam-opt-label">
                             <input type="checkbox" name="q_${idx}" value="${oIdx}">
@@ -4442,17 +4404,17 @@ function renderAdminUserTable(obj) {
             </td>
             <td>
                 ${renderUserRoleBadges(u)}<br>
-                <span style="color:${u.status==='approved'?'var(--success)':'var(--danger)'};font-weight:700;font-size:12px;">${u.status==='approved'?'✅ Aktiv':'⛔ Gesperrt'}</span>
+                <span style="color:${u.status==='approved'?'var(--success)':'var(--danger)'};font-weight:700;font-size:11px;">${u.status==='approved'?'✅ Aktiv':'⛔ Gesperrt'}</span>
             </td>
-            <td style="color:var(--text-muted);font-size:12px;">${escapeHtml(u.date||'--')}</td>
+            <td style="color:var(--text-muted);font-size:11px;">${escapeHtml(u.date||'--')}</td>
             <td style="text-align:right;">
                 <div style="display:flex;gap:6px;justify-content:flex-end;">
                     ${u.status !== 'approved'
-                        ? `<button type="button" class="btn" style="width:auto;margin:0;padding:4px 10px;font-size:12px;background:var(--success);color:#080c14;font-weight:800;" onclick="approveUser('${uId}')">✅ Freischalten</button>`
-                        : `<button type="button" class="btn" style="width:auto;margin:0;padding:4px 10px;font-size:12px;background:rgba(244,63,94,0.15);color:var(--danger);border:1px solid var(--danger);" onclick="revokeUser('${uId}')">⛔ Sperren</button>`
+                        ? `<button type="button" class="btn" style="width:auto;margin:0;padding:4px 10px;font-size:11px;background:var(--success);color:#080c14;font-weight:800;" onclick="approveUser('${uId}')">✅ Freischalten</button>`
+                        : `<button type="button" class="btn" style="width:auto;margin:0;padding:4px 10px;font-size:11px;background:rgba(244,63,94,0.15);color:var(--danger);border:1px solid var(--danger);" onclick="revokeUser('${uId}')">⛔ Sperren</button>`
                     }
-                    <button type="button" class="btn" style="width:auto;margin:0;padding:4px 10px;font-size:12px;" onclick="openAssignRolesModal('${uId}','${escapeHtml(u.vorname)} ${escapeHtml(u.nachname)}', false)">🎭 Rollen</button>
-                    <button type="button" class="btn" style="width:auto;margin:0;padding:4px 10px;font-size:12px;background:rgba(168,85,247,0.15);color:#a855f7;border:1px solid #a855f7;" onclick="openUserPermissionsModal('${uId}')">✏️ Edit</button>
+                    <button type="button" class="btn" style="width:auto;margin:0;padding:4px 10px;font-size:11px;" onclick="openAssignRolesModal('${uId}','${escapeHtml(u.vorname)} ${escapeHtml(u.nachname)}', false)">🎭 Rollen</button>
+                    <button type="button" class="btn" style="width:auto;margin:0;padding:4px 10px;font-size:11px;background:rgba(168,85,247,0.15);color:#a855f7;border:1px solid #a855f7;" onclick="openUserPermissionsModal('${uId}')">✏️ Edit</button>
                     ${eff.delUsers ? `<button type="button" class="btn-delete-row" onclick="deleteUserAccount('${uId}')" title="Mitarbeiter löschen">🗑️</button>` : ''}
                 </div>
             </td>
@@ -4545,7 +4507,7 @@ function openAssignRolesModal(uId, name, isRestrictedByLeitung = false) {
             <label for="assignRoleInput_${r.id}" style="display:flex;align-items:center;gap:10px;padding:8px;cursor:pointer;background:rgba(30,41,59,0.3);border-radius:8px;">
                 <input type="checkbox" ${isChecked ? 'checked' : ''} ${isSelfMasterProtection ? 'disabled checked title="Selbstausschluss-Schutz: Du kannst dir als Master-Admin deine eigene Rolle nicht entziehen."' : ''} id="assignRoleInput_${r.id}">
                 <b style="color:${r.color||'#38bdf8'};">${r.icon||''} ${escapeHtml(r.name)}</b>
-                ${isSelfMasterProtection ? '<span style="font-size:11px;color:var(--warning);margin-left:auto;">🔒 Geschützt</span>' : ''}
+                ${isSelfMasterProtection ? '<span style="font-size:10px;color:var(--warning);margin-left:auto;">🔒 Geschützt</span>' : ''}
             </label>
         `;
     }).join('');
@@ -4620,7 +4582,7 @@ function renderAdminRolesList() {
     sb.innerHTML = sortedRoles.map(r => `
         <div style="display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:10px;border:1px solid ${r.color||'#38bdf8'}33;background:${r.color||'#38bdf8'}0d;cursor:pointer;" onclick="selectRole('${r.id}')">
             <span>${r.icon||'🎭'}</span>
-            <b style="color:${r.color||'#38bdf8'};font-size:14px;">${escapeHtml(r.name)}</b>
+            <b style="color:${r.color||'#38bdf8'};font-size:13px;">${escapeHtml(r.name)}</b>
         </div>
     `).join('');
 }
@@ -4632,11 +4594,11 @@ function renderRoleCategoryCheckboxes(containerId, allItems, selectedList = []) 
     const safeSelected = normalizeKats(selectedList);
 
     if (!kats.length) {
-        cont.innerHTML = '<span style="color:var(--text-muted);font-size:13px;">Keine Kategorien vorhanden.</span>';
+        cont.innerHTML = '<span style="color:var(--text-muted);font-size:12px;">Keine Kategorien vorhanden.</span>';
         return;
     }
     cont.innerHTML = kats.map((k, idx) => `
-        <label for="${containerId}_item_${idx}" style="display:inline-flex;align-items:center;gap:6px;background:rgba(30,41,59,0.5);padding:4px 10px;border-radius:6px;font-size:13px;cursor:pointer;">
+        <label for="${containerId}_item_${idx}" style="display:inline-flex;align-items:center;gap:6px;background:rgba(30,41,59,0.5);padding:4px 10px;border-radius:6px;font-size:12px;cursor:pointer;">
             <input type="checkbox" id="${containerId}_item_${idx}" class="cat-checkbox-item ${containerId}_check" value="${escapeHtml(k)}" ${safeSelected.includes(k) ? 'checked' : ''}>
             <span>${escapeHtml(k)}</span>
         </label>
@@ -4863,7 +4825,7 @@ function renderAdminAuditLogsData(logsObj) {
     const entries = Object.entries(logsObj).sort((a,b) => (b[1].ts||0) - (a[1].ts||0));
     tbody.innerHTML = !entries.length ? '<tr><td colspan="4" style="text-align:center;">Keine Protokolle für den heutigen Tag.</td></tr>'
         : entries.map(([, l]) => `<tr>
-            <td style="font-size:12px;">⏰ ${l.ts ? new Date(l.ts).toLocaleTimeString('de-DE') : '-'}</td>
+            <td style="font-size:11px;">⏰ ${l.ts ? new Date(l.ts).toLocaleTimeString('de-DE') : '-'}</td>
             <td><b>${escapeHtml(l.admin||'System')}</b></td>
             <td><span style="color:var(--primary);font-weight:700;">${escapeHtml(l.action||'-')}</span></td>
             <td>${escapeHtml(l.details||'-')}</td>
@@ -4910,8 +4872,10 @@ function openAuditLogArchiveModal() {
 function closeAuditArchiveModal() { document.getElementById('auditArchiveModal').style.display = 'none'; }
 
 /* ══════════════════════════════════════════════════════════════
-   WÜNSCHE & BUGS: MELDESYSTEM, PRÜFCENTER & INLINE-ABLEHNUNG
+   WÜNSCHE & BUGS: MELDESYSTEM & INTERNE VERWALTUNG
 ══════════════════════════════════════════════════════════════ */
+let activeRejectFeedbackId = null;
+
 function openFeedbackSubmitModal() {
     if (!sessionUser) return;
     const modal = document.getElementById('feedbackSubmitModal');
@@ -4962,86 +4926,6 @@ function submitUserFeedback() {
     });
 }
 
-function renderFeedbackRowsHtml(list, targetPrefix) {
-    const eff = sessionUser ? getUserEffectivePermissions(sessionUser) : {};
-    const canDelete = eff.isAdmin || eff.isMasterAdmin || eff.delFeedback || (sessionUser && sessionUser.isMasterAdmin);
-
-    const badgeClassMap = {
-        'Neu': 'badge-status-neu',
-        'In Prüfung': 'badge-status-pruefung',
-        'Angenommen': 'badge-status-angenommen',
-        'In Umsetzung': 'badge-status-umsetzung',
-        'Erledigt': 'badge-status-erledigt',
-        'Abgelehnt': 'badge-status-abgelehnt'
-    };
-
-    return list.map(item => {
-        const bClass = badgeClassMap[item.status] || 'badge-status-neu';
-        let rejectNoteHtml = '';
-        if (item.status === 'Abgelehnt' && item.rejectionReason) {
-            rejectNoteHtml = `
-                <div style="background:rgba(244,63,94,0.1);border-left:3px solid var(--danger);padding:6px 10px;border-radius:6px;margin-top:6px;font-size:12px;color:#fecdd3;">
-                    <b>Begründung der Ablehnung:</b> ${escapeHtml(item.rejectionReason)}<br>
-                    <span style="color:var(--text-muted);font-size:11px;">Entschieden von ${escapeHtml(item.rejectedBy || 'Leitung')} am ${escapeHtml(item.rejectedDate || '--')}</span>
-                </div>
-            `;
-        }
-
-        const inlineRejectBoxHtml = `
-            <div id="${targetPrefix}_rejectBox_${item.id}" class="feedback-inline-reject-box" style="display:none;">
-                <div style="display:flex;justify-content:space-between;align-items:center;">
-                    <b style="color:var(--danger);font-size:12px;">❌ Ablehnung begründen:</b>
-                    <button type="button" class="btn-close" style="width:24px;height:24px;font-size:12px;" onclick="closeInlineRejectBox('${targetPrefix}', '${item.id}')">✖</button>
-                </div>
-                <select id="${targetPrefix}_preset_${item.id}" onchange="applyInlinePreset('${targetPrefix}', '${item.id}', this.value)" style="font-size:12px;padding:4px 8px;">
-                    <option value="">-- Schnellbegründung wählen (optional) --</option>
-                    <option value="Für den aktuellen Arbeitsablauf nicht sinnvoll.">Für den aktuellen Arbeitsablauf nicht sinnvoll.</option>
-                    <option value="Die gewünschte Funktion existiert bereits.">Die gewünschte Funktion existiert bereits.</option>
-                    <option value="Technisch nicht sinnvoll umsetzbar.">Technisch nicht sinnvoll umsetzbar.</option>
-                    <option value="Passt nicht zum Konzept der Homepage.">Passt nicht zum Konzept der Homepage.</option>
-                    <option value="Zu hoher Aufwand im Verhältnis zum Nutzen.">Zu hoher Aufwand im Verhältnis zum Nutzen.</option>
-                    <option value="Wird aktuell nicht benötigt.">Wird aktuell nicht benötigt.</option>
-                </select>
-                <textarea id="${targetPrefix}_reason_${item.id}" rows="2" placeholder="Verbindliche Begründung der Ablehnung..." style="font-size:13px;"></textarea>
-                <div style="display:flex;gap:6px;justify-content:flex-end;">
-                    <button type="button" class="btn" style="width:auto;margin:0;padding:4px 10px;font-size:12px;background:var(--text-muted);" onclick="closeInlineRejectBox('${targetPrefix}', '${item.id}')">Abbrechen</button>
-                    <button type="button" class="btn" style="width:auto;margin:0;padding:4px 14px;font-size:12px;background:var(--danger);color:#fff;font-weight:800;" onclick="saveInlineRejection('${targetPrefix}', '${item.id}')">Speichern & Ablehnen</button>
-                </div>
-            </div>
-        `;
-
-        return `
-            <tr>
-                <td style="font-size:13px;color:var(--text-muted);white-space:nowrap;">${escapeHtml(item.date || '--')}</td>
-                <td><b>${escapeHtml(item.author || '--')}</b> <span style="color:var(--primary);font-size:12px;">(DN: ${escapeHtml(item.authorDN || '--')})</span></td>
-                <td><span class="feedback-category-badge">${escapeHtml(item.category || 'Wunsch')}</span></td>
-                <td>
-                    <b>${escapeHtml(item.title || '--')}</b>
-                    <div style="font-size:13px;color:var(--text-muted);margin-top:4px;white-space:pre-wrap;">${formatTextWithLinks(item.description || '')}</div>
-                    ${rejectNoteHtml}
-                    ${inlineRejectBoxHtml}
-                </td>
-                <td>
-                    <span class="feedback-status-badge ${bClass}">${escapeHtml(item.status || 'Neu')}</span>
-                </td>
-                <td>
-                    <select id="${targetPrefix}_selStatus_${item.id}" onchange="handleFeedbackStatusSelect('${targetPrefix}', '${item.id}', this.value)" style="padding:6px 8px;font-size:13px;width:auto;margin:0;">
-                        <option value="Neu" ${item.status === 'Neu' ? 'selected' : ''}>Neu</option>
-                        <option value="In Prüfung" ${item.status === 'In Prüfung' ? 'selected' : ''}>In Prüfung</option>
-                        <option value="Angenommen" ${item.status === 'Angenommen' ? 'selected' : ''}>Angenommen</option>
-                        <option value="In Umsetzung" ${item.status === 'In Umsetzung' ? 'selected' : ''}>In Umsetzung</option>
-                        <option value="Erledigt" ${item.status === 'Erledigt' ? 'selected' : ''}>Erledigt</option>
-                        <option value="Abgelehnt" ${item.status === 'Abgelehnt' ? 'selected' : ''}>❌ Ablehnen</option>
-                    </select>
-                </td>
-                <td style="text-align:right;">
-                    ${canDelete ? `<button type="button" class="btn-delete-row" onclick="deleteFeedbackEntry('${item.id}')" title="Meldung endgültig löschen">🗑️</button>` : '--'}
-                </td>
-            </tr>
-        `;
-    }).join('');
-}
-
 function renderAdminFeedbackTable() {
     const tbody = document.getElementById('adminFeedbackTableBody');
     if (!tbody) return;
@@ -5055,8 +4939,14 @@ function renderAdminFeedbackTable() {
 
     let list = Object.values(cachedFeedback || {}).sort((a, b) => (b.ts || 0) - (a.ts || 0));
 
-    if (filterCat !== 'all') list = list.filter(item => item.category === filterCat);
-    if (filterStatus !== 'all') list = list.filter(item => item.status === filterStatus);
+    if (filterCat !== 'all') {
+        list = list.filter(item => item.category === filterCat);
+    }
+
+    if (filterStatus !== 'all') {
+        list = list.filter(item => item.status === filterStatus);
+    }
+
     if (q) {
         list = list.filter(item => {
             const t = (item.title || '').toLowerCase();
@@ -5067,64 +4957,72 @@ function renderAdminFeedbackTable() {
         });
     }
 
-    if (!list.length) {
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--text-muted);">Keine Wünsche oder Fehlermeldungen vorhanden.</td></tr>';
-        return;
-    }
-
-    tbody.innerHTML = renderFeedbackRowsHtml(list, 'adminFb');
-}
-
-function renderDirectFeedbackTable() {
-    const tbody = document.getElementById('directFeedbackTableBody');
-    if (!tbody) return;
-
-    const eff = sessionUser ? getUserEffectivePermissions(sessionUser) : {};
-    if (!eff.isAdmin && !eff.isMasterAdmin) return;
-
-    const q = (document.getElementById('searchDirectFeedbackInput')?.value || '').trim().toLowerCase();
-    const filterCat = document.getElementById('filterDirectFeedbackCategory')?.value || 'all';
-    const filterStatus = document.getElementById('filterDirectFeedbackStatus')?.value || 'all';
-
-    let list = Object.values(cachedFeedback || {}).sort((a, b) => (b.ts || 0) - (a.ts || 0));
-
-    if (filterCat !== 'all') list = list.filter(item => item.category === filterCat);
-    if (filterStatus !== 'all') list = list.filter(item => item.status === filterStatus);
-    if (q) {
-        list = list.filter(item => {
-            const t = (item.title || '').toLowerCase();
-            const d = (item.description || '').toLowerCase();
-            const a = (item.author || '').toLowerCase();
-            const dn = (item.authorDN || '').toLowerCase();
-            return t.includes(q) || d.includes(q) || a.includes(q) || dn.includes(q);
-        });
-    }
+    const badgeClassMap = {
+        'Neu': 'badge-status-neu',
+        'In Prüfung': 'badge-status-pruefung',
+        'Angenommen': 'badge-status-angenommen',
+        'In Umsetzung': 'badge-status-umsetzung',
+        'Erledigt': 'badge-status-erledigt',
+        'Abgelehnt': 'badge-status-abgelehnt'
+    };
 
     if (!list.length) {
         tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--text-muted);">Keine Wünsche oder Fehlermeldungen vorhanden.</td></tr>';
         return;
     }
 
-    tbody.innerHTML = renderFeedbackRowsHtml(list, 'directFb');
+    tbody.innerHTML = list.map(item => {
+        const bClass = badgeClassMap[item.status] || 'badge-status-neu';
+        let rejectNoteHtml = '';
+        if (item.status === 'Abgelehnt' && item.rejectionReason) {
+            rejectNoteHtml = `
+                <div style="background:rgba(244,63,94,0.1);border-left:3px solid var(--danger);padding:6px 10px;border-radius:6px;margin-top:6px;font-size:11px;color:#fecdd3;">
+                    <b>Begründung der Ablehnung:</b> ${escapeHtml(item.rejectionReason)}<br>
+                    <span style="color:var(--text-muted);font-size:10px;">Entschieden von ${escapeHtml(item.rejectedBy || 'Leitung')} am ${escapeHtml(item.rejectedDate || '--')}</span>
+                </div>
+            `;
+        }
+
+        return `
+            <tr>
+                <td style="font-size:11px;color:var(--text-muted);">${escapeHtml(item.date || '--')}</td>
+                <td><b>${escapeHtml(item.author || '--')}</b> <span style="color:var(--primary);font-size:11px;">(DN: ${escapeHtml(item.authorDN || '--')})</span></td>
+                <td><span class="feedback-category-badge">${escapeHtml(item.category || 'Wunsch')}</span></td>
+                <td>
+                    <b>${escapeHtml(item.title || '--')}</b>
+                    <div style="font-size:12px;color:var(--text-muted);margin-top:4px;white-space:pre-wrap;">${formatTextWithLinks(item.description || '')}</div>
+                    ${rejectNoteHtml}
+                </td>
+                <td>
+                    <span class="feedback-status-badge ${bClass}">${escapeHtml(item.status || 'Neu')}</span>
+                </td>
+                <td>
+                    <select onchange="handleFeedbackStatusChange('${item.id}', this.value)" style="padding:4px 8px;font-size:11px;width:auto;margin:0;">
+                        <option value="Neu" ${item.status === 'Neu' ? 'selected' : ''}>Neu</option>
+                        <option value="In Prüfung" ${item.status === 'In Prüfung' ? 'selected' : ''}>In Prüfung</option>
+                        <option value="Angenommen" ${item.status === 'Angenommen' ? 'selected' : ''}>Angenommen</option>
+                        <option value="In Umsetzung" ${item.status === 'In Umsetzung' ? 'selected' : ''}>In Umsetzung</option>
+                        <option value="Erledigt" ${item.status === 'Erledigt' ? 'selected' : ''}>Erledigt</option>
+                        <option value="Abgelehnt" ${item.status === 'Abgelehnt' ? 'selected' : ''}>❌ Ablehnen</option>
+                    </select>
+                </td>
+                <td style="text-align:right;">
+                    ${eff.isMasterAdmin ? `<button type="button" class="btn-delete-row" onclick="deleteFeedbackEntry('${item.id}')" title="Eintrag endgültig löschen">🗑️</button>` : '--'}
+                </td>
+            </tr>
+        `;
+    }).join('');
 }
 
-function handleFeedbackStatusSelect(prefix, fbId, newStatus) {
+function handleFeedbackStatusChange(fbId, newStatus) {
     if (!sessionUser) return;
     const eff = getUserEffectivePermissions(sessionUser);
     if (!eff.isAdmin && !eff.isMasterAdmin) return;
 
-    const rejectBox = document.getElementById(`${prefix}_rejectBox_${fbId}`);
-
     if (newStatus === 'Abgelehnt') {
-        if (rejectBox) {
-            rejectBox.style.display = 'flex';
-            const reasonInput = document.getElementById(`${prefix}_reason_${fbId}`);
-            if (reasonInput) reasonInput.focus();
-        }
+        openFeedbackRejectModal(fbId);
         return;
     }
-
-    if (rejectBox) rejectBox.style.display = 'none';
 
     db.ref('data/feedback/' + fbId).update({
         status: newStatus,
@@ -5135,66 +5033,60 @@ function handleFeedbackStatusSelect(prefix, fbId, newStatus) {
     });
 }
 
-function applyInlinePreset(prefix, fbId, val) {
-    const reasonInp = document.getElementById(`${prefix}_reason_${fbId}`);
-    if (reasonInp && val) {
-        reasonInp.value = val;
+function openFeedbackRejectModal(fbId) {
+    activeRejectFeedbackId = fbId;
+    const modal = document.getElementById('feedbackRejectModal');
+    if (!modal) return;
+    document.getElementById('rejectReasonPreset').value = '';
+    document.getElementById('rejectReasonCustom').value = '';
+    modal.style.display = 'flex';
+}
+
+function closeFeedbackRejectModal() {
+    const modal = document.getElementById('feedbackRejectModal');
+    if (modal) modal.style.display = 'none';
+    activeRejectFeedbackId = null;
+    renderAdminFeedbackTable();
+}
+
+function applyRejectPresetReason() {
+    const preset = document.getElementById('rejectReasonPreset')?.value;
+    const custom = document.getElementById('rejectReasonCustom');
+    if (preset && custom) {
+        custom.value = preset;
     }
 }
 
-function closeInlineRejectBox(prefix, fbId) {
-    const rejectBox = document.getElementById(`${prefix}_rejectBox_${fbId}`);
-    if (rejectBox) rejectBox.style.display = 'none';
-    const sel = document.getElementById(`${prefix}_selStatus_${fbId}`);
-    if (sel && cachedFeedback[fbId]) {
-        sel.value = cachedFeedback[fbId].status || 'Neu';
-    }
-}
+function saveFeedbackRejection() {
+    if (!activeRejectFeedbackId || !sessionUser) return;
+    const customReason = document.getElementById('rejectReasonCustom')?.value.trim();
 
-function saveInlineRejection(prefix, fbId) {
-    if (!fbId || !sessionUser) return;
-    const reasonInp = document.getElementById(`${prefix}_reason_${fbId}`);
-    const reasonText = (reasonInp?.value || '').trim();
-
-    if (!reasonText) {
+    if (!customReason) {
         alert('⚠️ Begründungspflicht: Eine Ablehnung darf nicht ohne sachliche Erklärung gespeichert werden!');
         return;
     }
 
     const todayFormatted = new Date().toLocaleDateString('de-DE');
 
-    db.ref('data/feedback/' + fbId).update({
+    db.ref('data/feedback/' + activeRejectFeedbackId).update({
         status: 'Abgelehnt',
-        rejectionReason: reasonText,
+        rejectionReason: customReason,
         rejectedBy: `${sessionUser.vorname} ${sessionUser.nachname}`,
         rejectedDate: todayFormatted,
         rejectedTs: Date.now()
     }).then(() => {
-        logAdminAudit('Meldung abgelehnt', `${sessionUser.vorname} ${sessionUser.nachname} lehnte Meldung ${fbId} ab. Begründung: ${reasonText}`);
-        closeInlineRejectBox(prefix, fbId);
+        logAdminAudit('Meldung abgelehnt', `${sessionUser.vorname} ${sessionUser.nachname} lehnte Meldung ${activeRejectFeedbackId} ab. Begründung: ${customReason}`);
+        closeFeedbackRejectModal();
         alert('✅ Meldung wurde als abgelehnt markiert und die Begründung revisionssicher hinterlegt.');
     });
 }
 
 function deleteFeedbackEntry(fbId) {
-    if (!sessionUser) return;
-    const eff = getUserEffectivePermissions(sessionUser);
-    const isMaster = !!sessionUser.isMasterAdmin || eff.isMasterAdmin || eff.isAdmin;
-
-    if (!isMaster && !eff.delFeedback) {
-        alert('Keine Berechtigung zum Löschen von Meldungen!');
-        return;
-    }
-
-    const item = cachedFeedback[fbId];
-    const itemTitle = item ? (item.title || fbId) : fbId;
-
-    if (confirm(`Möchtest du diese Meldung ("${itemTitle}") wirklich dauerhaft aus der Datenbank entfernen?`)) {
+    if (!sessionUser || !getUserEffectivePermissions(sessionUser).isMasterAdmin) return;
+    if (confirm('Möchtest du diese Meldung wirklich dauerhaft aus der Datenbank entfernen?')) {
         db.ref('data/feedback/' + fbId).remove().then(() => {
-            logAdminAudit('Feedback gelöscht', `Eintrag "${itemTitle}" (${fbId}) gelöscht durch ${sessionUser.vorname} ${sessionUser.nachname}`);
-            alert('✅ Eintrag erfolgreich gelöscht!');
-        }).catch(err => {
-            alert('Fehler beim Löschen: ' + err.message);
+            logAdminAudit('Feedback gelöscht', `Eintrag ${fbId} gelöscht durch ${sessionUser.vorname} ${sessionUser.nachname}`);
+            alert('✅ Eintrag gelöscht!');
         });
     }
 }
@@ -5235,7 +5127,6 @@ function switchTab(tabId, btn) {
     if (tabId === 'calendarTab') renderCalendarMonth();
     if (tabId === 'staffTab') renderStaffDirectory();
     if (tabId === 'miscTab') renderGehaltTab(cachedGehaltData);
-    if (tabId === 'feedbackDirectTab') renderDirectFeedbackTable();
 }
 function settingsTabClick() { switchTab('settingsTab', document.getElementById('adminMainTabHeader')); }
 function switchInstructorTab(tabId, btnEl) {
@@ -5289,7 +5180,7 @@ _w.openSzenarienInlineModal = openSzenarienInlineModal; _w.closeSzenarienInlineM
 _w.openGuideInlineModal = openGuideInlineModal; _w.closeGuideInlineModal = closeGuideInlineModal; _w.addGuideRow = addGuideRow; _w.removeGuideRow = removeGuideRow; _w.saveGuideInline = saveGuideInline; _w.addKeineRechnungRow = addKeineRechnungRow; _w.removeKeineRechnungRow = removeKeineRechnungRow;
 _w.openCommandsInlineModal = openCommandsInlineModal; _w.closeCommandsInlineModal = closeCommandsInlineModal; _w.addCommandInline = addCommandInline;
 _w.openLinksInlineModal = openLinksInlineModal; _w.closeLinksInlineModal = closeLinksInlineModal; _w.addLinkInline = addLinkInline;
-_w.togglePostNewsForm = togglePostNewsForm; _w.speichereNeueNews = speichereNeueNews; _w.deleteNews = deleteNews;
+_w.renderNewsFeed = () => renderNewsFeedData(cachedNews); _w.togglePostNewsForm = togglePostNewsForm; _w.speichereNeueNews = speichereNeueNews; _w.deleteNews = deleteNews;
 _w.toggleProposeNewsForm = toggleProposeNewsForm; _w.submitNewsProposal = submitNewsProposal; _w.approveNewsProposal = approveNewsProposal;
 _w.markNewsAsRead = markNewsAsRead; _w.openNewsReadersModal = openNewsReadersModal; _w.closeNewsReadersModal = closeNewsReadersModal;
 _w.openEditNewsModal = openEditNewsModal;
@@ -5346,10 +5237,10 @@ _w.openFeedbackSubmitModal = openFeedbackSubmitModal;
 _w.closeFeedbackSubmitModal = closeFeedbackSubmitModal;
 _w.submitUserFeedback = submitUserFeedback;
 _w.renderAdminFeedbackTable = renderAdminFeedbackTable;
-_w.renderDirectFeedbackTable = renderDirectFeedbackTable;
-_w.handleFeedbackStatusSelect = handleFeedbackStatusSelect;
-_w.applyInlinePreset = applyInlinePreset;
-_w.closeInlineRejectBox = closeInlineRejectBox;
-_w.saveInlineRejection = saveInlineRejection;
+_w.handleFeedbackStatusChange = handleFeedbackStatusChange;
+_w.openFeedbackRejectModal = openFeedbackRejectModal;
+_w.closeFeedbackRejectModal = closeFeedbackRejectModal;
+_w.applyRejectPresetReason = applyRejectPresetReason;
+_w.saveFeedbackRejection = saveFeedbackRejection;
 _w.deleteFeedbackEntry = deleteFeedbackEntry;
 _w.exportFeedbackListMarkdown = exportFeedbackListMarkdown;

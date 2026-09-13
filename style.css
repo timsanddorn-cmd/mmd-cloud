@@ -1,5 +1,5 @@
 ﻿/* ============================================================
-   MMD CLOUD – Medical Center Web-App  |  style.css  v6.2.0
+   MMD CLOUD – Medical Center Web-App  |  style.css  v6.1.0
    ============================================================ */
 
 :root {
@@ -311,7 +311,7 @@ body {
     margin-bottom: 4px;
 }
 
-/* WÜNSCHE & BUGS BADGES & INLINE-ABLEHNUNG */
+/* WÜNSCHE & BUGS BADGES */
 .feedback-category-badge {
     display: inline-block;
     padding: 3px 8px;
@@ -337,17 +337,6 @@ body {
 .badge-status-umsetzung { background: rgba(168, 85, 247, 0.15); color: #c084fc; border: 1px solid #a855f7; }
 .badge-status-erledigt { background: rgba(16, 185, 129, 0.25); color: #34d399; border: 1px solid #059669; }
 .badge-status-abgelehnt { background: rgba(244, 63, 94, 0.15); color: var(--danger); border: 1px solid var(--danger); }
-
-.feedback-inline-reject-box {
-    background: rgba(244, 63, 94, 0.08);
-    border: 1px solid rgba(244, 63, 94, 0.35);
-    border-radius: 8px;
-    padding: 10px 12px;
-    margin-top: 8px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
 
 /* SUB TABS */
 .admin-subtabs { display: flex; gap: 10px; margin-bottom: 22px; flex-wrap: wrap; border-bottom: 1px solid var(--border); padding-bottom: 16px; }
@@ -582,7 +571,7 @@ body {
     }
 }
 
-/* MITARBEITER-KARTEI (FOTO CA. 20% GRÖSSER & FÜLLIGER) */
+/* MITARBEITER-KARTEI */
 .staff-header-toolbar {
     display: flex;
     justify-content: space-between;
@@ -648,8 +637,8 @@ body {
 
 .staff-photo-wrapper {
     width: 100%;
-    height: 265px;
-    min-height: 265px;
+    height: 220px;
+    min-height: 220px;
     background: radial-gradient(circle at center, rgba(30, 41, 59, 0.7), rgba(8, 12, 20, 0.95));
     overflow: hidden;
     position: relative;
@@ -669,11 +658,11 @@ body {
 }
 
 .staff-portrait-img.is-logo {
-    width: 78%;
-    height: 78%;
+    width: 65%;
+    height: 65%;
     object-fit: contain;
     object-position: center;
-    filter: drop-shadow(0 0 14px rgba(56, 189, 248, 0.3));
+    filter: drop-shadow(0 0 12px rgba(56, 189, 248, 0.25));
 }
 .staff-card:hover .staff-portrait-img {
     transform: scale(1.03);
@@ -783,7 +772,7 @@ body {
 
 .staff-admin-photo-preview {
     width: 100%;
-    height: 220px;
+    height: 200px;
     object-fit: contain;
     background: #080c14;
     border-radius: 8px;
@@ -924,15 +913,15 @@ body {
 .guide-right-stack { display: flex; flex-direction: column; gap: 18px; }
 
 .guide-table { width: 100%; border-collapse: collapse; background: rgba(8, 12, 20, 0.2); border-radius: 12px; overflow: hidden; border: 1px solid var(--border); }
-.guide-table th.red-head { background: linear-gradient(135deg, #1e293b, #0f172a); color: var(--primary); font-size: 15px; font-weight: 800; text-align: center; padding: 12px; text-transform: uppercase; border-bottom: 1px solid var(--border); }
-.guide-table th.sub-head { background-color: rgba(30, 41, 59, 0.6); color: var(--text-main); font-weight: 700; border-bottom: 1px solid var(--border); padding: 11px 14px; font-size: 14px; }
-.guide-table td { padding: 12px 14px; border-bottom: 1px solid var(--border); font-size: 14px; }
+.guide-table th.red-head { background: linear-gradient(135deg, #1e293b, #0f172a); color: var(--primary); font-size: 14px; font-weight: 800; text-align: center; padding: 12px; text-transform: uppercase; border-bottom: 1px solid var(--border); }
+.guide-table th.sub-head { background-color: rgba(30, 41, 59, 0.6); color: var(--text-main); font-weight: 700; border-bottom: 1px solid var(--border); padding: 10px 12px; font-size: 13px; }
+.guide-table td { padding: 10px 14px; border-bottom: 1px solid var(--border); font-size: 13px; }
 
-.link-btn-clickable { display: inline-block; background: rgba(56, 189, 248, 0.08); color: var(--primary); padding: 8px 14px; border-radius: 8px; border: 1px solid rgba(56, 189, 248, 0.2); font-weight: 700; font-size: 14px; text-decoration: none; transition: all 0.2s; }
+.link-btn-clickable { display: inline-block; background: rgba(56, 189, 248, 0.08); color: var(--primary); padding: 8px 14px; border-radius: 8px; border: 1px solid rgba(56, 189, 248, 0.2); font-weight: 700; font-size: 13px; text-decoration: none; transition: all 0.2s; }
 .link-btn-clickable:hover { background: var(--primary); color: #080c14; }
 
 .theme-accordion-group { margin-bottom: 12px; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; background: rgba(8, 12, 20, 0.3); }
-.theme-accordion-header { background: rgba(30, 41, 59, 0.6); padding: 14px 18px; font-size: 15px; font-weight: 700; color: var(--warning); display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none; }
+.theme-accordion-header { background: rgba(30, 41, 59, 0.6); padding: 14px 18px; font-size: 14px; font-weight: 700; color: var(--warning); display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none; }
 .theme-accordion-header::after { content: '▼'; font-size: 11px; color: var(--text-muted); }
 .theme-accordion-group.collapsed .theme-accordion-header::after { transform: rotate(-90deg); color: var(--primary); }
 .theme-accordion-content { display: block; padding: 0; }
@@ -984,33 +973,12 @@ input[type="checkbox"] { margin-right: 10px; transform: scale(1.2); cursor: poin
 .btn-export { background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.3); color: var(--primary); padding: 7px 14px; border-radius: 8px; font-size: 13px; cursor: pointer; font-weight: 700; margin-left: auto; user-select: none; transition: all 0.2s; }
 .btn-export:hover { background: var(--primary); color: #080c14; }
 
-/* REIHEN-AKTIONEN: EDITIEREN & LÖSCHEN */
-.btn-edit-row {
-    background: rgba(56, 189, 248, 0.1);
-    border: 1px solid rgba(56, 189, 248, 0.25);
-    font-size: 15px;
-    cursor: pointer;
-    padding: 5px 8px;
-    border-radius: 6px;
-    user-select: none;
-    transition: all 0.2s ease;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    line-height: 1;
-    color: var(--primary);
-}
-.btn-edit-row:hover {
-    background: rgba(56, 189, 248, 0.25);
-    transform: scale(1.1);
-}
-
 .btn-delete-row {
-    background: rgba(244, 63, 94, 0.1);
-    border: 1px solid rgba(244, 63, 94, 0.25);
+    background: transparent;
+    border: none;
     font-size: 15px;
     cursor: pointer;
-    padding: 5px 8px;
+    padding: 4px 6px;
     border-radius: 6px;
     user-select: none;
     transition: all 0.2s ease;
@@ -1018,24 +986,11 @@ input[type="checkbox"] { margin-right: 10px; transform: scale(1.2); cursor: poin
     align-items: center;
     justify-content: center;
     line-height: 1;
-    color: var(--danger);
-}
-.btn-delete-row:hover {
-    background: rgba(244, 63, 94, 0.25);
-    transform: scale(1.1);
 }
 
-/* ARCHIV-LISTEN STYLING */
-.archiv-details-list {
-    margin: 0;
-    padding-left: 16px;
-    color: var(--text-muted);
-    font-size: 13px;
-    list-style-type: square;
-    line-height: 1.6;
-}
-.archiv-details-list li {
-    margin-bottom: 2px;
+.btn-delete-row:hover {
+    background: rgba(244, 63, 94, 0.18);
+    transform: scale(1.1);
 }
 
 .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 14px; }
@@ -1043,28 +998,9 @@ input[type="checkbox"] { margin-right: 10px; transform: scale(1.2); cursor: poin
 .stat-card h5 { margin: 0 0 6px 0; font-size: 12px; color: var(--text-muted); text-transform: uppercase; user-select: none; }
 .stat-card span { display: block; font-size: 22px; font-weight: 800; color: var(--primary); }
 
-/* TABELLEN (SCHRIFTGRÖSSE ALLGEMEIN AUF 15px ANGEHOBEN) */
 table { width: 100%; border-collapse: collapse; }
-th, td { 
-    padding: 12px 14px; 
-    text-align: left; 
-    font-size: 15px; 
-    border-bottom: 1px solid var(--border); 
-    vertical-align: middle;
-}
-th { 
-    background-color: rgba(255, 255, 255, 0.03); 
-    color: var(--text-main); 
-    font-weight: 700; 
-    font-size: 15px; 
-    user-select: none; 
-}
-table input[type="text"], 
-table input[type="number"], 
-table select {
-    font-size: 14px;
-    padding: 7px 10px;
-}
+th, td { padding: 11px 14px; text-align: left; font-size: 13px; border-bottom: 1px solid var(--border); }
+th { background-color: rgba(255, 255, 255, 0.03); color: var(--text-main); font-weight: 700; font-size: 13px; user-select: none; }
 
 .material-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .text-center { text-align: center; }
@@ -1124,5 +1060,5 @@ table select {
     margin-top: 10px; 
     text-transform: uppercase; 
     letter-spacing: 0.3px; 
-    user-select: none; 
+    user-select: none;
 }
