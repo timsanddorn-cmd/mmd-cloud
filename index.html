@@ -1512,6 +1512,23 @@
                     <button type="button" id="btnRunFirebaseAuthMigration" class="btn" style="width:auto; padding:10px 20px; background:var(--warning); color:#080c14; font-weight:800;" onclick="runFirebaseAuthMigration()">🔐 Sicherheitsmigration starten</button>
                 </div>
 
+                <div id="passwordChangeStatusPanel" style="background:rgba(34,197,94,0.05); padding:20px; border-radius:16px; border:1px solid rgba(34,197,94,0.25); margin-bottom:20px; display:none;">
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:14px; flex-wrap:wrap;">
+                        <div>
+                            <h3 style="margin:0 0 8px 0; color:var(--success);">🔐 Passwort-Umstellungsstatus</h3>
+                            <p style="color:var(--text-muted); font-size:12px; margin:0; line-height:1.55;">
+                                Zeigt live, welche Mitarbeiter ihre persönliche Passwortänderung bereits abgeschlossen haben und bei wem sie noch offen ist.
+                            </p>
+                        </div>
+                        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                            <button type="button" id="btnCopyAllPasswordReminders" class="btn" style="width:auto; padding:9px 14px; background:rgba(234,179,8,0.12); color:var(--warning); border:1px solid rgba(234,179,8,0.35);" onclick="copyAllOpenPasswordReminders()">📋 Offene Erinnerungen kopieren</button>
+                            <button type="button" class="btn" style="width:auto; padding:9px 14px; background:rgba(56,189,248,0.12); color:var(--primary); border:1px solid rgba(56,189,248,0.3);" onclick="renderPasswordChangeStatusPanel()">🔄 Aktualisieren</button>
+                        </div>
+                    </div>
+                    <div id="passwordChangeStatusSummary" style="margin:16px 0 12px 0;"></div>
+                    <div id="passwordChangeStatusList"></div>
+                </div>
+
                 <div style="background:rgba(56, 189, 248, 0.05); padding:20px; border-radius:16px; border:1px solid rgba(56, 189, 248, 0.25); margin-bottom:20px;">
                     <h3 style="margin:0 0 10px 0; color:var(--primary);">💾 Cloud-Backup & Wiederherstellung</h3>
                     <p style="color:var(--text-muted); font-size:12px; margin-top:0;">Lade eine vollständige Sicherung aller Systemdaten als JSON herunter oder spiele ein früheres Backup ein.</p>
@@ -1625,6 +1642,6 @@
         </div>
     </div>
 
-    <script src="app.js?v=6.3.0-transition2"></script>
+    <script src="app.js?v=6.3.0-passwordstatus1"></script>
 </body>
 </html>

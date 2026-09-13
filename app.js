@@ -278,7 +278,8 @@ const systemChangelogs = [
             "Wünsche & Bugs neu geordnet: Meldungen werden jetzt in einem eigenen Bereich eingereicht; berechtigte Rollen erhalten dort einen zusätzlichen Verwaltungsreiter. Der doppelte Admin-Prüfcenter-Bereich wurde entfernt.",
             "Alte Wunsch-/Bug-Einträge repariert: Auch unvollständige Alt-Einträge ohne gespeicherte interne ID können wieder eindeutig erkannt und gelöscht werden.",
             "Mitarbeiterdaten flexibel: Dienstnummer, Vorname und Nachname können bei Beförderung, Heirat oder Namensänderung angepasst werden, ohne dass Rollen, Prüfungen, Fotos, News-Lesebestätigungen oder das Konto ihre feste Zuordnung verlieren.",
-            "Neue Systemrolle Chief-Ebene: Die Rolle übernimmt den vollständigen Funktionsumfang der Admin-Rolle, bleibt aber unterhalb des Master-Admins."
+            "Neue Systemrolle Chief-Ebene: Die Rolle übernimmt den vollständigen Funktionsumfang der Admin-Rolle, bleibt aber unterhalb des Master-Admins.",
+            "Passwort-Umstellungsstatus ergänzt: Der Master-Admin sieht live, welche Mitarbeiter ihre persönliche Passwortänderung bereits abgeschlossen haben, kann offene Erinnerungen kopieren und wird informiert, sobald alle Konten abgeschlossen sind."
         ]
     },
     {
@@ -1677,6 +1678,7 @@ function startFirebaseListeners() {
         }
         renderExamTab();
         renderAdminUserTable(cachedUsers);
+        renderPasswordChangeStatusPanel();
         renderCalendarMonth();
         renderStaffDirectory();
     });
@@ -5313,6 +5315,7 @@ async function verifyAdminKeyPassword() {
         renderAdminUserTable(cachedUsers);
         renderAdminRolesList();
         refreshFirebaseAuthMigrationPanel();
+        renderPasswordChangeStatusPanel();
     } catch (err) {
         console.error('Admin-Verifizierung fehlgeschlagen:', err);
         if (['auth/wrong-password', 'auth/invalid-credential', 'auth/invalid-login-credentials'].includes(err?.code)) {
@@ -5458,6 +5461,7 @@ async function resetFirebaseAuthForUser(uId, newPassword) {
     updates[`data/users/${uId}/loginKey`] = loginKey;
     updates[`data/users/${uId}/authUid`] = ctx.user.uid;
     updates[`data/users/${uId}/authVersion`] = nextVersion;
+    updates[`data/users/${uId}/mustChangePassword`] = true;
     updates[`data/users/${uId}/pass`] = null;
     updates[`data/users/${uId}/passwordHash`] = null;
     updates[`data/users/${uId}/passwordSalt`] = null;
@@ -5479,6 +5483,178 @@ async function resetFirebaseAuthForUser(uId, newPassword) {
         await closeSecondaryAuthAccount(ctx);
         throw err;
     }
+}
+
+
+const PASSWORD_ROLLOUT_NOTIFY_KEY = 'mmd_password_rollout_complete_notified_v1';
+
+function getPasswordRolloutEntries() {
+    return Object.entries(cachedUsers || {})
+        .filter(([, u]) => u && typeof u === 'object')
+        .map(([uId, u]) => ({
+            uId,
+            user: u,
+            pending: u.mustChangePassword === true,
+            mapped: !!u.authUid
+        }))
+        .sort((a, b) => {
+            const an = `${a.user.nachname || ''} ${a.user.vorname || ''}`.trim();
+            const bn = `${b.user.nachname || ''} ${b.user.vorname || ''}`.trim();
+            return an.localeCompare(bn, 'de');
+        });
+}
+
+function buildPasswordReminderText(user) {
+    const firstName = (user?.vorname || '').trim();
+    const greetingName = firstName || 'du';
+    return `Hallo ${greetingName}, bitte melde dich einmal in der MMD Cloud mit deinem aktuell gültigen Passwort an. Beim Login wirst du automatisch aufgefordert, ein neues persönliches Passwort festzulegen. Bitte führe diese Passwortänderung zeitnah durch. Danke!`;
+}
+
+async function copyPlainText(text) {
+    const value = String(text || '');
+    if (!value) return false;
+    try {
+        if (navigator.clipboard?.writeText) {
+            await navigator.clipboard.writeText(value);
+            return true;
+        }
+    } catch (_) {}
+
+    try {
+        const ta = document.createElement('textarea');
+        ta.value = value;
+        ta.setAttribute('readonly', '');
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        const ok = document.execCommand('copy');
+        ta.remove();
+        return ok;
+    } catch (_) {
+        return false;
+    }
+}
+
+async function copyPasswordReminderForUser(uId) {
+    const target = cachedUsers?.[uId];
+    if (!target) {
+        alert('Mitarbeiterkonto wurde nicht gefunden.');
+        return;
+    }
+    const ok = await copyPlainText(buildPasswordReminderText(target));
+    alert(ok ? `✅ Erinnerung für ${target.vorname || ''} ${target.nachname || ''} wurde kopiert.`.trim() : 'Die Erinnerung konnte nicht automatisch kopiert werden.');
+}
+
+async function copyAllOpenPasswordReminders() {
+    const pending = getPasswordRolloutEntries().filter(e => e.pending && e.mapped);
+    if (!pending.length) {
+        alert('✅ Aktuell gibt es keine offenen Passwortänderungen.');
+        return;
+    }
+    const text = pending.map(({ user }) => {
+        const name = `${user.vorname || ''} ${user.nachname || ''}`.trim() || 'Mitarbeiter';
+        return `${name}\n${buildPasswordReminderText(user)}`;
+    }).join('\n\n--------------------\n\n');
+    const ok = await copyPlainText(text);
+    alert(ok ? `✅ ${pending.length} Erinnerung(en) wurden in die Zwischenablage kopiert.` : 'Die Erinnerungen konnten nicht automatisch kopiert werden.');
+}
+
+function maybeNotifyPasswordRolloutComplete(entries) {
+    if (!sessionUser) return;
+    const eff = getUserEffectivePermissions(sessionUser);
+    if (!eff.isMasterAdmin) return;
+
+    const pending = entries.filter(e => e.pending || !e.mapped);
+    if (pending.length > 0) {
+        localStorage.removeItem(PASSWORD_ROLLOUT_NOTIFY_KEY);
+        return;
+    }
+
+    const trackedAccountsExist = entries.some(e => typeof e.user.mustChangePassword === 'boolean');
+    if (!trackedAccountsExist || entries.length === 0) return;
+    if (localStorage.getItem(PASSWORD_ROLLOUT_NOTIFY_KEY) === 'done') return;
+
+    localStorage.setItem(PASSWORD_ROLLOUT_NOTIFY_KEY, 'done');
+    setTimeout(() => {
+        alert('✅ Passwort-Umstellung abgeschlossen!\n\nAlle Mitarbeiterkonten sind jetzt ohne offene Passwortänderung.');
+    }, 150);
+}
+
+function renderPasswordChangeStatusPanel() {
+    const panel = document.getElementById('passwordChangeStatusPanel');
+    const summary = document.getElementById('passwordChangeStatusSummary');
+    const list = document.getElementById('passwordChangeStatusList');
+    const copyAllBtn = document.getElementById('btnCopyAllPasswordReminders');
+    if (!panel) return;
+
+    const eff = sessionUser ? getUserEffectivePermissions(sessionUser) : {};
+    if (!sessionUser || !eff.isMasterAdmin) {
+        panel.style.display = 'none';
+        return;
+    }
+
+    panel.style.display = 'block';
+    const entries = getPasswordRolloutEntries();
+    const pending = entries.filter(e => e.pending && e.mapped);
+    const problems = entries.filter(e => !e.mapped);
+    const done = entries.filter(e => e.mapped && !e.pending);
+    const total = entries.length;
+    const completed = done.length;
+    const pct = total ? Math.round((completed / total) * 100) : 100;
+
+    if (summary) {
+        const openCount = pending.length + problems.length;
+        summary.innerHTML = `
+            <div style="display:flex; justify-content:space-between; gap:12px; align-items:center; flex-wrap:wrap; margin-bottom:8px;">
+                <div style="font-size:13px; color:var(--text-main);"><b>${completed} von ${total}</b> Konten abgeschlossen · <b style="color:${openCount ? 'var(--warning)' : 'var(--success)'};">${openCount} offen</b></div>
+                <div style="font-size:12px; color:var(--text-muted);">Stand: ${new Date().toLocaleString('de-DE')}</div>
+            </div>
+            <div style="height:10px; background:rgba(148,163,184,0.14); border-radius:999px; overflow:hidden; border:1px solid rgba(148,163,184,0.18);">
+                <div style="height:100%; width:${Math.max(0, Math.min(100, pct))}%; background:var(--success); transition:width .2s ease;"></div>
+            </div>`;
+    }
+
+    if (copyAllBtn) copyAllBtn.style.display = pending.length ? 'inline-flex' : 'none';
+
+    if (list) {
+        if (!entries.length) {
+            list.innerHTML = '<div style="font-size:12px; color:var(--text-muted); padding:10px 0;">Keine Mitarbeiterkonten gefunden.</div>';
+        } else {
+            const rows = entries.map(({ uId, user, pending: isPending, mapped }) => {
+                const name = `${user.vorname || ''} ${user.nachname || ''}`.trim() || uId;
+                const dn = user.dn ? `DN ${escapeHtml(user.dn)}` : 'keine DN';
+                let statusHtml = '<span style="color:var(--success); font-weight:800;">✅ Abgeschlossen</span>';
+                let actionHtml = '<span style="color:var(--text-muted); font-size:11px;">—</span>';
+                if (!mapped) {
+                    statusHtml = '<span style="color:var(--danger); font-weight:800;">⚠️ Konto prüfen</span>';
+                } else if (isPending) {
+                    statusHtml = '<span style="color:var(--warning); font-weight:800;">⏳ Passwortänderung offen</span>';
+                    actionHtml = `<button type="button" class="btn password-reminder-copy-btn" data-user-id="${escapeHtml(uId)}" style="width:auto; margin:0; padding:7px 10px; font-size:11px; background:rgba(234,179,8,0.12); color:var(--warning); border:1px solid rgba(234,179,8,0.35);">📋 Erinnerung kopieren</button>`;
+                }
+                return `<tr>
+                    <td style="font-weight:800;">${escapeHtml(name)}</td>
+                    <td style="color:var(--text-muted);">${dn}</td>
+                    <td>${statusHtml}</td>
+                    <td style="text-align:right;">${actionHtml}</td>
+                </tr>`;
+            }).join('');
+
+            list.innerHTML = `
+                <div class="table-responsive" style="margin-top:10px;">
+                    <table>
+                        <thead><tr><th>Mitarbeiter</th><th>Dienstnummer</th><th>Passwortstatus</th><th style="text-align:right;">Aktion</th></tr></thead>
+                        <tbody>${rows}</tbody>
+                    </table>
+                </div>`;
+
+            list.querySelectorAll('.password-reminder-copy-btn').forEach(btn => {
+                btn.addEventListener('click', () => copyPasswordReminderForUser(btn.dataset.userId));
+            });
+        }
+    }
+
+    maybeNotifyPasswordRolloutComplete(entries);
 }
 
 async function refreshFirebaseAuthMigrationPanel() {
@@ -6852,6 +7028,7 @@ _w.speichereHierarchieDaten = saveHierarchieInline;
 _w.approveUser = approveUser; _w.revokeUser = revokeUser; _w.deleteUserAccount = deleteUserAccount; _w.filterAdminUserTable = filterAdminUserTable;
 _w.openAssignRolesModal = openAssignRolesModal; _w.closeAssignRolesModal = closeAssignRolesModal; _w.saveAssignedRoles = saveAssignedRoles;
 _w.openUserPermissionsModal = openUserPermissionsModal; _w.closeUserPermissionsModal = closeUserPermissionsModal; _w.saveUserPermissions = saveUserPermissions; _w.runFirebaseAuthMigration = runFirebaseAuthMigration;
+_w.renderPasswordChangeStatusPanel = renderPasswordChangeStatusPanel; _w.copyAllOpenPasswordReminders = copyAllOpenPasswordReminders; _w.copyPasswordReminderForUser = copyPasswordReminderForUser;
 _w.neueRolleErstellen = neueRolleErstellen; _w.selectRole = selectRole; _w.updateRoleBadgePreview = updateRoleBadgePreview; _w.speichereRolle = speichereRolle; _w.loescheRolle = loescheRolle;
 _w.vollstaendigerReset = vollstaendigerReset; _w.renderAdminAuditLogs = renderAdminAuditLogs;
 _w.openAuditLogArchiveModal = openAuditLogArchiveModal; _w.closeAuditLogArchiveModal = closeAuditArchiveModal;
