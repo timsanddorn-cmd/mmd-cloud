@@ -11,7 +11,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
-    <link rel="stylesheet" href="style.css?v=6.4.2">
+    <link rel="stylesheet" href="style.css?v=6.5.0">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏥</text></svg>">
 </head>
 <body>
@@ -140,6 +140,7 @@
                 📰 News <span id="newsUnreadBadge" class="unread-news-badge" style="display:none;">0</span>
             </button>
             <button type="button" class="tab-btn" onclick="switchTab('miscTab', this)">💰 Gehaltstabelle</button>
+            <button type="button" class="tab-btn" id="chiefTabNavBtn" style="display:none;" onclick="switchTab('chiefTab', this)">⭐ Chief-Ebene</button>
             <button type="button" class="tab-btn" id="adminMainTabHeader" onclick="settingsTabClick()">⚙️ Einstellungen</button>
         </div>
 
@@ -789,6 +790,82 @@
             </div>
         </div>
 
+        <!-- REITER: CHIEF-EBENE / MATERIALVERWALTUNG -->
+        <div id="chiefTab" class="tab-content">
+            <div class="content-header-bar" style="margin-bottom:18px;">
+                <div>
+                    <h2 style="margin:0 0 4px 0;color:var(--warning);">⭐ Chief-Ebene – Materialverwaltung</h2>
+                    <p style="margin:0;color:var(--text-muted);font-size:13px;">Zentrale Bestandsübersicht nach der bisherigen SAMD-Materialliste – mit automatischer Verbrauchsberechnung, Farbstatus und Historie.</p>
+                </div>
+            </div>
+
+            <div id="chiefMaterialsNoAccess" class="section" style="display:none;">
+                <h3>🔒 Kein Zugriff</h3>
+                <p style="color:var(--text-muted);margin-bottom:0;">Für diesen Bereich ist die entsprechende Rollenberechtigung erforderlich.</p>
+            </div>
+
+            <div id="chiefMaterialsContent" style="display:none;">
+                <div class="chief-material-layout">
+                    <div class="section chief-material-entry-card">
+                        <div class="chief-section-head">
+                            <div>
+                                <h3 style="margin:0;">📦 Neue Bestandsaufnahme</h3>
+                                <p style="margin:4px 0 0;color:var(--text-muted);font-size:12px;">Bestände eintragen – der Verbrauch wird automatisch aus dem jeweiligen Maximalbestand berechnet.</p>
+                            </div>
+                        </div>
+                        <div class="chief-meta-grid">
+                            <div>
+                                <label for="chiefMaterialDate">Stichtag</label>
+                                <input type="date" id="chiefMaterialDate">
+                            </div>
+                            <div class="chief-refill-box">
+                                <label class="chief-check-label" for="chiefMaterialRefilled"><input type="checkbox" id="chiefMaterialRefilled" onchange="handleChiefRefilledToggle()"> ✅ Aufgefüllt</label>
+                                <input type="date" id="chiefMaterialRefilledAt" style="display:none;" aria-label="Aufgefüllt am">
+                            </div>
+                        </div>
+                        <div id="chiefMaterialInputGrid" class="chief-material-grid"></div>
+                        <div class="chief-legend">
+                            <span class="chief-legend-item chief-level-surplus">Überschuss</span>
+                            <span class="chief-legend-item chief-level-green">0–199 verbraucht</span>
+                            <span class="chief-legend-item chief-level-yellow">200–399 verbraucht</span>
+                            <span class="chief-legend-item chief-level-orange">400–599 verbraucht</span>
+                            <span class="chief-legend-item chief-level-red">ab 600 verbraucht</span>
+                        </div>
+                        <div style="display:flex;justify-content:flex-end;margin-top:16px;">
+                            <button type="button" id="btnSaveChiefMaterialEntry" class="btn" style="width:auto;background:var(--success);color:#080c14;font-weight:800;" onclick="saveChiefMaterialEntry()">💾 Bestandsaufnahme speichern</button>
+                        </div>
+                    </div>
+
+                    <div class="section chief-material-config-card">
+                        <div class="chief-section-head">
+                            <div>
+                                <h3 style="margin:0;">⚙️ Maximalbestände</h3>
+                                <p style="margin:4px 0 0;color:var(--text-muted);font-size:12px;">Die Werte werden für neue Berechnungen verwendet. Frühere Einträge behalten ihren damaligen Berechnungsstand.</p>
+                            </div>
+                        </div>
+                        <div id="chiefMaterialConfigGrid" class="chief-config-grid"></div>
+                        <button type="button" id="btnSaveChiefMaterialConfig" class="btn" style="width:100%;margin-top:12px;background:rgba(56,189,248,0.15);color:var(--primary);border:1px solid var(--primary);font-weight:800;" onclick="saveChiefMaterialConfig()">💾 Maximalbestände speichern</button>
+                    </div>
+                </div>
+
+                <div class="section" style="margin-top:18px;">
+                    <div class="chief-section-head">
+                        <div>
+                            <h3 style="margin:0;">📋 Bestands-Historie</h3>
+                            <p style="margin:4px 0 0;color:var(--text-muted);font-size:12px;">Gespeicherte Aufnahmen mit Bestand, automatisch berechnetem Verbrauch und Auffüllstatus.</p>
+                        </div>
+                        <button type="button" class="btn" style="width:auto;padding:8px 12px;font-size:12px;" onclick="renderChiefMaterialsTab()">🔄 Aktualisieren</button>
+                    </div>
+                    <div class="table-responsive chief-history-wrap">
+                        <table class="chief-history-table">
+                            <thead id="chiefMaterialHistoryHead"></thead>
+                            <tbody id="chiefMaterialHistoryBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- REITER: EINSTELLUNGEN -->
         <div id="settingsTab" class="tab-content">
             <div class="content-header-bar" style="margin-bottom:18px;">
@@ -814,9 +891,11 @@
                 <div class="section">
                     <h3>🔐 Passwort ändern</h3>
                     <p style="color:var(--text-muted);font-size:12px;margin-top:0;">Das neue Passwort wird nicht mehr im Klartext gespeichert. Mindestlänge: 6 Zeichen.</p>
-                    <label for="newPasswordInput">Neues Passwort</label>
-                    <input type="password" id="newPasswordInput" autocomplete="new-password" minlength="6" placeholder="Neues Passwort eingeben...">
-                    <button type="button" class="btn" onclick="passwortAendern()">🔒 Passwort aktualisieren</button>
+                    <form id="changeOwnPasswordForm" onsubmit="event.preventDefault(); passwortAendern();">
+                        <label for="newPasswordInput">Neues Passwort</label>
+                        <input type="password" id="newPasswordInput" autocomplete="new-password" minlength="6" placeholder="Neues Passwort eingeben...">
+                        <button type="submit" class="btn">🔒 Passwort aktualisieren</button>
+                    </form>
                     <p style="color:var(--text-muted);font-size:11px;margin-bottom:0;">Aus Sicherheitsgründen ist nach einem Neuladen der Seite eine erneute Anmeldung erforderlich.</p>
                 </div>
             </div>
@@ -1412,6 +1491,8 @@
                                         <div class="role-perm-box"><label for="delFlagUsers" class="perm-check"><input type="checkbox" id="delFlagUsers"> <b>🗑️ Accounts löschen</b></label><span class="perm-desc">Darf Mitarbeiterkonten unwiderruflich aus der Datenbank entfernen.</span></div>
                                         <div class="role-perm-box"><label for="roleFlagManageFeedback" class="perm-check"><input type="checkbox" id="roleFlagManageFeedback"> <b>💡 Wünsche & Bugs bearbeiten</b></label><span class="perm-desc">Sieht im Wünsche-&-Bugs-Bereich den zusätzlichen Reiter zum Prüfen und Bearbeiten aller Meldungen.</span></div>
                                         <div class="role-perm-box"><label for="delFlagFeedback" class="perm-check"><input type="checkbox" id="delFlagFeedback"> <b>🗑️ Meldungen löschen</b></label><span class="perm-desc">Darf Wünsche und Fehlerberichte dauerhaft aus dem System löschen.</span></div>
+                                        <div class="role-perm-box"><label for="roleFlagViewChiefMaterials" class="perm-check"><input type="checkbox" id="roleFlagViewChiefMaterials"> <b>⭐ Chief-Materialliste sehen</b></label><span class="perm-desc">Blendet den Hauptreiter „Chief-Ebene“ mit Materialbestand und Historie ein.</span></div>
+                                        <div class="role-perm-box"><label for="roleFlagEditChiefMaterials" class="perm-check"><input type="checkbox" id="roleFlagEditChiefMaterials"> <b>📦 Chief-Materialliste bearbeiten</b></label><span class="perm-desc">Darf Bestandsaufnahmen speichern, Maximalbestände ändern und fehlerhafte Einträge löschen.</span></div>
                                     </div>
                                 </div>
 
@@ -1577,6 +1658,7 @@
                 <h3 style="margin:0; color:var(--primary);">👤 Mitarbeiter bearbeiten</h3>
                 <button type="button" class="btn-close" onclick="closeUserPermissionsModal()">✖</button>
             </div>
+            <form id="userPermissionsForm" onsubmit="event.preventDefault(); saveUserPermissions();">
             <input type="hidden" id="permUserId">
             <label for="permVorname">Vorname</label><input type="text" id="permVorname" autocomplete="off">
             <label for="permNachname">Nachname</label><input type="text" id="permNachname" autocomplete="off">
@@ -1595,8 +1677,9 @@
             </select>
             <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:20px;">
                 <button type="button" class="btn" style="width:auto; background:var(--text-muted);" onclick="closeUserPermissionsModal()">Abbrechen</button>
-                <button type="button" class="btn" style="width:auto; background:var(--success); color:#080c14; font-weight:800;" onclick="saveUserPermissions()">💾 Speichern</button>
+                <button type="submit" class="btn" style="width:auto; background:var(--success); color:#080c14; font-weight:800;">💾 Speichern</button>
             </div>
+            </form>
         </div>
     </div>
 
@@ -1642,6 +1725,6 @@
         </div>
     </div>
 
-    <script src="app.js?v=6.4.2"></script>
+    <script src="app.js?v=6.5.0"></script>
 </body>
 </html>

@@ -1,5 +1,5 @@
 // ============================================================
-//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.4.2
+//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.5.0
 //  Firebase Realtime Database (Compat SDK v10)
 // ============================================================
 
@@ -257,6 +257,22 @@ let hierarchieDaten = JSON.parse(JSON.stringify(defaultHierarchieData));
 /* ── Vollständiger Gesamt-Changelog (Entwicklungsverlauf) ───── */
 const systemChangelogs = [
     {
+        id: "sys_v6_5_0",
+        version: "v6.5.0",
+        date: "15.09.2026",
+        ts: 1789423200000,
+        category: "Neue Funktion",
+        title: "Chief-Ebene & Materialverwaltung",
+        changes: [
+            "Neuer Hauptbereich „Chief-Ebene“ für die zentrale Materialverwaltung ergänzt.",
+            "Materialbestände können direkt im Browser erfasst werden; der Verbrauch wird automatisch berechnet und farblich eingeordnet.",
+            "Maximalbestände lassen sich berechtigt anpassen und werden für neue Bestandsaufnahmen verwendet.",
+            "Eine gemeinsame Historie zeigt frühere Bestände, Auffüllstatus und den erfassenden Mitarbeiter.",
+            "Sichtbarkeit und Bearbeitung der Materialliste können über Rollen und Berechtigungen gesteuert werden.",
+            "Die Passwortfelder wurden technisch sauber in Formulare eingebunden, sodass die Browser-Warnungen dazu nicht mehr erscheinen."
+        ]
+    },
+    {
         id: "sys_v6_4_2",
         version: "v6.4.2",
         date: "15.09.2026",
@@ -432,6 +448,24 @@ const defaultGehaltData = [
 ];
 let cachedGehaltData = JSON.parse(JSON.stringify(defaultGehaltData));
 
+/* ── Chief-Ebene: Materialverwaltung (Grundlage: SAMD-Materialliste) ── */
+const CHIEF_MATERIAL_DEFS = [
+    { id:'wundreiniger', name:'Wundreiniger', defaultMax:2500 },
+    { id:'nahtset', name:'Nahtset', defaultMax:2500 },
+    { id:'verband', name:'Verband', defaultMax:2500 },
+    { id:'schiene', name:'Schiene', defaultMax:2500 },
+    { id:'kuehlpack', name:'Kühlpack', defaultMax:2500 },
+    { id:'medikit', name:'MediKit', defaultMax:3000 },
+    { id:'schmerz5', name:'Schmerzmittel 5mg', defaultMax:2500 },
+    { id:'schmerz10', name:'Schmerzmittel 10mg', defaultMax:3500 },
+    { id:'schmerz15', name:'Schmerzmittel 15mg', defaultMax:2500 },
+    { id:'schmerz20', name:'Schmerzmittel 20mg', defaultMax:2500 }
+];
+const defaultChiefMaterialConfig = Object.fromEntries(CHIEF_MATERIAL_DEFS.map(m => [m.id, m.defaultMax]));
+let cachedChiefMaterialConfig = Object.assign({}, defaultChiefMaterialConfig);
+let cachedChiefMaterialEntries = {};
+let chiefMaterialsListenerActive = false;
+
 /* ── Standard-Rollen & Berechtigungen ───────────────────────── */
 const defaultRoles = {
     masteradmin: {
@@ -441,6 +475,7 @@ const defaultRoles = {
         isInstructor:true, canManageInstructors:true, canManageExams:true,
         canPostNews:true, canApproveNews:true, canViewNewsRead:true,
         canEditPrices:true, canEditGuide:true, canEditCommands:true, canEditLinks:true,
+        canViewChiefMaterials:true, canEditChiefMaterials:true,
         delPatient:true, delArchiv:true, delGuide:true, delCommands:true, delLinks:true, delNews:true, delExams:true, delUsers:true, canManageFeedback:true, delFeedback:true,
         allowedCmdKats: [], allowedLinkKats: []
     },
@@ -451,6 +486,7 @@ const defaultRoles = {
         isInstructor:true, canManageInstructors:true, canManageExams:true,
         canPostNews:true, canApproveNews:true, canViewNewsRead:true,
         canEditPrices:true, canEditGuide:true, canEditCommands:true, canEditLinks:true,
+        canViewChiefMaterials:true, canEditChiefMaterials:true,
         delPatient:true, delArchiv:true, delGuide:true, delCommands:true, delLinks:true, delNews:true, delExams:true, delUsers:false, canManageFeedback:true, delFeedback:true,
         allowedCmdKats: [], allowedLinkKats: []
     },
@@ -551,6 +587,8 @@ const ROLE_PROPERTY_MAP = {
     delFlagUsers: 'delUsers',
     roleFlagManageFeedback: 'canManageFeedback',
     delFlagFeedback: 'delFeedback',
+    roleFlagViewChiefMaterials: 'canViewChiefMaterials',
+    roleFlagEditChiefMaterials: 'canEditChiefMaterials',
     roleFlagEditPrices: 'canEditPrices',
     roleFlagArchive: 'canViewArchive',
     roleFlagEditAllPatients: 'canEditAllPatients',
@@ -690,7 +728,7 @@ function logAdminAudit(action, details) {
 };
 
 // ============================================================
-//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.4.2
+//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.5.0
 //  Firebase Realtime Database (Compat SDK v10)
 // ============================================================
 
@@ -753,6 +791,15 @@ function getUserEffectivePermissions(user) {
         });
     });
 
+    // Abwärtskompatibilität: Ältere Chief-Rollendatensätze kennen die beiden neuen
+    // Materialrechte noch nicht. Nur wenn die Felder wirklich fehlen, gelten die
+    // Standardrechte. Ein später bewusst gespeichertes false wird dagegen respektiert.
+    if (roleIds.includes('chiefebene')) {
+        const chiefRole = cachedRoles.chiefebene || defaultRoles.chiefebene || {};
+        if (!Object.prototype.hasOwnProperty.call(chiefRole, 'canViewChiefMaterials')) eff.canViewChiefMaterials = true;
+        if (!Object.prototype.hasOwnProperty.call(chiefRole, 'canEditChiefMaterials')) eff.canEditChiefMaterials = true;
+    }
+
     const isMaster = !!user.isMasterAdmin || roleIds.includes('masteradmin');
 
     if (isMaster || eff.isAdmin || hasUnrestrictedRole) {
@@ -779,6 +826,7 @@ const SERVER_PERMISSION_KEYS = [
     'isInstructor','canManageInstructors','canManageExams',
     'canPostNews','canApproveNews','canViewNewsRead',
     'canEditPrices','canEditGuide','canEditCommands','canEditLinks',
+    'canViewChiefMaterials','canEditChiefMaterials',
     'delPatient','delArchiv','delGuide','delCommands','delLinks',
     'delNews','delExams','delUsers','canManageFeedback','delFeedback'
 ];
@@ -1410,6 +1458,14 @@ function applyUserPermissions(user) {
     const gehaltEdit = document.getElementById('btnEditGehaltInline');
     if (gehaltEdit) gehaltEdit.style.display = isAdminOrMaster ? 'inline-block' : 'none';
 
+    const chiefBtn = document.getElementById('chiefTabNavBtn');
+    const canViewChief = !!(eff.canViewChiefMaterials || eff.canEditChiefMaterials || isMaster);
+    if (chiefBtn) chiefBtn.style.display = canViewChief ? 'inline-block' : 'none';
+    if (!canViewChief && document.getElementById('chiefTab')?.classList.contains('active')) {
+        switchTab('docTab', document.querySelector('.tab-nav .tab-btn'));
+    }
+    refreshChiefMaterialsListener();
+
     const grpArchiv = document.getElementById('group-archiv');
     if (grpArchiv) grpArchiv.style.display = (eff.canViewArchive || isAdminOrMaster) ? 'block' : 'none';
 
@@ -1907,8 +1963,13 @@ function startPresenceWatcher() {
         });
 
         const medics = [...unique.values()].map(m => {
-            const fallbackDn = m.accountId ? String(cachedUsers[m.accountId]?.dn || '').trim() : '';
-            return Object.assign({}, m, { dn: m.dn || fallbackDn });
+            const accountDn = m.accountId ? String(cachedUsers[m.accountId]?.dn || '').trim() : '';
+            const normalizedName = String(m.name || '').trim().toLocaleLowerCase('de-DE');
+            const nameMatch = !accountDn && normalizedName
+                ? Object.values(cachedUsers || {}).find(u => `${u?.vorname || ''} ${u?.nachname || ''}`.trim().toLocaleLowerCase('de-DE') === normalizedName)
+                : null;
+            const nameDn = nameMatch ? String(nameMatch.dn || '').trim() : '';
+            return Object.assign({}, m, { dn: m.dn || accountDn || nameDn });
         }).sort((a, b) => a.name.localeCompare(b.name, 'de'));
         if (!medics.length) {
             d.innerHTML = '<span class="online-medic-name online-medic-empty">Keiner im Dienst</span>';
@@ -2257,7 +2318,7 @@ function saveAllSzenarienWorkflows() {
 }
 
 // ============================================================
-//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.4.2
+//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.5.0
 //  Firebase Realtime Database (Compat SDK v10)
 // ============================================================
 
@@ -6718,7 +6779,7 @@ function restoreSystemBackupFromFile(event) {
 
 async function vollstaendigerReset() {
     if (!sessionUser || !getUserEffectivePermissions(sessionUser).isMasterAdmin) return;
-    if (!confirm('ACHTUNG: Wirklich alle Fachdaten zurücksetzen?\n\nMitarbeiterkonten, Rollen und Firebase-Anmeldungen bleiben erhalten.')) return;
+    if (!confirm('ACHTUNG: Wirklich alle Fachdaten zurücksetzen?\n\nMitarbeiterkonten, Rollen, Firebase-Anmeldungen und die Chief-Materialliste bleiben erhalten.')) return;
     if (!confirm('Patienten, Archive, Termine, Prüfungen, News, Feedback und weitere Fachdaten werden gelöscht. Fortfahren?')) return;
 
     try {
@@ -6731,6 +6792,7 @@ async function vollstaendigerReset() {
             authIndex: current.authIndex || {},
             loginDirectory: current.loginDirectory || {},
             employeePhotos: current.employeePhotos || {},
+            chiefMaterials: current.chiefMaterials || {},
             system: {
                 authMigrationComplete: system.authMigrationComplete === true,
                 authMigrationCompletedAt: system.authMigrationCompletedAt || null,
@@ -7128,6 +7190,234 @@ function exportFeedbackListMarkdown() {
     URL.revokeObjectURL(url);
 }
 
+/* ══════════════════════════════════════════════════════════════
+   CHIEF-EBENE: MATERIALVERWALTUNG
+══════════════════════════════════════════════════════════════ */
+function canCurrentUserViewChiefMaterials() {
+    if (!sessionUser) return false;
+    const eff = getUserEffectivePermissions(sessionUser);
+    return !!(eff.isMasterAdmin || eff.canViewChiefMaterials || eff.canEditChiefMaterials);
+}
+
+function canCurrentUserEditChiefMaterials() {
+    if (!sessionUser) return false;
+    const eff = getUserEffectivePermissions(sessionUser);
+    return !!(eff.isMasterAdmin || eff.canEditChiefMaterials);
+}
+
+function refreshChiefMaterialsListener() {
+    if (!db) return;
+    const ref = db.ref('data/chiefMaterials');
+    ref.off();
+    chiefMaterialsListenerActive = false;
+    if (!sessionUser || !canCurrentUserViewChiefMaterials()) {
+        cachedChiefMaterialConfig = Object.assign({}, defaultChiefMaterialConfig);
+        cachedChiefMaterialEntries = {};
+        return;
+    }
+    chiefMaterialsListenerActive = true;
+    ref.on('value', snap => {
+        const raw = snap.val() || {};
+        cachedChiefMaterialConfig = Object.assign({}, defaultChiefMaterialConfig, raw.config || {});
+        cachedChiefMaterialEntries = raw.entries || {};
+        if (document.getElementById('chiefTab')?.classList.contains('active')) renderChiefMaterialsTab();
+    }, err => {
+        console.error('Chief-Materialliste konnte nicht geladen werden:', err);
+        if (document.getElementById('chiefTab')?.classList.contains('active')) {
+            const body = document.getElementById('chiefMaterialHistoryBody');
+            if (body) body.innerHTML = '<tr><td colspan="20" style="text-align:center;color:var(--danger);padding:20px;">Materialliste konnte nicht geladen werden.</td></tr>';
+        }
+    });
+}
+
+function getChiefConsumptionLevel(consumed) {
+    const n = Number(consumed);
+    if (n < 0) return { cls:'chief-level-surplus', label:`${Math.abs(n)} Überschuss` };
+    if (n <= 199) return { cls:'chief-level-green', label:`${n} verbraucht` };
+    if (n <= 399) return { cls:'chief-level-yellow', label:`${n} verbraucht` };
+    if (n <= 599) return { cls:'chief-level-orange', label:`${n} verbraucht` };
+    return { cls:'chief-level-red', label:`${n} verbraucht` };
+}
+
+function formatChiefDate(iso) {
+    if (!iso) return '--';
+    const parts = String(iso).split('-');
+    return parts.length === 3 ? `${parts[2]}.${parts[1]}.${parts[0]}` : escapeHtml(iso);
+}
+
+function renderChiefMaterialEntryForm() {
+    const grid = document.getElementById('chiefMaterialInputGrid');
+    if (!grid) return;
+    const editable = canCurrentUserEditChiefMaterials();
+    grid.innerHTML = CHIEF_MATERIAL_DEFS.map(m => {
+        const max = Math.max(0, Number(cachedChiefMaterialConfig[m.id]) || m.defaultMax);
+        return `<div class="chief-material-item">
+            <label for="chiefStock_${m.id}">${escapeHtml(m.name)}</label>
+            <input type="number" min="0" step="1" id="chiefStock_${m.id}" ${editable ? '' : 'disabled'} placeholder="Bestand" oninput="updateChiefMaterialPreview()">
+            <div class="chief-material-meta">Max.: <b>${max}</b></div>
+            <div id="chiefPreview_${m.id}" class="chief-consumption-badge chief-level-green">—</div>
+        </div>`;
+    }).join('');
+    const saveBtn = document.getElementById('btnSaveChiefMaterialEntry');
+    if (saveBtn) saveBtn.style.display = editable ? 'inline-block' : 'none';
+    document.getElementById('chiefMaterialRefilled')?.toggleAttribute('disabled', !editable);
+    document.getElementById('chiefMaterialRefilledAt')?.toggleAttribute('disabled', !editable);
+}
+
+function renderChiefMaterialConfig() {
+    const grid = document.getElementById('chiefMaterialConfigGrid');
+    if (!grid) return;
+    const editable = canCurrentUserEditChiefMaterials();
+    grid.innerHTML = CHIEF_MATERIAL_DEFS.map(m => {
+        const max = Math.max(0, Number(cachedChiefMaterialConfig[m.id]) || m.defaultMax);
+        return `<div class="chief-config-item"><label for="chiefMax_${m.id}">${escapeHtml(m.name)}</label><input type="number" min="0" step="1" id="chiefMax_${m.id}" value="${max}" ${editable ? '' : 'disabled'}></div>`;
+    }).join('');
+    const btn = document.getElementById('btnSaveChiefMaterialConfig');
+    if (btn) btn.style.display = editable ? 'block' : 'none';
+}
+
+function updateChiefMaterialPreview() {
+    CHIEF_MATERIAL_DEFS.forEach(m => {
+        const input = document.getElementById(`chiefStock_${m.id}`);
+        const badge = document.getElementById(`chiefPreview_${m.id}`);
+        if (!input || !badge) return;
+        if (input.value === '') {
+            badge.className = 'chief-consumption-badge chief-level-green';
+            badge.textContent = '—';
+            return;
+        }
+        const stock = Math.max(0, Number(input.value) || 0);
+        const max = Math.max(0, Number(cachedChiefMaterialConfig[m.id]) || m.defaultMax);
+        const level = getChiefConsumptionLevel(max - stock);
+        badge.className = `chief-consumption-badge ${level.cls}`;
+        badge.textContent = level.label;
+    });
+}
+
+function handleChiefRefilledToggle() {
+    const cb = document.getElementById('chiefMaterialRefilled');
+    const date = document.getElementById('chiefMaterialRefilledAt');
+    if (!cb || !date) return;
+    date.style.display = cb.checked ? 'block' : 'none';
+    if (cb.checked && !date.value) date.value = new Date().toLocaleDateString('sv-SE');
+    if (!cb.checked) date.value = '';
+}
+
+function renderChiefMaterialHistory() {
+    const head = document.getElementById('chiefMaterialHistoryHead');
+    const body = document.getElementById('chiefMaterialHistoryBody');
+    if (!head || !body) return;
+    const editable = canCurrentUserEditChiefMaterials();
+    head.innerHTML = `<tr><th>Stichtag</th>${CHIEF_MATERIAL_DEFS.map(m => `<th>${escapeHtml(m.name)}</th>`).join('')}<th>Aufgefüllt</th><th>Erfasst von</th>${editable ? '<th>Aktion</th>' : ''}</tr>`;
+    const entries = Object.entries(cachedChiefMaterialEntries || {}).sort((a,b) => {
+        const ad = a[1]?.date || '';
+        const bd = b[1]?.date || '';
+        if (ad !== bd) return bd.localeCompare(ad);
+        return (b[1]?.ts || 0) - (a[1]?.ts || 0);
+    });
+    if (!entries.length) {
+        body.innerHTML = `<tr><td colspan="${CHIEF_MATERIAL_DEFS.length + (editable ? 4 : 3)}" style="text-align:center;color:var(--text-muted);padding:24px;">Noch keine Bestandsaufnahmen gespeichert.</td></tr>`;
+        return;
+    }
+    body.innerHTML = entries.map(([entryId, e]) => {
+        const stocks = e.stocks || {};
+        const maxima = e.maxima || cachedChiefMaterialConfig || {};
+        const consumed = e.consumed || {};
+        const matCells = CHIEF_MATERIAL_DEFS.map(m => {
+            const stock = stocks[m.id];
+            if (stock === undefined || stock === null || stock === '') return '<td class="chief-history-empty">—</td>';
+            const max = Number(maxima[m.id] ?? m.defaultMax);
+            const cons = Number(consumed[m.id] ?? (max - Number(stock)));
+            const level = getChiefConsumptionLevel(cons);
+            return `<td><div class="chief-history-stock">${escapeHtml(stock)}</div><span class="chief-consumption-badge ${level.cls}">${escapeHtml(level.label)}</span></td>`;
+        }).join('');
+        const refill = e.refilled ? `✅ Ja${e.refilledAt ? `<br><small>${formatChiefDate(e.refilledAt)}</small>` : ''}` : '—';
+        return `<tr><td><b>${formatChiefDate(e.date)}</b></td>${matCells}<td>${refill}</td><td>${escapeHtml(e.enteredBy || '--')}</td>${editable ? `<td><button type="button" class="btn-delete-row" onclick="deleteChiefMaterialEntry('${entryId}')" title="Bestandsaufnahme löschen">🗑️</button></td>` : ''}</tr>`;
+    }).join('');
+}
+
+function renderChiefMaterialsTab() {
+    const allowed = canCurrentUserViewChiefMaterials();
+    const noAccess = document.getElementById('chiefMaterialsNoAccess');
+    const content = document.getElementById('chiefMaterialsContent');
+    if (noAccess) noAccess.style.display = allowed ? 'none' : 'block';
+    if (content) content.style.display = allowed ? 'block' : 'none';
+    if (!allowed) return;
+    const dateEl = document.getElementById('chiefMaterialDate');
+    if (dateEl && !dateEl.value) dateEl.value = new Date().toLocaleDateString('sv-SE');
+    renderChiefMaterialEntryForm();
+    renderChiefMaterialConfig();
+    renderChiefMaterialHistory();
+    handleChiefRefilledToggle();
+}
+
+async function saveChiefMaterialEntry() {
+    if (!requirePermission(['canEditChiefMaterials','isMasterAdmin'], 'Keine Berechtigung zum Bearbeiten der Chief-Materialliste!')) return;
+    const date = document.getElementById('chiefMaterialDate')?.value;
+    if (!date) { alert('Bitte einen Stichtag auswählen.'); return; }
+    const stocks = {}, maxima = {}, consumed = {};
+    for (const m of CHIEF_MATERIAL_DEFS) {
+        const el = document.getElementById(`chiefStock_${m.id}`);
+        if (!el || el.value === '') { alert(`Bitte den Bestand für „${m.name}“ eintragen.`); el?.focus(); return; }
+        const stock = Number(el.value);
+        if (!Number.isFinite(stock) || stock < 0) { alert(`Ungültiger Bestand bei „${m.name}“.`); el.focus(); return; }
+        const max = Math.max(0, Number(cachedChiefMaterialConfig[m.id]) || m.defaultMax);
+        stocks[m.id] = Math.round(stock);
+        maxima[m.id] = Math.round(max);
+        consumed[m.id] = Math.round(max - stock);
+    }
+    const refilled = !!document.getElementById('chiefMaterialRefilled')?.checked;
+    const refilledAt = refilled ? (document.getElementById('chiefMaterialRefilledAt')?.value || date) : '';
+    const entry = {
+        date, stocks, maxima, consumed, refilled, refilledAt,
+        enteredBy: `${sessionUser.vorname || ''} ${sessionUser.nachname || ''}`.trim(),
+        enteredById: getUserAccountId(sessionUser),
+        ts: Date.now()
+    };
+    try {
+        await db.ref('data/chiefMaterials/entries').push(entry);
+        logAdminAudit('Materialbestand gespeichert', `Bestandsaufnahme vom ${formatChiefDate(date)} wurde gespeichert.`);
+        CHIEF_MATERIAL_DEFS.forEach(m => { const el = document.getElementById(`chiefStock_${m.id}`); if (el) el.value = ''; });
+        const cb = document.getElementById('chiefMaterialRefilled'); if (cb) cb.checked = false;
+        const rd = document.getElementById('chiefMaterialRefilledAt'); if (rd) { rd.value = ''; rd.style.display = 'none'; }
+        updateChiefMaterialPreview();
+        alert('✅ Bestandsaufnahme wurde gespeichert.');
+    } catch (err) {
+        console.error('Materialbestand konnte nicht gespeichert werden:', err);
+        alert('Materialbestand konnte nicht gespeichert werden: ' + (err?.message || err));
+    }
+}
+
+async function saveChiefMaterialConfig() {
+    if (!requirePermission(['canEditChiefMaterials','isMasterAdmin'], 'Keine Berechtigung zum Ändern der Maximalbestände!')) return;
+    const config = {};
+    for (const m of CHIEF_MATERIAL_DEFS) {
+        const el = document.getElementById(`chiefMax_${m.id}`);
+        const val = Number(el?.value);
+        if (!Number.isFinite(val) || val < 0) { alert(`Ungültiger Maximalbestand bei „${m.name}“.`); el?.focus(); return; }
+        config[m.id] = Math.round(val);
+    }
+    try {
+        await db.ref('data/chiefMaterials/config').set(config);
+        logAdminAudit('Maximalbestände geändert', `${sessionUser.vorname} ${sessionUser.nachname} hat die Maximalbestände der Chief-Materialliste aktualisiert.`);
+        alert('✅ Maximalbestände wurden gespeichert.');
+    } catch (err) {
+        console.error('Maximalbestände konnten nicht gespeichert werden:', err);
+        alert('Maximalbestände konnten nicht gespeichert werden: ' + (err?.message || err));
+    }
+}
+
+async function deleteChiefMaterialEntry(entryId) {
+    if (!requirePermission(['canEditChiefMaterials','isMasterAdmin'], 'Keine Berechtigung zum Löschen von Bestandsaufnahmen!')) return;
+    if (!entryId || !confirm('Diese Bestandsaufnahme wirklich dauerhaft löschen?')) return;
+    try {
+        await db.ref(`data/chiefMaterials/entries/${entryId}`).remove();
+        logAdminAudit('Materialbestand gelöscht', `Bestandsaufnahme ${entryId} wurde gelöscht.`);
+    } catch (err) {
+        alert('Bestandsaufnahme konnte nicht gelöscht werden: ' + (err?.message || err));
+    }
+}
+
 /* ── Navigation & Global Helpers ───────────────────────────── */
 function switchTab(tabId, btn) {
     document.querySelectorAll('.tab-content').forEach(e => e.classList.remove('active'));
@@ -7137,6 +7427,7 @@ function switchTab(tabId, btn) {
     if (tabId === 'calendarTab') renderCalendarMonth();
     if (tabId === 'staffTab') renderStaffDirectory();
     if (tabId === 'miscTab') renderGehaltTab(cachedGehaltData);
+    if (tabId === 'chiefTab') renderChiefMaterialsTab();
     if (tabId === 'examTab') renderExamTab();
     if (tabId === 'settingsTab' && sessionUser) {
         const eDatumEl = document.getElementById('einstellungsDatum');
@@ -7208,6 +7499,7 @@ _w.openEditNewsModal = openEditNewsModal;
 _w.openChangelogModal = openChangelogModal; _w.closeChangelogModal = closeChangelogModal;
 _w.openChangelogWriterModal = openChangelogWriterModal; _w.closeChangelogWriterModal = closeChangelogWriterModal; _w.saveCustomChangelogEntry = saveCustomChangelogEntry;
 _w.openGehaltInlineModal = openGehaltInlineModal; _w.closeGehaltInlineModal = closeGehaltInlineModal; _w.saveGehaltInline = saveGehaltInline; _w.addGehaltRowInline = addGehaltRowInline; _w.removeGehaltRowInline = removeGehaltRowInline;
+_w.renderChiefMaterialsTab = renderChiefMaterialsTab; _w.updateChiefMaterialPreview = updateChiefMaterialPreview; _w.handleChiefRefilledToggle = handleChiefRefilledToggle; _w.saveChiefMaterialEntry = saveChiefMaterialEntry; _w.saveChiefMaterialConfig = saveChiefMaterialConfig; _w.deleteChiefMaterialEntry = deleteChiefMaterialEntry;
 _w.startExam = startExam; _w.cancelActiveExam = cancelActiveExam; _w.submitActiveExam = submitActiveExam;
 _w.addExamQuestionRow = addExamQuestionRow; _w.resetExamBuilderForm = resetExamBuilderForm; _w.neuePruefungSpeichern = neuePruefungSpeichern; _w.editExam = editExam; _w.deleteExam = deleteExam; _w.deleteExamSubmission = deleteExamSubmission;
 _w.openExamBuilderModal = openExamBuilderModal; _w.closeExamBuilderModal = closeExamBuilderModal;
