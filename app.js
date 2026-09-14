@@ -1,5 +1,5 @@
 // ============================================================
-//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.3.0
+//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.4.0
 //  Firebase Realtime Database (Compat SDK v10)
 // ============================================================
 
@@ -257,29 +257,46 @@ let hierarchieDaten = JSON.parse(JSON.stringify(defaultHierarchieData));
 /* ── Vollständiger Gesamt-Changelog (Entwicklungsverlauf) ───── */
 const systemChangelogs = [
     {
+        id: "sys_v6_4_0",
+        version: "v6.4.0",
+        date: "14.09.2026",
+        ts: 1789422000000,
+        category: "Update",
+        title: "Anmeldung, Rollen & Bedienung verbessert",
+        changes: [
+            "Neue Mitarbeiterkonten können zuverlässiger beantragt und anschließend von berechtigten Personen freigeschaltet werden.",
+            "Bei Freischaltungen, Sperrungen und Prüfungsaktionen werden Fehler jetzt verständlich angezeigt, statt unbemerkt zu bleiben.",
+            "Die Dienstnummer wird in der Liste der aktuell im Dienst befindlichen Mitarbeiter wieder zuverlässiger beim Darüberfahren angezeigt.",
+            "Die bisherige Rolle Admin wurde entfernt. Die Chief-Ebene übernimmt weiterhin die vorgesehenen Verwaltungsaufgaben unterhalb des Master-Admins.",
+            "Wartende, aktive und gesperrte Mitarbeiterkonten werden deutlicher voneinander unterschieden.",
+            "Der bestehende Changelog wurde sprachlich vereinfacht und stärker auf die sichtbaren Änderungen für Mitarbeiter ausgerichtet.",
+            "Mehrere kleinere Stabilitätsprobleme bei Anmeldung, Ausbildung und Benutzerverwaltung wurden bereinigt."
+        ]
+    },
+    {
         id: "sys_v6_3_0",
         version: "v6.3.0",
         date: "13.09.2026",
         ts: 1789335600001,
         category: "Bugfix",
-        title: "Stabilitäts-, Sicherheits- & Navigationsbereinigung",
+        title: "Stabilität, Anmeldung & Navigation verbessert",
         changes: [
-            "Navigation repariert: Einstellungen und Ausbildungsbereich sind wieder zuverlässig erreichbar.",
-            "Prüfcenter bereinigt: Doppelte Element-IDs und fehlerhafte Unterreiter wurden getrennt, sodass beide Prüfungsansichten korrekt arbeiten.",
-            "Anmeldung grundlegend abgesichert: Passwörter werden jetzt von Firebase Authentication verwaltet und nicht mehr in der Realtime Database gespeichert.",
-            "Sitzungsschutz verbessert: Die Anmeldung wird über eine echte Firebase-Sitzung geprüft; sensible Benutzer- und Passwortdaten werden nicht mehr im Browser gespeichert.",
-            "Berechtigungen gehärtet: Kritische Schreib-, Rollen-, Prüfungs- und Backup-Funktionen prüfen ihre Rechte nun direkt beim Ausführen und werden zusätzlich durch Firebase-Zugriffsregeln abgesichert.",
-            "Direktzugriffe abgesichert: Kalender-, News-, Feedback- und Prüfungsaktionen prüfen nun auch bei direktem Funktionsaufruf die jeweilige Berechtigung.",
-            "Master-Admin-Schutz: Namensbasierte Sonderrechte wurden entfernt und privilegierte Rollen können nur noch durch Master-Admins vergeben oder verändert werden.",
-            "Archivierung abgesichert: Neue Einträge während der Mitternachtsarchivierung werden nicht mehr versehentlich mitgelöscht.",
-            "Altlasten entfernt: Verwaiste Feedback-Verwaltung und weitere tote Referenzen wurden aus dem laufenden Code entfernt.",
-            "Login-Design überarbeitet: Die Anmelde- und Registrierungsseite wurde vollständig an die dunkle MMD-Optik mit blauen Akzenten, Kartenstil und mobiler Darstellung angepasst.",
-            "Dienstleiste stabilisiert: Die Liste der im Dienst befindlichen Mitarbeiter zeigt höchstens fünf Personen pro Zeile und wächst bei mehr Kollegen nur nach unten; Datum und Aktionsbuttons bleiben an ihrem festen Platz.",
-            "Wünsche & Bugs neu geordnet: Meldungen werden jetzt in einem eigenen Bereich eingereicht; berechtigte Rollen erhalten dort einen zusätzlichen Verwaltungsreiter. Der doppelte Admin-Prüfcenter-Bereich wurde entfernt.",
-            "Alte Wunsch-/Bug-Einträge repariert: Auch unvollständige Alt-Einträge ohne gespeicherte interne ID können wieder eindeutig erkannt und gelöscht werden.",
-            "Mitarbeiterdaten flexibel: Dienstnummer, Vorname und Nachname können bei Beförderung, Heirat oder Namensänderung angepasst werden, ohne dass Rollen, Prüfungen, Fotos, News-Lesebestätigungen oder das Konto ihre feste Zuordnung verlieren.",
-            "Neue Systemrolle Chief-Ebene: Die Rolle übernimmt den vollständigen Funktionsumfang der Admin-Rolle, bleibt aber unterhalb des Master-Admins.",
-            "Passwort-Umstellungsstatus ergänzt: Der Master-Admin sieht live, welche Mitarbeiter ihre persönliche Passwortänderung bereits abgeschlossen haben, kann offene Erinnerungen kopieren und wird informiert, sobald alle Konten abgeschlossen sind."
+            "Einstellungen und Ausbildungsbereich sind wieder zuverlässig erreichbar.",
+            "Das Prüfcenter wurde bereinigt, damit die verschiedenen Prüfungsansichten wieder korrekt funktionieren.",
+            "Die Anmeldung und Passwortverwaltung wurden sicherer und zuverlässiger gemacht.",
+            "Sitzungen und sensible Kontodaten werden besser geschützt.",
+            "Rollen und Zugriffsrechte wurden verbessert, damit Funktionen nur von den vorgesehenen Personen genutzt werden können.",
+            "Kalender-, News-, Feedback- und Prüfungsfunktionen wurden zusätzlich gegen unberechtigte Nutzung abgesichert.",
+            "Besonders geschützte Verwaltungsrechte können nur noch vom Master-Admin vergeben oder verändert werden.",
+            "Die automatische Archivierung wurde stabilisiert, damit neue Einträge nicht versehentlich mit entfernt werden.",
+            "Nicht mehr benötigte Altlasten wurden aus dem laufenden System entfernt.",
+            "Die Anmelde- und Registrierungsseite wurde optisch an die MMD-Cloud angepasst und für mobile Geräte verbessert.",
+            "Die Dienstleiste wurde stabilisiert und bleibt auch bei mehreren Mitarbeitern übersichtlich.",
+            "Wünsche und Bug-Meldungen wurden in einen eigenen übersichtlichen Bereich verschoben.",
+            "Ältere Wunsch- und Bug-Einträge können wieder zuverlässig bearbeitet und gelöscht werden.",
+            "Namen und Dienstnummern können geändert werden, ohne dass die feste Kontozuordnung verloren geht.",
+            "Die Chief-Ebene wurde als Verwaltungsrolle unterhalb des Master-Admins ergänzt.",
+            "Der Master-Admin kann den Stand der persönlichen Passwortumstellung aller Mitarbeiter einsehen."
         ]
     },
     {
@@ -288,14 +305,14 @@ const systemChangelogs = [
         date: "13.09.2026",
         ts: 1789335600000,
         category: "Update",
-        title: "Direktes Prüfcenter, Tabellen-Schrift & Workflow-Optimierungen",
+        title: "Prüfcenter & Bedienung verbessert",
         changes: [
-            "Prüfcenter-Direktzugriff: Admins und Master-Admins können Wünsche und Bug-Meldungen direkt über die Hauptleiste aufrufen – ohne Passwort-Eingabe.",
-            "Direkte Inline-Ablehnung: Die Begründung bei einer Ablehnung wird nun direkt in der Zeile eingegeben, ohne störende Hintergrundfenster.",
-            "Mülleimer-Reparatur: Abgelehnte oder erledigte Meldungen können nun verlässlich und fehlerfrei von Administratoren gelöscht werden.",
-            "Lesbarkeit verbessert: Schriftgrößen in allen Tabellen wurden spürbar auf 15px vergrößert für ein ruhigeres und augenschonendes Arbeiten.",
-            "Mitarbeiter-Kartei: Porträtfotos und Dienstlogos wurden um 20 % vergrößert und füllen den Kartenrahmen harmonischer aus.",
-            "Code-Audit & Bereinigung: Fehlende Button-Styles nachgerüstet und Browser-Hinweise zu Formularfeldern vollständig bereinigt."
+            "Berechtigte Personen können Wünsche und Bug-Meldungen schneller über die Hauptleiste aufrufen.",
+            "Begründungen bei Ablehnungen können direkt in der jeweiligen Zeile eingegeben werden.",
+            "Erledigte oder abgelehnte Meldungen lassen sich wieder zuverlässig löschen.",
+            "Die Schrift in Tabellen wurde für eine bessere Lesbarkeit vergrößert.",
+            "Porträtfotos und Dienstlogos in der Mitarbeiter-Kartei wurden größer dargestellt.",
+            "Mehrere kleinere Darstellungs- und Bedienprobleme wurden bereinigt."
         ]
     },
     {
@@ -304,12 +321,12 @@ const systemChangelogs = [
         date: "12.09.2026",
         ts: 1789249200000,
         category: "Neue Funktion",
-        title: "Einführung des Wünsche- & Bug-Meldesystems",
+        title: "Wünsche & Bug-Meldungen eingeführt",
         changes: [
-            "Wünsche & Bugs: Mitarbeiter können nun direkt Verbesserungsvorschläge, Ideen und Fehlerberichte einreichen.",
-            "Geschützte Einsicht: Eingereichte Meldungen sind nur für Administratoren und Master-Admins einsehbar.",
-            "Begründungspflicht bei Ablehnung: Entscheidungen gegen einen Vorschlag werden zwingend begründet und im Archiv erfasst.",
-            "Aufgabenlisten-Export: Einreichungen können für künftige Entwicklungsphasen heruntergeladen werden."
+            "Mitarbeiter können Verbesserungsvorschläge, Ideen und Fehlerberichte direkt über die Homepage einreichen.",
+            "Die Verwaltung eingereichter Meldungen ist nur für berechtigte Personen sichtbar.",
+            "Abgelehnte Vorschläge benötigen eine Begründung und bleiben nachvollziehbar.",
+            "Einreichungen können für die weitere Bearbeitung als Aufgabenliste exportiert werden."
         ]
     },
     {
@@ -318,11 +335,11 @@ const systemChangelogs = [
         date: "12.09.2026",
         ts: 1789243200000,
         category: "Bugfix",
-        title: "Sicherheits- & Stabilitätsoptimierungen",
+        title: "Passwort & Verwaltung stabilisiert",
         changes: [
-            "Passwort-Änderung: Das Eingabefeld in den persönlichen Einstellungen funktioniert nun wieder einwandfrei.",
-            "Audit-Log: Das Löschen archivierter Schichten wird nun lückenlos und nachvollziehbar im System-Protokoll erfasst.",
-            "Mitarbeiterverwaltung: Beim Bearbeiten eines Kontos bleibt das bestehende Passwort sicher erhalten, falls das Feld leer gelassen wird."
+            "Das Ändern des eigenen Passworts in den Einstellungen funktioniert wieder zuverlässig.",
+            "Das Löschen archivierter Schichten wird im System-Protokoll nachvollziehbar erfasst.",
+            "Beim Bearbeiten eines Mitarbeiterkontos bleibt das vorhandene Passwort erhalten, wenn kein neues gesetzt wird."
         ]
     },
     {
@@ -331,15 +348,15 @@ const systemChangelogs = [
         date: "11.09.2026",
         ts: 1789156800000,
         category: "Update",
-        title: "Großes System- & Workflow-Update (Sicherheit, Kalender & Ausbildung)",
+        title: "Kalender, Ausbildung & Arbeitsabläufe erweitert",
         changes: [
-            "Täglicher automatischer Logout um 23:59 Uhr zur Bereinigung aller aktiven Sitzungen und Token-Invalidierung.",
-            "Ausbildungsbereich: Alphabetische Sortierung aller Mitarbeiter (A-Z) und Schnellsuche bei absolvierten Prüfungen.",
-            "Ausbilder-Schutz: Ausbilder können nur noch Prüfungen einsehen und freischalten, die sie selbst bestanden haben.",
-            "Kalendersystem: Private Termine sowie verbindlicher Einladungs-Status (Ausstehend / Angenommen / Abgelehnt).",
-            "Sichtbarkeitsfilter: Bei Terminerstellung stehen nur noch eigene Abteilungsrollen zur Auswahl.",
-            "No-Code Ausbau: Behandlungsschritte, Szenarien sowie Streifen- und Abrechnungscodes direkt per Stiftsymbol editierbar.",
-            "Persistenz-Fix für Rollenmatrix, lückenloses Audit-Log bei Patientenlöschung und verbesserte A11y-Werte."
+            "Aktive Sitzungen werden täglich automatisch beendet.",
+            "Der Ausbildungsbereich wurde übersichtlicher sortiert und um eine schnellere Suche ergänzt.",
+            "Ausbilder können nur Prüfungen verwalten, für die sie selbst die erforderliche Freigabe besitzen.",
+            "Der Kalender unterstützt private Termine und Rückmeldungen auf Einladungen.",
+            "Bei Terminen werden nur passende Rollen und Abteilungen zur Auswahl angeboten.",
+            "Mehrere regelmäßig benötigte Inhalte können direkt über die Homepage bearbeitet werden.",
+            "Rollen, Protokolle und verschiedene Bedienhilfen wurden zuverlässiger gemacht."
         ]
     },
     {
@@ -348,10 +365,10 @@ const systemChangelogs = [
         date: "11.09.2026",
         ts: 1789136800000,
         category: "Bugfix",
-        title: "Link-Bereinigung & Robuste Mülleimer-Funktionen",
+        title: "Links & Dokumente bereinigt",
         changes: [
-            "Generische Google-Docs-Dummy-Links und leere Kategorien wurden bereinigt.",
-            "Mülleimer-Funktionen für Links und Dokumente wurden optimiert und gegen verwaiste DOM-Referenzen gehärtet."
+            "Leere oder nicht benötigte Standard-Links wurden entfernt.",
+            "Links und Dokumente lassen sich zuverlässiger löschen und verwalten."
         ]
     },
     {
@@ -360,10 +377,10 @@ const systemChangelogs = [
         date: "11.09.2026",
         ts: 1789126800000,
         category: "Design",
-        title: "Barrierefreiheit & Label-Verknüpfungen (A11y)",
+        title: "Formulare & Bedienbarkeit verbessert",
         changes: [
-            "Alle dynamisch generierten Checkboxen und Auswahllisten im Kalender und in der Admin-Rollenverwaltung wurden mit korrekten for- und id-Attributen versehen.",
-            "Lighthouse- und DevTools-Warnungen bezüglich fehlender Formular-Labels vollständig behoben."
+            "Auswahlfelder und Checkboxen im Kalender und in der Rollenverwaltung wurden besser zugeordnet.",
+            "Mehrere Hinweise und Warnungen bei Formularfeldern wurden beseitigt."
         ]
     },
     {
@@ -372,10 +389,10 @@ const systemChangelogs = [
         date: "11.09.2026",
         ts: 1789116800000,
         category: "Technische Änderung",
-        title: "Architektur-Härtung, ID-Normalisierung & Validierung",
+        title: "Benutzerzuordnung & Prüfungen stabilisiert",
         changes: [
-            "Zentrale ID-Normalisierung (Umlaute-Ersetzung) für absolut fehlerfreie Benutzer-Zuordnungen eingeführt.",
-            "Strikte Validierung im Prüfungs-Builder: Es wird nun zwingend geprüft, ob Multiple-Choice-Fragen korrekte Antworten besitzen."
+            "Benutzer werden auch bei Namen mit Umlauten zuverlässiger erkannt und zugeordnet.",
+            "Prüfungen werden beim Erstellen genauer geprüft, damit unvollständige Fragen nicht gespeichert werden."
         ]
     }
 ];
@@ -410,16 +427,6 @@ const defaultRoles = {
         canPostNews:true, canApproveNews:true, canViewNewsRead:true,
         canEditPrices:true, canEditGuide:true, canEditCommands:true, canEditLinks:true,
         delPatient:true, delArchiv:true, delGuide:true, delCommands:true, delLinks:true, delNews:true, delExams:true, delUsers:true, canManageFeedback:true, delFeedback:true,
-        allowedCmdKats: [], allowedLinkKats: []
-    },
-    admin: {
-        id:'admin', name:'Admin', color:'#f59e0b', icon:'🛡️', isSystem:true,
-        isAdmin:true, isMasterAdmin:false, canViewArchive:true, canEditAllPatients:true,
-        canCreateCalendar:true, delCalendar:true, canManagePhotos:true, delPhotos:true,
-        isInstructor:true, canManageInstructors:true, canManageExams:true,
-        canPostNews:true, canApproveNews:true, canViewNewsRead:true,
-        canEditPrices:true, canEditGuide:true, canEditCommands:true, canEditLinks:true,
-        delPatient:true, delArchiv:true, delGuide:true, delCommands:true, delLinks:true, delNews:true, delExams:true, delUsers:false, canManageFeedback:true, delFeedback:true,
         allowedCmdKats: [], allowedLinkKats: []
     },
     chiefebene: {
@@ -668,7 +675,7 @@ function logAdminAudit(action, details) {
 };
 
 // ============================================================
-//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.3.0
+//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.4.0
 //  Firebase Realtime Database (Compat SDK v10)
 // ============================================================
 
@@ -683,6 +690,8 @@ function getUserRolesList(user) {
             list = Object.keys(user.roles).filter(k => user.roles[k] === true);
         }
     }
+    // Kompatibilität für alte Konten: Die frühere Rolle "admin" wird seit v6.4.0 als Chief-Ebene behandelt.
+    list = list.map(roleId => roleId === 'admin' ? 'chiefebene' : roleId);
     if (user.isMasterAdmin && !list.includes('masteradmin')) {
         list.unshift('masteradmin');
     }
@@ -923,8 +932,11 @@ async function readLoginDirectory(loginKey) {
                 ? Math.floor(transitionIterationsRaw)
                 : PASSWORD_HASH_ITERATIONS
         };
-    } catch (_) {
-        return { loginKey, accountId: loginKey, version: 0, exists: false };
+    } catch (err) {
+        if (err?.code === 'PERMISSION_DENIED' || err?.code === 'permission-denied') {
+            return { loginKey, accountId: loginKey, version: 0, exists: false };
+        }
+        throw err;
     }
 }
 
@@ -1147,9 +1159,15 @@ async function registerNewFirebaseUser(v, n, p, dn) {
         };
         baseUser.serverPermissions = buildServerPermissions(baseUser);
 
-        await db.ref(`data/loginDirectory/${loginKey}`).set({ version, accountId: uId });
+        // Reihenfolge passend zu den finalen Security Rules:
+        // zuerst die Firebase-UID zuordnen, danach Login-Verzeichnis und Benutzerprofil anlegen.
         await db.ref(`data/authIndex/${firebaseUser.uid}`).set(uId);
+        await db.ref(`data/loginDirectory/${loginKey}`).set({ version, accountId: uId });
         await db.ref(`data/users/${uId}`).set(baseUser);
+        const registrationCheck = await db.ref(`data/users/${uId}`).once('value');
+        if (!registrationCheck.exists() || registrationCheck.val()?.status !== 'pending') {
+            throw new Error('Die Registrierung konnte nicht vollständig in der Mitarbeiterverwaltung gespeichert werden.');
+        }
 
         await auth.signOut();
         return uId;
@@ -1387,6 +1405,35 @@ function refreshSessionIdentityDisplay() {
     if (settingsDn) settingsDn.textContent = sessionUser.dn || '--';
 }
 
+async function migrateLegacyAdminRoleToChief() {
+    if (!sessionUser || !getUserEffectivePermissions(sessionUser).isMasterAdmin) return;
+    try {
+        const [usersSnap, rolesSnap] = await Promise.all([
+            db.ref('data/users').once('value'),
+            db.ref('data/roles/admin').once('value')
+        ]);
+        const users = usersSnap.val() || {};
+        const updates = {};
+        let changedUsers = 0;
+        Object.entries(users).forEach(([uId, user]) => {
+            if (!user?.roles?.admin) return;
+            const newRoles = Object.assign({}, user.roles, { chiefebene: true });
+            delete newRoles.admin;
+            const updatedUser = Object.assign({}, user, { roles: newRoles });
+            updates[`data/users/${uId}/roles`] = newRoles;
+            updates[`data/users/${uId}/isAdmin`] = true;
+            updates[`data/users/${uId}/serverPermissions`] = buildServerPermissions(updatedUser);
+            changedUsers++;
+        });
+        if (rolesSnap.exists()) updates['data/roles/admin'] = null;
+        if (!Object.keys(updates).length) return;
+        await db.ref().update(updates);
+        logAdminAudit('Admin-Rolle migriert', `${changedUsers} alte Admin-Zuordnung(en) wurden auf Chief-Ebene umgestellt.`);
+    } catch (err) {
+        console.error('Migration der alten Admin-Rolle fehlgeschlagen:', err);
+    }
+}
+
 function initDienstEintritt(user) {
     sessionUser = withStableAccountId(user?.accountId || generateUserId(user?.vorname, user?.nachname), user);
     const todayFormatted = new Date().toLocaleDateString('de-DE');
@@ -1404,6 +1451,9 @@ function initDienstEintritt(user) {
     updateLiveDate();
     baueMaterialUIAuf();
     startFirebaseListeners();
+    if (getUserEffectivePermissions(sessionUser).isMasterAdmin) {
+        migrateLegacyAdminRoleToChief();
+    }
     setupMidnightScheduler();
     setupDailyForcedLogoutScheduler();
     cleanOldCalendarEvents();
@@ -1638,7 +1688,9 @@ function startFirebaseListeners() {
         renderCommandsTab(cachedCommands);
     });
     db.ref('data/roles').on('value', s => {
-        cachedRoles = s.val() ? Object.assign({}, defaultRoles, s.val()) : Object.assign({}, defaultRoles);
+        const serverRoles = Object.assign({}, s.val() || {});
+        delete serverRoles.admin;
+        cachedRoles = Object.assign({}, defaultRoles, serverRoles);
         if (sessionUser) {
             applyUserPermissions(sessionUser);
             refreshSensitiveFirebaseListeners();
@@ -1760,14 +1812,17 @@ function startPresenceWatcher() {
             if (value && typeof value === 'object') {
                 const name = String(value.name || '').trim() || 'Unbekannt';
                 const key = String(value.accountId || name.toLowerCase() || presenceId);
-                if (!unique.has(key)) unique.set(key, { name, dn: String(value.dn || '').trim() });
+                if (!unique.has(key)) unique.set(key, { accountId: String(value.accountId || '').trim(), name, dn: String(value.dn || '').trim() });
             } else {
                 const name = String(value || '').trim();
-                if (name && !unique.has(name.toLowerCase())) unique.set(name.toLowerCase(), { name, dn: '' });
+                if (name && !unique.has(name.toLowerCase())) unique.set(name.toLowerCase(), { accountId: '', name, dn: '' });
             }
         });
 
-        const medics = [...unique.values()].sort((a, b) => a.name.localeCompare(b.name, 'de'));
+        const medics = [...unique.values()].map(m => {
+            const fallbackDn = m.accountId ? String(cachedUsers[m.accountId]?.dn || '').trim() : '';
+            return Object.assign({}, m, { dn: m.dn || fallbackDn });
+        }).sort((a, b) => a.name.localeCompare(b.name, 'de'));
         if (!medics.length) {
             d.innerHTML = '<span class="online-medic-name online-medic-empty">Keiner im Dienst</span>';
             return;
@@ -2115,7 +2170,7 @@ function saveAllSzenarienWorkflows() {
 }
 
 // ============================================================
-//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.3.0
+//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.4.0
 //  Firebase Realtime Database (Compat SDK v10)
 // ============================================================
 
@@ -4751,7 +4806,11 @@ function toggleExamUnlockForUser(uId, examId, isUnlocked) {
         renderInstructorUnlocks();
         return;
     }
-    db.ref(`data/users/${uId}/unlockedExams/${examId}`).set(isUnlocked);
+    db.ref(`data/users/${uId}/unlockedExams/${examId}`).set(isUnlocked).catch(err => {
+        console.error('Prüfungsfreischaltung fehlgeschlagen:', err);
+        alert('Prüfungsfreischaltung konnte nicht gespeichert werden: ' + (err?.message || err));
+        renderInstructorUnlocks();
+    });
 }
 
 function toggleExamPassedForUser(uId, examId, isPassed) {
@@ -4769,7 +4828,11 @@ function toggleExamPassedForUser(uId, examId, isPassed) {
         renderInstructorUnlocks();
         return;
     }
-    db.ref(`data/users/${uId}/passedExams/${examId}`).set(isPassed);
+    db.ref(`data/users/${uId}/passedExams/${examId}`).set(isPassed).catch(err => {
+        console.error('Prüfungsstatus konnte nicht gespeichert werden:', err);
+        alert('Prüfungsstatus konnte nicht gespeichert werden: ' + (err?.message || err));
+        renderInstructorUnlocks();
+    });
 }
 
 function renderInstructorSubmissionsInto(subs, tbodyId, searchInputId) {
@@ -5142,7 +5205,7 @@ function renderInstructorAllowedExams() {
             <td style="padding:10px;"><b>${escapeHtml(u.vorname||'')} ${escapeHtml(u.nachname||'')}</b></td>
             <td style="padding:10px;color:var(--primary);font-weight:700;">DN: ${escapeHtml(u.dn||'--')}</td>
             <td style="padding:10px;">${renderUserRoleBadges(u)}</td>
-            <td style="padding:10px;"><span style="color:${u.status==='approved'?'var(--success)':'var(--danger)'};font-weight:700;">${u.status==='approved'?'✅ Aktiv':'⛔ Gesperrt'}</span></td>
+            <td style="padding:10px;"><span style="color:${getUserStatusDisplay(u.status).color};font-weight:700;">${getUserStatusDisplay(u.status).text}</span></td>
             <td style="text-align:right;padding:10px;">
                 <div style="display:flex;gap:6px;justify-content:flex-end;">
                     ${u.status !== 'approved'
@@ -5268,7 +5331,9 @@ function submitActiveExam() {
     const m = Math.floor(activeExamSecondsElapsed / 60).toString().padStart(2, '0');
     const s = (activeExamSecondsElapsed % 60).toString().padStart(2, '0');
 
-    db.ref('data/examSubmissions').push({
+    const submissionRef = db.ref('data/examSubmissions').push();
+    const updates = {};
+    updates[`data/examSubmissions/${submissionRef.key}`] = {
         examId: eid,
         examTitle: ex.title,
         userId: myId,
@@ -5280,15 +5345,20 @@ function submitActiveExam() {
         datum: new Date().toLocaleDateString('de-DE'),
         ts: Date.now(),
         answers: recordedAnswers
-    }).then(() => {
+    };
+    if (passed) updates[`data/users/${myId}/passedExams/${eid}`] = true;
+    else updates[`data/users/${myId}/unlockedExams/${eid}`] = false;
+
+    db.ref().update(updates).then(() => {
         if (passed) {
-            db.ref(`data/users/${myId}/passedExams/${eid}`).set(true);
             alert(`🎉 Herzlichen Glückwunsch! Du hast die Prüfung bestanden mit ${pct}%!`);
         } else {
-            db.ref(`data/users/${myId}/unlockedExams/${eid}`).set(false);
             alert(`❌ Leider nicht bestanden (${pct}%). Die Prüfung wurde gesperrt und muss von der Ausbildungsleitung neu freigeschaltet werden.`);
         }
         cancelActiveExam();
+    }).catch(err => {
+        console.error('Prüfungsergebnis konnte nicht vollständig gespeichert werden:', err);
+        alert('Das Prüfungsergebnis konnte nicht gespeichert werden. Bitte die Ausbildungsleitung informieren.\n\nFehler: ' + (err?.message || err));
     });
 }
 
@@ -5335,6 +5405,12 @@ function switchAdminTab(tabId, btnEl) {
     if (btnEl) btnEl.classList.add('active');
 }
 
+function getUserStatusDisplay(status) {
+    if (status === 'approved') return { text: '✅ Aktiv', color: 'var(--success)' };
+    if (status === 'revoked') return { text: '⛔ Gesperrt', color: 'var(--danger)' };
+    return { text: '⏳ Wartet auf Freischaltung', color: 'var(--warning)' };
+}
+
 function renderAdminUserTable(obj) {
     const tbody = document.getElementById('adminUserTableBody'); if (!tbody) return;
     const eff = sessionUser ? getUserEffectivePermissions(sessionUser) : {};
@@ -5355,7 +5431,7 @@ function renderAdminUserTable(obj) {
             </td>
             <td>
                 ${renderUserRoleBadges(u)}<br>
-                <span style="color:${u.status==='approved'?'var(--success)':'var(--danger)'};font-weight:700;font-size:12px;">${u.status==='approved'?'✅ Aktiv':'⛔ Gesperrt'}</span>
+                <span style="color:${getUserStatusDisplay(u.status).color};font-weight:700;font-size:12px;">${getUserStatusDisplay(u.status).text}</span>
             </td>
             <td style="color:var(--text-muted);font-size:12px;">${escapeHtml(u.date||'--')}</td>
             <td style="text-align:right;">
@@ -5829,7 +5905,7 @@ async function runFirebaseAuthMigration() {
     }
 }
 
-function approveUser(uId) {
+async function approveUser(uId) {
     if (!sessionUser) return;
     const eff = getUserEffectivePermissions(sessionUser);
     if (!eff.canManageInstructors && !eff.isAdmin && !eff.isMasterAdmin) {
@@ -5837,11 +5913,16 @@ function approveUser(uId) {
         return;
     }
     if (!requireTargetUserManagement(uId)) return;
-    db.ref('data/users/'+uId+'/status').set('approved').then(() => {
+    try {
+        await db.ref('data/users/'+uId+'/status').set('approved');
         logAdminAudit('Mitarbeiter freigeschaltet', `Account ${uId} aktiviert von ${sessionUser.vorname} ${sessionUser.nachname}`);
-    });
+        alert('✅ Mitarbeiter wurde erfolgreich freigeschaltet.');
+    } catch (err) {
+        console.error('Freischaltung fehlgeschlagen:', err);
+        alert('Freischaltung fehlgeschlagen: ' + (err?.message || err));
+    }
 }
-function revokeUser(uId) {
+async function revokeUser(uId) {
     if (!sessionUser) return;
     const eff = getUserEffectivePermissions(sessionUser);
     if (!eff.canManageInstructors && !eff.isAdmin && !eff.isMasterAdmin) {
@@ -5849,10 +5930,14 @@ function revokeUser(uId) {
         return;
     }
     if (!requireTargetUserManagement(uId)) return;
-    if (confirm('Mitarbeiter wirklich sperren? Der Account bleibt bestehen, kann sich aber nicht mehr einloggen.')) {
-        db.ref('data/users/'+uId+'/status').set('revoked').then(() => {
-            logAdminAudit('Mitarbeiter gesperrt', `Account ${uId} gesperrt von ${sessionUser.vorname} ${sessionUser.nachname}`);
-        });
+    if (!confirm('Mitarbeiter wirklich sperren? Der Account bleibt bestehen, kann sich aber nicht mehr einloggen.')) return;
+    try {
+        await db.ref('data/users/'+uId+'/status').set('revoked');
+        logAdminAudit('Mitarbeiter gesperrt', `Account ${uId} gesperrt von ${sessionUser.vorname} ${sessionUser.nachname}`);
+        alert('✅ Mitarbeiter wurde gesperrt.');
+    } catch (err) {
+        console.error('Sperren fehlgeschlagen:', err);
+        alert('Sperren fehlgeschlagen: ' + (err?.message || err));
     }
 }
 function deleteUserAccount(uId) {
@@ -6246,7 +6331,7 @@ function selectRole(roleId) {
     });
 
     const btnDel = document.getElementById('btnDeleteRole');
-    const protectedRoles = ['masteradmin', 'admin', 'mitarbeiter', 'ausbilder', 'ausbildungsleitung'];
+    const protectedRoles = ['masteradmin', 'mitarbeiter', 'ausbilder', 'ausbildungsleitung'];
     if (btnDel) {
         if (protectedRoles.includes(roleId) || r.isSystem) {
             btnDel.style.display = 'none';
@@ -6381,7 +6466,7 @@ async function loescheRolle() {
         alert('Rollen mit Admin- oder Master-Admin-Rechten dürfen nur von einem Master-Admin gelöscht werden!');
         return;
     }
-    const protectedSystemRoles = ['masteradmin', 'admin', 'mitarbeiter', 'ausbilder', 'ausbildungsleitung'];
+    const protectedSystemRoles = ['masteradmin', 'mitarbeiter', 'ausbilder', 'ausbildungsleitung'];
     if (protectedSystemRoles.includes(id) || role?.isSystem) {
         alert(`⛔ Die Standard-Systemrolle "${role?.name || id}" kann nicht gelöscht werden!`);
         return;
