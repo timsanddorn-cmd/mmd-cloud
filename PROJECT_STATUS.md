@@ -1,7 +1,7 @@
 # MMD CLOUD – PROJECT STATUS
 
 ## Aktueller Stand
-- **Version:** v6.4.0 (vorbereitet)
+- **Version:** v6.4.2 (vorbereitet – noch nicht live bestätigt)
 - **Status:** Dateien erstellt – Veröffentlichung und Live-Test noch offen
 - **Datum des letzten bestätigten Updates:** 14.09.2026
 
@@ -15,7 +15,8 @@
 - Firebase Authentication mit E-Mail/Passwort ist aktiv.
 - Die sichtbare Mitarbeiter-Anmeldung erfolgt weiterhin über Vorname + Nachname + Passwort.
 - Technische Firebase-E-Mail-Adressen bleiben für Mitarbeiter unsichtbar.
-- Die finalen rollenbasierten Realtime Database Security Rules sind veröffentlicht und aktiv.
+- Der bisher bestätigte rollenbasierte Realtime-Database-Regelsatz ist live aktiv.
+- Für v6.4.2 liegt ein **neuer vorbereiteter Regelsatz** bei; dieser ist noch nicht veröffentlicht und wird erst im Update-Schritt eingespielt.
 - Feste Account-IDs sowie `authIndex` und `loginDirectory` bilden die Benutzerzuordnung.
 - Passwörter werden im regulären Betrieb nicht im Klartext in der Realtime Database gespeichert.
 - Temporäre Migrationsregeln sind nicht mehr aktiv und dürfen nicht wieder versehentlich veröffentlicht werden.
@@ -93,3 +94,17 @@ Die tatsächlich aktuellen, vom Nutzer bestätigten Projektdateien haben immer V
 - Bestehenden Changelog allgemeinverständlicher formuliert.
 - `database.rules.final.json` bleibt gegenüber v6.3.0 unverändert.
 - Dieser Stand darf erst nach erfolgreicher Veröffentlichung und Live-Test als bestätigt/live markiert werden.
+
+
+## Hotfix v6.4.2
+- Enthält vollständig die vorgesehenen, noch nicht veröffentlichten Verbesserungen aus v6.4.1; v6.4.1 muss nicht separat veröffentlicht werden.
+- Gelöschte Mitarbeiter können sich erneut mit demselben Namen registrieren; die technische Auth-Version wird automatisch erhöht.
+- Alte Firebase-Auth-Konten erhalten keinen neuen Datenbankzugriff, weil nur die neue UID in `authIndex` eingetragen wird.
+- `database.rules.final.json` wurde gezielt für sichere Wiederregistrierung und Registrierungs-Rollbacks erweitert.
+- Veröffentlichung erfordert deshalb eine kontrollierte Rules- und Datei-Reihenfolge.
+
+## In v6.4.2 enthaltene Freischaltungsverbesserungen
+- Ausstehende Registrierungen werden für berechtigte Rollen zusätzlich in der Mitarbeiter-Kartei angezeigt.
+- Freischaltung ist dort direkt möglich.
+- Adminverwaltung lädt Benutzer beim Öffnen nochmals frisch aus Firebase.
+- Status bleibt bis zum Live-Test: veröffentlicht / noch zu bestätigen.

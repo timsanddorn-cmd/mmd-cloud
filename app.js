@@ -1,5 +1,5 @@
 // ============================================================
-//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.4.0
+//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.4.2
 //  Firebase Realtime Database (Compat SDK v10)
 // ============================================================
 
@@ -256,6 +256,21 @@ let hierarchieDaten = JSON.parse(JSON.stringify(defaultHierarchieData));
 
 /* ── Vollständiger Gesamt-Changelog (Entwicklungsverlauf) ───── */
 const systemChangelogs = [
+    {
+        id: "sys_v6_4_2",
+        version: "v6.4.2",
+        date: "15.09.2026",
+        ts: 1789422000002,
+        category: "Bugfix",
+        title: "Wiederregistrierung gelöschter Mitarbeiter repariert",
+        changes: [
+            "Gelöschte Mitarbeiter können sich später wieder mit demselben Namen registrieren, ohne durch einen alten technischen Zugang blockiert zu werden.",
+            "Bei einer erneuten Registrierung wird automatisch ein neuer technischer Zugang verwendet; alte Zugänge bleiben weiterhin ohne Zugriff auf die MD-Daten.",
+            "Ausstehende Registrierungen werden für berechtigte Personen direkt in der Mitarbeiter-Kartei sichtbar und können dort freigeschaltet werden.",
+            "Beim Öffnen der Adminverwaltung wird die Mitarbeiterliste frisch aus der Datenbank geladen, damit neue Anträge zuverlässig erscheinen.",
+            "Fehler bei der Registrierung werden verständlicher abgefangen, damit unvollständige Konten möglichst nicht zurückbleiben."
+        ]
+    },
     {
         id: "sys_v6_4_0",
         version: "v6.4.0",
@@ -675,7 +690,7 @@ function logAdminAudit(action, details) {
 };
 
 // ============================================================
-//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.4.0
+//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.4.2
 //  Firebase Realtime Database (Compat SDK v10)
 // ============================================================
 
@@ -1132,15 +1147,35 @@ async function registerNewFirebaseUser(v, n, p, dn) {
     } catch (err) {
         if (err?.code === 'mmd/already-registered') throw err;
         // Unter den finalen Regeln darf ein nicht zugeordneter Neu-Account die Benutzerliste
-        // nicht vorab lesen. Dann übernimmt Firebase Auth + authIndex die Kollisionsprüfung.
+        // nicht vorab lesen. Firebase Auth + authIndex übernehmen danach die sichere Zuordnung.
     }
 
-    const version = 1;
-    const email = getTechnicalAuthEmail(uId, version);
+    // Nach einer früheren Löschung bleibt das alte Firebase-Auth-Konto technisch bestehen.
+    // Deshalb wird die nächste freie technische Version verwendet (v2, v3, ...), statt
+    // erneut dieselbe technische E-Mail zu verwenden.
+    const previousVersion = Math.max(0, Number(knownDirectory.version) || 0);
+    let version = knownDirectory.exists && knownDirectory.deleted ? previousVersion + 1 : 1;
     let credential = null;
+    const maxVersionAttempts = 25;
 
     try {
-        credential = await auth.createUserWithEmailAndPassword(email, p);
+        for (let attempt = 0; attempt < maxVersionAttempts; attempt++, version++) {
+            const email = getTechnicalAuthEmail(uId, version);
+            try {
+                credential = await auth.createUserWithEmailAndPassword(email, p);
+                break;
+            } catch (err) {
+                if (err?.code === 'auth/email-already-in-use') continue;
+                throw err;
+            }
+        }
+
+        if (!credential?.user) {
+            const e = new Error('Für diesen Namen existieren bereits mehrere alte technische Zugänge. Bitte den Master-Admin kontaktieren.');
+            e.code = 'mmd/registration-version-exhausted';
+            throw e;
+        }
+
         const firebaseUser = credential.user;
         const todayIso = new Date().toLocaleDateString('sv-SE');
         const baseUser = {
@@ -1159,10 +1194,23 @@ async function registerNewFirebaseUser(v, n, p, dn) {
         };
         baseUser.serverPermissions = buildServerPermissions(baseUser);
 
-        // Reihenfolge passend zu den finalen Security Rules:
-        // zuerst die Firebase-UID zuordnen, danach Login-Verzeichnis und Benutzerprofil anlegen.
+        // Zuerst wird ausschließlich die neue Firebase-UID zugeordnet. Ein alter Auth-Zugang
+        // bleibt ohne authIndex und besitzt daher weiterhin keinen Zugriff auf die MD-Daten.
         await db.ref(`data/authIndex/${firebaseUser.uid}`).set(uId);
-        await db.ref(`data/loginDirectory/${loginKey}`).set({ version, accountId: uId });
+
+        if (knownDirectory.exists && knownDirectory.deleted) {
+            // Vorhandenen Löschmarker kontrolliert reaktivieren und die technische Version erhöhen.
+            await db.ref(`data/loginDirectory/${loginKey}`).update({
+                version,
+                accountId: uId,
+                deleted: false
+            });
+        } else {
+            // Bei einer komplett neuen Registrierung darf die erste freie technische Version
+            // auch größer als 1 sein, falls ein verwaister alter Firebase-Auth-Zugang existiert.
+            await db.ref(`data/loginDirectory/${loginKey}`).set({ version, accountId: uId });
+        }
+
         await db.ref(`data/users/${uId}`).set(baseUser);
         const registrationCheck = await db.ref(`data/users/${uId}`).once('value');
         if (!registrationCheck.exists() || registrationCheck.val()?.status !== 'pending') {
@@ -1172,12 +1220,35 @@ async function registerNewFirebaseUser(v, n, p, dn) {
         await auth.signOut();
         return uId;
     } catch (err) {
-        if (credential?.user) {
+        console.error('Registrierung fehlgeschlagen:', err);
+
+        // Bestmöglicher Rollback, solange der gerade neu erstellte Firebase-Nutzer noch
+        // angemeldet ist. Bestehende Löschmarker werden wiederhergestellt.
+        if (credential?.user?.uid) {
+            try {
+                if (knownDirectory.exists && knownDirectory.deleted) {
+                    await db.ref(`data/loginDirectory/${loginKey}`).update({
+                        version: previousVersion || 1,
+                        accountId: uId,
+                        deleted: true
+                    });
+                } else {
+                    await db.ref(`data/loginDirectory/${loginKey}`).remove();
+                }
+            } catch (rollbackErr) {
+                console.warn('Login-Verzeichnis konnte beim Registrierungs-Rollback nicht vollständig zurückgesetzt werden:', rollbackErr);
+            }
+
+            try { await db.ref(`data/authIndex/${credential.user.uid}`).remove(); } catch (rollbackErr) {
+                console.warn('Auth-Zuordnung konnte beim Registrierungs-Rollback nicht entfernt werden:', rollbackErr);
+            }
             try { await credential.user.delete(); } catch (_) {}
         }
-        try { await db.ref(`data/loginDirectory/${loginKey}`).remove(); } catch (_) {}
-        if (credential?.user?.uid) {
-            try { await db.ref(`data/authIndex/${credential.user.uid}`).remove(); } catch (_) {}
+
+        if (err?.code === 'auth/email-already-in-use') {
+            const e = new Error('Ein alter technischer Zugang blockiert diese Registrierung. Bitte den Master-Admin kontaktieren.');
+            e.code = 'mmd/old-auth-account-conflict';
+            throw e;
         }
         throw err;
     }
@@ -1575,6 +1646,22 @@ function executeMidnightArchive(archivedDateLabel) {
 }
 
 /* ── Sensible Firebase-Listener nur bei passender Rolle ─────── */
+async function refreshUsersFromFirebase() {
+    if (!sessionUser) return cachedUsers;
+    try {
+        const snap = await db.ref('data/users').once('value');
+        const rawUsers = snap.val() || {};
+        cachedUsers = Object.fromEntries(Object.entries(rawUsers).map(([uId, u]) => [uId, withStableAccountId(uId, u)]));
+        renderAdminUserTable(cachedUsers);
+        renderStaffDirectory();
+        renderExamTab();
+        return cachedUsers;
+    } catch (err) {
+        console.error('Mitarbeiterliste konnte nicht aktualisiert werden:', err);
+        throw err;
+    }
+}
+
 function refreshSensitiveFirebaseListeners() {
     db.ref('data/archiv').off();
     db.ref('data/auditLogs').off();
@@ -2170,7 +2257,7 @@ function saveAllSzenarienWorkflows() {
 }
 
 // ============================================================
-//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.4.0
+//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.4.2
 //  Firebase Realtime Database (Compat SDK v10)
 // ============================================================
 
@@ -3273,8 +3360,11 @@ function renderStaffDirectory() {
 
     const q = (document.getElementById('searchStaffInput')?.value || '').trim().toLowerCase();
     const canManagePhotos = canUserManageEmployeePhotos();
+    const eff = sessionUser ? getUserEffectivePermissions(sessionUser) : {};
+    const canManageRegistrations = !!(eff.canManageInstructors || eff.isAdmin || eff.isMasterAdmin);
 
     const staffList = Object.entries(cachedUsers || {}).filter(([, u]) => {
+        if (canManageRegistrations) return true;
         return u.status === 'approved' || u.isAdmin || u.isMasterAdmin;
     });
 
@@ -3320,7 +3410,15 @@ function renderStaffDirectory() {
                     <div class="staff-dn-pill">${escapeHtml(dnFormatted)}</div>
                     <h3 class="staff-name-title">${escapeHtml(u.vorname || '')} ${escapeHtml(u.nachname || '')}</h3>
                     <div class="staff-roles-container">${renderUserRoleBadges(u)}</div>
-                    ${canManagePhotos ? `
+                    ${canManageRegistrations ? `
+                        <div style="margin-top:8px;font-size:12px;font-weight:800;color:${getUserStatusDisplay(u.status).color};">${getUserStatusDisplay(u.status).text}</div>
+                        ${u.status !== 'approved' ? `
+                            <div class="staff-card-admin-actions">
+                                <button type="button" class="btn-staff-quick-action" onclick="approveUser('${uId}')" title="Diesen Mitarbeiter freischalten">✅ Freischalten</button>
+                            </div>
+                        ` : ''}
+                    ` : ''}
+                    ${(canManagePhotos && u.status === 'approved') ? `
                         <div class="staff-card-admin-actions">
                             <label class="btn-staff-quick-action btn-upload" title="Neues bearbeitetes Foto mit Logo für diesen Mitarbeiter einstellen">
                                 🎨 Foto einstellen
@@ -5382,6 +5480,11 @@ async function verifyAdminKeyPassword() {
         await auth.currentUser.reauthenticateWithCredential(credential);
         closeAdminAuthModal();
         document.getElementById('adminManagementModal').style.display = 'flex';
+        try {
+            await refreshUsersFromFirebase();
+        } catch (_) {
+            alert('Die Mitarbeiterliste konnte nicht frisch aus Firebase geladen werden. Es wird der zuletzt geladene Stand angezeigt.');
+        }
         renderAdminUserTable(cachedUsers);
         renderAdminRolesList();
         refreshFirebaseAuthMigrationPanel();
@@ -5915,6 +6018,7 @@ async function approveUser(uId) {
     if (!requireTargetUserManagement(uId)) return;
     try {
         await db.ref('data/users/'+uId+'/status').set('approved');
+        await refreshUsersFromFirebase();
         logAdminAudit('Mitarbeiter freigeschaltet', `Account ${uId} aktiviert von ${sessionUser.vorname} ${sessionUser.nachname}`);
         alert('✅ Mitarbeiter wurde erfolgreich freigeschaltet.');
     } catch (err) {
@@ -5933,6 +6037,7 @@ async function revokeUser(uId) {
     if (!confirm('Mitarbeiter wirklich sperren? Der Account bleibt bestehen, kann sich aber nicht mehr einloggen.')) return;
     try {
         await db.ref('data/users/'+uId+'/status').set('revoked');
+        await refreshUsersFromFirebase();
         logAdminAudit('Mitarbeiter gesperrt', `Account ${uId} gesperrt von ${sessionUser.vorname} ${sessionUser.nachname}`);
         alert('✅ Mitarbeiter wurde gesperrt.');
     } catch (err) {
