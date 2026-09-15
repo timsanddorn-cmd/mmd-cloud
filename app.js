@@ -1,5 +1,5 @@
 // ============================================================
-//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.5.0
+//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.6.0
 //  Firebase Realtime Database (Compat SDK v10)
 // ============================================================
 
@@ -119,6 +119,17 @@ function clearStoredSessionData() {
     ['mmd_session_active', 'mmd_session_user', 'mmd_session_date', 'mmd_session_user_id'].forEach(k => localStorage.removeItem(k));
 }
 
+function getStoredSessionDate() {
+    return sessionStorage.getItem('mmd_session_date') || localStorage.getItem('mmd_session_date') || '';
+}
+
+function storeActiveSessionDate(dateLabel) {
+    sessionStorage.setItem('mmd_session_active', 'true');
+    sessionStorage.setItem('mmd_session_date', dateLabel);
+    localStorage.setItem('mmd_session_active', 'true');
+    localStorage.setItem('mmd_session_date', dateLabel);
+}
+
 /* ── Robuste, einheitliche Benutzer-ID Normalisierung ──────── */
 function generateUserId(vorname, nachname) {
     const cleanV = (vorname || '').trim().toLowerCase()
@@ -205,6 +216,11 @@ let anzahlVerletzungenFall = 1;
 let fallMaterial      = {};
 let daten             = { patienten: 0, verletzungen: 0, ausgaben: 0 };
 let mySessionRef      = null;
+let cachedMaintenanceState = { enabled:false, startedAt:0, startedBy:'', message:'' };
+let maintenanceModeListenerActive = false;
+let maintenanceRestrictedLast = false;
+let dailyForcedLogoutTimeoutId = null;
+let dailyLogoutEventsBound = false;
 let cachedUsers       = {};
 let cachedExams       = {};
 let cachedSubmissions = {};
@@ -257,174 +273,100 @@ let hierarchieDaten = JSON.parse(JSON.stringify(defaultHierarchieData));
 /* ── Vollständiger Gesamt-Changelog (Entwicklungsverlauf) ───── */
 const systemChangelogs = [
     {
-        id: "sys_v6_5_0",
-        version: "v6.5.0",
-        date: "15.09.2026",
-        ts: 1789423200000,
-        category: "Neue Funktion",
-        title: "Chief-Ebene & Materialverwaltung",
+        id: "sys_v6_6_0", version: "v6.6.0", date: "15.09.2026", ts: 1789426800000,
+        category: "Update", title: "Materialliste & Wartungsmodus verbessert",
         changes: [
-            "Neuer Hauptbereich „Chief-Ebene“ für die zentrale Materialverwaltung ergänzt.",
-            "Materialbestände können direkt im Browser erfasst werden; der Verbrauch wird automatisch berechnet und farblich eingeordnet.",
-            "Maximalbestände lassen sich berechtigt anpassen und werden für neue Bestandsaufnahmen verwendet.",
-            "Eine gemeinsame Historie zeigt frühere Bestände, Auffüllstatus und den erfassenden Mitarbeiter.",
-            "Sichtbarkeit und Bearbeitung der Materialliste können über Rollen und Berechtigungen gesteuert werden.",
-            "Die Passwortfelder wurden technisch sauber in Formulare eingebunden, sodass die Browser-Warnungen dazu nicht mehr erscheinen."
+            "Die Materialverwaltung wurde übersichtlicher gestaltet und um die bisherigen Altbestände ergänzt.",
+            "Fehlerhafte Bestandsaufnahmen können jetzt einzeln gelöscht werden.",
+            "Für Wartungsarbeiten gibt es einen neuen geschützten Wartungsmodus. Dokumentation & Einsatz bleibt für alle Mitarbeiter nutzbar.",
+            "Neue Registrierungen sind während Wartungsarbeiten vorübergehend nicht möglich.",
+            "Der automatische Dienst-Logout zum Tageswechsel wurde verbessert.",
+            "Die Anzeige der Mitarbeiter im Dienst wurde für längere Namen verbessert.",
+            "Die Passwortverwaltung für den Master Admin wurde verständlicher gestaltet.",
+            "Hinweise und Fehlermeldungen wurden einfacher und verständlicher formuliert."
         ]
     },
     {
-        id: "sys_v6_4_2",
-        version: "v6.4.2",
-        date: "15.09.2026",
-        ts: 1789422000002,
-        category: "Bugfix",
-        title: "Wiederregistrierung gelöschter Mitarbeiter repariert",
+        id: "sys_v6_5_0", version: "v6.5.0", date: "15.09.2026", ts: 1789423200000,
+        category: "Neue Funktion", title: "Materialverwaltung hinzugefügt",
         changes: [
-            "Gelöschte Mitarbeiter können sich später wieder mit demselben Namen registrieren, ohne durch einen alten technischen Zugang blockiert zu werden.",
-            "Bei einer erneuten Registrierung wird automatisch ein neuer technischer Zugang verwendet; alte Zugänge bleiben weiterhin ohne Zugriff auf die MD-Daten.",
-            "Ausstehende Registrierungen werden für berechtigte Personen direkt in der Mitarbeiter-Kartei sichtbar und können dort freigeschaltet werden.",
-            "Beim Öffnen der Adminverwaltung wird die Mitarbeiterliste frisch aus der Datenbank geladen, damit neue Anträge zuverlässig erscheinen.",
-            "Fehler bei der Registrierung werden verständlicher abgefangen, damit unvollständige Konten möglichst nicht zurückbleiben."
+            "Die Chief Ebene hat einen eigenen Bereich für die Materialverwaltung erhalten.",
+            "Bestände, Verbrauch und Auffüllstatus können gemeinsam gepflegt werden.",
+            "Die Bestands Historie zeigt frühere Einträge übersichtlich an."
         ]
     },
     {
-        id: "sys_v6_4_0",
-        version: "v6.4.0",
-        date: "14.09.2026",
-        ts: 1789422000000,
-        category: "Update",
-        title: "Anmeldung, Rollen & Bedienung verbessert",
+        id: "sys_v6_4_2", version: "v6.4.2", date: "15.09.2026", ts: 1789422000002,
+        category: "Fehlerbehebung", title: "Registrierung verbessert",
         changes: [
-            "Neue Mitarbeiterkonten können zuverlässiger beantragt und anschließend von berechtigten Personen freigeschaltet werden.",
-            "Bei Freischaltungen, Sperrungen und Prüfungsaktionen werden Fehler jetzt verständlich angezeigt, statt unbemerkt zu bleiben.",
-            "Die Dienstnummer wird in der Liste der aktuell im Dienst befindlichen Mitarbeiter wieder zuverlässiger beim Darüberfahren angezeigt.",
-            "Die bisherige Rolle Admin wurde entfernt. Die Chief-Ebene übernimmt weiterhin die vorgesehenen Verwaltungsaufgaben unterhalb des Master-Admins.",
-            "Wartende, aktive und gesperrte Mitarbeiterkonten werden deutlicher voneinander unterschieden.",
-            "Der bestehende Changelog wurde sprachlich vereinfacht und stärker auf die sichtbaren Änderungen für Mitarbeiter ausgerichtet.",
-            "Mehrere kleinere Stabilitätsprobleme bei Anmeldung, Ausbildung und Benutzerverwaltung wurden bereinigt."
+            "Gelöschte Mitarbeiter können sich bei Bedarf wieder neu registrieren.",
+            "Ausstehende Registrierungen werden zuverlässiger zur Freischaltung angezeigt."
         ]
     },
     {
-        id: "sys_v6_3_0",
-        version: "v6.3.0",
-        date: "13.09.2026",
-        ts: 1789335600001,
-        category: "Bugfix",
-        title: "Stabilität, Anmeldung & Navigation verbessert",
+        id: "sys_v6_4_0", version: "v6.4.0", date: "14.09.2026", ts: 1789422000000,
+        category: "Update", title: "Anmeldung & Verwaltung verbessert",
         changes: [
-            "Einstellungen und Ausbildungsbereich sind wieder zuverlässig erreichbar.",
-            "Das Prüfcenter wurde bereinigt, damit die verschiedenen Prüfungsansichten wieder korrekt funktionieren.",
-            "Die Anmeldung und Passwortverwaltung wurden sicherer und zuverlässiger gemacht.",
-            "Sitzungen und sensible Kontodaten werden besser geschützt.",
-            "Rollen und Zugriffsrechte wurden verbessert, damit Funktionen nur von den vorgesehenen Personen genutzt werden können.",
-            "Kalender-, News-, Feedback- und Prüfungsfunktionen wurden zusätzlich gegen unberechtigte Nutzung abgesichert.",
-            "Besonders geschützte Verwaltungsrechte können nur noch vom Master-Admin vergeben oder verändert werden.",
-            "Die automatische Archivierung wurde stabilisiert, damit neue Einträge nicht versehentlich mit entfernt werden.",
-            "Nicht mehr benötigte Altlasten wurden aus dem laufenden System entfernt.",
-            "Die Anmelde- und Registrierungsseite wurde optisch an die MMD-Cloud angepasst und für mobile Geräte verbessert.",
-            "Die Dienstleiste wurde stabilisiert und bleibt auch bei mehreren Mitarbeitern übersichtlich.",
-            "Wünsche und Bug-Meldungen wurden in einen eigenen übersichtlichen Bereich verschoben.",
-            "Ältere Wunsch- und Bug-Einträge können wieder zuverlässig bearbeitet und gelöscht werden.",
-            "Namen und Dienstnummern können geändert werden, ohne dass die feste Kontozuordnung verloren geht.",
-            "Die Chief-Ebene wurde als Verwaltungsrolle unterhalb des Master-Admins ergänzt.",
-            "Der Master-Admin kann den Stand der persönlichen Passwortumstellung aller Mitarbeiter einsehen."
+            "Die Anmeldung und Freischaltung neuer Mitarbeiter wurde verbessert.",
+            "Wartende, aktive und gesperrte Konten werden deutlicher unterschieden.",
+            "Die Chief Ebene übernimmt die vorgesehenen Verwaltungsaufgaben."
         ]
     },
     {
-        id: "sys_v6_2_0",
-        version: "v6.2.0",
-        date: "13.09.2026",
-        ts: 1789335600000,
-        category: "Update",
-        title: "Prüfcenter & Bedienung verbessert",
+        id: "sys_v6_3_0", version: "v6.3.0", date: "13.09.2026", ts: 1789335600001,
+        category: "Fehlerbehebung", title: "Stabilität verbessert",
         changes: [
-            "Berechtigte Personen können Wünsche und Bug-Meldungen schneller über die Hauptleiste aufrufen.",
-            "Begründungen bei Ablehnungen können direkt in der jeweiligen Zeile eingegeben werden.",
-            "Erledigte oder abgelehnte Meldungen lassen sich wieder zuverlässig löschen.",
-            "Die Schrift in Tabellen wurde für eine bessere Lesbarkeit vergrößert.",
-            "Porträtfotos und Dienstlogos in der Mitarbeiter-Kartei wurden größer dargestellt.",
-            "Mehrere kleinere Darstellungs- und Bedienprobleme wurden bereinigt."
+            "Mehrere Bereiche der Seite wurden stabilisiert.",
+            "Anmeldung, Navigation und Mitarbeiterverwaltung wurden verbessert.",
+            "Die Darstellung auf verschiedenen Geräten wurde überarbeitet."
         ]
     },
     {
-        id: "sys_v6_1_0",
-        version: "v6.1.0",
-        date: "12.09.2026",
-        ts: 1789249200000,
-        category: "Neue Funktion",
-        title: "Wünsche & Bug-Meldungen eingeführt",
+        id: "sys_v6_2_0", version: "v6.2.0", date: "13.09.2026", ts: 1789335600000,
+        category: "Update", title: "Prüfcenter & Bedienung verbessert",
         changes: [
-            "Mitarbeiter können Verbesserungsvorschläge, Ideen und Fehlerberichte direkt über die Homepage einreichen.",
-            "Die Verwaltung eingereichter Meldungen ist nur für berechtigte Personen sichtbar.",
-            "Abgelehnte Vorschläge benötigen eine Begründung und bleiben nachvollziehbar.",
-            "Einreichungen können für die weitere Bearbeitung als Aufgabenliste exportiert werden."
+            "Das Prüfcenter wurde übersichtlicher und zuverlässiger gemacht.",
+            "Tabellen und Mitarbeiterfotos wurden besser lesbar dargestellt."
         ]
     },
     {
-        id: "sys_v6_0_1",
-        version: "v6.0.1",
-        date: "12.09.2026",
-        ts: 1789243200000,
-        category: "Bugfix",
-        title: "Passwort & Verwaltung stabilisiert",
+        id: "sys_v6_1_0", version: "v6.1.0", date: "12.09.2026", ts: 1789249200000,
+        category: "Neue Funktion", title: "Wünsche & Bugs hinzugefügt",
         changes: [
-            "Das Ändern des eigenen Passworts in den Einstellungen funktioniert wieder zuverlässig.",
-            "Das Löschen archivierter Schichten wird im System-Protokoll nachvollziehbar erfasst.",
-            "Beim Bearbeiten eines Mitarbeiterkontos bleibt das vorhandene Passwort erhalten, wenn kein neues gesetzt wird."
+            "Mitarbeiter können Wünsche und Fehler direkt über die Seite melden.",
+            "Berechtigte Personen können die Meldungen prüfen und bearbeiten."
         ]
     },
     {
-        id: "sys_v6_0_0",
-        version: "v6.0.0",
-        date: "11.09.2026",
-        ts: 1789156800000,
-        category: "Update",
-        title: "Kalender, Ausbildung & Arbeitsabläufe erweitert",
+        id: "sys_v6_0_1", version: "v6.0.1", date: "12.09.2026", ts: 1789245600000,
+        category: "Fehlerbehebung", title: "Passwort & Verwaltung verbessert",
         changes: [
-            "Aktive Sitzungen werden täglich automatisch beendet.",
-            "Der Ausbildungsbereich wurde übersichtlicher sortiert und um eine schnellere Suche ergänzt.",
-            "Ausbilder können nur Prüfungen verwalten, für die sie selbst die erforderliche Freigabe besitzen.",
-            "Der Kalender unterstützt private Termine und Rückmeldungen auf Einladungen.",
-            "Bei Terminen werden nur passende Rollen und Abteilungen zur Auswahl angeboten.",
-            "Mehrere regelmäßig benötigte Inhalte können direkt über die Homepage bearbeitet werden.",
-            "Rollen, Protokolle und verschiedene Bedienhilfen wurden zuverlässiger gemacht."
+            "Die Passwortverwaltung wurde zuverlässiger gemacht.",
+            "Mehrere kleinere Probleme in der Mitarbeiterverwaltung wurden behoben."
         ]
     },
     {
-        id: "sys_v5_9_4",
-        version: "v5.9.4",
-        date: "11.09.2026",
-        ts: 1789136800000,
-        category: "Bugfix",
-        title: "Links & Dokumente bereinigt",
+        id: "sys_v6_0_0", version: "v6.0.0", date: "11.09.2026", ts: 1789159200000,
+        category: "Update", title: "Arbeitsbereiche erweitert",
         changes: [
-            "Leere oder nicht benötigte Standard-Links wurden entfernt.",
-            "Links und Dokumente lassen sich zuverlässiger löschen und verwalten."
+            "Kalender, Ausbildung und weitere Arbeitsbereiche wurden erweitert.",
+            "Mehrere tägliche Abläufe können direkt über die MMD Cloud erledigt werden."
         ]
     },
     {
-        id: "sys_v5_9_3",
-        version: "v5.9.3",
-        date: "11.09.2026",
-        ts: 1789126800000,
-        category: "Design",
-        title: "Formulare & Bedienbarkeit verbessert",
-        changes: [
-            "Auswahlfelder und Checkboxen im Kalender und in der Rollenverwaltung wurden besser zugeordnet.",
-            "Mehrere Hinweise und Warnungen bei Formularfeldern wurden beseitigt."
-        ]
+        id: "sys_v5_9_4", version: "v5.9.4", date: "11.09.2026", ts: 1789155600004,
+        category: "Fehlerbehebung", title: "Links & Dokumente verbessert",
+        changes: ["Der Bereich Links & Dokumente wurde bereinigt und stabilisiert."]
     },
     {
-        id: "sys_v5_9_2",
-        version: "v5.9.2",
-        date: "11.09.2026",
-        ts: 1789116800000,
-        category: "Technische Änderung",
-        title: "Benutzerzuordnung & Prüfungen stabilisiert",
-        changes: [
-            "Benutzer werden auch bei Namen mit Umlauten zuverlässiger erkannt und zugeordnet.",
-            "Prüfungen werden beim Erstellen genauer geprüft, damit unvollständige Fragen nicht gespeichert werden."
-        ]
+        id: "sys_v5_9_3", version: "v5.9.3", date: "11.09.2026", ts: 1789155600003,
+        category: "Fehlerbehebung", title: "Bedienung verbessert",
+        changes: ["Formulare und mehrere Bedienelemente wurden verbessert."]
+    },
+    {
+        id: "sys_v5_9_2", version: "v5.9.2", date: "11.09.2026", ts: 1789155600002,
+        category: "Fehlerbehebung", title: "Mitarbeiter & Prüfungen stabilisiert",
+        changes: ["Mitarbeiterzuordnung und Prüfungsfunktionen wurden zuverlässiger gemacht."]
     }
 ];
 
@@ -448,7 +390,7 @@ const defaultGehaltData = [
 ];
 let cachedGehaltData = JSON.parse(JSON.stringify(defaultGehaltData));
 
-/* ── Chief-Ebene: Materialverwaltung (Grundlage: SAMD-Materialliste) ── */
+/* ── Chief Ebene: Materialverwaltung (Grundlage: SAMD-Materialliste) ── */
 const CHIEF_MATERIAL_DEFS = [
     { id:'wundreiniger', name:'Wundreiniger', defaultMax:2500 },
     { id:'nahtset', name:'Nahtset', defaultMax:2500 },
@@ -469,7 +411,7 @@ let chiefMaterialsListenerActive = false;
 /* ── Standard-Rollen & Berechtigungen ───────────────────────── */
 const defaultRoles = {
     masteradmin: {
-        id:'masteradmin', name:'Master-Admin', color:'#eab308', icon:'👑', isSystem:true,
+        id:'masteradmin', name:'Master Admin', color:'#eab308', icon:'👑', isSystem:true,
         isAdmin:true, isMasterAdmin:true, canViewArchive:true, canEditAllPatients:true,
         canCreateCalendar:true, delCalendar:true, canManagePhotos:true, delPhotos:true,
         isInstructor:true, canManageInstructors:true, canManageExams:true,
@@ -480,7 +422,7 @@ const defaultRoles = {
         allowedCmdKats: [], allowedLinkKats: []
     },
     chiefebene: {
-        id:'chiefebene', name:'Chief-Ebene', color:'#fbbf24', icon:'⭐', isSystem:true,
+        id:'chiefebene', name:'Chief Ebene', color:'#fbbf24', icon:'⭐', isSystem:true,
         isAdmin:true, isMasterAdmin:false, canViewArchive:true, canEditAllPatients:true,
         canCreateCalendar:true, delCalendar:true, canManagePhotos:true, delPhotos:true,
         isInstructor:true, canManageInstructors:true, canManageExams:true,
@@ -513,7 +455,7 @@ const defaultRoles = {
         allowedLinkKats: ['Allgemein', 'MD Intern']
     },
     cls: {
-        id:'cls', name:'CLS-Ausbilder', color:'#06b6d4', icon:'💉', isSystem:true,
+        id:'cls', name:'CLS Ausbilder', color:'#06b6d4', icon:'💉', isSystem:true,
         isAdmin:false, isMasterAdmin:false, canViewArchive:false, canEditAllPatients:false,
         canCreateCalendar:false, delCalendar:false, canManagePhotos:false, delPhotos:false,
         isInstructor:false, canManageInstructors:false, canManageExams:false,
@@ -524,7 +466,7 @@ const defaultRoles = {
         allowedLinkKats: ['Allgemein', 'CLS', 'MD Intern']
     },
     ehk: {
-        id:'ehk', name:'EHK-Ausbilder', color:'#10b981', icon:'🩺', isSystem:true,
+        id:'ehk', name:'EHK Ausbilder', color:'#10b981', icon:'🩺', isSystem:true,
         isAdmin:false, isMasterAdmin:false, canViewArchive:false, canEditAllPatients:false,
         canCreateCalendar:false, delCalendar:false, canManagePhotos:false, delPhotos:false,
         isInstructor:false, canManageInstructors:false, canManageExams:false,
@@ -580,6 +522,51 @@ const defaultRoles = {
     }
 };
 let cachedRoles = Object.assign({}, defaultRoles);
+
+// Feste Anzeige-Reihenfolge der Standardrollen. Die internen Rollen-IDs bleiben unverändert.
+const ROLE_DISPLAY_ORDER = [
+    'masteradmin',
+    'chiefebene',
+    'ausbildungsleitung',
+    'ausbilder',
+    'personalabteilung',
+    'psychologie',
+    'cls',
+    'ehk',
+    'luftrettung',
+    'mitarbeiter'
+];
+
+const SYSTEM_ROLE_DISPLAY_NAMES = {
+    masteradmin: 'Master Admin',
+    chiefebene: 'Chief Ebene',
+    ausbildungsleitung: 'Ausbildungsleitung',
+    ausbilder: 'Ausbilder',
+    personalabteilung: 'Personalabteilung',
+    psychologie: 'Psychologie',
+    cls: 'CLS Ausbilder',
+    ehk: 'EHK Ausbilder',
+    luftrettung: 'Luftrettung',
+    mitarbeiter: 'Mitarbeiter'
+};
+
+function normalizeSystemRoleDisplayData(rolesObj) {
+    const roles = rolesObj || {};
+    Object.entries(SYSTEM_ROLE_DISPLAY_NAMES).forEach(([roleId, displayName]) => {
+        if (roles[roleId]) roles[roleId].name = displayName;
+    });
+    return roles;
+}
+
+function sortRolesForDisplay(roleList) {
+    const orderMap = new Map(ROLE_DISPLAY_ORDER.map((id, index) => [id, index]));
+    return [...(roleList || [])].sort((a, b) => {
+        const ai = orderMap.has(a?.id) ? orderMap.get(a.id) : 999;
+        const bi = orderMap.has(b?.id) ? orderMap.get(b.id) : 999;
+        if (ai !== bi) return ai - bi;
+        return (a?.name || '').localeCompare(b?.name || '', 'de');
+    });
+}
 
 const ROLE_PROPERTY_MAP = {
     roleFlagAdmin: 'isAdmin',
@@ -717,6 +704,187 @@ const STANDARD_INFO_QUESTIONS = [
 ];
 
 /* ── Audit Logger ──────────────────────────────────────────── */
+
+/* ── Wartungsmodus ─────────────────────────────────────────── */
+function isChiefOrMasterUser(user = sessionUser) {
+    if (!user) return false;
+    const roles = getUserRolesList(user);
+    return !!user.isMasterAdmin || roles.includes('masteradmin') || roles.includes('chiefebene');
+}
+
+function canCurrentUserManageMaintenance() {
+    return !!sessionUser && isChiefOrMasterUser(sessionUser);
+}
+
+function normalizeMaintenanceState(raw) {
+    const x = raw && typeof raw === 'object' ? raw : {};
+    return {
+        enabled: x.enabled === true,
+        startedAt: Number(x.startedAt) || 0,
+        startedBy: String(x.startedBy || ''),
+        message: String(x.message || '')
+    };
+}
+
+async function readMaintenanceState() {
+    try {
+        if (!auth.currentUser) {
+            const snap = await db.ref('data/systemStatus/maintenance/enabled').once('value');
+            cachedMaintenanceState = { enabled: snap.val() === true, startedAt:0, startedBy:'', message:'' };
+        } else {
+            const snap = await db.ref('data/systemStatus/maintenance').once('value');
+            cachedMaintenanceState = normalizeMaintenanceState(snap.val());
+        }
+    } catch (err) {
+        console.error('Wartungsstatus konnte nicht geladen werden:', err);
+        cachedMaintenanceState = { enabled:false, startedAt:0, startedBy:'', message:'' };
+    }
+    return cachedMaintenanceState;
+}
+
+function isMaintenanceRestrictedSession() {
+    return !!(sessionUser && cachedMaintenanceState.enabled && !isChiefOrMasterUser(sessionUser));
+}
+
+function updateMaintenanceBanner() {
+    const banner = document.getElementById('maintenanceModeBanner');
+    if (!banner) return;
+    if (!cachedMaintenanceState.enabled) {
+        banner.style.display = 'none';
+        banner.textContent = '';
+        return;
+    }
+    banner.style.display = 'flex';
+    const suffix = cachedMaintenanceState.message ? ` – ${cachedMaintenanceState.message}` : '';
+    banner.textContent = `🛠️ Wartungsmodus aktiv${suffix}`;
+}
+
+function applyMaintenanceAccessMode(showNotice = false) {
+    updateMaintenanceBanner();
+    if (!sessionUser) return;
+    const restricted = isMaintenanceRestrictedSession();
+    document.body.classList.toggle('maintenance-restricted', restricted);
+
+    document.querySelectorAll('.tab-nav .tab-btn').forEach(btn => {
+        const onclick = btn.getAttribute('onclick') || '';
+        const isDoc = onclick.includes("switchTab('docTab'");
+        if (restricted) {
+            btn.dataset.maintenancePrevDisplay = btn.style.display || '';
+            btn.style.display = isDoc ? '' : 'none';
+        } else if (btn.dataset.maintenancePrevDisplay !== undefined) {
+            btn.style.display = btn.dataset.maintenancePrevDisplay;
+            delete btn.dataset.maintenancePrevDisplay;
+        }
+    });
+
+    const adminBtn = document.getElementById('adminKeyBtn');
+    const feedbackBtn = document.querySelector('.btn-feedback-trigger');
+    const restrictedControls = [
+        document.getElementById('btnEditPricesInline'),
+        document.getElementById('btnEditSzenarienInline'),
+        document.getElementById('btnManualProtArchive')
+    ].filter(Boolean);
+    if (restricted) {
+        if (adminBtn) adminBtn.style.display = 'none';
+        if (feedbackBtn) feedbackBtn.style.display = 'none';
+        restrictedControls.forEach(el => {
+            if (el.dataset.maintenancePrevDisplay === undefined) el.dataset.maintenancePrevDisplay = el.style.display || '';
+            el.style.display = 'none';
+        });
+        if (!document.getElementById('docTab')?.classList.contains('active')) {
+            switchTab('docTab', document.querySelector('.tab-nav .tab-btn'));
+        }
+        document.querySelectorAll('.modal-overlay').forEach(m => { if (m.style.display === 'flex') m.style.display = 'none'; });
+        if (showNotice) alert('🛠️ Es finden aktuell Wartungsarbeiten statt. Dokumentation & Einsatz bleibt für den Dienstbetrieb verfügbar.');
+    } else {
+        if (feedbackBtn) feedbackBtn.style.display = '';
+        restrictedControls.forEach(el => {
+            if (el.dataset.maintenancePrevDisplay !== undefined) {
+                el.style.display = el.dataset.maintenancePrevDisplay;
+                delete el.dataset.maintenancePrevDisplay;
+            }
+        });
+    }
+}
+
+function startMaintenanceStatusListener() {
+    const ref = db.ref('data/systemStatus/maintenance');
+    ref.off();
+    maintenanceModeListenerActive = true;
+    maintenanceRestrictedLast = isMaintenanceRestrictedSession();
+    ref.on('value', snap => {
+        const before = maintenanceRestrictedLast;
+        cachedMaintenanceState = normalizeMaintenanceState(snap.val());
+        const after = isMaintenanceRestrictedSession();
+        maintenanceRestrictedLast = after;
+        renderMaintenanceAdminPanel();
+        applyMaintenanceAccessMode(!before && after);
+        if (before !== after) {
+            if (!after && sessionUser) applyUserPermissions(sessionUser);
+            startFirebaseListeners();
+        }
+    }, err => console.error('Wartungsstatus konnte nicht aktualisiert werden:', err));
+}
+
+function renderMaintenanceAdminPanel() {
+    const box = document.getElementById('maintenanceAdminPanel');
+    if (!box) return;
+    const canManage = canCurrentUserManageMaintenance();
+    const stateText = document.getElementById('maintenanceStatusText');
+    const details = document.getElementById('maintenanceStatusDetails');
+    const btnOn = document.getElementById('btnEnableMaintenance');
+    const btnOff = document.getElementById('btnDisableMaintenance');
+    const msg = document.getElementById('maintenanceMessageInput');
+    if (stateText) {
+        stateText.textContent = cachedMaintenanceState.enabled ? '🟠 Wartungsmodus ist aktiv' : '🟢 Normalbetrieb';
+        stateText.className = cachedMaintenanceState.enabled ? 'maintenance-state active' : 'maintenance-state';
+    }
+    if (details) {
+        if (cachedMaintenanceState.enabled) {
+            const when = cachedMaintenanceState.startedAt ? new Date(cachedMaintenanceState.startedAt).toLocaleString('de-DE') : '--';
+            details.textContent = `Aktiviert von ${cachedMaintenanceState.startedBy || 'Chief Ebene / Master Admin'} · ${when}`;
+        } else {
+            details.textContent = 'Alle Bereiche stehen den jeweils berechtigten Mitarbeitern normal zur Verfügung.';
+        }
+    }
+    if (msg && document.activeElement !== msg) msg.value = cachedMaintenanceState.message || '';
+    if (btnOn) { btnOn.style.display = canManage && !cachedMaintenanceState.enabled ? 'inline-flex' : 'none'; btnOn.disabled = !canManage; }
+    if (btnOff) { btnOff.style.display = canManage && cachedMaintenanceState.enabled ? 'inline-flex' : 'none'; btnOff.disabled = !canManage; }
+}
+
+async function setMaintenanceMode(enabled) {
+    if (!canCurrentUserManageMaintenance()) {
+        alert('Du hast dafür keine Berechtigung.');
+        return;
+    }
+    const msg = (document.getElementById('maintenanceMessageInput')?.value || '').trim();
+    const question = enabled
+        ? 'Wartungsmodus jetzt aktivieren? Alle Mitarbeiter behalten Zugriff auf „Dokumentation & Einsatz“. Andere Bereiche sind währenddessen nur für Chief Ebene und Master Admin verfügbar.'
+        : 'Wartungsmodus jetzt beenden und den normalen Zugriff wieder freigeben?';
+    if (!confirm(question)) return;
+    const payload = enabled ? {
+        enabled: true,
+        startedAt: Date.now(),
+        startedBy: `${sessionUser.vorname || ''} ${sessionUser.nachname || ''}`.trim(),
+        startedById: getUserAccountId(sessionUser),
+        message: msg
+    } : {
+        enabled: false,
+        startedAt: 0,
+        startedBy: '',
+        startedById: '',
+        message: ''
+    };
+    try {
+        await db.ref('data/systemStatus/maintenance').set(payload);
+        logAdminAudit(enabled ? 'Wartungsmodus aktiviert' : 'Wartungsmodus beendet', enabled ? 'Wartungsarbeiten wurden gestartet.' : 'Wartungsarbeiten wurden beendet.');
+        alert(enabled ? '✅ Wartungsmodus wurde aktiviert.' : '✅ Wartungsmodus wurde beendet.');
+    } catch (err) {
+        console.error('Wartungsmodus konnte nicht geändert werden:', err);
+        alert('Die Einstellung konnte nicht gespeichert werden. Bitte versuche es erneut.');
+    }
+}
+
 function logAdminAudit(action, details) {
     if (!sessionUser) return;
     db.ref('data/auditLogs').push({
@@ -728,7 +896,7 @@ function logAdminAudit(action, details) {
 };
 
 // ============================================================
-//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.5.0
+//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.6.0
 //  Firebase Realtime Database (Compat SDK v10)
 // ============================================================
 
@@ -743,7 +911,7 @@ function getUserRolesList(user) {
             list = Object.keys(user.roles).filter(k => user.roles[k] === true);
         }
     }
-    // Kompatibilität für alte Konten: Die frühere Rolle "admin" wird seit v6.4.0 als Chief-Ebene behandelt.
+    // Kompatibilität für alte Konten: Die frühere Rolle "admin" wird seit v6.4.0 als Chief Ebene behandelt.
     list = list.map(roleId => roleId === 'admin' ? 'chiefebene' : roleId);
     if (user.isMasterAdmin && !list.includes('masteradmin')) {
         list.unshift('masteradmin');
@@ -874,7 +1042,7 @@ function requireAdminAccess(message = 'Diese Funktion ist nur für Administrator
     return requirePermission(['isAdmin', 'isMasterAdmin'], message);
 }
 
-function requireMasterAdminAccess(message = 'Diese Funktion ist nur für Master-Admins verfügbar!') {
+function requireMasterAdminAccess(message = 'Diese Funktion ist nur für Master Admins verfügbar!') {
     return requirePermission('isMasterAdmin', message);
 }
 
@@ -899,7 +1067,7 @@ function canCurrentUserManageTargetUser(uId) {
 
 function requireTargetUserManagement(uId) {
     if (canCurrentUserManageTargetUser(uId)) return true;
-    alert('Privilegierte Admin-Konten dürfen nur von einem Master-Admin verändert werden!');
+    alert('Privilegierte Admin-Konten dürfen nur von einem Master Admin verändert werden!');
     return false;
 }
 
@@ -1009,18 +1177,18 @@ async function readLoginVersion(loginKey) {
 }
 
 async function loadAuthenticatedProfile(firebaseUser) {
-    if (!firebaseUser) throw new Error('Keine Firebase-Anmeldung vorhanden.');
+    if (!firebaseUser) throw new Error('Keine aktive Anmeldung vorhanden.');
     const indexSnap = await db.ref(`data/authIndex/${firebaseUser.uid}`).once('value');
     const uId = indexSnap.val();
     if (!uId || typeof uId !== 'string') {
-        throw new Error('Dieser Firebase-Zugang ist keinem MD-Mitarbeiterkonto zugeordnet.');
+        throw new Error('Dieser Zugang ist keinem Mitarbeiterkonto zugeordnet.');
     }
 
     const userSnap = await db.ref(`data/users/${uId}`).once('value');
     const user = userSnap.val();
     if (!user) throw new Error('Das zugehörige MD-Mitarbeiterkonto wurde nicht gefunden.');
     if (user.authUid && user.authUid !== firebaseUser.uid) {
-        throw new Error('Dieser Firebase-Zugang wurde durch einen neueren Zugang ersetzt.');
+        throw new Error('Dieser Zugang wurde ersetzt. Bitte melde dich erneut an.');
     }
     return { uId, user: withStableAccountId(uId, user) };
 }
@@ -1061,7 +1229,7 @@ async function migrateLegacyUserOnLogin(uId, password) {
     try {
         snap = await db.ref(`data/users/${uId}`).once('value');
     } catch (err) {
-        const e = new Error('Dieser ältere Account wurde noch nicht in Firebase Authentication übernommen. Bitte den Master-Admin kontaktieren.');
+        const e = new Error('Dieser ältere Account muss noch umgestellt werden. Bitte den Master Admin kontaktieren.');
         e.code = 'mmd/legacy-migration-locked';
         throw e;
     }
@@ -1083,7 +1251,7 @@ async function migrateLegacyUserOnLogin(uId, password) {
     let firebasePassword = password;
     if (firebasePassword.length < 6) {
         const replacement = prompt(
-            'Dein bisheriges MD-Passwort ist kürzer als die von Firebase vorgeschriebenen 6 Zeichen.\n\n' +
+            'Dein bisheriges MD-Passwort ist kürzer als die erforderlichen 6 Zeichen.\n\n' +
             'Bitte lege jetzt einmalig ein neues Passwort mit mindestens 6 Zeichen fest. Dieses neue Passwort gilt anschließend für deine MD-Anmeldung.'
         );
         if (!replacement || replacement.length < 6) {
@@ -1137,7 +1305,7 @@ async function signInWithLegacyTransition(directory, enteredPassword) {
 
 async function forcePasswordChangeAfterTransition(profile) {
     if (!profile?.user?.mustChangePassword) return profile;
-    if (!auth.currentUser) throw new Error('Keine aktive Firebase-Anmeldung für die Passwortänderung vorhanden.');
+    if (!auth.currentUser) throw new Error('Keine aktive Anmeldung für die Passwortänderung vorhanden.');
 
     alert('🔐 Dein MD-Konto wurde auf die neue sichere Anmeldung umgestellt.\n\nBevor du fortfahren kannst, musst du jetzt ein neues persönliches Passwort festlegen.');
 
@@ -1219,7 +1387,7 @@ async function registerNewFirebaseUser(v, n, p, dn) {
         }
 
         if (!credential?.user) {
-            const e = new Error('Für diesen Namen existieren bereits mehrere alte technische Zugänge. Bitte den Master-Admin kontaktieren.');
+            const e = new Error('Für diesen Namen bestehen bereits mehrere ältere Zugänge. Bitte den Master Admin kontaktieren.');
             e.code = 'mmd/registration-version-exhausted';
             throw e;
         }
@@ -1294,7 +1462,7 @@ async function registerNewFirebaseUser(v, n, p, dn) {
         }
 
         if (err?.code === 'auth/email-already-in-use') {
-            const e = new Error('Ein alter technischer Zugang blockiert diese Registrierung. Bitte den Master-Admin kontaktieren.');
+            const e = new Error('Ein älterer Zugang blockiert diese Registrierung. Bitte den Master Admin kontaktieren.');
             e.code = 'mmd/old-auth-account-conflict';
             throw e;
         }
@@ -1313,6 +1481,11 @@ async function handleAuthAction() {
         await configureFirebaseAuthPersistence();
 
         if (currentAuthTab === 'register') {
+            const maintenance = await readMaintenanceState();
+            if (maintenance.enabled) {
+                alert('🛠️ Eine Registrierung ist während der Wartungsarbeiten vorübergehend nicht möglich. Bitte versuche es später erneut.');
+                return;
+            }
             const dn = (document.getElementById('authDN')?.value || '').trim();
             if (!dn) { alert('Bitte Dienstnummer eingeben!'); return; }
             if (p.length < 6) { alert('Das Passwort muss mindestens 6 Zeichen lang sein!'); return; }
@@ -1367,6 +1540,7 @@ async function handleAuthAction() {
             return;
         }
 
+        cachedMaintenanceState = await readMaintenanceState();
         profile = await forcePasswordChangeAfterTransition(profile);
         initDienstEintritt(profile.user);
     } catch (err) {
@@ -1377,35 +1551,41 @@ async function handleAuthAction() {
         } else if (err?.code === 'mmd/password-change-required') {
             alert(err.message);
         } else {
-            alert(err?.message || 'Anmeldung konnte nicht abgeschlossen werden.');
+            alert('Die Anmeldung konnte nicht abgeschlossen werden. Bitte prüfe deine Angaben und versuche es erneut.');
         }
     }
 }
 
-/* ── Tägliches Zwangs-Logout (23:59 Uhr) ─────────────────────── */
+/* ── Tägliches Zwangs-Logout zum Tageswechsel ──────────────── */
 function setupDailyForcedLogoutScheduler() {
     if (dailyForcedLogoutIntervalId) clearInterval(dailyForcedLogoutIntervalId);
+    if (dailyForcedLogoutTimeoutId) clearTimeout(dailyForcedLogoutTimeoutId);
+
+    checkDailyForcedLogout();
     dailyForcedLogoutIntervalId = setInterval(checkDailyForcedLogout, 15000);
+
+    const now = new Date();
+    const nextMidnight = new Date(now);
+    nextMidnight.setHours(24, 0, 2, 0);
+    dailyForcedLogoutTimeoutId = setTimeout(() => checkDailyForcedLogout(), Math.max(1000, nextMidnight.getTime() - now.getTime()));
+
+    if (!dailyLogoutEventsBound) {
+        dailyLogoutEventsBound = true;
+        document.addEventListener('visibilitychange', () => { if (!document.hidden) checkDailyForcedLogout(); });
+        window.addEventListener('focus', checkDailyForcedLogout);
+        window.addEventListener('pageshow', checkDailyForcedLogout);
+    }
 }
 
 function checkDailyForcedLogout() {
-    const now = new Date();
-    const hours = now.getHours();
-    const minutes = now.getMinutes();
-
-    if (hours === 23 && minutes >= 59) {
-        executeDailyForcedLogout();
-        return;
-    }
-
-    const sessionDate = sessionStorage.getItem('mmd_session_date');
-    const todayFormatted = now.toLocaleDateString('de-DE');
-    if (sessionDate && sessionDate !== todayFormatted) {
-        executeDailyForcedLogout();
-    }
+    if (!sessionUser) return;
+    const todayFormatted = new Date().toLocaleDateString('de-DE');
+    const sessionDate = getStoredSessionDate();
+    if (sessionDate && sessionDate !== todayFormatted) executeDailyForcedLogout();
 }
 
 async function executeDailyForcedLogout() {
+    if (!sessionUser) return;
     if (mySessionRef) {
         try { await mySessionRef.remove(); } catch (_) {}
         mySessionRef = null;
@@ -1413,8 +1593,7 @@ async function executeDailyForcedLogout() {
     clearStoredSessionData();
     sessionUser = null;
     try { await auth.signOut(); } catch (_) {}
-
-    alert('🛑 Täglicher System-Reset (23:59 Uhr):\n\nIhre Schichtsitzung wurde beendet. Bitte melden Sie sich für Ihren nächsten Dienst erneut an.');
+    alert('🛑 Der vorherige Dienst wurde zum Tageswechsel automatisch beendet. Bitte melde dich für den neuen Dienst erneut an.');
     location.reload();
 }
 
@@ -1429,6 +1608,12 @@ function applyUserPermissions(user) {
     
     const akBtn = document.getElementById('adminKeyBtn');
     if (akBtn) akBtn.style.display = isAdminOrMaster ? 'inline-block' : 'none';
+
+    const maintenanceAdminTabBtn = document.getElementById('btnAdminSubMaintenance');
+    if (maintenanceAdminTabBtn) maintenanceAdminTabBtn.style.display = isChiefOrMasterUser(user) ? 'inline-flex' : 'none';
+    if (!isChiefOrMasterUser(user) && document.getElementById('adminSubTabMaintenance')?.classList.contains('active')) {
+        switchAdminTab('adminSubTabUsers', document.getElementById('btnAdminSubUsers'));
+    }
 
     const canManageFeedback = !!(eff.canManageFeedback || isAdminOrMaster);
     const feedbackManageTabBtn = document.getElementById('feedbackManageTabBtn');
@@ -1520,6 +1705,7 @@ function applyUserPermissions(user) {
         db.ref('data/feedback').off();
         cachedFeedback = {};
     }
+    if (cachedMaintenanceState.enabled) applyMaintenanceAccessMode(false);
 }
 
 function refreshSessionIdentityDisplay() {
@@ -1555,7 +1741,7 @@ async function migrateLegacyAdminRoleToChief() {
         if (rolesSnap.exists()) updates['data/roles/admin'] = null;
         if (!Object.keys(updates).length) return;
         await db.ref().update(updates);
-        logAdminAudit('Admin-Rolle migriert', `${changedUsers} alte Admin-Zuordnung(en) wurden auf Chief-Ebene umgestellt.`);
+        logAdminAudit('Admin-Rolle migriert', `${changedUsers} alte Admin-Zuordnung(en) wurden auf Chief Ebene umgestellt.`);
     } catch (err) {
         console.error('Migration der alten Admin-Rolle fehlgeschlagen:', err);
     }
@@ -1565,8 +1751,7 @@ function initDienstEintritt(user) {
     sessionUser = withStableAccountId(user?.accountId || generateUserId(user?.vorname, user?.nachname), user);
     const todayFormatted = new Date().toLocaleDateString('de-DE');
     clearStoredSessionData();
-    sessionStorage.setItem('mmd_session_active', 'true');
-    sessionStorage.setItem('mmd_session_date', todayFormatted);
+    storeActiveSessionDate(todayFormatted);
 
     document.getElementById('authView').style.display = 'none';
     document.getElementById('mainAppView').style.display = 'block';
@@ -1578,6 +1763,8 @@ function initDienstEintritt(user) {
     updateLiveDate();
     baueMaterialUIAuf();
     startFirebaseListeners();
+    startMaintenanceStatusListener();
+    applyMaintenanceAccessMode(false);
     if (getUserEffectivePermissions(sessionUser).isMasterAdmin) {
         migrateLegacyAdminRoleToChief();
     }
@@ -1787,6 +1974,27 @@ function startFirebaseListeners() {
     ];
     endpoints.forEach(ep => db.ref(ep).off());
 
+    if (isMaintenanceRestrictedSession()) {
+        db.ref('data/protokoll').on('value', s => renderProtokoll(s.val() || {}));
+        db.ref('data/materialPreise').on('value', s => {
+            const serverData = s.val();
+            if (serverData) Object.keys(serverData).forEach(k => { if (materialKatalog[k]) materialKatalog[k].preis = serverData[k]; });
+            baueMaterialUIAuf();
+        });
+        db.ref('data/szenarienConfig').on('value', s => {
+            const cfg = s.val();
+            if (cfg) {
+                if (cfg.templates) szenarioTemplates = Object.assign({}, szenarioTemplates, cfg.templates);
+                if (cfg.steps) medicDatenbank = Object.assign({}, medicDatenbank, cfg.steps);
+                updateSzenarioDropdownOptions();
+            }
+        });
+        db.ref('data/szenarioTemplates').on('value', s => {
+            if (s.val()) szenarioTemplates = Object.assign({}, szenarioTemplates, s.val());
+        });
+        return;
+    }
+
     db.ref('data/protokoll').on('value', s => renderProtokoll(s.val() || {}));
     db.ref('data/hierarchie').on('value', s => renderHierarchieBoard(s.val() || hierarchieDaten));
     db.ref('data/gehaltstabelle').on('value', s => {
@@ -1833,7 +2041,7 @@ function startFirebaseListeners() {
     db.ref('data/roles').on('value', s => {
         const serverRoles = Object.assign({}, s.val() || {});
         delete serverRoles.admin;
-        cachedRoles = Object.assign({}, defaultRoles, serverRoles);
+        cachedRoles = normalizeSystemRoleDisplayData(Object.assign({}, defaultRoles, serverRoles));
         if (sessionUser) {
             applyUserPermissions(sessionUser);
             refreshSensitiveFirebaseListeners();
@@ -2318,7 +2526,7 @@ function saveAllSzenarienWorkflows() {
 }
 
 // ============================================================
-//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.5.0
+//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.6.0
 //  Firebase Realtime Database (Compat SDK v10)
 // ============================================================
 
@@ -2495,7 +2703,7 @@ function itemCash(i) {
     return Number(i.ausgaben ?? i.cash ?? i.kosten ?? 0);
 }
 
-/* ── Schicht-Korrektur (Master-Admin No-Code Stift) ─────────── */
+/* ── Schicht-Korrektur (Master Admin No-Code Stift) ─────────── */
 function openArchivEditModal(k) {
     const s = cachedArchiv[k];
     if (!s) return;
@@ -2510,7 +2718,7 @@ function closeArchivEditModal() { document.getElementById('archivEditModal').sty
 
 function saveArchivEdit() {
     const eff = sessionUser ? getUserEffectivePermissions(sessionUser) : {};
-    if (!eff.isMasterAdmin) { alert('Nur Master-Admins dürfen archivierte Schichten bearbeiten!'); return; }
+    if (!eff.isMasterAdmin) { alert('Nur Master Admins dürfen archivierte Schichten bearbeiten!'); return; }
 
     const k = document.getElementById('editArchivKey')?.value;
     if (!k) return;
@@ -2593,7 +2801,7 @@ function manualTriggerArchive() {
         db.ref().update(updates).then(() => {
             logAdminAudit('Tagesprotokoll als Schicht übernommen & exportiert', `${sessionUser.vorname} ${sessionUser.nachname} hat das Tagesprotokoll übernommen und exportiert.`);
             alert('✅ Tagesprotokoll wurde archiviert, Schichtbericht heruntergeladen und die erfassten Einträge zurückgesetzt!');
-        }).catch(err => alert('Fehler beim Archivieren: ' + (err?.message || err)));
+        }).catch(err => alert('Die Archivierung konnte nicht abgeschlossen werden. Bitte versuche es erneut.'));
     });
 }
 
@@ -2609,7 +2817,7 @@ function deleteArchivSchicht(k) {
             logAdminAudit('Schichtarchiv gelöscht', `${sessionUser.vorname} ${sessionUser.nachname} hat Schicht ${schichtDatum} gelöscht.`);
             alert('✅ Schichteintrag erfolgreich gelöscht!');
         }).catch(err => {
-            alert('Fehler beim Löschen: ' + err.message);
+            alert('Der Eintrag konnte nicht gelöscht werden. Bitte versuche es erneut.');
         });
     }
 }
@@ -2933,7 +3141,7 @@ function openCreateEventModal(prefillDate = null) {
     }
 
     if (targetRolesContainer) {
-        const sortedRoles = Object.values(cachedRoles).sort((a,b) => (a.name||'').localeCompare(b.name||'', 'de'));
+        const sortedRoles = sortRolesForDisplay(Object.values(cachedRoles));
         targetRolesContainer.innerHTML = sortedRoles.map(r => `
             <label for="cal_role_${r.id}" style="display:flex;align-items:center;gap:6px;padding:4px 8px;cursor:pointer;background:rgba(30,41,59,0.4);border-radius:6px;font-size:13px;">
                 <input type="checkbox" id="cal_role_${r.id}" class="cal-target-role-cb" value="${escapeHtml(r.id)}">
@@ -3329,7 +3537,7 @@ function editCalendarEventAction() {
     if (selectAllCb) selectAllCb.checked = hasAll;
 
     if (targetRolesContainer) {
-        const sortedRoles = Object.values(cachedRoles).sort((a,b) => (a.name||'').localeCompare(b.name||'', 'de'));
+        const sortedRoles = sortRolesForDisplay(Object.values(cachedRoles));
         targetRolesContainer.innerHTML = sortedRoles.map(r => {
             const isChecked = hasAll || (ev.targetRoles && ev.targetRoles.includes(r.id));
             return `
@@ -4336,7 +4544,7 @@ function deleteDienstLink(k) {
             if (rowEl) rowEl.remove();
             alert('✅ Link erfolgreich gelöscht!');
         }).catch(err => {
-            alert('Fehler beim Löschen des Links: ' + err.message);
+            alert('Der Link konnte nicht gelöscht werden. Bitte versuche es erneut.');
         });
     }
 }
@@ -4355,10 +4563,10 @@ function closeChangelogModal() {
 }
 
 function openChangelogWriterModal() {
-    if (!requireMasterAdminAccess('Nur Master-Admins dürfen den Changelog bearbeiten!')) return;
+    if (!requireMasterAdminAccess('Nur Master Admins dürfen den Changelog bearbeiten!')) return;
     const eff = sessionUser ? getUserEffectivePermissions(sessionUser) : {};
     if (!eff.isMasterAdmin) {
-        alert('Nur Master-Admins können neue Changelogs direkt eintragen!');
+        alert('Nur Master Admins können neue Changelogs direkt eintragen!');
         return;
     }
     document.getElementById('clNewVersion').value = '';
@@ -4372,7 +4580,7 @@ function closeChangelogWriterModal() {
 }
 
 function saveCustomChangelogEntry() {
-    if (!requireMasterAdminAccess('Nur Master-Admins dürfen Changelog-Einträge speichern!')) return;
+    if (!requireMasterAdminAccess('Nur Master Admins dürfen Changelog-Einträge speichern!')) return;
     if (!sessionUser || !getUserEffectivePermissions(sessionUser).isMasterAdmin) return;
     const version = document.getElementById('clNewVersion')?.value.trim();
     const category = document.getElementById('clNewCategory')?.value || 'Update';
@@ -4411,6 +4619,8 @@ function renderChangelogModal() {
         'Update': 'changelog-badge-update',
         'Neue Funktion': 'changelog-badge-feature',
         'Änderung': 'changelog-badge-change',
+        'Verbesserung': 'changelog-badge-change',
+        'Fehlerbehebung': 'changelog-badge-bugfix',
         'Bugfix': 'changelog-badge-bugfix',
         'Design': 'changelog-badge-design',
         'Technische Änderung': 'changelog-badge-tech'
@@ -4420,7 +4630,8 @@ function renderChangelogModal() {
     const allEntries = [...customList, ...systemChangelogs].sort((a, b) => (b.ts || 0) - (a.ts || 0));
 
     cont.innerHTML = allEntries.map(entry => {
-        const bClass = catBadgeClassMap[entry.category] || 'changelog-badge-update';
+        const displayCategory = entry.category === 'Technische Änderung' ? 'Verbesserung' : (entry.category === 'Bugfix' ? 'Fehlerbehebung' : entry.category);
+        const bClass = catBadgeClassMap[displayCategory] || 'changelog-badge-update';
         const itemsHtml = (entry.changes || []).map(ch => `<li>${escapeHtml(ch)}</li>`).join('');
 
         return `
@@ -4756,7 +4967,7 @@ async function passwortAendern() {
     try {
         await auth.currentUser.updatePassword(np);
         if (inp) inp.value = '';
-        logAdminAudit('Eigenes Passwort geändert', `${sessionUser.vorname} ${sessionUser.nachname} hat das Firebase-Login-Passwort aktualisiert.`);
+        logAdminAudit('Eigenes Passwort geändert', `${sessionUser.vorname} ${sessionUser.nachname} hat das Login-Passwort aktualisiert.`);
         alert('✅ Passwort erfolgreich geändert!');
     } catch (err) {
         console.error('Passwortänderung fehlgeschlagen:', err);
@@ -4764,7 +4975,7 @@ async function passwortAendern() {
             alert('Aus Sicherheitsgründen ist eine erneute Anmeldung erforderlich. Bitte Dienst beenden, erneut anmelden und die Passwortänderung direkt danach wiederholen.');
             return;
         }
-        alert('Fehler beim Ändern des Passworts: ' + (err?.message || err));
+        alert('Das Passwort konnte nicht geändert werden. Bitte versuche es erneut.');
     }
 }
 
@@ -4967,7 +5178,7 @@ function toggleExamUnlockForUser(uId, examId, isUnlocked) {
     }
     db.ref(`data/users/${uId}/unlockedExams/${examId}`).set(isUnlocked).catch(err => {
         console.error('Prüfungsfreischaltung fehlgeschlagen:', err);
-        alert('Prüfungsfreischaltung konnte nicht gespeichert werden: ' + (err?.message || err));
+        alert('Die Prüfungsfreischaltung konnte nicht gespeichert werden. Bitte versuche es erneut.');
         renderInstructorUnlocks();
     });
 }
@@ -4989,7 +5200,7 @@ function toggleExamPassedForUser(uId, examId, isPassed) {
     }
     db.ref(`data/users/${uId}/passedExams/${examId}`).set(isPassed).catch(err => {
         console.error('Prüfungsstatus konnte nicht gespeichert werden:', err);
-        alert('Prüfungsstatus konnte nicht gespeichert werden: ' + (err?.message || err));
+        alert('Der Prüfungsstatus konnte nicht gespeichert werden. Bitte versuche es erneut.');
         renderInstructorUnlocks();
     });
 }
@@ -5517,7 +5728,7 @@ function submitActiveExam() {
         cancelActiveExam();
     }).catch(err => {
         console.error('Prüfungsergebnis konnte nicht vollständig gespeichert werden:', err);
-        alert('Das Prüfungsergebnis konnte nicht gespeichert werden. Bitte die Ausbildungsleitung informieren.\n\nFehler: ' + (err?.message || err));
+        alert('Das Prüfungsergebnis konnte nicht gespeichert werden. Bitte die Ausbildungsleitung informieren.');
     });
 }
 
@@ -5525,6 +5736,7 @@ function submitActiveExam() {
    ADMIN-BEREICH: ROLLENVERGABE & DAUERHAFTER ENTZUG
 ══════════════════════════════════════════════════════════════ */
 function openAdminKeyModal() {
+    if (isMaintenanceRestrictedSession()) { alert('🛠️ Dieser Bereich ist während der Wartungsarbeiten vorübergehend nicht verfügbar.'); return; }
     const eff = sessionUser ? getUserEffectivePermissions(sessionUser) : {};
     if (!eff.isAdmin && !eff.isMasterAdmin) return;
     const pi = document.getElementById('adminAuthPassInput'); if (pi) pi.value = '';
@@ -5544,29 +5756,35 @@ async function verifyAdminKeyPassword() {
         try {
             await refreshUsersFromFirebase();
         } catch (_) {
-            alert('Die Mitarbeiterliste konnte nicht frisch aus Firebase geladen werden. Es wird der zuletzt geladene Stand angezeigt.');
+            alert('Die Mitarbeiterliste konnte gerade nicht aktualisiert werden. Es wird der zuletzt geladene Stand angezeigt.');
         }
         renderAdminUserTable(cachedUsers);
         renderAdminRolesList();
         refreshFirebaseAuthMigrationPanel();
         renderPasswordChangeStatusPanel();
+        renderMaintenanceAdminPanel();
     } catch (err) {
         console.error('Admin-Verifizierung fehlgeschlagen:', err);
         if (['auth/wrong-password', 'auth/invalid-credential', 'auth/invalid-login-credentials'].includes(err?.code)) {
             alert('Falsches Admin-Passwort!');
             return;
         }
-        alert('Admin-Verifizierung fehlgeschlagen: ' + (err?.message || err));
+        alert('Die Admin-Verifizierung konnte nicht abgeschlossen werden. Bitte versuche es erneut.');
     }
 }
 
 function closeAdminManagementModal() { document.getElementById('adminManagementModal').style.display = 'none'; }
 
 function switchAdminTab(tabId, btnEl) {
+    if (tabId === 'adminSubTabMaintenance' && !canCurrentUserManageMaintenance()) {
+        alert('Du hast dafür keine Berechtigung.');
+        return;
+    }
     document.querySelectorAll('#adminManagementModal .admin-subtab-content').forEach(e => e.classList.remove('active'));
     document.querySelectorAll('#adminManagementModal .admin-tab-btn').forEach(e => e.classList.remove('active'));
     const t = document.getElementById(tabId); if (t) t.classList.add('active');
     if (btnEl) btnEl.classList.add('active');
+    if (tabId === 'adminSubTabMaintenance') renderMaintenanceAdminPanel();
 }
 
 function getUserStatusDisplay(status) {
@@ -5658,7 +5876,7 @@ async function closeSecondaryAuthAccount(ctx) {
 }
 
 async function resetFirebaseAuthForUser(uId, newPassword) {
-    if (!requireMasterAdminAccess('Nur der Master-Admin darf das Login-Passwort anderer Mitarbeiter zurücksetzen.')) return false;
+    if (!requireMasterAdminAccess('Nur der Master Admin darf das Login-Passwort anderer Mitarbeiter zurücksetzen.')) return false;
     if (!uId || !newPassword || newPassword.length < 6) {
         alert('Das neue Passwort muss mindestens 6 Zeichen lang sein!');
         return false;
@@ -5688,7 +5906,7 @@ async function resetFirebaseAuthForUser(uId, newPassword) {
             throw err;
         }
     }
-    if (!ctx) throw new Error('Es konnte kein neuer Firebase-Zugang angelegt werden.');
+    if (!ctx) throw new Error('Es konnte kein neuer Zugang angelegt werden.');
 
     const oldAuthUid = target.authUid || null;
     const updates = {};
@@ -5714,7 +5932,7 @@ async function resetFirebaseAuthForUser(uId, newPassword) {
     try {
         await db.ref().update(updates);
         await closeSecondaryAuthAccount(ctx);
-        logAdminAudit('Firebase-Zugang zurückgesetzt', `Login-Zugang für ${uId} wurde durch ${sessionUser.vorname} ${sessionUser.nachname} neu gesetzt.`);
+        logAdminAudit('Login-Zugang zurückgesetzt', `Login-Zugang für ${uId} wurde durch ${sessionUser.vorname} ${sessionUser.nachname} neu gesetzt.`);
         return true;
     } catch (err) {
         try {
@@ -5921,28 +6139,29 @@ async function refreshFirebaseAuthMigrationPanel() {
         if (complete) return;
 
         if (statusEl) {
-            statusEl.innerHTML = `<b>${entries.length - pending.length}</b> von <b>${entries.length}</b> Konten sind vollständig auf Firebase Authentication umgestellt. ${pending.length ? `<span style="color:var(--warning);">${pending.length} Konto/Konten benötigen noch die Migration.</span>` : 'Die Konten sind migriert; der Abschlussstatus kann jetzt gesetzt werden.'}`;
+            statusEl.innerHTML = `<b>${entries.length - pending.length}</b> von <b>${entries.length}</b> Konten sind vollständig auf die sichere Anmeldung umgestellt. ${pending.length ? `<span style="color:var(--warning);">${pending.length} Konto/Konten benötigen noch die Umstellung.</span>` : 'Die Konten sind umgestellt; der Abschlussstatus kann jetzt gesetzt werden.'}`;
         }
         if (runBtn) runBtn.disabled = false;
     } catch (err) {
         panel.style.display = 'block';
-        if (statusEl) statusEl.textContent = 'Migrationsstatus konnte nicht gelesen werden: ' + (err?.message || err);
+        console.error('Status der Sicherheitsumstellung konnte nicht gelesen werden:', err);
+        if (statusEl) statusEl.textContent = 'Der Status konnte gerade nicht geladen werden. Bitte versuche es später erneut.';
     }
 }
 
 async function runFirebaseAuthMigration() {
-    if (!requireMasterAdminAccess('Nur der Master-Admin darf die Firebase-Auth-Migration ausführen.')) return;
+    if (!requireMasterAdminAccess('Nur der Master Admin darf diese Sicherheitsumstellung ausführen.')) return;
     if (!auth.currentUser) {
-        alert('Keine aktive Firebase-Anmeldung vorhanden.');
+        alert('Deine Anmeldung ist nicht mehr aktiv. Bitte melde dich erneut an.');
         return;
     }
 
     const ok = confirm(
-        'Sicherheitsmigration jetzt starten?\n\n' +
-        'Alle noch nicht umgestellten Mitarbeiterkonten werden jetzt sofort in Firebase Authentication angelegt.\n' +
+        'Sicherheitsumstellung jetzt starten?\n\n' +
+        'Alle noch nicht umgestellten Mitarbeiterkonten werden jetzt für die sichere Anmeldung vorbereitet.\n' +
         'Die Mitarbeiter behalten für den ersten Login ihr bisheriges Passwort und müssen anschließend direkt ein neues persönliches Passwort festlegen.\n\n' +
         'Es werden keine Übergangspasswörter an Mitarbeiter ausgegeben.\n\n' +
-        'Vorher sollte ein aktuelles Firebase-Backup vorhanden sein.'
+        'Vorher sollte eine aktuelle Sicherung vorhanden sein.'
     );
     if (!ok) return;
 
@@ -5960,7 +6179,7 @@ async function runFirebaseAuthMigration() {
             db.ref('data/roles').once('value'),
             db.ref('data/users').once('value')
         ]);
-        cachedRoles = rolesSnap.val() ? Object.assign({}, defaultRoles, rolesSnap.val()) : Object.assign({}, defaultRoles);
+        cachedRoles = normalizeSystemRoleDisplayData(rolesSnap.val() ? Object.assign({}, defaultRoles, rolesSnap.val()) : Object.assign({}, defaultRoles));
         const users = snap.val() || {};
         const myId = getUserAccountId(sessionUser);
 
@@ -6053,16 +6272,17 @@ async function runFirebaseAuthMigration() {
                 authMigrationCompletedBy: `${sessionUser.vorname} ${sessionUser.nachname}`
             });
             await syncServerPermissionsForAllUsers();
-            if (statusEl) statusEl.innerHTML = `✅ Migration abgeschlossen: ${cleaned} Konten geprüft, ${migrated} Firebase-Zugänge neu angelegt. ${transitionAccounts} Konto/Konten ändern ihr Passwort selbst beim nächsten Login.`;
-            alert('✅ Firebase-Authentication-Migration vollständig abgeschlossen.\n\nAlle Konten sind jetzt technisch umgestellt. Mitarbeiter mit Übergangslogin verwenden beim ersten Login ihr bisheriges Passwort und müssen anschließend sofort ein neues Passwort festlegen.\n\nEs müssen keine Passwörter verteilt werden.\n\nJetzt können die FINALEN Realtime-Database-Regeln veröffentlicht werden.');
+            if (statusEl) statusEl.innerHTML = `✅ Umstellung abgeschlossen: ${cleaned} Konten geprüft, ${migrated} Zugänge neu eingerichtet. ${transitionAccounts} Konto/Konten ändern ihr Passwort selbst beim nächsten Login.`;
+            alert('✅ Die Sicherheitsumstellung wurde erfolgreich abgeschlossen.');
         } else {
             await db.ref('data/system/authMigrationComplete').set(false);
-            if (statusEl) statusEl.innerHTML = `⚠️ Migration nicht vollständig. ${failures.length} Konto/Konten benötigen manuelle Prüfung.`;
-            alert('⚠️ Die Migration konnte nicht für alle Konten abgeschlossen werden:\n\n' + failures.join('\n') + '\n\nBitte die finalen Regeln noch NICHT veröffentlichen.');
+            if (statusEl) statusEl.innerHTML = `⚠️ Umstellung nicht vollständig. ${failures.length} Konto/Konten benötigen eine Prüfung.`;
+            console.error('Einige Konten konnten bei der Sicherheitsumstellung nicht verarbeitet werden:', failures);
+            alert('⚠️ Die Umstellung konnte nicht für alle Konten abgeschlossen werden. Bitte prüfe die offenen Konten und versuche es anschließend erneut.');
         }
     } catch (err) {
         console.error('Firebase-Auth-Migration fehlgeschlagen:', err);
-        alert('Migration fehlgeschlagen: ' + (err?.message || err));
+        alert('Die Umstellung konnte nicht abgeschlossen werden. Bitte versuche es erneut.');
     } finally {
         if (btn) btn.disabled = false;
         refreshFirebaseAuthMigrationPanel();
@@ -6084,7 +6304,7 @@ async function approveUser(uId) {
         alert('✅ Mitarbeiter wurde erfolgreich freigeschaltet.');
     } catch (err) {
         console.error('Freischaltung fehlgeschlagen:', err);
-        alert('Freischaltung fehlgeschlagen: ' + (err?.message || err));
+        alert('Die Freischaltung konnte nicht gespeichert werden. Bitte versuche es erneut.');
     }
 }
 async function revokeUser(uId) {
@@ -6103,14 +6323,14 @@ async function revokeUser(uId) {
         alert('✅ Mitarbeiter wurde gesperrt.');
     } catch (err) {
         console.error('Sperren fehlgeschlagen:', err);
-        alert('Sperren fehlgeschlagen: ' + (err?.message || err));
+        alert('Die Sperrung konnte nicht gespeichert werden. Bitte versuche es erneut.');
     }
 }
 function deleteUserAccount(uId) {
     if (!sessionUser || !getUserEffectivePermissions(sessionUser).delUsers) return;
     if (!requireTargetUserManagement(uId)) return;
     const target = cachedUsers[uId] || {};
-    if (confirm('ACHTUNG: Mitarbeiter endgültig aus der Datenbank löschen? Dadurch wird er sofort aus der Mitarbeiter-Kartei entfernt und sein Firebase-Zugang verliert den Datenbankzugriff.')) {
+    if (confirm('ACHTUNG: Mitarbeiter endgültig löschen? Dadurch wird er sofort aus der Mitarbeiter-Kartei entfernt und kann sich mit diesem Zugang nicht mehr anmelden.')) {
         const updates = {};
         updates[`data/users/${uId}`] = null;
         updates[`data/employeePhotos/${uId}`] = null;
@@ -6125,9 +6345,9 @@ function deleteUserAccount(uId) {
             };
         }
         db.ref().update(updates).then(() => {
-            logAdminAudit('Mitarbeiter gelöscht', `Account ${uId} wurde von ${sessionUser.vorname} ${sessionUser.nachname} aus der MD-Datenbank entfernt und sein Datenbankzugriff widerrufen.`);
+            logAdminAudit('Mitarbeiter gelöscht', `Account ${uId} wurde von ${sessionUser.vorname} ${sessionUser.nachname} aus der Mitarbeiterverwaltung entfernt.`);
         }).catch(err => {
-            alert('Fehler beim Löschen des Mitarbeiters: ' + (err?.message || err));
+            alert('Der Mitarbeiter konnte nicht gelöscht werden. Bitte versuche es erneut.');
         });
     }
 }
@@ -6150,6 +6370,39 @@ function openUserPermissionsModal(uId) {
     document.getElementById('userPermissionsModal').style.display = 'flex';
 }
 function closeUserPermissionsModal() { document.getElementById('userPermissionsModal').style.display = 'none'; }
+
+async function resetSelectedUserPassword() {
+    if (!requireMasterAdminAccess('Nur der Master Admin darf Passwörter anderer Mitarbeiter zurücksetzen.')) return;
+
+    const uId = document.getElementById('permUserId')?.value;
+    if (!uId) {
+        alert('Der Mitarbeiter konnte nicht gefunden werden.');
+        return;
+    }
+    if (!requireTargetUserManagement(uId)) return;
+
+    const input = document.getElementById('permPassword');
+    const newPassword = input?.value || '';
+    if (newPassword.length < 6) {
+        alert('Das neue Passwort muss mindestens 6 Zeichen lang sein.');
+        input?.focus();
+        return;
+    }
+
+    const target = cachedUsers[uId] || {};
+    const displayName = `${target.vorname || ''} ${target.nachname || ''}`.trim() || 'diesen Mitarbeiter';
+    if (!confirm(`Passwort für ${displayName} wirklich zurücksetzen?\n\nDas bisherige Passwort kann danach nicht mehr verwendet werden.`)) return;
+
+    try {
+        const ok = await resetFirebaseAuthForUser(uId, newPassword);
+        if (!ok) return;
+        if (input) input.value = '';
+        alert('✅ Das neue Passwort wurde gesetzt. Der Mitarbeiter muss es beim nächsten Login ändern.');
+    } catch (err) {
+        console.error('Passwort-Zurücksetzung fehlgeschlagen:', err);
+        alert('Das Passwort konnte nicht geändert werden. Bitte versuche es erneut.');
+    }
+}
 
 async function migrateLegacyNewsReadKeyForUser(uId, oldDn, newProfile) {
     if (!uId || !oldDn || String(oldDn).trim() === '') return;
@@ -6181,12 +6434,6 @@ async function saveUserPermissions() {
     const uId = document.getElementById('permUserId')?.value;
     if (!uId) return;
     if (!requireTargetUserManagement(uId)) return;
-
-    const newPass = document.getElementById('permPassword')?.value.trim();
-    if (newPass && newPass.length < 6) {
-        alert('Das neue Passwort muss mindestens 6 Zeichen lang sein!');
-        return;
-    }
 
     const original = cachedUsers[uId] || {};
     const vorname = document.getElementById('permVorname')?.value.trim() || '';
@@ -6227,16 +6474,6 @@ async function saveUserPermissions() {
             }
         }
 
-        if (newPass) {
-            const eff = getUserEffectivePermissions(sessionUser);
-            if (!eff.isMasterAdmin) {
-                alert('Nur der Master-Admin darf das Login-Passwort anderer Mitarbeiter zurücksetzen.');
-                return;
-            }
-            const resetOk = await resetFirebaseAuthForUser(uId, newPass);
-            if (!resetOk) return;
-        }
-
         const freshTarget = cachedUsers[uId] || original;
         // Vor Abschluss der einmaligen Auth-Migration darf der Alias Version 0 tragen.
         // Nach erfolgter Migration ist authVersion >= 1 und die finalen Rules verlangen genau das.
@@ -6262,11 +6499,10 @@ async function saveUserPermissions() {
         if ((original.nachname || '') !== nachname) changes.push(`Nachname: ${original.nachname || '--'} → ${nachname}`);
         if ((original.dn || '') !== dn) changes.push(`Dienstnummer: ${original.dn || '--'} → ${dn}`);
         if ((original.status || 'approved') !== status) changes.push(`Status: ${original.status || 'approved'} → ${status}`);
-        if (newPass) changes.push('Login-Passwort zurückgesetzt');
         logAdminAudit('Mitarbeiterdaten bearbeitet', `${vorname} ${nachname} (${uId}) angepasst von ${sessionUser.vorname} ${sessionUser.nachname}${changes.length ? ': ' + changes.join(' | ') : ''}`);
-        alert(newPass ? '✅ Mitarbeiterdaten, Loginname und Firebase-Zugang erfolgreich aktualisiert!' : '✅ Mitarbeiterdaten und Loginname erfolgreich gespeichert!');
+        alert('✅ Mitarbeiterdaten wurden erfolgreich gespeichert!');
     } catch (err) {
-        alert('Fehler beim Speichern: ' + (err?.message || err));
+        alert('Die Änderung konnte nicht gespeichert werden. Bitte versuche es erneut.');
     }
 }
 
@@ -6284,7 +6520,7 @@ function openAssignRolesModal(uId, name, isRestrictedByLeitung = false) {
     const eff = getUserEffectivePermissions(sessionUser);
     const target = cachedUsers[uId];
     if (target && isPrivilegedUser(target) && !eff.isMasterAdmin) {
-        alert('Privilegierte Admin-Konten dürfen nur von einem Master-Admin verändert werden!');
+        alert('Privilegierte Admin-Konten dürfen nur von einem Master Admin verändert werden!');
         return;
     }
     const isMasterOperator = !!eff.isMasterAdmin;
@@ -6308,17 +6544,18 @@ function openAssignRolesModal(uId, name, isRestrictedByLeitung = false) {
         if (activeRoleAssignmentRestricted && (r.isAdmin || r.isMasterAdmin || r.id === 'admin' || r.id === 'masteradmin')) return false;
         if (!canAdminManage && canLeitungManage && !isRoleAssignableByTrainingLead(r)) return false;
         return true;
-    }).sort((a,b) => (a.name||'').localeCompare(b.name||'', 'de'));
+    });
+    const sortedRolesToShow = sortRolesForDisplay(rolesToShow);
 
     const myId = getUserAccountId(sessionUser);
     const isSelfMasterAdmin = (uId === myId) && (rids.includes('masteradmin') || sessionUser.isMasterAdmin);
 
-    document.getElementById('assignRolesContainer').innerHTML = rolesToShow.map(r => {
+    document.getElementById('assignRolesContainer').innerHTML = sortedRolesToShow.map(r => {
         const isSelfMasterProtection = isSelfMasterAdmin && (r.id === 'masteradmin');
         const isChecked = rids.includes(r.id);
         return `
             <label for="assignRoleInput_${r.id}" style="display:flex;align-items:center;gap:10px;padding:8px;cursor:pointer;background:rgba(30,41,59,0.3);border-radius:8px;">
-                <input type="checkbox" ${isChecked ? 'checked' : ''} ${isSelfMasterProtection ? 'disabled checked title="Selbstausschluss-Schutz: Du kannst dir als Master-Admin deine eigene Rolle nicht entziehen."' : ''} id="assignRoleInput_${r.id}">
+                <input type="checkbox" ${isChecked ? 'checked' : ''} ${isSelfMasterProtection ? 'disabled checked title="Selbstausschluss-Schutz: Du kannst dir als Master Admin deine eigene Rolle nicht entziehen."' : ''} id="assignRoleInput_${r.id}">
                 <b style="color:${sanitizeRoleColor(r.color)};">${r.icon ? escapeHtml(r.icon) : ''} ${escapeHtml(r.name)}</b>
                 ${isSelfMasterProtection ? '<span style="font-size:11px;color:var(--warning);margin-left:auto;">🔒 Geschützt</span>' : ''}
             </label>
@@ -6343,7 +6580,7 @@ function saveAssignedRoles() {
     const uId = document.getElementById('assignRoleUserId')?.value; if (!uId) return;
     const target = cachedUsers[uId];
     if (target && isPrivilegedUser(target) && !isMasterOperator) {
-        alert('Privilegierte Admin-Konten dürfen nur von einem Master-Admin verändert werden!');
+        alert('Privilegierte Admin-Konten dürfen nur von einem Master Admin verändert werden!');
         return;
     }
     let cleanRoles = {};
@@ -6407,13 +6644,13 @@ function saveAssignedRoles() {
         renderExamTab();
         logAdminAudit('Rollen angepasst & bereinigt', `Rollen für ${uId} von ${sessionUser.vorname} ${sessionUser.nachname} gespeichert.`);
         alert('✅ Rollen erfolgreich und dauerhaft aktualisiert!');
-    }).catch(err => alert('Fehler beim Speichern der Rollen: ' + (err?.message || err)));
+    }).catch(err => alert('Die Rollen konnten nicht gespeichert werden. Bitte versuche es erneut.'));
 }
 
 function renderAdminRolesList() {
     const sb = document.getElementById('adminRolesSidebarList'); if (!sb) return;
     if (!sessionUser || !requireAdminAccess()) { sb.innerHTML = ''; return; }
-    const sortedRoles = Object.values(cachedRoles).sort((a,b) => (a.name||'').localeCompare(b.name||'', 'de'));
+    const sortedRoles = sortRolesForDisplay(Object.values(cachedRoles));
     sb.innerHTML = sortedRoles.map(r => {
         const color = sanitizeRoleColor(r.color);
         return `
@@ -6464,7 +6701,7 @@ function selectRole(roleId) {
     if (!r) return;
     const operatorEff = getUserEffectivePermissions(sessionUser);
     if ((r.isAdmin || r.isMasterAdmin || roleId === 'admin' || roleId === 'masteradmin') && !operatorEff.isMasterAdmin) {
-        alert('Rollen mit Admin- oder Master-Admin-Rechten dürfen nur von einem Master-Admin verändert werden!');
+        alert('Rollen mit Admin- oder Master Admin-Rechten dürfen nur von einem Master Admin verändert werden!');
         return;
     }
     
@@ -6576,7 +6813,7 @@ function speichereRolle() {
     const operatorEff = getUserEffectivePermissions(sessionUser);
     const existingRole = cachedRoles[id] || defaultRoles[id];
     if ((id === 'masteradmin' || id === 'admin' || existingRole?.isAdmin || existingRole?.isMasterAdmin) && !operatorEff.isMasterAdmin) {
-        alert('Rollen mit Admin- oder Master-Admin-Rechten dürfen nur von einem Master-Admin verändert werden!');
+        alert('Rollen mit Admin- oder Master Admin-Rechten dürfen nur von einem Master Admin verändert werden!');
         return;
     }
 
@@ -6617,7 +6854,7 @@ function speichereRolle() {
         logAdminAudit('Rolle gespeichert', `${sessionUser.vorname} ${sessionUser.nachname} hat Rolle "${r.name}" gespeichert.`);
         alert(`✅ Rolle "${r.name}" erfolgreich gespeichert!`);
     }).catch(err => {
-        alert('Fehler beim Speichern der Rolle: ' + err.message);
+        alert('Die Rolle konnte nicht gespeichert werden. Bitte versuche es erneut.');
     });
 }
 
@@ -6629,7 +6866,7 @@ async function loescheRolle() {
     const role = cachedRoles[id] || defaultRoles[id];
     const operatorEff = getUserEffectivePermissions(sessionUser);
     if ((role?.isAdmin || role?.isMasterAdmin || id === 'admin' || id === 'masteradmin') && !operatorEff.isMasterAdmin) {
-        alert('Rollen mit Admin- oder Master-Admin-Rechten dürfen nur von einem Master-Admin gelöscht werden!');
+        alert('Rollen mit Admin- oder Master Admin-Rechten dürfen nur von einem Master Admin gelöscht werden!');
         return;
     }
     const protectedSystemRoles = ['masteradmin', 'mitarbeiter', 'ausbilder', 'ausbildungsleitung'];
@@ -6664,7 +6901,7 @@ async function loescheRolle() {
         logAdminAudit('Rolle gelöscht', `${sessionUser.vorname} ${sessionUser.nachname} hat die Rolle "${role?.name || id}" gelöscht.`);
         alert('✅ Rolle erfolgreich gelöscht!');
     } catch (err) {
-        alert('Fehler beim Löschen der Rolle: ' + (err?.message || err));
+        alert('Die Rolle konnte nicht gelöscht werden. Bitte versuche es erneut.');
     }
 }
 
@@ -6676,7 +6913,7 @@ function stripCredentialsFromBackupUser(user) {
 }
 
 function downloadSystemBackup() {
-    if (!requireMasterAdminAccess('Backups dürfen nur von Master-Admins heruntergeladen werden!')) return;
+    if (!requireMasterAdminAccess('Backups dürfen nur von Master Admins heruntergeladen werden!')) return;
     db.ref('data').once('value', s => {
         const data = s.val() || {};
         if (data.users) {
@@ -6685,7 +6922,7 @@ function downloadSystemBackup() {
         const backup = {
             meta: {
                 app: 'MMD Cloud',
-                version: '6.3.0',
+                version: '6.6.0',
                 createdAt: Date.now(),
                 note: 'Passwörter und alte Passwort-Hashes werden aus Sicherheitsgründen nicht exportiert.'
             },
@@ -6703,7 +6940,7 @@ function downloadSystemBackup() {
 }
 
 function restoreSystemBackupFromFile(event) {
-    if (!requireMasterAdminAccess('Backups dürfen nur von Master-Admins eingespielt werden!')) {
+    if (!requireMasterAdminAccess('Backups dürfen nur von Master Admins eingespielt werden!')) {
         if (event?.target) event.target.value = '';
         return;
     }
@@ -6717,7 +6954,7 @@ function restoreSystemBackupFromFile(event) {
             if (!restoreDataRaw || typeof restoreDataRaw !== 'object' || Array.isArray(restoreDataRaw)) {
                 throw new Error('Ungültiges Backup-Format.');
             }
-            if (!confirm('Das Backup ersetzt die Fachdaten. Aktuelle Firebase-Anmeldungen und Sicherheitszuordnungen bleiben geschützt erhalten. Wirklich fortfahren?')) return;
+            if (!confirm('Die Sicherung ersetzt die Fachdaten. Aktuelle Anmeldungen und Zugriffsrechte bleiben erhalten. Wirklich fortfahren?')) return;
 
             const currentSnap = await db.ref('data').once('value');
             const current = currentSnap.val() || {};
@@ -6758,7 +6995,7 @@ function restoreSystemBackupFromFile(event) {
             });
 
             const previousRoles = cachedRoles;
-            cachedRoles = Object.assign({}, defaultRoles, restoreData.roles || {});
+            cachedRoles = normalizeSystemRoleDisplayData(Object.assign({}, defaultRoles, restoreData.roles || {}));
             Object.entries(mergedUsers).forEach(([uId, user]) => {
                 user.serverPermissions = buildServerPermissions(user);
             });
@@ -6766,10 +7003,10 @@ function restoreSystemBackupFromFile(event) {
 
             restoreData.users = mergedUsers;
             await db.ref('data').set(restoreData);
-            alert('✅ Backup wiederhergestellt. Firebase-Anmeldungen und Sicherheitszuordnungen wurden geschützt beibehalten.');
+            alert('✅ Die Sicherung wurde erfolgreich wiederhergestellt. Anmeldungen und Zugriffsrechte wurden beibehalten.');
             location.reload();
         } catch(err) {
-            alert('Fehler: ' + (err?.message || err));
+            alert('Die Wiederherstellung konnte nicht abgeschlossen werden. Bitte versuche es erneut.');
         } finally {
             if (event?.target) event.target.value = '';
         }
@@ -6779,7 +7016,7 @@ function restoreSystemBackupFromFile(event) {
 
 async function vollstaendigerReset() {
     if (!sessionUser || !getUserEffectivePermissions(sessionUser).isMasterAdmin) return;
-    if (!confirm('ACHTUNG: Wirklich alle Fachdaten zurücksetzen?\n\nMitarbeiterkonten, Rollen, Firebase-Anmeldungen und die Chief-Materialliste bleiben erhalten.')) return;
+    if (!confirm('ACHTUNG: Wirklich alle Fachdaten zurücksetzen?\n\nMitarbeiterkonten, Rollen, Anmeldungen und die Chief-Materialliste bleiben erhalten.')) return;
     if (!confirm('Patienten, Archive, Termine, Prüfungen, News, Feedback und weitere Fachdaten werden gelöscht. Fortfahren?')) return;
 
     try {
@@ -6800,10 +7037,10 @@ async function vollstaendigerReset() {
             }
         };
         await db.ref('data').set(preserved);
-        alert('✅ Fachdaten wurden zurückgesetzt. Mitarbeiterkonten und Firebase-Anmeldungen sind erhalten geblieben.');
+        alert('✅ Die Fachdaten wurden zurückgesetzt. Mitarbeiterkonten und Anmeldungen bleiben erhalten.');
         location.reload();
     } catch (err) {
-        alert('Reset fehlgeschlagen: ' + (err?.message || err));
+        alert('Das Zurücksetzen konnte nicht abgeschlossen werden. Bitte versuche es erneut.');
     }
 }
 
@@ -6937,7 +7174,7 @@ function submitUserFeedback() {
         resetFeedbackSubmitForm();
         alert('✅ Vielen Dank! Deine Meldung wurde sicher an die berechtigten Mitarbeiter übermittelt.');
     }).catch(err => {
-        alert('Fehler beim Übermitteln: ' + err.message);
+        alert('Die Meldung konnte nicht übermittelt werden. Bitte versuche es erneut.');
     });
 }
 
@@ -7085,7 +7322,7 @@ function handleFeedbackStatusSelect(prefix, fbId, newStatus) {
         console.error('Feedback-Status konnte nicht gespeichert werden:', err);
         const sel = document.getElementById(`${prefix}_selStatus_${fbId}`);
         if (sel && cachedFeedback[fbId]) sel.value = cachedFeedback[fbId].status || 'Neu';
-        alert('Der Status konnte nicht gespeichert werden: ' + (err?.message || err));
+        alert('Der Status konnte nicht gespeichert werden. Bitte versuche es erneut.');
     });
 }
 
@@ -7134,7 +7371,7 @@ function saveInlineRejection(prefix, fbId) {
         alert('✅ Meldung wurde als abgelehnt markiert und die Begründung revisionssicher hinterlegt.');
     }).catch(err => {
         console.error('Ablehnung konnte nicht gespeichert werden:', err);
-        alert('Die Ablehnung konnte nicht gespeichert werden: ' + (err?.message || err));
+        alert('Die Ablehnung konnte nicht gespeichert werden. Bitte versuche es erneut.');
     });
 }
 
@@ -7151,12 +7388,12 @@ function deleteFeedbackEntry(fbId) {
     const item = cachedFeedback[fbId];
     const itemTitle = item ? (item.title || fbId) : fbId;
 
-    if (confirm(`Möchtest du diese Meldung ("${itemTitle}") wirklich dauerhaft aus der Datenbank entfernen?`)) {
+    if (confirm(`Möchtest du diese Meldung ("${itemTitle}") wirklich dauerhaft löschen?`)) {
         db.ref('data/feedback/' + fbId).remove().then(() => {
             logAdminAudit('Feedback gelöscht', `Eintrag "${itemTitle}" (${fbId}) gelöscht durch ${sessionUser.vorname} ${sessionUser.nachname}`);
             alert('✅ Eintrag erfolgreich gelöscht!');
         }).catch(err => {
-            alert('Fehler beim Löschen: ' + err.message);
+            alert('Der Eintrag konnte nicht gelöscht werden. Bitte versuche es erneut.');
         });
     }
 }
@@ -7193,6 +7430,67 @@ function exportFeedbackListMarkdown() {
 /* ══════════════════════════════════════════════════════════════
    CHIEF-EBENE: MATERIALVERWALTUNG
 ══════════════════════════════════════════════════════════════ */
+
+const CHIEF_MATERIAL_LEGACY_V660 = [
+    {date:'2026-05-24', stocks:{wundreiniger:1744,nahtset:759,verband:1832,schiene:3545,kuehlpack:2417,schmerz5:2704,schmerz10:2101,schmerz15:2913,schmerz20:2127}, refilled:true, refilledAt:'2026-05-24'},
+    {date:'2026-05-31', stocks:{wundreiniger:1648,nahtset:646,verband:2044,schiene:3459,kuehlpack:2430,schmerz5:2718,schmerz10:2025,schmerz15:2922,schmerz20:2118}, refilled:true, refilledAt:'2026-05-31'},
+    {date:'2026-06-07', stocks:{wundreiniger:1693,nahtset:1721,verband:2385,schiene:3449,kuehlpack:2572,schmerz5:2682,schmerz10:2116,schmerz15:2905,schmerz20:2101}, refilled:true, refilledAt:'2026-06-07'},
+    {date:'2026-06-14', stocks:{wundreiniger:1853,nahtset:1841,verband:1866,schiene:3405,kuehlpack:2500,medikit:1233,schmerz5:2619,schmerz10:2136,schmerz15:2812,schmerz20:2236}, refilled:true, refilledAt:'2026-06-15'},
+    {date:'2026-06-21', stocks:{wundreiniger:1943,nahtset:2500,verband:2720,schiene:3367,kuehlpack:2520,medikit:1179,schmerz5:2660,schmerz10:2493,schmerz15:3063,schmerz20:2443}, refilled:true, refilledAt:'2026-06-21'},
+    {date:'2026-06-28', stocks:{wundreiniger:1443,nahtset:1359,verband:1681,schiene:3269,kuehlpack:2355,medikit:957,schmerz5:2516,schmerz10:1784,schmerz15:3035,schmerz20:2085}, refilled:true, refilledAt:''},
+    {date:'2026-07-05', stocks:{wundreiniger:2076,nahtset:2187,verband:2351,schiene:3234,kuehlpack:2468,medikit:1743,schmerz5:2496,schmerz10:2286,schmerz15:3003,schmerz20:2527}, refilled:true, refilledAt:''},
+    {date:'2026-07-12', stocks:{wundreiniger:1927,nahtset:1945,verband:1871,schiene:3148,kuehlpack:2417,medikit:604,schmerz5:2481,schmerz10:2105,schmerz15:2890,schmerz20:2330}, refilled:true, refilledAt:'2026-07-13'},
+    {date:'2026-07-19', stocks:{wundreiniger:2169,nahtset:2127,verband:2167,schiene:3096,kuehlpack:2477,medikit:1124,schmerz5:2508,schmerz10:2119,schmerz15:2880,schmerz20:2495}, refilled:true, refilledAt:'2026-07-19'},
+    {date:'2026-07-26', stocks:{wundreiniger:2080,nahtset:1968,verband:2008,schiene:3032,kuehlpack:2523,medikit:851,schmerz5:2435,schmerz10:1654,schmerz15:2850,schmerz20:2529}, refilled:true, refilledAt:'2026-06-27'},
+    {date:'2026-08-02', stocks:{wundreiniger:2167,nahtset:2145,verband:2150,schiene:3014,kuehlpack:2507,medikit:1438,schmerz5:2436,schmerz10:2167,schmerz15:2880,schmerz20:2573}, refilled:true, refilledAt:''},
+    {date:'2026-08-09', stocks:{wundreiniger:2350,nahtset:2306,verband:2249,schiene:3009,kuehlpack:2507,medikit:2592,schmerz5:2441,schmerz10:2355,schmerz15:2894,schmerz20:2593}, refilled:true, refilledAt:''},
+    {date:'2026-08-16', stocks:{wundreiniger:2010,nahtset:1929,verband:1879,schiene:3044,kuehlpack:2532,medikit:1443,schmerz5:2492,schmerz10:2039,schmerz15:2924,schmerz20:2622}, refilled:true, refilledAt:'2026-08-16'},
+    {date:'2026-08-23', stocks:{wundreiniger:2072,nahtset:2105,verband:2128,schiene:3035,kuehlpack:2529,medikit:1598,schmerz5:2456,schmerz10:2115,schmerz15:2924,schmerz20:2629}, refilled:true, refilledAt:'2026-08-23'},
+    {date:'2026-08-30', stocks:{wundreiniger:1967,nahtset:1866,verband:1938,schiene:2959,kuehlpack:2445,medikit:2469,schmerz5:2438,schmerz10:1953,schmerz15:2819,schmerz20:2519}, refilled:true, refilledAt:'2026-08-30'},
+    {date:'2026-09-06', stocks:{wundreiniger:2062,nahtset:1986,verband:1897,schiene:2909,kuehlpack:2500,medikit:2287,schmerz5:2520,schmerz10:1974,schmerz15:2814,schmerz20:2504}, refilled:true, refilledAt:'2026-09-06'},
+    {date:'2026-09-13', stocks:{wundreiniger:1899,nahtset:1966,verband:2131,schiene:2821,kuehlpack:2421,medikit:2457,schmerz5:2431,schmerz10:1522,schmerz15:2763,schmerz20:2461}, refilled:false, refilledAt:''}
+];
+
+async function importChiefMaterialLegacyV660Once() {
+    if (!sessionUser || !canCurrentUserEditChiefMaterials() || isMaintenanceRestrictedSession()) return;
+    try {
+        const markerRef = db.ref('data/chiefMaterials/legacyImportV660');
+        const marker = await markerRef.once('value');
+        if (marker.exists()) return;
+        const updates = {};
+        CHIEF_MATERIAL_LEGACY_V660.forEach((row, index) => {
+            const maxima = Object.assign({}, defaultChiefMaterialConfig);
+            const consumed = {};
+            Object.entries(row.stocks || {}).forEach(([id, stock]) => {
+                if (stock === null || stock === undefined || stock === '') return;
+                consumed[id] = Math.round((Number(maxima[id]) || 0) - Number(stock));
+            });
+            const key = `legacy_v660_${row.date.replace(/-/g, '_')}`;
+            updates[`data/chiefMaterials/entries/${key}`] = {
+                date: row.date,
+                stocks: row.stocks,
+                maxima,
+                consumed,
+                refilled: row.refilled === true,
+                refilledAt: row.refilledAt || '',
+                enteredBy: 'Altbestand (übernommen)',
+                enteredById: 'legacy_import_v660',
+                ts: new Date(`${row.date}T12:00:00`).getTime() + index
+            };
+        });
+        updates['data/chiefMaterials/legacyImportV660'] = {
+            done: true,
+            importedAt: Date.now(),
+            importedBy: getUserAccountId(sessionUser),
+            count: CHIEF_MATERIAL_LEGACY_V660.length
+        };
+        await db.ref().update(updates);
+        console.info(`${CHIEF_MATERIAL_LEGACY_V660.length} Altbestände wurden übernommen.`);
+    } catch (err) {
+        console.error('Altbestände konnten nicht übernommen werden:', err);
+    }
+}
+
 function canCurrentUserViewChiefMaterials() {
     if (!sessionUser) return false;
     const eff = getUserEffectivePermissions(sessionUser);
@@ -7216,6 +7514,7 @@ function refreshChiefMaterialsListener() {
         return;
     }
     chiefMaterialsListenerActive = true;
+    importChiefMaterialLegacyV660Once();
     ref.on('value', snap => {
         const raw = snap.val() || {};
         cachedChiefMaterialConfig = Object.assign({}, defaultChiefMaterialConfig, raw.config || {});
@@ -7308,7 +7607,7 @@ function renderChiefMaterialHistory() {
     const body = document.getElementById('chiefMaterialHistoryBody');
     if (!head || !body) return;
     const editable = canCurrentUserEditChiefMaterials();
-    head.innerHTML = `<tr><th>Stichtag</th>${CHIEF_MATERIAL_DEFS.map(m => `<th>${escapeHtml(m.name)}</th>`).join('')}<th>Aufgefüllt</th><th>Erfasst von</th>${editable ? '<th>Aktion</th>' : ''}</tr>`;
+    head.innerHTML = `<tr><th>Stichtag</th>${CHIEF_MATERIAL_DEFS.map(m => `<th>${escapeHtml(m.name)}</th>`).join('')}<th>Aufgefüllt</th><th>Erfasst von</th>${editable ? '<th class="chief-history-action-col">Aktion</th>' : ''}</tr>`;
     const entries = Object.entries(cachedChiefMaterialEntries || {}).sort((a,b) => {
         const ad = a[1]?.date || '';
         const bd = b[1]?.date || '';
@@ -7332,7 +7631,7 @@ function renderChiefMaterialHistory() {
             return `<td><div class="chief-history-stock">${escapeHtml(stock)}</div><span class="chief-consumption-badge ${level.cls}">${escapeHtml(level.label)}</span></td>`;
         }).join('');
         const refill = e.refilled ? `✅ Ja${e.refilledAt ? `<br><small>${formatChiefDate(e.refilledAt)}</small>` : ''}` : '—';
-        return `<tr><td><b>${formatChiefDate(e.date)}</b></td>${matCells}<td>${refill}</td><td>${escapeHtml(e.enteredBy || '--')}</td>${editable ? `<td><button type="button" class="btn-delete-row" onclick="deleteChiefMaterialEntry('${entryId}')" title="Bestandsaufnahme löschen">🗑️</button></td>` : ''}</tr>`;
+        return `<tr><td><b>${formatChiefDate(e.date)}</b></td>${matCells}<td>${refill}</td><td>${escapeHtml(e.enteredBy || '--')}</td>${editable ? `<td class="chief-history-action-col"><button type="button" class="btn-delete-row chief-history-delete-btn" onclick="deleteChiefMaterialEntry('${entryId}')" title="Bestandsaufnahme löschen" aria-label="Bestandsaufnahme löschen">🗑️</button></td>` : ''}</tr>`;
     }).join('');
 }
 
@@ -7384,7 +7683,7 @@ async function saveChiefMaterialEntry() {
         alert('✅ Bestandsaufnahme wurde gespeichert.');
     } catch (err) {
         console.error('Materialbestand konnte nicht gespeichert werden:', err);
-        alert('Materialbestand konnte nicht gespeichert werden: ' + (err?.message || err));
+        alert('Die Bestandsaufnahme konnte nicht gespeichert werden. Bitte versuche es erneut.');
     }
 }
 
@@ -7403,7 +7702,7 @@ async function saveChiefMaterialConfig() {
         alert('✅ Maximalbestände wurden gespeichert.');
     } catch (err) {
         console.error('Maximalbestände konnten nicht gespeichert werden:', err);
-        alert('Maximalbestände konnten nicht gespeichert werden: ' + (err?.message || err));
+        alert('Die Maximalbestände konnten nicht gespeichert werden. Bitte versuche es erneut.');
     }
 }
 
@@ -7414,12 +7713,18 @@ async function deleteChiefMaterialEntry(entryId) {
         await db.ref(`data/chiefMaterials/entries/${entryId}`).remove();
         logAdminAudit('Materialbestand gelöscht', `Bestandsaufnahme ${entryId} wurde gelöscht.`);
     } catch (err) {
-        alert('Bestandsaufnahme konnte nicht gelöscht werden: ' + (err?.message || err));
+        console.error('Bestandsaufnahme konnte nicht gelöscht werden:', err);
+        alert('Der Eintrag konnte nicht gelöscht werden. Bitte versuche es erneut.');
     }
 }
 
 /* ── Navigation & Global Helpers ───────────────────────────── */
 function switchTab(tabId, btn) {
+    if (isMaintenanceRestrictedSession() && tabId !== 'docTab') {
+        alert('🛠️ Dieser Bereich ist während der Wartungsarbeiten vorübergehend nicht verfügbar. Dokumentation & Einsatz bleibt nutzbar.');
+        tabId = 'docTab';
+        btn = document.querySelector('.tab-nav .tab-btn');
+    }
     document.querySelectorAll('.tab-content').forEach(e => e.classList.remove('active'));
     document.querySelectorAll('.tab-btn').forEach(e => e.classList.remove('active'));
     const t = document.getElementById(tabId); if (t) t.classList.add('active');
@@ -7451,7 +7756,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     renderGuideTab(); renderHierarchieBoard(hierarchieDaten); baueMaterialUIAuf();
     renderGehaltTab(cachedGehaltData);
 
-    clearStoredSessionData();
     const authView = document.getElementById('authView');
     const mainView = document.getElementById('mainAppView');
     if (authView) authView.style.display = 'flex';
@@ -7462,6 +7766,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         const firebaseUser = await waitForFirebaseAuthReady();
         if (!firebaseUser) return;
 
+        const todayFormatted = new Date().toLocaleDateString('de-DE');
+        const storedSessionDate = getStoredSessionDate();
+        if (!storedSessionDate || storedSessionDate !== todayFormatted) {
+            clearStoredSessionData();
+            await auth.signOut();
+            return;
+        }
+
         const profile = await loadAuthenticatedProfile(firebaseUser);
         const user = profile.user;
         const effectiveStatus = user.status || ((user.isAdmin || user.isMasterAdmin) ? 'approved' : 'pending');
@@ -7470,6 +7782,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
         }
 
+        cachedMaintenanceState = await readMaintenanceState();
         initDienstEintritt(user);
     } catch (err) {
         console.warn('Firebase-Sitzung konnte nicht wiederhergestellt werden:', err);
@@ -7509,10 +7822,10 @@ _w.downloadSystemBackup = downloadSystemBackup; _w.restoreSystemBackupFromFile =
 _w.speichereHierarchieDaten = saveHierarchieInline;
 _w.approveUser = approveUser; _w.revokeUser = revokeUser; _w.deleteUserAccount = deleteUserAccount; _w.filterAdminUserTable = filterAdminUserTable;
 _w.openAssignRolesModal = openAssignRolesModal; _w.closeAssignRolesModal = closeAssignRolesModal; _w.saveAssignedRoles = saveAssignedRoles;
-_w.openUserPermissionsModal = openUserPermissionsModal; _w.closeUserPermissionsModal = closeUserPermissionsModal; _w.saveUserPermissions = saveUserPermissions; _w.runFirebaseAuthMigration = runFirebaseAuthMigration;
+_w.openUserPermissionsModal = openUserPermissionsModal; _w.closeUserPermissionsModal = closeUserPermissionsModal; _w.saveUserPermissions = saveUserPermissions; _w.resetSelectedUserPassword = resetSelectedUserPassword; _w.runFirebaseAuthMigration = runFirebaseAuthMigration;
 _w.renderPasswordChangeStatusPanel = renderPasswordChangeStatusPanel; _w.copyAllOpenPasswordReminders = copyAllOpenPasswordReminders; _w.copyPasswordReminderForUser = copyPasswordReminderForUser;
 _w.neueRolleErstellen = neueRolleErstellen; _w.selectRole = selectRole; _w.updateRoleBadgePreview = updateRoleBadgePreview; _w.speichereRolle = speichereRolle; _w.loescheRolle = loescheRolle;
-_w.vollstaendigerReset = vollstaendigerReset; _w.renderAdminAuditLogs = renderAdminAuditLogs;
+_w.vollstaendigerReset = vollstaendigerReset; _w.renderAdminAuditLogs = renderAdminAuditLogs; _w.setMaintenanceMode = setMaintenanceMode; _w.renderMaintenanceAdminPanel = renderMaintenanceAdminPanel;
 _w.openAuditLogArchiveModal = openAuditLogArchiveModal; _w.closeAuditLogArchiveModal = closeAuditArchiveModal;
 _w.editCommandInline = editCommandInline;
 _w.editLinkInline = editLinkInline;

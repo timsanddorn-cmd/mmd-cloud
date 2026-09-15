@@ -486,13 +486,13 @@ body {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 6px;
+    column-gap: 8px;
+    row-gap: 7px;
 }
 .online-medic-name {
+    flex: 0 0 auto;
     min-width: 0;
-    flex: 0 1 calc((100% - 24px) / 5);
-    min-width: 90px;
-    max-width: 220px;
+    max-width: 100%;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -506,8 +506,8 @@ body {
     line-height: 1.25;
     text-align: center;
     white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    overflow: visible;
+    text-overflow: clip;
 }
 .online-medic-empty { flex: 1 1 100%; max-width: none; color: var(--text-muted); font-weight: 600; }
 .online-dot { width: 10px; height: 10px; flex: 0 0 10px; background: var(--success); border-radius: 50%; display: inline-block; box-shadow: 0 0 10px var(--success); }
@@ -1561,7 +1561,7 @@ table select {
 }
 
 /* ══════════════════════════════════════════════════════════════
-   v6.5.0 – Chief-Ebene / Materialverwaltung
+   v6.6.0 – Chief Ebene / Materialverwaltung & Wartungsmodus
 ══════════════════════════════════════════════════════════════ */
 .chief-material-layout{display:grid;grid-template-columns:minmax(0,2fr) minmax(280px,1fr);gap:18px;align-items:start}
 .chief-section-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:14px}
@@ -1591,3 +1591,32 @@ table select {
 .chief-history-stock{font-weight:900;color:var(--text-main);margin-bottom:5px}
 .chief-history-empty{text-align:center;color:var(--text-muted)}
 @media (max-width:980px){.chief-material-layout{grid-template-columns:1fr}.chief-material-grid{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}}
+
+
+/* ══════════════════════════════════════════════════════════════
+   v6.6.0 – Wartungsmodus & kompakter Chief-Bereich
+══════════════════════════════════════════════════════════════ */
+.maintenance-banner{margin:10px 0 14px;padding:10px 14px;border-radius:12px;border:1px solid rgba(249,115,22,.5);background:rgba(249,115,22,.12);color:#fdba74;font-weight:900;align-items:center;justify-content:center;text-align:center;font-size:13px}
+.maintenance-admin-card{background:rgba(15,23,42,.72);padding:22px 24px;border-radius:16px;border:1px solid var(--border)}
+.maintenance-admin-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:14px}
+.maintenance-state{display:inline-flex;align-items:center;padding:7px 11px;border-radius:999px;background:rgba(34,197,94,.12);color:#86efac;border:1px solid rgba(34,197,94,.35);font-size:12px;font-weight:900}
+.maintenance-state.active{background:rgba(249,115,22,.13);color:#fdba74;border-color:rgba(249,115,22,.4)}
+.maintenance-details{margin:0 0 16px;padding:10px 12px;border-radius:10px;background:rgba(8,12,20,.45);color:var(--text-muted);font-size:12px}
+.maintenance-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:14px;flex-wrap:wrap}
+.maintenance-actions .btn{width:auto;margin:0;font-weight:900}
+.maintenance-enable{background:rgba(249,115,22,.16)!important;color:#fdba74!important;border:1px solid rgba(249,115,22,.5)!important}
+.maintenance-disable{background:rgba(34,197,94,.16)!important;color:#86efac!important;border:1px solid rgba(34,197,94,.45)!important}
+.chief-material-config-compact{padding:14px!important}
+.chief-material-config-compact .chief-section-head{margin-bottom:8px}
+.chief-material-config-compact .chief-config-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+.chief-material-config-compact .chief-config-item{padding:7px 8px;border-radius:9px}
+.chief-material-config-compact .chief-config-item label{font-size:10px;margin-bottom:3px}
+.chief-material-config-compact .chief-config-item input{padding:7px 8px;margin:0;font-size:12px}
+.chief-material-config-compact #btnSaveChiefMaterialConfig{padding:8px 10px;font-size:12px;margin-top:8px!important}
+.maintenance-restricted .top-bar-controls #adminKeyBtn,.maintenance-restricted .btn-feedback-trigger{display:none!important}
+@media (max-width:560px){.chief-material-config-compact .chief-config-grid{grid-template-columns:1fr}.maintenance-admin-head{align-items:stretch}}
+
+
+.chief-history-action-col{position:sticky;right:0;z-index:2;min-width:72px!important;text-align:center!important;background:var(--card-bg-solid)!important;box-shadow:-8px 0 14px rgba(0,0,0,.18)}
+.chief-history-table th.chief-history-action-col{z-index:3}
+.chief-history-delete-btn{display:inline-flex!important;align-items:center;justify-content:center;min-width:34px;min-height:34px}

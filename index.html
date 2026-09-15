@@ -11,7 +11,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
-    <link rel="stylesheet" href="style.css?v=6.5.0">
+    <link rel="stylesheet" href="style.css?v=6.6.0">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏥</text></svg>">
 </head>
 <body>
@@ -124,6 +124,7 @@
                 <button type="button" class="btn-logout" onclick="handleDienstEndeLogout()">Dienst beenden 🚪</button>
             </div>
         </div>
+        <div id="maintenanceModeBanner" class="maintenance-banner" style="display:none;"></div>
 
         <!-- HAUPT-NAVIGATION -->
         <div class="tab-nav">
@@ -140,7 +141,7 @@
                 📰 News <span id="newsUnreadBadge" class="unread-news-badge" style="display:none;">0</span>
             </button>
             <button type="button" class="tab-btn" onclick="switchTab('miscTab', this)">💰 Gehaltstabelle</button>
-            <button type="button" class="tab-btn" id="chiefTabNavBtn" style="display:none;" onclick="switchTab('chiefTab', this)">⭐ Chief-Ebene</button>
+            <button type="button" class="tab-btn" id="chiefTabNavBtn" style="display:none;" onclick="switchTab('chiefTab', this)">⭐ Chief Ebene</button>
             <button type="button" class="tab-btn" id="adminMainTabHeader" onclick="settingsTabClick()">⚙️ Einstellungen</button>
         </div>
 
@@ -794,7 +795,7 @@
         <div id="chiefTab" class="tab-content">
             <div class="content-header-bar" style="margin-bottom:18px;">
                 <div>
-                    <h2 style="margin:0 0 4px 0;color:var(--warning);">⭐ Chief-Ebene – Materialverwaltung</h2>
+                    <h2 style="margin:0 0 4px 0;color:var(--warning);">⭐ Chief Ebene – Materialverwaltung</h2>
                     <p style="margin:0;color:var(--text-muted);font-size:13px;">Zentrale Bestandsübersicht nach der bisherigen SAMD-Materialliste – mit automatischer Verbrauchsberechnung, Farbstatus und Historie.</p>
                 </div>
             </div>
@@ -836,11 +837,11 @@
                         </div>
                     </div>
 
-                    <div class="section chief-material-config-card">
+                    <div class="section chief-material-config-card chief-material-config-compact">
                         <div class="chief-section-head">
                             <div>
                                 <h3 style="margin:0;">⚙️ Maximalbestände</h3>
-                                <p style="margin:4px 0 0;color:var(--text-muted);font-size:12px;">Die Werte werden für neue Berechnungen verwendet. Frühere Einträge behalten ihren damaligen Berechnungsstand.</p>
+                                <p style="margin:4px 0 0;color:var(--text-muted);font-size:12px;">Diese Werte werden für neue Bestandsaufnahmen verwendet.</p>
                             </div>
                         </div>
                         <div id="chiefMaterialConfigGrid" class="chief-config-grid"></div>
@@ -851,7 +852,7 @@
                 <div class="section" style="margin-top:18px;">
                     <div class="chief-section-head">
                         <div>
-                            <h3 style="margin:0;">📋 Bestands-Historie</h3>
+                            <h3 style="margin:0;">📋 Bestands Historie</h3>
                             <p style="margin:4px 0 0;color:var(--text-muted);font-size:12px;">Gespeicherte Aufnahmen mit Bestand, automatisch berechnetem Verbrauch und Auffüllstatus.</p>
                         </div>
                         <button type="button" class="btn" style="width:auto;padding:8px 12px;font-size:12px;" onclick="renderChiefMaterialsTab()">🔄 Aktualisieren</button>
@@ -994,8 +995,8 @@
         <div class="modal-card" style="max-width: 900px; width: 95vw; max-height: 90vh; overflow-y:auto;">
             <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:12px; margin-bottom:16px;">
                 <div>
-                    <h3 style="margin:0; color:var(--primary);">📜 MMD Cloud – Vollständiger Versions- & Entwicklungsverlauf</h3>
-                    <p style="margin:4px 0 0 0; color:var(--text-muted); font-size:12px;">Chronologische Übersicht aller Meilensteine, Funktionen und Verbesserungen des Medical Department Portals.</p>
+                    <h3 style="margin:0; color:var(--primary);">📜 MMD Cloud – Changelog</h3>
+                    <p style="margin:4px 0 0 0; color:var(--text-muted); font-size:12px;">Kurze Übersicht über neue Funktionen, Änderungen und Verbesserungen.</p>
                 </div>
                 <button type="button" class="btn-close" onclick="closeChangelogModal()">✖</button>
             </div>
@@ -1019,8 +1020,8 @@
             <form onsubmit="event.preventDefault(); saveCustomChangelogEntry();">
                 <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:12px;">
                     <div>
-                        <label for="clNewVersion">Version (z.B. v6.3.0):</label>
-                        <input type="text" id="clNewVersion" placeholder="v6.3.0" required>
+                        <label for="clNewVersion">Version (z. B. v6.6.0):</label>
+                        <input type="text" id="clNewVersion" placeholder="v6.6.0" required>
                     </div>
                     <div>
                         <label for="clNewCategory">Kategorie:</label>
@@ -1028,14 +1029,15 @@
                             <option value="Update">Update</option>
                             <option value="Neue Funktion">Neue Funktion</option>
                             <option value="Änderung">Änderung</option>
-                            <option value="Bugfix">Bugfix</option>
+                            <option value="Fehlerbehebung">Fehlerbehebung</option>
                             <option value="Design">Design</option>
-                            <option value="Technische Änderung">Technische Änderung</option>
+                            <option value="Verbesserung">Verbesserung</option>
                         </select>
                     </div>
                 </div>
+                <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px;">Bitte kurz und ohne technische Fachbegriffe formulieren.</div>
                 <label for="clNewTitle">Titel / Zusammenfassung:</label>
-                <input type="text" id="clNewTitle" placeholder="z.B. Direkter Reiter Prüfcenter und Mülleimer-Reparatur" required style="margin-bottom:12px;">
+                <input type="text" id="clNewTitle" placeholder="z. B. Materialverwaltung verbessert" required style="margin-bottom:12px;">
 
                 <label for="clNewChanges">Änderungspunkte (Jede Zeile = 1 Stichpunkt):</label>
                 <textarea id="clNewChanges" rows="6" placeholder="- Erste Neuerung&#10;- Zweite Verbesserung&#10;- Behobener Fehler" required style="margin-bottom:16px;"></textarea>
@@ -1426,6 +1428,7 @@
                 <button type="button" class="admin-tab-btn" id="btnAdminSubRoles" onclick="switchAdminTab('adminSubTabRoles', this)">🎭 Rollen & Berechtigungs-Matrix</button>
                 <button type="button" class="admin-tab-btn" id="btnAdminSubSystem" onclick="switchAdminTab('adminSubTabSystem', this)">💾 Backup & Wiederherstellung</button>
                 <button type="button" class="admin-tab-btn" id="btnAdminSubAudit" onclick="switchAdminTab('adminSubTabAudit', this)">📋 System-Protokoll (Heute)</button>
+                <button type="button" class="admin-tab-btn" id="btnAdminSubMaintenance" onclick="switchAdminTab('adminSubTabMaintenance', this)">🛠️ Wartungsarbeiten</button>
             </div>
 
             <!-- SUB-TAB 1: MITARBEITER KARTEI -->
@@ -1487,11 +1490,11 @@
                                     <h5 style="margin:0 0 10px 0; color:var(--warning); font-size:13px; text-transform:uppercase;">🛡️ System & Administration</h5>
                                     <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:10px;">
                                         <div class="role-perm-box"><label for="roleFlagAdmin" class="perm-check"><input type="checkbox" id="roleFlagAdmin"> <b>Admin-Zugang</b></label><span class="perm-desc">Darf das Admin-Menü (🔑) öffnen und Mitarbeiter freischalten.</span></div>
-                                        <div class="role-perm-box"><label for="roleFlagMasterAdmin" class="perm-check"><input type="checkbox" id="roleFlagMasterAdmin"> <b>👑 Master-Admin</b></label><span class="perm-desc">Höchste Stufe: Voller Zugriff, Bearbeitungsstifte überall, Rollenverwaltung & Backups.</span></div>
-                                        <div class="role-perm-box"><label for="delFlagUsers" class="perm-check"><input type="checkbox" id="delFlagUsers"> <b>🗑️ Accounts löschen</b></label><span class="perm-desc">Darf Mitarbeiterkonten unwiderruflich aus der Datenbank entfernen.</span></div>
+                                        <div class="role-perm-box"><label for="roleFlagMasterAdmin" class="perm-check"><input type="checkbox" id="roleFlagMasterAdmin"> <b>👑 Master Admin</b></label><span class="perm-desc">Höchste Stufe: Voller Zugriff, Bearbeitungsstifte überall, Rollenverwaltung & Backups.</span></div>
+                                        <div class="role-perm-box"><label for="delFlagUsers" class="perm-check"><input type="checkbox" id="delFlagUsers"> <b>🗑️ Accounts löschen</b></label><span class="perm-desc">Darf Mitarbeiterkonten dauerhaft entfernen.</span></div>
                                         <div class="role-perm-box"><label for="roleFlagManageFeedback" class="perm-check"><input type="checkbox" id="roleFlagManageFeedback"> <b>💡 Wünsche & Bugs bearbeiten</b></label><span class="perm-desc">Sieht im Wünsche-&-Bugs-Bereich den zusätzlichen Reiter zum Prüfen und Bearbeiten aller Meldungen.</span></div>
                                         <div class="role-perm-box"><label for="delFlagFeedback" class="perm-check"><input type="checkbox" id="delFlagFeedback"> <b>🗑️ Meldungen löschen</b></label><span class="perm-desc">Darf Wünsche und Fehlerberichte dauerhaft aus dem System löschen.</span></div>
-                                        <div class="role-perm-box"><label for="roleFlagViewChiefMaterials" class="perm-check"><input type="checkbox" id="roleFlagViewChiefMaterials"> <b>⭐ Chief-Materialliste sehen</b></label><span class="perm-desc">Blendet den Hauptreiter „Chief-Ebene“ mit Materialbestand und Historie ein.</span></div>
+                                        <div class="role-perm-box"><label for="roleFlagViewChiefMaterials" class="perm-check"><input type="checkbox" id="roleFlagViewChiefMaterials"> <b>⭐ Chief-Materialliste sehen</b></label><span class="perm-desc">Blendet den Hauptreiter „Chief Ebene“ mit Materialbestand und Historie ein.</span></div>
                                         <div class="role-perm-box"><label for="roleFlagEditChiefMaterials" class="perm-check"><input type="checkbox" id="roleFlagEditChiefMaterials"> <b>📦 Chief-Materialliste bearbeiten</b></label><span class="perm-desc">Darf Bestandsaufnahmen speichern, Maximalbestände ändern und fehlerhafte Einträge löschen.</span></div>
                                     </div>
                                 </div>
@@ -1584,13 +1587,12 @@
             <!-- SUB-TAB 4: BACKUP & WIEDERHERSTELLUNG -->
             <div id="adminSubTabSystem" class="admin-subtab-content">
                 <div id="firebaseAuthMigrationPanel" style="background:rgba(234,179,8,0.06); padding:20px; border-radius:16px; border:1px solid rgba(234,179,8,0.35); margin-bottom:20px; display:none;">
-                    <h3 style="margin:0 0 10px 0; color:var(--warning);">🔐 Firebase-Anmeldung umstellen</h3>
+                    <h3 style="margin:0 0 10px 0; color:var(--warning);">🔐 Anmeldungen sicher umstellen</h3>
                     <p style="color:var(--text-muted); font-size:12px; margin-top:0; line-height:1.55;">
-                        Einmalige Sicherheitsmigration: Bestehende Mitarbeiter werden sofort in Firebase Authentication übernommen.
-                        Konten, die nicht automatisch mit dem alten Passwort übernommen werden können, verwenden beim ersten Login weiterhin ihr bisheriges Passwort und müssen danach direkt ein neues persönliches Passwort festlegen. Es werden keine Übergangspasswörter verteilt.
+                        Einmalige Sicherheitsumstellung für bestehende Mitarbeiterkonten. Falls nötig, werden Mitarbeiter beim nächsten Login aufgefordert, ein neues persönliches Passwort festzulegen.
                     </p>
                     <div id="firebaseAuthMigrationStatus" style="font-size:12px; color:var(--text-main); margin:10px 0 14px 0;">Status wird geprüft …</div>
-                    <button type="button" id="btnRunFirebaseAuthMigration" class="btn" style="width:auto; padding:10px 20px; background:var(--warning); color:#080c14; font-weight:800;" onclick="runFirebaseAuthMigration()">🔐 Sicherheitsmigration starten</button>
+                    <button type="button" id="btnRunFirebaseAuthMigration" class="btn" style="width:auto; padding:10px 20px; background:var(--warning); color:#080c14; font-weight:800;" onclick="runFirebaseAuthMigration()">🔐 Sicherheitsumstellung starten</button>
                 </div>
 
                 <div id="passwordChangeStatusPanel" style="background:rgba(34,197,94,0.05); padding:20px; border-radius:16px; border:1px solid rgba(34,197,94,0.25); margin-bottom:20px; display:none;">
@@ -1622,12 +1624,33 @@
 
                 <div style="background:rgba(244, 63, 94, 0.06); padding:20px; border-radius:16px; border:1px solid rgba(244, 63, 94, 0.25);">
                     <h3 style="margin:0 0 8px 0; color:var(--danger);">⚠️ Fachdaten-Reset</h3>
-                    <p style="color:var(--text-muted); font-size:12px; margin-top:0;">Nur für den Master-Admin verfügbar. Löscht Patienten-, Archiv-, Kalender-, Prüfungs- und weitere Fachdaten. Mitarbeiterkonten, Rollen und Firebase-Anmeldungen bleiben aus Sicherheitsgründen erhalten.</p>
+                    <p style="color:var(--text-muted); font-size:12px; margin-top:0;">Nur für den Master Admin verfügbar. Löscht Patienten-, Archiv-, Kalender-, Prüfungs- und weitere Fachdaten. Mitarbeiterkonten, Rollen und Anmeldungen bleiben aus Sicherheitsgründen erhalten.</p>
                     <button type="button" class="btn-full-reset" style="width:auto; padding:10px 20px;" onclick="vollstaendigerReset()">Fachdaten zurücksetzen</button>
                 </div>
             </div>
 
             <!-- SUB-TAB 5: SYSTEM-PROTOKOLL -->
+
+            <!-- SUB-TAB: WARTUNGSARBEITEN -->
+            <div id="adminSubTabMaintenance" class="admin-subtab-content">
+                <div id="maintenanceAdminPanel" class="maintenance-admin-card">
+                    <div class="maintenance-admin-head">
+                        <div>
+                            <h3 style="margin:0;">🛠️ Wartungsarbeiten</h3>
+                            <p style="margin:5px 0 0;color:var(--text-muted);font-size:12px;line-height:1.5;">Während Wartungsarbeiten bleibt „Dokumentation & Einsatz“ für alle Mitarbeiter verfügbar. Alle anderen Bereiche stehen nur der Chief Ebene und dem Master Admin zur Verfügung. Neue Registrierungen sind vorübergehend gesperrt.</p>
+                        </div>
+                        <div id="maintenanceStatusText" class="maintenance-state">🟢 Normalbetrieb</div>
+                    </div>
+                    <div id="maintenanceStatusDetails" class="maintenance-details">Alle Bereiche stehen den jeweils berechtigten Mitarbeitern normal zur Verfügung.</div>
+                    <label for="maintenanceMessageInput">Hinweis für Mitarbeiter (optional)</label>
+                    <input type="text" id="maintenanceMessageInput" maxlength="140" placeholder="z. B. Kurze Wartung an der Mitarbeiterverwaltung">
+                    <div class="maintenance-actions">
+                        <button type="button" id="btnEnableMaintenance" class="btn maintenance-enable" onclick="setMaintenanceMode(true)">🛠️ Wartungsmodus aktivieren</button>
+                        <button type="button" id="btnDisableMaintenance" class="btn maintenance-disable" onclick="setMaintenanceMode(false)" style="display:none;">✅ Wartungsmodus beenden</button>
+                    </div>
+                </div>
+            </div>
+
             <div id="adminSubTabAudit" class="admin-subtab-content">
                 <div style="background:rgba(15, 23, 42, 0.7); padding:20px 24px; border-radius:16px; border:1px solid var(--border);">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:10px;">
@@ -1664,10 +1687,12 @@
             <label for="permNachname">Nachname</label><input type="text" id="permNachname" autocomplete="off">
             <div style="font-size:11px;color:var(--text-muted);margin-top:-4px;margin-bottom:10px;">Vor- und Nachname können bei einer Namensänderung angepasst werden. Die feste interne Account-ID bleibt dabei unverändert; der Login wird automatisch auf den neuen Namen umgestellt.</div>
             <label for="permDN">Dienstnummer (DN)</label><input type="text" id="permDN" autocomplete="off">
-            <div id="permPasswordResetContainer">
-                <label for="permPassword">Neues Login-Passwort (optional)</label>
-                <input type="password" id="permPassword" autocomplete="new-password" minlength="6" placeholder="Nur Master-Admin: Firebase-Zugang neu setzen">
-                <div style="font-size:11px;color:var(--text-muted);margin-top:-6px;margin-bottom:10px;">Ein neues Passwort ersetzt den Firebase-Zugang dieses Mitarbeiters. Nur für den Master-Admin verfügbar.</div>
+            <div id="permPasswordResetContainer" style="display:none; margin:14px 0; padding:14px; border:1px solid var(--border); border-radius:12px; background:rgba(56,189,248,0.05);">
+                <div style="font-weight:800; color:var(--primary); margin-bottom:6px;">🔑 Passwort zurücksetzen</div>
+                <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px;">Das bisherige Passwort kann nicht angezeigt werden. Als Master Admin kannst du ein neues vorläufiges Passwort setzen. Der Mitarbeiter muss es beim nächsten Login ändern.</div>
+                <label for="permPassword">Neues vorläufiges Passwort</label>
+                <input type="password" id="permPassword" autocomplete="new-password" minlength="6" placeholder="Mindestens 6 Zeichen">
+                <button type="button" class="btn" style="width:auto; margin:0;" onclick="resetSelectedUserPassword()">🔑 Passwort zurücksetzen</button>
             </div>
             <label for="permStatus">Status</label>
             <select id="permStatus">
@@ -1725,6 +1750,6 @@
         </div>
     </div>
 
-    <script src="app.js?v=6.5.0"></script>
+    <script src="app.js?v=6.6.0"></script>
 </body>
 </html>
