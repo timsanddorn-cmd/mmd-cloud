@@ -280,10 +280,12 @@ const systemChangelogs = [
             "Fehlerhafte Bestandsaufnahmen können jetzt einzeln gelöscht werden.",
             "Für Wartungsarbeiten gibt es einen neuen geschützten Wartungsmodus. Dokumentation & Einsatz bleibt für alle Mitarbeiter nutzbar.",
             "Neue Registrierungen sind während Wartungsarbeiten vorübergehend nicht möglich.",
-            "Der automatische Dienst-Logout zum Tageswechsel wurde verbessert.",
+            "Der automatische Dienstlogout zum Tageswechsel wurde verbessert.",
             "Die Anzeige der Mitarbeiter im Dienst wurde für längere Namen verbessert.",
             "Die Passwortverwaltung für den Master Admin wurde verständlicher gestaltet.",
-            "Hinweise und Fehlermeldungen wurden einfacher und verständlicher formuliert."
+            "Hinweise und Fehlermeldungen wurden einfacher und verständlicher formuliert.",
+            "Rollen und Berechtigungen wurden zuverlässiger miteinander verknüpft.",
+            "Überschriften und Bezeichnungen wurden einheitlicher gestaltet."
         ]
     },
     {
@@ -486,6 +488,7 @@ const defaultRoles = {
         isInstructor:false, canManageInstructors:false, canManageExams:false,
         canPostNews:false, canApproveNews:false, canViewNewsRead:false,
         canEditPrices:false, canEditGuide:false, canEditCommands:false, canEditLinks:false,
+        canViewChiefMaterials:false, canEditChiefMaterials:false,
         delPatient:false, delArchiv:false, delGuide:false, delCommands:false, delLinks:false, delNews:false, delExams:false, delUsers:false, canManageFeedback:false, delFeedback:false,
         allowedCmdKats: ['Abkürzungen & Dokumente', 'Allgemein', 'T-Codes'],
         allowedLinkKats: ['MD Intern']
@@ -1073,7 +1076,7 @@ function canCurrentUserManageTargetUser(uId) {
 
 function requireTargetUserManagement(uId) {
     if (canCurrentUserManageTargetUser(uId)) return true;
-    alert('Privilegierte Admin-Konten dürfen nur von einem Master Admin verändert werden!');
+    alert('Privilegierte Admin Konten dürfen nur von einem Master Admin verändert werden!');
     return false;
 }
 
@@ -1192,7 +1195,7 @@ async function loadAuthenticatedProfile(firebaseUser) {
 
     const userSnap = await db.ref(`data/users/${uId}`).once('value');
     const user = userSnap.val();
-    if (!user) throw new Error('Das zugehörige MD-Mitarbeiterkonto wurde nicht gefunden.');
+    if (!user) throw new Error('Das zugehörige MD Mitarbeiterkonto wurde nicht gefunden.');
     if (user.authUid && user.authUid !== firebaseUser.uid) {
         throw new Error('Dieser Zugang wurde ersetzt. Bitte melde dich erneut an.');
     }
@@ -1257,8 +1260,8 @@ async function migrateLegacyUserOnLogin(uId, password) {
     let firebasePassword = password;
     if (firebasePassword.length < 6) {
         const replacement = prompt(
-            'Dein bisheriges MD-Passwort ist kürzer als die erforderlichen 6 Zeichen.\n\n' +
-            'Bitte lege jetzt einmalig ein neues Passwort mit mindestens 6 Zeichen fest. Dieses neue Passwort gilt anschließend für deine MD-Anmeldung.'
+            'Dein bisheriges MD Passwort ist kürzer als die erforderlichen 6 Zeichen.\n\n' +
+            'Bitte lege jetzt einmalig ein neues Passwort mit mindestens 6 Zeichen fest. Dieses neue Passwort gilt anschließend für deine MD Anmeldung.'
         );
         if (!replacement || replacement.length < 6) {
             const e = new Error('Für die sichere Umstellung wird ein neues Passwort mit mindestens 6 Zeichen benötigt.');
@@ -3706,7 +3709,7 @@ function renderStaffDirectory() {
                                 <input type="file" accept="image/*" style="display:none;" onchange="uploadProcessedStaffPhoto(event, '${uId}')">
                             </label>
                             ${isCustomPhoto ? `
-                                <button type="button" class="btn-staff-quick-action btn-reset" onclick="resetStaffPhotoToDefault('${uId}')" title="Auf Standard-Logo zurücksetzen">🔄 Logo</button>
+                                <button type="button" class="btn-staff-quick-action btn-reset" onclick="resetStaffPhotoToDefault('${uId}')" title="Auf Standardlogo zurücksetzen">🔄 Logo</button>
                             ` : ''}
                         </div>
                     ` : ''}
@@ -3722,9 +3725,9 @@ function filterStaffDirectory() {
 
 function resetStaffPhotoToDefault(uId) {
     if (!canUserManageEmployeePhotos()) return;
-    if (confirm('Profilbild dieses Mitarbeiters wieder auf das Standard-Logo (mdlogo.png) zurücksetzen?')) {
+    if (confirm('Profilbild dieses Mitarbeiters wieder auf das Standardlogo (mdlogo.png) zurücksetzen?')) {
         db.ref('data/users/' + uId + '/photoUrl').set('mdlogo.png').then(() => {
-            logAdminAudit('Mitarbeiter-Foto zurückgesetzt', `Profilbild für ${uId} wurde auf Standard-Logo zurückgesetzt.`);
+            logAdminAudit('Mitarbeiterfoto zurückgesetzt', `Profilbild für ${uId} wurde auf Standardlogo zurückgesetzt.`);
             renderStaffDirectory();
         });
     }
@@ -3810,13 +3813,13 @@ function submitStaffPhotoUpload() {
     db.ref('data/employeePhotos/' + uId).set(photoEntry).then(() => {
         closeStaffPhotoUploadModal();
         logAdminAudit('Foto zur Bearbeitung eingereicht', `${sessionUser.vorname} ${sessionUser.nachname} (DN: ${sessionUser.dn}) hat ein Foto eingereicht.`);
-        alert('✅ Foto erfolgreich eingereicht!\n\nDein Bild liegt nun im internen Foto-Ordner der Leitung/Personalabteilung.');
+        alert('✅ Foto erfolgreich eingereicht!\n\nDein Bild liegt nun im internen Fotoordner der Leitung/Personalabteilung.');
     });
 }
 
 function openStaffPhotoAdminModal() {
     if (!canUserManageEmployeePhotos()) {
-        alert('Keine Berechtigung für den Foto-Ordner!');
+        alert('Keine Berechtigung für den Fotoordner!');
         return;
     }
     renderStaffPhotoAdminList();
@@ -3882,7 +3885,7 @@ function uploadProcessedStaffPhoto(event, uId) {
     scaleImageProportionally(file, 360, 430, (scaledBase64) => {
         db.ref('data/users/' + uId + '/photoUrl').set(scaledBase64).then(() => {
             logAdminAudit('Finales Dienstfoto hinterlegt', `Freigestelltes Bild für ${uId} von ${sessionUser.vorname} ${sessionUser.nachname} gespeichert.`);
-            alert('✅ Finales Foto erfolgreich in die Mitarbeiter-Kartei eingesetzt!');
+            alert('✅ Finales Foto erfolgreich in die Mitarbeiterkartei eingesetzt!');
             renderStaffDirectory();
         });
     });
@@ -3892,7 +3895,7 @@ function deleteSubmittedRawPhoto(uId) {
     if (!canUserManageEmployeePhotos()) return;
     const eff = sessionUser ? getUserEffectivePermissions(sessionUser) : {};
     if (!eff.isMasterAdmin && !eff.delPhotos && !eff.isAdmin) {
-        alert('Keine Berechtigung zum Löschen aus dem Foto-Ordner!');
+        alert('Keine Berechtigung zum Löschen aus dem Fotoordner!');
         return;
     }
 
@@ -6342,7 +6345,7 @@ function deleteUserAccount(uId) {
     if (!sessionUser || !getUserEffectivePermissions(sessionUser).delUsers) return;
     if (!requireTargetUserManagement(uId)) return;
     const target = cachedUsers[uId] || {};
-    if (confirm('ACHTUNG: Mitarbeiter endgültig löschen? Dadurch wird er sofort aus der Mitarbeiter-Kartei entfernt und kann sich mit diesem Zugang nicht mehr anmelden.')) {
+    if (confirm('ACHTUNG: Mitarbeiter endgültig löschen? Dadurch wird er sofort aus der Mitarbeiterkartei entfernt und kann sich mit diesem Zugang nicht mehr anmelden.')) {
         const updates = {};
         updates[`data/users/${uId}`] = null;
         updates[`data/employeePhotos/${uId}`] = null;
@@ -6532,7 +6535,7 @@ function openAssignRolesModal(uId, name, isRestrictedByLeitung = false) {
     const eff = getUserEffectivePermissions(sessionUser);
     const target = cachedUsers[uId];
     if (target && isPrivilegedUser(target) && !eff.isMasterAdmin) {
-        alert('Privilegierte Admin-Konten dürfen nur von einem Master Admin verändert werden!');
+        alert('Privilegierte Admin Konten dürfen nur von einem Master Admin verändert werden!');
         return;
     }
     const isMasterOperator = !!eff.isMasterAdmin;
@@ -6592,7 +6595,7 @@ function saveAssignedRoles() {
     const uId = document.getElementById('assignRoleUserId')?.value; if (!uId) return;
     const target = cachedUsers[uId];
     if (target && isPrivilegedUser(target) && !isMasterOperator) {
-        alert('Privilegierte Admin-Konten dürfen nur von einem Master Admin verändert werden!');
+        alert('Privilegierte Admin Konten dürfen nur von einem Master Admin verändert werden!');
         return;
     }
     let cleanRoles = {};
@@ -7506,7 +7509,8 @@ async function importChiefMaterialLegacyV660Once() {
 function canCurrentUserViewChiefMaterials() {
     if (!sessionUser) return false;
     const eff = getUserEffectivePermissions(sessionUser);
-    return !!(eff.isMasterAdmin || eff.canViewChiefMaterials || eff.canEditChiefMaterials);
+    const hasChiefRole = getUserRolesList(sessionUser).includes('chiefebene');
+    return !!(eff.isMasterAdmin || hasChiefRole || eff.canViewChiefMaterials || eff.canEditChiefMaterials);
 }
 
 function canCurrentUserEditChiefMaterials() {
@@ -7663,7 +7667,7 @@ function renderChiefMaterialsTab() {
 }
 
 async function saveChiefMaterialEntry() {
-    if (!requirePermission(['canEditChiefMaterials','isMasterAdmin'], 'Keine Berechtigung zum Bearbeiten der Chief-Materialliste!')) return;
+    if (!requirePermission(['canEditChiefMaterials','isMasterAdmin'], 'Keine Berechtigung zum Bearbeiten der Chief Materialliste!')) return;
     const date = document.getElementById('chiefMaterialDate')?.value;
     if (!date) { alert('Bitte einen Stichtag auswählen.'); return; }
     const stocks = {}, maxima = {}, consumed = {};
@@ -7710,7 +7714,7 @@ async function saveChiefMaterialConfig() {
     }
     try {
         await db.ref('data/chiefMaterials/config').set(config);
-        logAdminAudit('Maximalbestände geändert', `${sessionUser.vorname} ${sessionUser.nachname} hat die Maximalbestände der Chief-Materialliste aktualisiert.`);
+        logAdminAudit('Maximalbestände geändert', `${sessionUser.vorname} ${sessionUser.nachname} hat die Maximalbestände der Chief Materialliste aktualisiert.`);
         alert('✅ Maximalbestände wurden gespeichert.');
     } catch (err) {
         console.error('Maximalbestände konnten nicht gespeichert werden:', err);

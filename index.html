@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MMD Cloud-Patientenverwaltung Live</title>
+    <title>MMD Cloud Patientenverwaltung Live</title>
     <!-- Google Fonts & Firebase SDK -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -119,7 +119,7 @@
 
             <div class="top-bar-controls">
                 <div class="date-display">📅 <span id="liveDateDisplay">--.--.----</span></div>
-                <button type="button" id="adminKeyBtn" class="btn-admin-key" style="display:none;" onclick="openAdminKeyModal()" title="Admin-Zentralverwaltung">🔑 Admin</button>
+                <button type="button" id="adminKeyBtn" class="btn-admin-key" style="display:none;" onclick="openAdminKeyModal()" title="Admin Zentralverwaltung">🔑 Admin</button>
                 <button type="button" class="btn-feedback-trigger" onclick="openFeedbackCenter()" title="Wünsche, Feedback oder Bugs">💡 Wünsche & Bugs</button>
                 <button type="button" class="btn-logout" onclick="handleDienstEndeLogout()">Dienst beenden 🚪</button>
             </div>
@@ -617,11 +617,11 @@
 
         <!-- REITER: AUSBILDUNGSBEREICH -->
         <div id="examTab" class="tab-content">
-            <h2>🎓 Ausbildungs- & Prüfungsbereich</h2>
+            <h2>🎓 Ausbildung & Prüfungen</h2>
             <div id="examStudentView">
                 <div style="background: rgba(15, 23, 42, 0.6); padding: 18px 20px; border-radius: 14px; border: 1px solid var(--border); margin-bottom: 20px;">
                     <h4 style="margin:0 0 6px 0; color:var(--primary); font-size:15px;">📋 Deine freigeschalteten Prüfungen</h4>
-                    <p style="color:var(--text-muted); font-size:12px; margin:0 0 14px 0;">Hier findest du alle Prüfungen, die von der <b>Ausbildungsabteilung</b> für dich autorisiert wurden. <i>Hinweis: Prüfungen unterstützen Multiple-Choice (eine oder mehrere Antworten können zutreffen).</i></p>
+                    <p style="color:var(--text-muted); font-size:12px; margin:0 0 14px 0;">Hier findest du alle Prüfungen, die von der <b>Ausbildungsabteilung</b> für dich autorisiert wurden. <i>Hinweis: Prüfungen unterstützen Multiple Choice (eine oder mehrere Antworten können zutreffen).</i></p>
                     <div id="studentUnlockedExamsContainer" class="exam-grid-compact"></div>
                 </div>
 
@@ -629,7 +629,7 @@
                     <div class="exam-timer-sticky">
                         <div>
                             <h3 id="activeExamTitle" style="margin:0; color:var(--primary); font-size:20px;">Prüfung</h3>
-                            <span id="activeExamSubtitle" style="font-size:12px; color:var(--text-muted);">Echtzeit-Prüfungslauf (Mehrfachauswahl möglich)</span>
+                            <span id="activeExamSubtitle" style="font-size:12px; color:var(--text-muted);">Echtzeit Prüfungslauf (Mehrfachauswahl möglich)</span>
                         </div>
                         <div class="exam-timer-label">⏱️ <span>Zeit:</span><span id="activeExamTimerDisplay" class="exam-timer-text">00:00</span></div>
                     </div>
@@ -644,7 +644,7 @@
             <div id="examInstructorView" style="display:none; margin-top:24px; border-top:2px dashed var(--primary); padding-top:24px;">
                 <div style="background: rgba(168, 85, 247, 0.04); padding: 20px; border-radius: 14px; border: 1px solid rgba(168, 85, 247, 0.25);">
                     <h3 style="margin-top:0; color:#a855f7; display:flex; justify-content:space-between; align-items:center;">
-                        <span>🎓 Ausbilder-Verwaltung & Auswertung</span>
+                        <span>🎓 Ausbilderverwaltung & Auswertung</span>
                         <span style="font-size:11px; background:rgba(168, 85, 247, 0.2); color:#a855f7; padding:4px 10px; border-radius:20px;">AUSBILDER MODUS</span>
                     </h3>
 
@@ -658,7 +658,7 @@
                     <div id="instrTabUnlocks" class="admin-subtab-content active">
                         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:10px;">
                             <input type="text" class="form-input" id="searchUnlocksUser" placeholder="🔍 Mitarbeiter nach Name oder DN suchen (A-Z)..." style="max-width:380px;" oninput="filterUnlocksTable()" aria-label="Mitarbeiter nach Name oder DN suchen">
-                            <span style="font-size:12px; color:var(--text-muted);">Echtzeit-Synchronisierung aktiv</span>
+                            <span style="font-size:12px; color:var(--text-muted);">Echtzeit Synchronisierung aktiv</span>
                         </div>
                         <div class="table-responsive">
                             <table>
@@ -690,8 +690,8 @@
                     </div>
 
                     <div id="instrTabInstructorAllowedExams" class="admin-subtab-content">
-                        <h4 style="margin:0 0 8px 0; color:#a855f7;">🎓 Ausbildungsleitung: Mitglieder-Freigabe & Ausbilder-Rollen</h4>
-                        <p style="color:var(--text-muted); font-size:12px; margin-top:0;">Schalte neue Fraktionsmitglieder frei oder sperre den Zugriff. Rollenvergabe beschränkt auf Ausbildungs- und Fachabteilungs-Rollen (Ausbilder, CLS, EHK, Luftrettung, Mitarbeiter, Personalabteilung, Psychologie).</p>
+                        <h4 style="margin:0 0 8px 0; color:#a855f7;">🎓 Ausbildungsleitung: Mitgliederfreigabe & Ausbilderrollen</h4>
+                        <p style="color:var(--text-muted); font-size:12px; margin-top:0;">Schalte neue Fraktionsmitglieder frei oder sperre den Zugriff. Rollenvergabe beschränkt auf Ausbildungs- und Fachabteilungsrollen (Ausbilder, CLS, EHK, Luftrettung, Mitarbeiter, Personalabteilung, Psychologie).</p>
                         <div class="table-responsive">
                             <table>
                                 <thead><tr><th>Mitarbeiter Name</th><th>DN</th><th>Rollen</th><th>Status</th><th style="text-align:right;">Aktion</th></tr></thead>
@@ -731,7 +731,7 @@
 
             <!-- NEWS VORSCHLAGEN -->
             <div id="proposeNewsContainer" style="display:none; background:rgba(30,41,59,0.5); border:1px dashed var(--primary); border-radius:14px; padding:20px; margin-bottom:24px;">
-                <h3 style="margin-top:0; color:var(--primary); font-size:15px;">💡 News-Beitrag vorschlagen</h3>
+                <h3 style="margin-top:0; color:var(--primary); font-size:15px;">💡 Newsbeitrag vorschlagen</h3>
                 <label for="propNewsTitle">Titel / Betreff:</label>
                 <input type="text" id="propNewsTitle" placeholder="Titel / Betreff" style="margin-bottom:10px;">
                 <label for="propNewsContent">Inhalt / Text:</label>
@@ -745,7 +745,7 @@
             <!-- NEWS DIREKT POSTEN / BEARBEITEN -->
             <div id="postNewsContainer" style="display: none; background: rgba(15, 23, 42, 0.7); border: 1px solid var(--primary); border-radius: 14px; padding: 20px; margin-bottom: 24px;">
                 <input type="hidden" id="editingNewsId" value="">
-                <h3 style="margin-top: 0; color: var(--primary); font-size: 15px;" id="postNewsFormHeading">📝 Neuen News-Thread verfassen</h3>
+                <h3 style="margin-top: 0; color: var(--primary); font-size: 15px;" id="postNewsFormHeading">📝 Neuen News Thread verfassen</h3>
                 <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 14px; margin-bottom: 12px;">
                     <div>
                         <label for="newNewsTitle">Titel / Betreff:</label>
@@ -1013,8 +1013,8 @@
         <div class="modal-card" style="max-width: 700px; width: 95vw; max-height: 90vh; overflow-y:auto;">
             <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:12px; margin-bottom:16px;">
                 <div>
-                    <h3 style="margin:0; color:var(--warning);">✏️ Neuen Changelog-Eintrag verfassen</h3>
-                    <p style="margin:4px 0 0 0; color:var(--text-muted); font-size:12px;">Erstelle ohne Quellcode-Bearbeitung neue Hinweise für das gesamte MD-Team.</p>
+                    <h3 style="margin:0; color:var(--warning);">✏️ Neuen Changelog Eintrag verfassen</h3>
+                    <p style="margin:4px 0 0 0; color:var(--text-muted); font-size:12px;">Erstelle ohne Quellcodebearbeitung neue Hinweise für das gesamte MD-Team.</p>
                 </div>
                 <button type="button" class="btn-close" onclick="closeChangelogWriterModal()">✖</button>
             </div>
@@ -1089,7 +1089,7 @@
     <!-- MODAL POPUP: PATIENT EDITIEREN -->
     <div id="editModal" class="modal-overlay">
         <div class="modal-card">
-            <h3 style="margin-top:0; color:var(--primary);">✏️ Patienten-Eintrag bearbeiten</h3>
+            <h3 style="margin-top:0; color:var(--primary);">✏️ Patienteneintrag bearbeiten</h3>
             <input type="hidden" id="editKey">
             <label for="editName">Patienten Name:</label><input type="text" id="editName">
             <label for="editSzenario">Szenario:</label><input type="text" id="editSzenario">
@@ -1111,7 +1111,7 @@
             </div>
             <form onsubmit="event.preventDefault(); saveArchivEdit();">
                 <input type="hidden" id="editArchivKey">
-                <label for="editArchivDatum">Schicht-Datum:</label>
+                <label for="editArchivDatum">Schichtdatum:</label>
                 <input type="text" id="editArchivDatum" placeholder="TT.MM.JJJJ" required>
 
                 <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
@@ -1215,7 +1215,7 @@
                 </div>
 
                 <div id="calEventRepeatContainer" style="margin-top:10px;">
-                    <label for="calEventRepeat">Termin-Wiederholung:</label>
+                    <label for="calEventRepeat">Terminwiederholung:</label>
                     <select id="calEventRepeat">
                         <option value="none">Einmaliger Termin (Keine Wiederholung)</option>
                         <option value="weekly_1">Wöchentlich wiederholen (1 Woche lang)</option>
@@ -1272,7 +1272,7 @@
     <div id="calendarEventDetailsModal" class="modal-overlay">
         <div class="modal-card" style="max-width: 550px; width: 95vw;">
             <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:12px; margin-bottom:16px;">
-                <h3 style="margin:0; color:var(--primary);" id="calDetailsTitle">Termin-Details</h3>
+                <h3 style="margin:0; color:var(--primary);" id="calDetailsTitle">Termindetails</h3>
                 <button type="button" class="btn-close" onclick="closeCalendarEventDetailsModal()">✖</button>
             </div>
             <div id="calDetailsBody" style="font-size:14px; line-height:1.6;"></div>
@@ -1290,17 +1290,17 @@
     <div id="staffPhotoUploadModal" class="modal-overlay">
         <div class="modal-card" style="max-width: 620px; width: 95vw; max-height: 90vh; overflow-y:auto;">
             <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:12px; margin-bottom:16px;">
-                <h3 style="margin:0; color:var(--primary);">📷 Mitarbeiter-Foto zur Bearbeitung einreichen</h3>
+                <h3 style="margin:0; color:var(--primary);">📷 Mitarbeiterfoto zur Bearbeitung einreichen</h3>
                 <button type="button" class="btn-close" onclick="closeStaffPhotoUploadModal()">✖</button>
             </div>
 
             <div style="background:rgba(15,23,42,0.8); border:1px solid var(--border); border-radius:12px; padding:14px; margin-bottom:16px;">
-                <h4 style="margin:0 0 8px 0; color:var(--warning); font-size:14px;">📍 Foto-Anleitung (1. Stock MD)</h4>
+                <h4 style="margin:0 0 8px 0; color:var(--warning); font-size:14px;">📍 Fotoanleitung (1. Stock MD)</h4>
                 <p style="margin:0 0 10px 0; font-size:12px; color:var(--text-muted); line-height:1.5;">
                     Bitte erstelle dein Foto im 1. Obergeschoss des Medical Departments vor der neutralen Wand. Stelle dich aufrecht hin, blicke direkt in die Kamera. Dein Bild wird automatisch angepasst, ohne dass etwas abgeschnitten wird.
                 </p>
                 <div id="staffGuidePlaceholderBox" class="guide-photo-box">
-                    <span>🖼️ Foto-Guide: Positionierung & Haltung im 1. OG (Grafik wird nachgereicht)</span>
+                    <span>🖼️ Fotoguide: Positionierung & Haltung im 1. OG (Grafik wird nachgereicht)</span>
                 </div>
             </div>
 
@@ -1371,7 +1371,7 @@
                 <textarea id="newExamIntroText" rows="2" placeholder="Willkommen zur Prüfung..."></textarea>
             </div>
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-                <h4 style="margin:0; color:var(--text-main);">❓ Fragen-Katalog (<span id="examQuestionsCountDisplay">0</span> Fragen)</h4>
+                <h4 style="margin:0; color:var(--text-main);">❓ Fragenkatalog (<span id="examQuestionsCountDisplay">0</span> Fragen)</h4>
                 <button type="button" class="btn" style="width:auto; margin:0; padding:6px 14px; font-size:12px; background:var(--primary); color:#080c14;" onclick="addExamQuestionRow()">➕ Frage hinzufügen</button>
             </div>
             <div id="examQuestionsListBuilder" style="display:flex; flex-direction:column; gap:12px; margin-bottom:20px;"></div>
@@ -1385,11 +1385,11 @@
     <!-- ADMIN AUTHENTIFIZIERUNGS-MODAL -->
     <div id="adminAuthModal" class="modal-overlay">
         <div class="modal-card">
-            <h3 style="margin-top:0; color:var(--warning); display:flex; align-items:center; gap:8px;">🔑 Admin-Verifizierung</h3>
+            <h3 style="margin-top:0; color:var(--warning); display:flex; align-items:center; gap:8px;">🔑 Admin Verifizierung</h3>
             <p style="color:var(--text-muted); font-size:12px; margin-bottom:16px;">Bitte verifiziere dich mit deinem Passwort, um das Dashboard zu öffnen.</p>
             <form onsubmit="event.preventDefault(); verifyAdminKeyPassword();">
                 <input type="text" id="hiddenAuthUsernameAdmin" name="username" autocomplete="username" style="display:none;" aria-hidden="true">
-                <label for="adminAuthPassInput">Admin-Passwort:</label>
+                <label for="adminAuthPassInput">Admin Passwort:</label>
                 <input type="password" id="adminAuthPassInput" autocomplete="current-password" placeholder="Passwort eingeben...">
                 <div style="display:flex; gap:10px; margin-top:20px;">
                     <button type="submit" class="btn" style="background:var(--warning); color:#080c14; font-weight:800;">Freischalten 🔓</button>
@@ -1403,7 +1403,7 @@
     <div id="hierarchieInlineModal" class="modal-overlay">
         <div class="modal-card" style="max-width: 900px; width: 95vw; max-height: 90vh; overflow-y:auto;">
             <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:12px; margin-bottom:16px;">
-                <h3 style="margin:0; color:var(--primary);">🌳 Hierarchie-Besetzung bearbeiten</h3>
+                <h3 style="margin:0; color:var(--primary);">🌳 Hierarchie Besetzung bearbeiten</h3>
                 <button type="button" class="btn-close" onclick="closeHierarchieInlineModal()">✖</button>
             </div>
             <div id="hierarchieInlineEditorContainer"></div>
@@ -1417,8 +1417,8 @@
                 <div style="display:flex; align-items:center; gap:12px;">
                     <div style="font-size:24px;">🔑</div>
                     <div>
-                        <h2 style="margin:0; color:var(--warning); font-size:22px;">Admin-Zentralverwaltung</h2>
-                        <span style="font-size:12px; color:var(--text-muted);">Zentrale System- und Mitarbeiterkonfiguration</span>
+                        <h2 style="margin:0; color:var(--warning); font-size:22px;">Admin Zentralverwaltung</h2>
+                        <span style="font-size:12px; color:var(--text-muted);">Zentrale System und Mitarbeiterkonfiguration</span>
                     </div>
                 </div>
                 <button type="button" class="btn-close" onclick="closeAdminManagementModal()">✖</button>
@@ -1426,9 +1426,9 @@
 
             <div class="admin-subtabs">
                 <button type="button" class="admin-tab-btn active" id="btnAdminSubUsers" onclick="switchAdminTab('adminSubTabUsers', this)">👥 Mitarbeiter Kartei</button>
-                <button type="button" class="admin-tab-btn" id="btnAdminSubRoles" onclick="switchAdminTab('adminSubTabRoles', this)">🎭 Rollen & Berechtigungs-Matrix</button>
+                <button type="button" class="admin-tab-btn" id="btnAdminSubRoles" onclick="switchAdminTab('adminSubTabRoles', this)">🎭 Rollen & Berechtigungsmatrix</button>
                 <button type="button" class="admin-tab-btn" id="btnAdminSubSystem" onclick="switchAdminTab('adminSubTabSystem', this)">💾 Backup & Wiederherstellung</button>
-                <button type="button" class="admin-tab-btn" id="btnAdminSubAudit" onclick="switchAdminTab('adminSubTabAudit', this)">📋 System-Protokoll (Heute)</button>
+                <button type="button" class="admin-tab-btn" id="btnAdminSubAudit" onclick="switchAdminTab('adminSubTabAudit', this)">📋 Systemprotokoll (Heute)</button>
                 <button type="button" class="admin-tab-btn" id="btnAdminSubMaintenance" onclick="switchAdminTab('adminSubTabMaintenance', this)">🛠️ Wartungsarbeiten</button>
             </div>
 
@@ -1464,7 +1464,7 @@
                 <div style="background:rgba(15, 23, 42, 0.7); padding:20px 24px; border-radius:16px; border:1px solid var(--border);">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:12px;">
                         <div>
-                            <h3 style="margin:0; color:var(--primary); font-size:16px;">🎭 Rollen & Berechtigungs-Matrix</h3>
+                            <h3 style="margin:0; color:var(--primary); font-size:16px;">🎭 Rollen & Berechtigungsmatrix</h3>
                             <span style="color:var(--text-muted); font-size:12px;">Verständliche Funktionsrechte und Schutzeinstellungen für jeden Dienstgrad</span>
                         </div>
                         <button type="button" class="btn" style="width:auto; margin:0; padding:8px 18px; background:var(--success); color:#080c14; font-weight:800;" onclick="neueRolleErstellen()">➕ Neue Rolle erstellen</button>
@@ -1481,7 +1481,7 @@
                                 </h4>
                             </div>
                             <div style="display:grid; grid-template-columns: 2fr 1fr 1fr; gap:12px;">
-                                <div><label for="roleEditName">Rollen-Name:</label><input type="text" id="roleEditName" placeholder="z.B. Notarzt" oninput="updateRoleBadgePreview()"></div>
+                                <div><label for="roleEditName">Rollenname:</label><input type="text" id="roleEditName" placeholder="z.B. Notarzt" oninput="updateRoleBadgePreview()"></div>
                                 <div><label for="roleEditColor">Farbe:</label><input type="color" id="roleEditColor" value="#38bdf8" style="height:40px;" onchange="updateRoleBadgePreview()"></div>
                                 <div><label for="roleEditIcon">Icon:</label><input type="text" id="roleEditIcon" placeholder="z.B. 🩺" oninput="updateRoleBadgePreview()"></div>
                             </div>
@@ -1490,13 +1490,13 @@
                                 <div>
                                     <h5 style="margin:0 0 10px 0; color:var(--warning); font-size:13px; text-transform:uppercase;">🛡️ System & Administration</h5>
                                     <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:10px;">
-                                        <div class="role-perm-box"><label for="roleFlagAdmin" class="perm-check"><input type="checkbox" id="roleFlagAdmin"> <b>Admin-Zugang</b></label><span class="perm-desc">Darf das Admin-Menü (🔑) öffnen und Mitarbeiter freischalten.</span></div>
+                                        <div class="role-perm-box"><label for="roleFlagAdmin" class="perm-check"><input type="checkbox" id="roleFlagAdmin"> <b>Admin Zugang</b></label><span class="perm-desc">Darf das Admin Menü (🔑) öffnen und Mitarbeiter freischalten.</span></div>
                                         <div class="role-perm-box"><label for="roleFlagMasterAdmin" class="perm-check"><input type="checkbox" id="roleFlagMasterAdmin"> <b>👑 Master Admin</b></label><span class="perm-desc">Höchste Stufe: Voller Zugriff, Bearbeitungsstifte überall, Rollenverwaltung & Backups.</span></div>
                                         <div class="role-perm-box"><label for="delFlagUsers" class="perm-check"><input type="checkbox" id="delFlagUsers"> <b>🗑️ Accounts löschen</b></label><span class="perm-desc">Darf Mitarbeiterkonten dauerhaft entfernen.</span></div>
-                                        <div class="role-perm-box"><label for="roleFlagManageFeedback" class="perm-check"><input type="checkbox" id="roleFlagManageFeedback"> <b>💡 Wünsche & Bugs bearbeiten</b></label><span class="perm-desc">Sieht im Wünsche-&-Bugs-Bereich den zusätzlichen Reiter zum Prüfen und Bearbeiten aller Meldungen.</span></div>
+                                        <div class="role-perm-box"><label for="roleFlagManageFeedback" class="perm-check"><input type="checkbox" id="roleFlagManageFeedback"> <b>💡 Wünsche & Bugs bearbeiten</b></label><span class="perm-desc">Sieht im Wünsche & Bugs Bereich den zusätzlichen Reiter zum Prüfen und Bearbeiten aller Meldungen.</span></div>
                                         <div class="role-perm-box"><label for="delFlagFeedback" class="perm-check"><input type="checkbox" id="delFlagFeedback"> <b>🗑️ Meldungen löschen</b></label><span class="perm-desc">Darf Wünsche und Fehlerberichte dauerhaft aus dem System löschen.</span></div>
-                                        <div class="role-perm-box"><label for="roleFlagViewChiefMaterials" class="perm-check"><input type="checkbox" id="roleFlagViewChiefMaterials"> <b>⭐ Chief-Materialliste sehen</b></label><span class="perm-desc">Blendet den Hauptreiter „Chief Ebene“ mit Materialbestand und Historie ein.</span></div>
-                                        <div class="role-perm-box"><label for="roleFlagEditChiefMaterials" class="perm-check"><input type="checkbox" id="roleFlagEditChiefMaterials"> <b>📦 Chief-Materialliste bearbeiten</b></label><span class="perm-desc">Darf Bestandsaufnahmen speichern, Maximalbestände ändern und fehlerhafte Einträge löschen.</span></div>
+                                        <div class="role-perm-box"><label for="roleFlagViewChiefMaterials" class="perm-check"><input type="checkbox" id="roleFlagViewChiefMaterials"> <b>⭐ Chief Materialliste sehen</b></label><span class="perm-desc">Blendet den Hauptreiter „Chief Ebene“ mit Materialbestand und Historie ein.</span></div>
+                                        <div class="role-perm-box"><label for="roleFlagEditChiefMaterials" class="perm-check"><input type="checkbox" id="roleFlagEditChiefMaterials"> <b>📦 Chief Materialliste bearbeiten</b></label><span class="perm-desc">Darf Bestandsaufnahmen speichern, Maximalbestände ändern und fehlerhafte Einträge löschen.</span></div>
                                     </div>
                                 </div>
 
@@ -1504,7 +1504,7 @@
                                     <h5 style="margin:0 0 10px 0; color:var(--primary); font-size:13px; text-transform:uppercase;">📝 Einsatz, Preise & Archiv</h5>
                                     <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:10px;">
                                         <div class="role-perm-box"><label for="roleFlagEditPrices" class="perm-check"><input type="checkbox" id="roleFlagEditPrices"> <b>✏️ Preise anpassen</b></label><span class="perm-desc">Sieht das Stiftsymbol im Einsatzbereich zur Anpassung der Materialpreise.</span></div>
-                                        <div class="role-perm-box"><label for="roleFlagArchive" class="perm-check"><input type="checkbox" id="roleFlagArchive"> <b>🗄️ Schicht-Archiv</b></label><span class="perm-desc">Darf die archivierten Wochenschichten einsehen und als CSV herunterladen.</span></div>
+                                        <div class="role-perm-box"><label for="roleFlagArchive" class="perm-check"><input type="checkbox" id="roleFlagArchive"> <b>🗄️ Schichtarchiv</b></label><span class="perm-desc">Darf die archivierten Wochenschichten einsehen und als CSV herunterladen.</span></div>
                                         <div class="role-perm-box"><label for="roleFlagEditAllPatients" class="perm-check"><input type="checkbox" id="roleFlagEditAllPatients"> <b>✏️ Fremde Patienten bearbeiten</b></label><span class="perm-desc">Darf Einträge von allen Kollegen bearbeiten (Standard: nur eigene).</span></div>
                                         <div class="role-perm-box"><label for="delFlagPatient" class="perm-check"><input type="checkbox" id="delFlagPatient"> <b>🗑️ Patienten löschen</b></label><span class="perm-desc">Darf fehlerhafte Patienteneinträge aus dem heutigen Protokoll löschen.</span></div>
                                         <div class="role-perm-box"><label for="delFlagArchiv" class="perm-check"><input type="checkbox" id="delFlagArchiv"> <b>🗑️ Archive löschen</b></label><span class="perm-desc">Darf ganze Schichteinträge aus dem Wochenarchiv entfernen.</span></div>
@@ -1512,10 +1512,10 @@
                                 </div>
 
                                 <div>
-                                    <h5 style="margin:0 0 10px 0; color:var(--primary); font-size:13px; text-transform:uppercase;">👥 Mitarbeiter-Fotos & Kartei</h5>
+                                    <h5 style="margin:0 0 10px 0; color:var(--primary); font-size:13px; text-transform:uppercase;">👥 Mitarbeiterfotos & Kartei</h5>
                                     <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:10px;">
-                                        <div class="role-perm-box"><label for="roleFlagManagePhotos" class="perm-check"><input type="checkbox" id="roleFlagManagePhotos"> <b>📁 Foto-Ordner Zugriff</b></label><span class="perm-desc">Darf Rohfotos herunterladen und fertige Mitarbeiterbilder mit Logo einsetzen.</span></div>
-                                        <div class="role-perm-box"><label for="delFlagPhotos" class="perm-check"><input type="checkbox" id="delFlagPhotos"> <b>🗑️ Originalfotos löschen</b></label><span class="perm-desc">Darf eingereichte Originalbilder dauerhaft aus dem Foto-Ordner entfernen.</span></div>
+                                        <div class="role-perm-box"><label for="roleFlagManagePhotos" class="perm-check"><input type="checkbox" id="roleFlagManagePhotos"> <b>📁 Fotoordner Zugriff</b></label><span class="perm-desc">Darf Rohfotos herunterladen und fertige Mitarbeiterbilder mit Logo einsetzen.</span></div>
+                                        <div class="role-perm-box"><label for="delFlagPhotos" class="perm-check"><input type="checkbox" id="delFlagPhotos"> <b>🗑️ Originalfotos löschen</b></label><span class="perm-desc">Darf eingereichte Originalbilder dauerhaft aus dem Fotoordner entfernen.</span></div>
                                     </div>
                                 </div>
 
@@ -1532,7 +1532,7 @@
                                     <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:10px;">
                                         <div class="role-perm-box"><label for="roleFlagPostNews" class="perm-check"><input type="checkbox" id="roleFlagPostNews"> <b>News direkt posten</b></label><span class="perm-desc">Darf Dienstanweisungen ohne vorherige Prüfung sofort veröffentlichen.</span></div>
                                         <div class="role-perm-box"><label for="roleFlagApproveNews" class="perm-check"><input type="checkbox" id="roleFlagApproveNews"> <b>Vorschläge annehmen</b></label><span class="perm-desc">Darf eingereichte News-Vorschläge normaler Mitarbeiter prüfen und freigeben.</span></div>
-                                        <div class="role-perm-box"><label for="roleFlagViewNewsRead" class="perm-check"><input type="checkbox" id="roleFlagViewNewsRead"> <b>👁️ Gelesen-Liste</b></label><span class="perm-desc">Sieht mit einem Klick genau, welche Mitarbeiter die News bereits bestätigt haben.</span></div>
+                                        <div class="role-perm-box"><label for="roleFlagViewNewsRead" class="perm-check"><input type="checkbox" id="roleFlagViewNewsRead"> <b>👁️ Gelesen Liste</b></label><span class="perm-desc">Sieht mit einem Klick genau, welche Mitarbeiter die News bereits bestätigt haben.</span></div>
                                         <div class="role-perm-box"><label for="delFlagNews" class="perm-check"><input type="checkbox" id="delFlagNews"> <b>🗑️ News löschen</b></label><span class="perm-desc">Darf Beiträge dauerhaft vom Schwarzen Brett entfernen.</span></div>
                                     </div>
                                 </div>
@@ -1540,7 +1540,7 @@
                                 <div>
                                     <h5 style="margin:0 0 10px 0; color:#c084fc; font-size:13px; text-transform:uppercase;">🎓 Ausbildung & Prüfungen</h5>
                                     <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:10px;">
-                                        <div class="role-perm-box"><label for="roleFlagInstructor" class="perm-check"><input type="checkbox" id="roleFlagInstructor"> <b>Ausbilder-Modus</b></label><span class="perm-desc">Öffnet den Ausbilder-Bereich: Darf bestandene Prüfungen für Schüler freischalten.</span></div>
+                                        <div class="role-perm-box"><label for="roleFlagInstructor" class="perm-check"><input type="checkbox" id="roleFlagInstructor"> <b>Ausbilder Modus</b></label><span class="perm-desc">Öffnet den Ausbilderbereich: Darf bestandene Prüfungen für Schüler freischalten.</span></div>
                                         <div class="role-perm-box"><label for="roleFlagManageInstructors" class="perm-check"><input type="checkbox" id="roleFlagManageInstructors"> <b>⚙️ Ausbildungsleitung</b></label><span class="perm-desc">Darf Mitarbeiter freischalten und Fachrollen (Ausbilder, CLS, EHK, etc.) vergeben.</span></div>
                                         <div class="role-perm-box"><label for="roleFlagManageExams" class="perm-check"><input type="checkbox" id="roleFlagManageExams"> <b>✏️ Prüfungen bauen</b></label><span class="perm-desc">Darf Fragenkataloge, Prüfungen und Bestehensquoten neu anlegen oder ändern.</span></div>
                                         <div class="role-perm-box"><label for="delFlagExams" class="perm-check"><input type="checkbox" id="delFlagExams"> <b>🗑️ Prüfungen löschen</b></label><span class="perm-desc">Darf Prüfungen und absolvierte Prüfungsprotokolle dauerhaft löschen.</span></div>
@@ -1550,8 +1550,8 @@
                                 <div>
                                     <h5 style="margin:0 0 10px 0; color:var(--text-main); font-size:13px; text-transform:uppercase;">📋 Funk & Codes</h5>
                                     <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:10px;">
-                                        <div class="role-perm-box"><label for="roleFlagEditGuide" class="perm-check"><input type="checkbox" id="roleFlagEditGuide"> <b>✏️ Codes bearbeiten</b></label><span class="perm-desc">Darf Ten-Codes, Status-Codes und Streifenbelegungen live editieren.</span></div>
-                                        <div class="role-perm-box"><label for="delFlagGuide" class="perm-check"><input type="checkbox" id="delFlagGuide"> <b>🗑️ Codes löschen</b></label><span class="perm-desc">Darf einzelne Funk-Code-Zeilen dauerhaft entfernen.</span></div>
+                                        <div class="role-perm-box"><label for="roleFlagEditGuide" class="perm-check"><input type="checkbox" id="roleFlagEditGuide"> <b>✏️ Codes bearbeiten</b></label><span class="perm-desc">Darf Ten Codes, Status Codes und Streifenbelegungen live editieren.</span></div>
+                                        <div class="role-perm-box"><label for="delFlagGuide" class="perm-check"><input type="checkbox" id="delFlagGuide"> <b>🗑️ Codes löschen</b></label><span class="perm-desc">Darf einzelne Funkcode Zeilen dauerhaft entfernen.</span></div>
                                     </div>
                                 </div>
 
@@ -1599,7 +1599,7 @@
                 <div id="passwordChangeStatusPanel" style="background:rgba(34,197,94,0.05); padding:20px; border-radius:16px; border:1px solid rgba(34,197,94,0.25); margin-bottom:20px; display:none;">
                     <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:14px; flex-wrap:wrap;">
                         <div>
-                            <h3 style="margin:0 0 8px 0; color:var(--success);">🔐 Passwort-Umstellungsstatus</h3>
+                            <h3 style="margin:0 0 8px 0; color:var(--success);">🔐 Passwortstatus</h3>
                             <p style="color:var(--text-muted); font-size:12px; margin:0; line-height:1.55;">
                                 Zeigt live, welche Mitarbeiter ihre persönliche Passwortänderung bereits abgeschlossen haben und bei wem sie noch offen ist.
                             </p>
@@ -1614,7 +1614,7 @@
                 </div>
 
                 <div style="background:rgba(56, 189, 248, 0.05); padding:20px; border-radius:16px; border:1px solid rgba(56, 189, 248, 0.25); margin-bottom:20px;">
-                    <h3 style="margin:0 0 10px 0; color:var(--primary);">💾 Cloud-Backup & Wiederherstellung</h3>
+                    <h3 style="margin:0 0 10px 0; color:var(--primary);">💾 Cloud Backup & Wiederherstellung</h3>
                     <p style="color:var(--text-muted); font-size:12px; margin-top:0;">Lade eine vollständige Sicherung aller Systemdaten als JSON herunter oder spiele ein früheres Backup ein.</p>
                     <div style="display:flex; gap:14px; flex-wrap:wrap; align-items:center;">
                         <button type="button" class="btn" style="width:auto; padding:10px 20px; background:var(--primary); color:#080c14;" onclick="downloadSystemBackup()">📥 Backup herunterladen (JSON)</button>
@@ -1624,8 +1624,8 @@
                 </div>
 
                 <div style="background:rgba(244, 63, 94, 0.06); padding:20px; border-radius:16px; border:1px solid rgba(244, 63, 94, 0.25);">
-                    <h3 style="margin:0 0 8px 0; color:var(--danger);">⚠️ Fachdaten-Reset</h3>
-                    <p style="color:var(--text-muted); font-size:12px; margin-top:0;">Nur für den Master Admin verfügbar. Löscht Patienten-, Archiv-, Kalender-, Prüfungs- und weitere Fachdaten. Mitarbeiterkonten, Rollen und Anmeldungen bleiben aus Sicherheitsgründen erhalten.</p>
+                    <h3 style="margin:0 0 8px 0; color:var(--danger);">⚠️ Fachdaten Reset</h3>
+                    <p style="color:var(--text-muted); font-size:12px; margin-top:0;">Nur für den Master Admin verfügbar. Löscht Patienten, Archiv, Kalender, Prüfungen und weitere Fachdaten. Mitarbeiterkonten, Rollen und Anmeldungen bleiben aus Sicherheitsgründen erhalten.</p>
                     <button type="button" class="btn-full-reset" style="width:auto; padding:10px 20px;" onclick="vollstaendigerReset()">Fachdaten zurücksetzen</button>
                 </div>
             </div>
@@ -1656,11 +1656,11 @@
                 <div style="background:rgba(15, 23, 42, 0.7); padding:20px 24px; border-radius:16px; border:1px solid var(--border);">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:10px;">
                         <div>
-                            <h3 style="margin:0; color:var(--primary);">📋 Tages-Protokoll (Heute)</h3>
+                            <h3 style="margin:0; color:var(--primary);">📋 Tagesprotokoll (Heute)</h3>
                             <span style="font-size:12px; color:var(--text-muted);">Protokolle vor 00:00 Uhr werden automatisch ins Archiv verschoben.</span>
                         </div>
                         <div style="display:flex; gap:8px;">
-                            <button type="button" class="btn-archive-view" onclick="openAuditLogArchiveModal()">🗄️ Protokoll-Archiv</button>
+                            <button type="button" class="btn-archive-view" onclick="openAuditLogArchiveModal()">🗄️ Protokollarchiv</button>
                             <button type="button" class="btn" style="width:auto; margin:0; padding:8px 16px; font-size:12px;" onclick="renderAdminAuditLogs()">🔄 Aktualisieren</button>
                         </div>
                     </div>
@@ -1686,7 +1686,7 @@
             <input type="hidden" id="permUserId">
             <label for="permVorname">Vorname</label><input type="text" id="permVorname" autocomplete="off">
             <label for="permNachname">Nachname</label><input type="text" id="permNachname" autocomplete="off">
-            <div style="font-size:11px;color:var(--text-muted);margin-top:-4px;margin-bottom:10px;">Vor- und Nachname können bei einer Namensänderung angepasst werden. Die feste interne Account-ID bleibt dabei unverändert; der Login wird automatisch auf den neuen Namen umgestellt.</div>
+            <div style="font-size:11px;color:var(--text-muted);margin-top:-4px;margin-bottom:10px;">Vor- und Nachname können bei einer Namensänderung angepasst werden. Die feste interne Account ID bleibt dabei unverändert; der Login wird automatisch auf den neuen Namen umgestellt.</div>
             <label for="permDN">Dienstnummer (DN)</label><input type="text" id="permDN" autocomplete="off">
             <div id="permPasswordResetContainer" style="display:none; margin:14px 0; padding:14px; border:1px solid var(--border); border-radius:12px; background:rgba(56,189,248,0.05);">
                 <div style="font-weight:800; color:var(--primary); margin-bottom:6px;">🔑 Passwort zurücksetzen</div>
@@ -1741,7 +1741,7 @@
     <div id="auditArchiveModal" class="modal-overlay">
         <div class="modal-card" style="max-width: 900px; width: 95vw; max-height: 88vh; overflow-y:auto;">
             <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:12px; margin-bottom:16px;">
-                <h3 style="margin:0; color:var(--primary);">🗄️ Systemprotokoll-Archiv</h3>
+                <h3 style="margin:0; color:var(--primary);">🗄️ Systemprotokoll Archiv</h3>
                 <button type="button" class="btn-close" onclick="closeAuditArchiveModal()">✖</button>
             </div>
             <div id="auditArchiveContent"></div>
@@ -1751,6 +1751,6 @@
         </div>
     </div>
 
-    <script src="app.js?v=6.6.0"></script>
+    <script src="app.js?v=6.6.0-roleuihotfix1"></script>
 </body>
 </html>
