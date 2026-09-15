@@ -474,6 +474,7 @@ const defaultRoles = {
         isInstructor:false, canManageInstructors:false, canManageExams:false,
         canPostNews:false, canApproveNews:false, canViewNewsRead:false,
         canEditPrices:false, canEditGuide:false, canEditCommands:false, canEditLinks:false,
+        canViewChiefMaterials:false, canEditChiefMaterials:false,
         delPatient:false, delArchiv:false, delGuide:false, delCommands:false, delLinks:false, delNews:false, delExams:false, delUsers:false, canManageFeedback:false, delFeedback:false,
         allowedCmdKats: ['Abkürzungen & Dokumente', 'T-Codes'],
         allowedLinkKats: ['Allgemein', 'EHK', 'MD Intern']
@@ -1649,7 +1650,9 @@ function applyUserPermissions(user) {
     if (gehaltEdit) gehaltEdit.style.display = isAdminOrMaster ? 'inline-block' : 'none';
 
     const chiefBtn = document.getElementById('chiefTabNavBtn');
-    const canViewChief = !!(eff.canViewChiefMaterials || eff.canEditChiefMaterials || isMaster);
+    const currentRoleIds = getUserRolesList(sessionUser || {});
+    const hasChiefRole = currentRoleIds.includes('chiefebene');
+    const canViewChief = !!(eff.canViewChiefMaterials || eff.canEditChiefMaterials || hasChiefRole || isMaster);
     if (chiefBtn) chiefBtn.style.display = canViewChief ? 'inline-block' : 'none';
     if (!canViewChief && document.getElementById('chiefTab')?.classList.contains('active')) {
         switchTab('docTab', document.querySelector('.tab-nav .tab-btn'));
