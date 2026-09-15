@@ -893,6 +893,7 @@
                     <h3>🔐 Passwort ändern</h3>
                     <p style="color:var(--text-muted);font-size:12px;margin-top:0;">Das neue Passwort wird nicht mehr im Klartext gespeichert. Mindestlänge: 6 Zeichen.</p>
                     <form id="changeOwnPasswordForm" onsubmit="event.preventDefault(); passwortAendern();">
+                        <input type="text" name="username" autocomplete="username" tabindex="-1" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0;pointer-events:none;" value="">
                         <label for="newPasswordInput">Neues Passwort</label>
                         <input type="password" id="newPasswordInput" autocomplete="new-password" minlength="6" placeholder="Neues Passwort eingeben...">
                         <button type="submit" class="btn">🔒 Passwort aktualisieren</button>

@@ -450,6 +450,7 @@ const defaultRoles = {
         isInstructor:true, canManageInstructors:false, canManageExams:false,
         canPostNews:false, canApproveNews:false, canViewNewsRead:false,
         canEditPrices:false, canEditGuide:false, canEditCommands:false, canEditLinks:false,
+        canViewChiefMaterials:false, canEditChiefMaterials:false,
         delPatient:false, delArchiv:false, delGuide:false, delCommands:false, delLinks:false, delNews:false, delExams:false, delUsers:false, canManageFeedback:false, delFeedback:false,
         allowedCmdKats: ['Ausbildung', 'Ausbildungsabteilung', 'Abkürzungen & Dokumente', 'T-Codes'],
         allowedLinkKats: ['Allgemein', 'MD Intern']
@@ -461,6 +462,7 @@ const defaultRoles = {
         isInstructor:false, canManageInstructors:false, canManageExams:false,
         canPostNews:false, canApproveNews:false, canViewNewsRead:false,
         canEditPrices:false, canEditGuide:false, canEditCommands:false, canEditLinks:false,
+        canViewChiefMaterials:false, canEditChiefMaterials:false,
         delPatient:false, delArchiv:false, delGuide:false, delCommands:false, delLinks:false, delNews:false, delExams:false, delUsers:false, canManageFeedback:false, delFeedback:false,
         allowedCmdKats: ['Abkürzungen & Dokumente', 'T-Codes'],
         allowedLinkKats: ['Allgemein', 'CLS', 'MD Intern']
@@ -1021,7 +1023,10 @@ async function syncServerPermissionsForAllUsers() {
     const users = snap.val() || {};
     const updates = {};
     Object.entries(users).forEach(([uId, user]) => {
-        updates[`data/users/${uId}/serverPermissions`] = buildServerPermissions(user);
+        const expected = buildServerPermissions(user);
+        const current = user?.serverPermissions || {};
+        const differs = SERVER_PERMISSION_KEYS.some(key => !!current[key] !== !!expected[key]);
+        if (differs) updates[`data/users/${uId}/serverPermissions`] = expected;
     });
     if (Object.keys(updates).length) await db.ref().update(updates);
 }
@@ -2045,6 +2050,10 @@ function startFirebaseListeners() {
         if (sessionUser) {
             applyUserPermissions(sessionUser);
             refreshSensitiveFirebaseListeners();
+            const eff = getUserEffectivePermissions(sessionUser);
+            if (eff.isAdmin || eff.isMasterAdmin) {
+                syncServerPermissionsForAllUsers().catch(err => console.error('Berechtigungen konnten nicht automatisch synchronisiert werden:', err));
+            }
         }
         renderCalendarMonth();
         renderStaffDirectory();
