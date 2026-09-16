@@ -11,7 +11,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
-    <link rel="stylesheet" href="style.css?v=6.8.0b">
+    <link rel="stylesheet" href="style.css?v=6.8.0c">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏥</text></svg>">
 </head>
 <body>
@@ -1444,7 +1444,7 @@
                 <div><label for="newExamTitle">Prüfungstitel:</label><input type="text" id="newExamTitle" placeholder="Z.B. Grundausbildung 1 (GA1)"></div>
                 <div><label for="newExamKat">Kategorie / Thema:</label><input type="text" id="newExamKat" placeholder="Z.B. Grundausbildung"></div>
                 <div><label for="newExamTime">Dauer (Minuten):</label><input type="number" id="newExamTime" value="30" min="1"></div>
-                <div><label for="newExamPassRate">Mindestquote (%):</label><input type="number" id="newExamPassRate" value="60" min="1" max="100"></div>
+                <div><label for="newExamPassRate">Mindestquote (%):</label><input type="number" id="newExamPassRate" value="60" min="60" max="100"><div style="font-size:11px;color:var(--text-muted);margin-top:4px;">Mindestens 60 %. Die Punktzahl wird automatisch aus allen richtigen Antwortmöglichkeiten berechnet.</div></div>
             </div>
             <div style="margin-bottom:16px;">
                 <label for="newExamIntroText">Einleitungstext / Begrüßung:</label>
@@ -1625,7 +1625,7 @@
                                     <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:10px;">
                                         <div class="role-perm-box"><label for="roleFlagInstructor" class="perm-check"><input type="checkbox" id="roleFlagInstructor"> <b>Ausbilder Modus</b></label><span class="perm-desc">Öffnet den Ausbilderbereich: Darf bestandene Prüfungen für Schüler freischalten.</span></div>
                                         <div class="role-perm-box"><label for="roleFlagManageInstructors" class="perm-check"><input type="checkbox" id="roleFlagManageInstructors"> <b>⚙️ Ausbildungsverwaltung</b></label><span class="perm-desc">Darf Ausbilderfunktionen und Prüfungsfreigaben auf Leitungsebene verwalten. Mitarbeiterfreigabe und Rollenvergabe werden separat gesteuert.</span></div>
-                                        <div class="role-perm-box"><label for="roleFlagManageExams" class="perm-check"><input type="checkbox" id="roleFlagManageExams"> <b>✏️ Prüfungen bauen</b></label><span class="perm-desc">Darf Fragenkataloge, Prüfungen und Bestehensquoten neu anlegen oder ändern.</span></div>
+                                        <div class="role-perm-box"><label for="roleFlagManageExams" class="perm-check"><input type="checkbox" id="roleFlagManageExams"> <b>✏️ Prüfungen bauen</b></label><span class="perm-desc">Darf Fragenkataloge, Prüfungen und Bestehensquoten (mindestens 60 %) neu anlegen oder ändern.</span></div>
                                         <div class="role-perm-box"><label for="roleFlagViewExamSolutions" class="perm-check"><input type="checkbox" id="roleFlagViewExamSolutions"> <b>👁️ Musterlösungen ansehen</b></label><span class="perm-desc">Darf Musterlösungen öffnen. Ausbilder sehen dabei nur Prüfungen, die sie selbst bestanden haben; Leitungsrollen mit Prüfungsverwaltung sehen alle.</span></div>
                                         <div class="role-perm-box"><label for="delFlagExams" class="perm-check"><input type="checkbox" id="delFlagExams"> <b>🗑️ Prüfungen löschen</b></label><span class="perm-desc">Darf Prüfungen und absolvierte Prüfungsprotokolle dauerhaft löschen.</span></div>
                                     </div>
@@ -1835,6 +1835,6 @@
         </div>
     </div>
 
-    <script src="app.js?v=6.8.0b"></script>
+    <script src="app.js?v=6.8.0c"></script>
 </body>
 </html>

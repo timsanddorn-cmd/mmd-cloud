@@ -282,6 +282,9 @@ const systemChangelogs = [
             "Nach Paragraphen, Verstößen und Sanktionen kann schnell gesucht und gefiltert werden.",
             "Berechtigte Rollen können den Sanktionskatalog über das Stiftsymbol direkt auf der Seite bearbeiten.",
             "Ausbilder können Musterlösungen zu Prüfungen einsehen, die sie selbst bestanden haben; Ausbildungsleitung und berechtigte Leitungsrollen können alle Musterlösungen öffnen.",
+            "Prüfungen werden jetzt nach einzelnen richtigen Antwortmöglichkeiten bepunktet; falsch gesetzte Antworten ziehen innerhalb der jeweiligen Frage Punkte ab, jedoch nie unter 0 Punkte.",
+            "Prüfungsdetails zeigen zuerst vollständig richtige und danach falsche oder nicht vollständig richtige Antworten inklusive Punktestand und hinterlegter richtiger Lösung.",
+            "Nicht bestandene Prüfungen können von berechtigten Ausbildern oder der Ausbildungsleitung zur Wiederholung freigegeben werden, ohne den Fehlversuch zu löschen.",
             "Die Darstellung wurde für Computer, Tablets und Smartphones angepasst."
         ]
     },
@@ -6006,6 +6009,54 @@ function toggleExamPassedForUser(uId, examId, isPassed) {
     });
 }
 
+function getExamPassPercentage(exam) {
+    const configured = Number(exam?.passPercentage || 60);
+    return Math.max(60, Math.min(100, Number.isFinite(configured) ? configured : 60));
+}
+
+function canCurrentUserRepeatExamForSubmission(sub) {
+    if (!sessionUser || !sub || sub.passed || !sub.examId) return false;
+    const eff = getUserEffectivePermissions(sessionUser);
+    if (!(eff.isMasterAdmin || eff.canManageInstructors || eff.isInstructor)) return false;
+    if (!canInstructorAccessExam(sub.examId)) return false;
+    const target = cachedUsers[sub.userId] || {};
+    if (target.passedExams?.[sub.examId] === true) return false;
+    return true;
+}
+
+function repeatFailedExam(subId) {
+    if (!sessionUser) return;
+    const sub = cachedSubmissions[subId];
+    if (!sub || sub.passed) {
+        alert('Diese Prüfung kann nicht zur Wiederholung freigegeben werden.');
+        return;
+    }
+    if (!canCurrentUserRepeatExamForSubmission(sub)) {
+        alert('Keine Berechtigung, diese Prüfung zur Wiederholung freizugeben.');
+        return;
+    }
+    const target = cachedUsers[sub.userId] || {};
+    if (target.passedExams?.[sub.examId] === true) {
+        alert('Der Mitarbeiter hat diese Prüfung inzwischen bereits bestanden.');
+        return;
+    }
+    if (!confirm(`Soll ${sub.userName || 'der Mitarbeiter'} die Prüfung „${sub.examTitle || 'Prüfung'}“ erneut absolvieren dürfen?`)) return;
+
+    db.ref(`data/users/${sub.userId}/unlockedExams/${sub.examId}`).set(true).then(() => {
+        if (cachedUsers[sub.userId]) {
+            cachedUsers[sub.userId].unlockedExams = cachedUsers[sub.userId].unlockedExams || {};
+            cachedUsers[sub.userId].unlockedExams[sub.examId] = true;
+        }
+        logAdminAudit('Prüfung zur Wiederholung freigegeben', `${sessionUser.vorname} ${sessionUser.nachname} hat ${sub.userName || sub.userId} die Prüfung „${sub.examTitle || sub.examId}“ erneut freigeschaltet.`);
+        renderInstructorSubmissions(cachedSubmissions);
+        closeExamSubmissionDetailsModal();
+        alert('✅ Die Prüfung wurde zur Wiederholung freigegeben. Der bisherige Fehlversuch bleibt in der Historie erhalten.');
+    }).catch(err => {
+        console.error('Wiederholungsfreigabe fehlgeschlagen:', err);
+        alert('Die Prüfung konnte nicht zur Wiederholung freigegeben werden.');
+    });
+}
+
 function renderInstructorSubmissionsInto(subs, tbodyId, searchInputId) {
     const t = document.getElementById(tbodyId); if (!t) return;
     const eff = sessionUser ? getUserEffectivePermissions(sessionUser) : {};
@@ -6036,10 +6087,10 @@ function renderInstructorSubmissionsInto(subs, tbodyId, searchInputId) {
                 <td><b>${escapeHtml(sub.userName||'--')}</b> <span style="color:var(--primary);font-size:12px;">(${escapeHtml(sub.userDN||'--')})</span></td>
                 <td style="font-weight:700;color:var(--primary);">${escapeHtml(sub.examTitle||'--')}</td>
                 <td style="font-family:monospace;color:var(--warning);">${escapeHtml(sub.durationFormatted||'--')}</td>
-                <td><b>${sub.percentage||0}%</b></td>
+                <td><b>${sub.percentage||0}%</b>${Number.isFinite(Number(sub.earnedPoints)) && Number.isFinite(Number(sub.maxPoints)) ? `<div style="font-size:11px;color:var(--text-muted);margin-top:2px;">${Number(sub.earnedPoints)} / ${Number(sub.maxPoints)} Punkte</div>` : ''}</td>
                 <td><span style="color:${sub.passed?'var(--success)':'var(--danger)'};font-weight:800;">${sub.passed?'✅ Bestanden':'⛔ Nicht bestanden'}</span></td>
                 <td>
-                    ${isUserInstructor() ? `<button type="button" class="btn" style="width:auto;margin:0;padding:4px 10px;font-size:12px;" onclick="openExamSubmissionDetailsModal('${subId}')">👁️ Details</button>` : '--'}
+                    ${isUserInstructor() ? `<div style="display:flex;gap:6px;flex-wrap:wrap;"><button type="button" class="btn" style="width:auto;margin:0;padding:4px 10px;font-size:12px;" onclick="openExamSubmissionDetailsModal('${subId}')">👁️ Details</button>${canCurrentUserRepeatExamForSubmission(sub) ? `<button type="button" class="btn" style="width:auto;margin:0;padding:4px 10px;font-size:12px;" onclick="repeatFailedExam('${subId}')">🔄 Wiederholen</button>` : ''}</div>` : '--'}
                 </td>
                 <td>${eff.delExams ? `<button type="button" class="btn-delete-row" onclick="deleteExamSubmission('${subId}')">🗑️</button>` : '--'}</td>
             </tr>
@@ -6084,56 +6135,77 @@ function openExamSubmissionDetailsModal(subId) {
         answersList = Object.values(sub.answers);
     }
 
+    const infoAnswers = answersList.filter(ans => ans?.isInfo);
+    const fachAnswers = answersList.filter(ans => !ans?.isInfo);
+    const correctAnswers = fachAnswers.filter(ans => ans?.isCorrect === true);
+    const wrongAnswers = fachAnswers.filter(ans => ans?.isCorrect !== true);
+
+    const renderInfoAnswer = (ans, idx) => {
+        const qText = ans.questionText || `Angabe ${idx + 1}`;
+        const chosen = ans.chosenAnswerText || 'Keine Angabe';
+        return `
+            <div style="background:rgba(30,41,59,0.5);padding:12px;border-radius:8px;border-left:4px solid var(--primary);">
+                <div style="font-weight:800;font-size:12px;color:var(--primary);text-transform:uppercase;">📋 Stammdaten / Prüfungs-Angabe</div>
+                <div style="font-weight:700;font-size:14px;color:var(--text-main);margin-top:2px;">${escapeHtml(qText)}</div>
+                <div style="font-size:13px;margin-top:4px;color:var(--text-main);background:rgba(8,12,20,0.6);padding:6px 10px;border-radius:6px;">${escapeHtml(chosen)}</div>
+            </div>`;
+    };
+
+    const renderScoredAnswer = (ans, idx, isCorrectGroup) => {
+        const qText = ans.questionText || `Frage ${idx + 1}`;
+        const chosen = ans.chosenAnswerText || 'Keine Antwort ausgewählt';
+        const correctText = ans.correctAnswerText || '';
+        const pointsPossible = Number(ans.pointsPossible);
+        const pointsEarned = Number(ans.pointsEarned);
+        const hasPoints = Number.isFinite(pointsPossible) && pointsPossible > 0 && Number.isFinite(pointsEarned);
+        const pointLabel = hasPoints ? `${pointsEarned} / ${pointsPossible} Punkte` : (isCorrectGroup ? 'Richtig' : 'Falsch');
+        return `
+            <div style="background:rgba(15,23,42,0.7);padding:12px;border-radius:8px;border-left:4px solid ${isCorrectGroup ? 'var(--success)' : 'var(--danger)'};">
+                <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap;">
+                    <div style="font-weight:700;font-size:14px;color:var(--text-main);">${escapeHtml(qText)}</div>
+                    <div style="font-size:12px;font-weight:800;color:${isCorrectGroup ? 'var(--success)' : 'var(--warning)'};">${escapeHtml(pointLabel)}</div>
+                </div>
+                <div style="font-size:13px;margin-top:6px;color:${isCorrectGroup ? 'var(--success)' : 'var(--danger)'};font-weight:700;">
+                    Ausgewählt: <span style="color:var(--text-main);font-weight:normal;">${escapeHtml(chosen)}</span>
+                </div>
+                ${!isCorrectGroup && correctText ? `<div style="font-size:13px;margin-top:5px;color:var(--success);font-weight:700;">Richtige Antwort${correctText.includes(',') ? 'en' : ''}: <span style="color:var(--text-main);font-weight:normal;">${escapeHtml(correctText)}</span></div>` : ''}
+            </div>`;
+    };
+
     let answersHtml = '';
     if (answersList.length === 0) {
-        answersHtml = `
-            <div style="background:rgba(15,23,42,0.6);padding:14px;border-radius:8px;color:var(--text-muted);text-align:center;">
-                ℹ️ Für diesen Eintrag wurden keine detaillierten Antwort-Protokolle hinterlegt.
-            </div>
-        `;
+        answersHtml = `<div style="background:rgba(15,23,42,0.6);padding:14px;border-radius:8px;color:var(--text-muted);text-align:center;">ℹ️ Für diesen Eintrag wurden keine detaillierten Antwort-Protokolle hinterlegt.</div>`;
     } else {
-        answersHtml = answersList.map((ans, idx) => {
-            const qText = ans.questionText || `Frage ${idx + 1}`;
-            const chosen = ans.chosenAnswerText || 'Keine Antwort ausgewählt';
-            
-            if (ans.isInfo) {
-                return `
-                    <div style="background:rgba(30,41,59,0.5);padding:12px;border-radius:8px;border-left:4px solid var(--primary);">
-                        <div style="font-weight:800;font-size:12px;color:var(--primary);text-transform:uppercase;">📋 Stammdaten / Prüfungs-Angabe</div>
-                        <div style="font-weight:700;font-size:14px;color:var(--text-main);margin-top:2px;">${escapeHtml(qText)}</div>
-                        <div style="font-size:13px;margin-top:4px;color:var(--text-main);background:rgba(8,12,20,0.6);padding:6px 10px;border-radius:6px;">
-                            ${escapeHtml(chosen)}
-                        </div>
-                    </div>
-                `;
-            }
-
-            const isCorrect = !!ans.isCorrect;
-            return `
-                <div style="background:rgba(15,23,42,0.7);padding:12px;border-radius:8px;border-left:4px solid ${isCorrect ? 'var(--success)' : 'var(--danger)'};">
-                    <div style="font-weight:700;font-size:14px;color:var(--text-main);">${escapeHtml(qText)}</div>
-                    <div style="font-size:13px;margin-top:4px;color:${isCorrect ? 'var(--success)' : 'var(--danger)'};font-weight:700;">
-                        Ausgewählt: <span style="color:var(--text-main);font-weight:normal;">${escapeHtml(chosen)}</span> ${isCorrect ? '✅ (Richtig)' : '❌ (Falsch)'}
-                    </div>
-                </div>
-            `;
-        }).join('');
+        const infoHtml = infoAnswers.length ? `
+            <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;">${infoAnswers.map(renderInfoAnswer).join('')}</div>` : '';
+        const correctHtml = `
+            <h4 style="margin:8px 0;color:var(--success);">✅ Richtig beantwortet (${correctAnswers.length})</h4>
+            <div style="display:flex;flex-direction:column;gap:8px;">${correctAnswers.length ? correctAnswers.map((ans, idx) => renderScoredAnswer(ans, idx, true)).join('') : '<div style="color:var(--text-muted);padding:10px 0;">Keine vollständig richtig beantworteten Fragen.</div>'}</div>`;
+        const wrongHtml = `
+            <h4 style="margin:18px 0 8px;color:var(--danger);">❌ Falsch oder nicht vollständig beantwortet (${wrongAnswers.length})</h4>
+            <div style="display:flex;flex-direction:column;gap:8px;">${wrongAnswers.length ? wrongAnswers.map((ans, idx) => renderScoredAnswer(ans, idx, false)).join('') : '<div style="color:var(--text-muted);padding:10px 0;">Keine falsch beantworteten Fragen.</div>'}</div>`;
+        answersHtml = infoHtml + correctHtml + wrongHtml;
     }
+
+    const hasPointTotals = Number.isFinite(Number(sub.earnedPoints)) && Number.isFinite(Number(sub.maxPoints));
+    const repeatBtn = canCurrentUserRepeatExamForSubmission(sub)
+        ? `<button type="button" class="btn" style="margin-top:12px;width:auto;" onclick="repeatFailedExam('${subId}')">🔄 Prüfung zur Wiederholung freigeben</button>`
+        : '';
 
     cont.innerHTML = `
         <div style="background:rgba(30,41,59,0.5);padding:14px;border-radius:10px;margin-bottom:14px;border:1px solid var(--border);">
             <p style="margin:0;"><b>Prüfling:</b> ${escapeHtml(sub.userName || '--')} <span style="color:var(--primary);font-weight:700;">(DN: ${escapeHtml(sub.userDN || '--')})</span></p>
             <p style="margin:6px 0 0 0;">
                 <b>Prüfung:</b> ${escapeHtml(sub.examTitle || '--')} • 
-                <b>Ergebnis:</b> <b style="color:${sub.passed ? 'var(--success)' : 'var(--danger)'};">${sub.percentage || 0}%</b> 
+                <b>Ergebnis:</b> <b style="color:${sub.passed ? 'var(--success)' : 'var(--danger)'};">${sub.percentage || 0}%</b>
+                ${hasPointTotals ? ` · <b>${Number(sub.earnedPoints)} / ${Number(sub.maxPoints)} Punkte</b>` : ''}
                 (${sub.passed ? '✅ Bestanden' : '⛔ Nicht bestanden'}) • 
                 <b>Dauer:</b> ${escapeHtml(sub.durationFormatted || '--')}
             </p>
+            ${repeatBtn}
         </div>
         <h4 style="margin:0 0 10px 0;color:var(--primary);">Antwort-Korrekturbogen:</h4>
-        <div style="display:flex;flex-direction:column;gap:8px;">
-            ${answersHtml}
-        </div>
+        <div>${answersHtml}</div>
     `;
 
     modal.style.display = 'flex';
@@ -6181,7 +6253,7 @@ function renderInstructorExamSolutions() {
                         <div class="exam-solution-card-main">
                             <span class="exam-solution-category">${escapeHtml(ex.kat || 'Allgemein')}</span>
                             <h5>${escapeHtml(ex.title || 'Prüfung')}</h5>
-                            <div class="exam-solution-meta">❓ ${qCount} Fachfragen · 🎯 ${Number(ex.passPercentage || 60)}% Mindestquote · ⏱️ ${Number(ex.timeLimitMinutes || 30)} Min</div>
+                            <div class="exam-solution-meta">❓ ${qCount} Fachfragen · 🎯 ${getExamPassPercentage(ex)}% Mindestquote · ⏱️ ${Number(ex.timeLimitMinutes || 30)} Min</div>
                         </div>
                         <button type="button" class="btn exam-solution-open" onclick="openExamSolutionModal('${eid}')">👁️ Musterlösung öffnen</button>
                     </article>`;
@@ -6239,7 +6311,7 @@ function openExamSolutionModal(examId) {
         <div class="exam-solution-summary">
             <div><b>Kategorie:</b> ${escapeHtml(ex.kat || 'Allgemein')}</div>
             <div><b>Zeit:</b> ${Number(ex.timeLimitMinutes || 30)} Minuten</div>
-            <div><b>Mindestquote:</b> ${Number(ex.passPercentage || 60)}%</div>
+            <div><b>Mindestquote:</b> ${getExamPassPercentage(ex)}%</div>
         </div>
         ${ex.introText ? `<div class="exam-solution-intro"><b>Einleitung:</b><br>${escapeHtml(ex.introText)}</div>` : ''}
         <div class="exam-solution-privacy-note">ℹ️ Diese Musterlösung zeigt nur den hinterlegten Prüfungsinhalt. Antworten oder Eingaben eines aktuell prüfenden Mitarbeiters werden nicht live übertragen.</div>
@@ -6268,7 +6340,7 @@ function renderInstructorExistingExams() {
                         <div>
                             <span style="font-size:11px;color:var(--primary);font-weight:800;text-transform:uppercase;">${escapeHtml(e.kat||'Allgemein')}</span>
                             <h5 style="margin:4px 0 6px 0;font-size:14px;color:var(--text-main);">${escapeHtml(e.title)}</h5>
-                            <div style="font-size:12px;color:var(--text-muted);">⏱️ ${e.timeLimitMinutes||30} Min • ❓ ${qCount} Fachfragen (+3 Stammdaten) • 🎯 ${e.passPercentage||60}%</div>
+                            <div style="font-size:12px;color:var(--text-muted);">⏱️ ${e.timeLimitMinutes||30} Min • ❓ ${qCount} Fachfragen (+3 Stammdaten) • 🎯 ${getExamPassPercentage(e)}%</div>
                         </div>
                         <div style="display:flex;gap:6px;justify-content:flex-end;border-top:1px solid rgba(255,255,255,0.06);padding-top:8px;">
                             ${eff.canManageExams ? `<button type="button" class="btn" style="width:auto;margin:0;padding:4px 10px;font-size:12px;" onclick="editExam('${k}')">✏️ Bearbeiten</button>` : ''}
@@ -6397,7 +6469,7 @@ function neuePruefungSpeichern() {
 
     const kat = document.getElementById('newExamKat')?.value.trim() || 'Allgemein';
     const timeLimit = parseInt(document.getElementById('newExamTime')?.value) || 30;
-    const passRate = parseInt(document.getElementById('newExamPassRate')?.value) || 60;
+    const passRate = Math.max(60, Math.min(100, parseInt(document.getElementById('newExamPassRate')?.value) || 60));
     const intro = document.getElementById('newExamIntroText')?.value.trim() || '';
     const examId = document.getElementById('editingExamId')?.value || ('exam_' + Date.now());
 
@@ -6431,7 +6503,7 @@ function editExam(eid) {
     document.getElementById('newExamTitle').value = ex.title || '';
     document.getElementById('newExamKat').value = ex.kat || '';
     document.getElementById('newExamTime').value = ex.timeLimitMinutes || 30;
-    document.getElementById('newExamPassRate').value = ex.passPercentage || 60;
+    document.getElementById('newExamPassRate').value = getExamPassPercentage(ex);
     document.getElementById('newExamIntroText').value = ex.introText || '';
     
     _examBuilderQuestions = JSON.parse(JSON.stringify(ex.questions || []));
@@ -6569,7 +6641,7 @@ function submitActiveExam() {
         return;
     }
     clearInterval(activeExamTimerInterval);
-    let totalQ = 0, correctQ = 0;
+    let maxPoints = 0, earnedPoints = 0;
     const recordedAnswers = [];
 
     ex.questions.forEach((q, idx) => {
@@ -6585,27 +6657,38 @@ function submitActiveExam() {
         }
 
         const checkboxes = document.querySelectorAll(`input[name="q_${idx}"]:checked`);
-        let chosenArr = [];
+        const chosenArr = [];
         checkboxes.forEach(cb => chosenArr.push(parseInt(cb.value)));
 
-        const correctArr = (q.correctAnswers || [0]).map(Number);
-        const isRight = (chosenArr.length === correctArr.length) && chosenArr.every(val => correctArr.includes(val));
-        
-        totalQ++;
-        if (isRight) correctQ++;
+        const correctArr = Array.from(new Set((q.correctAnswers || [0]).map(Number).filter(Number.isInteger)));
+        const possible = Math.max(1, correctArr.length);
+        const selectedCorrect = chosenArr.filter(val => correctArr.includes(val));
+        const selectedWrong = chosenArr.filter(val => !correctArr.includes(val));
+        const points = Math.max(0, Math.min(possible, selectedCorrect.length - selectedWrong.length));
+        const fullyCorrect = points === possible && selectedWrong.length === 0 && selectedCorrect.length === correctArr.length;
 
-        const chosenTexts = chosenArr.length > 0 ? chosenArr.map(oIdx => q.options[oIdx] || 'Unbekannt').join(', ') : 'Keine Antwort';
+        maxPoints += possible;
+        earnedPoints += points;
+
+        const chosenTexts = chosenArr.length > 0 ? chosenArr.map(oIdx => q.options?.[oIdx] || 'Unbekannt').join(', ') : 'Keine Antwort';
+        const correctTexts = correctArr.map(oIdx => q.options?.[oIdx] || 'Unbekannt').join(', ');
 
         recordedAnswers.push({
             questionText: q.text,
             chosenAnswerText: chosenTexts,
-            isCorrect: isRight,
-            isInfo: false
+            correctAnswerText: correctTexts,
+            isCorrect: fullyCorrect,
+            isInfo: false,
+            pointsEarned: points,
+            pointsPossible: possible,
+            selectedCorrectCount: selectedCorrect.length,
+            selectedWrongCount: selectedWrong.length
         });
     });
 
-    const pct = totalQ > 0 ? Math.round((correctQ / totalQ) * 100) : 0;
-    const passed = pct >= (ex.passPercentage || 60);
+    const pct = maxPoints > 0 ? Math.round((earnedPoints / maxPoints) * 100) : 0;
+    const passPercentage = getExamPassPercentage(ex);
+    const passed = pct >= passPercentage;
     const m = Math.floor(activeExamSecondsElapsed / 60).toString().padStart(2, '0');
     const s = (activeExamSecondsElapsed % 60).toString().padStart(2, '0');
 
@@ -6618,6 +6701,9 @@ function submitActiveExam() {
         userName: sessionUser.vorname + ' ' + sessionUser.nachname,
         userDN: sessionUser.dn || 'Keine DN',
         percentage: pct,
+        earnedPoints: earnedPoints,
+        maxPoints: maxPoints,
+        passPercentage: passPercentage,
         passed: passed,
         durationFormatted: `${m}:${s} Min`,
         datum: new Date().toLocaleDateString('de-DE'),
@@ -6629,9 +6715,9 @@ function submitActiveExam() {
 
     db.ref().update(updates).then(() => {
         if (passed) {
-            alert(`🎉 Herzlichen Glückwunsch! Du hast die Prüfung bestanden mit ${pct}%!`);
+            alert(`🎉 Herzlichen Glückwunsch! Du hast die Prüfung mit ${earnedPoints}/${maxPoints} Punkten (${pct}%) bestanden!`);
         } else {
-            alert(`❌ Leider nicht bestanden (${pct}%). Die Prüfung wurde gesperrt und muss von der Ausbildungsleitung neu freigeschaltet werden.`);
+            alert(`❌ Leider nicht bestanden (${earnedPoints}/${maxPoints} Punkte = ${pct}%). Die Prüfung wurde gesperrt und kann von einem berechtigten Ausbilder oder der Ausbildungsleitung zur Wiederholung freigegeben werden.`);
         }
         cancelActiveExam();
     }).catch(err => {
@@ -8755,7 +8841,7 @@ _w.renderChiefMaterialsTab = renderChiefMaterialsTab; _w.updateChiefMaterialPrev
 _w.startExam = startExam; _w.cancelActiveExam = cancelActiveExam; _w.submitActiveExam = submitActiveExam;
 _w.addExamQuestionRow = addExamQuestionRow; _w.resetExamBuilderForm = resetExamBuilderForm; _w.neuePruefungSpeichern = neuePruefungSpeichern; _w.editExam = editExam; _w.deleteExam = deleteExam; _w.deleteExamSubmission = deleteExamSubmission;
 _w.openExamBuilderModal = openExamBuilderModal; _w.closeExamBuilderModal = closeExamBuilderModal;
-_w.openExamSubmissionDetailsModal = openExamSubmissionDetailsModal; _w.closeExamSubmissionDetailsModal = closeExamSubmissionDetailsModal;
+_w.openExamSubmissionDetailsModal = openExamSubmissionDetailsModal; _w.closeExamSubmissionDetailsModal = closeExamSubmissionDetailsModal; _w.repeatFailedExam = repeatFailedExam;
 _w.filterUnlocksTable = filterUnlocksTable; _w.filterSubmissionsTable = filterSubmissionsTable; _w.toggleExamUnlockForUser = toggleExamUnlockForUser; _w.toggleExamPassedForUser = toggleExamPassedForUser;
 _w.downloadSystemBackup = downloadSystemBackup; _w.restoreSystemBackupFromFile = restoreSystemBackupFromFile;
 _w.speichereHierarchieDaten = saveHierarchieInline;
