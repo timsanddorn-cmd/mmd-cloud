@@ -1,5 +1,5 @@
 // ============================================================
-//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.7.0
+//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.8.0
 //  Firebase Realtime Database (Compat SDK v10)
 // ============================================================
 
@@ -233,6 +233,8 @@ let cachedCustomChangelogs = {};
 let cachedCommands    = {};
 let cachedLinks       = {};
 let cachedFeedback    = {};
+let cachedSanctionsCatalog = null;
+let sanctionsCatalogBootstrapAttempted = false;
 let activeExam        = null;
 let activeExamTimerInterval = null;
 let activeExamSecondsElapsed = 0;
@@ -272,6 +274,17 @@ let hierarchieDaten = JSON.parse(JSON.stringify(defaultHierarchieData));
 
 /* ── Vollständiger Gesamt-Changelog (Entwicklungsverlauf) ───── */
 const systemChangelogs = [
+    {
+        id: "sys_v6_8_0", version: "v6.8.0", date: "16.09.2026", ts: 1789552800000,
+        category: "Neue Funktion", title: "Sanktionskatalog hinzugefügt",
+        changes: [
+            "Der vollständige Sanktionskatalog ist jetzt direkt in der MMD Cloud verfügbar.",
+            "Nach Paragraphen, Verstößen und Sanktionen kann schnell gesucht und gefiltert werden.",
+            "Berechtigte Rollen können den Sanktionskatalog über das Stiftsymbol direkt auf der Seite bearbeiten.",
+            "Ausbilder können Musterlösungen zu Prüfungen einsehen, die sie selbst bestanden haben; Ausbildungsleitung und berechtigte Leitungsrollen können alle Musterlösungen öffnen.",
+            "Die Darstellung wurde für Computer, Tablets und Smartphones angepasst."
+        ]
+    },
     {
         id: "sys_v6_7_0", version: "v6.7.0", date: "16.09.2026", ts: 1789513200000,
         category: "Update", title: "Rollen & Bedienung verbessert",
@@ -404,6 +417,583 @@ const defaultGehaltData = [
 ];
 let cachedGehaltData = JSON.parse(JSON.stringify(defaultGehaltData));
 
+/* ── Sanktionskatalog 3.0 ─────────────────────────────────── */
+const defaultSanctionsCatalog = {
+    "version": "3.0",
+    "entries": {
+        "san_001": {
+            "id": "san_001",
+            "order": 1,
+            "paragraph": "§1",
+            "offense": "Nicht eintragen des Urlaubs",
+            "sanction1": "$10.000",
+            "sanction2": "$25.000",
+            "sanction3": "$50.000"
+        },
+        "san_002": {
+            "id": "san_002",
+            "order": 2,
+            "paragraph": "§1.1",
+            "offense": "Nicht eintragen des Urlaubs Ende",
+            "sanction1": "$10.000",
+            "sanction2": "$25.000",
+            "sanction3": "$50.000"
+        },
+        "san_003": {
+            "id": "san_003",
+            "order": 3,
+            "paragraph": "§1.2",
+            "offense": "Abwesenheit ohne Urlaub nach Erfolgloser Kontaktaufnahme",
+            "sanction1": "Kündigung",
+            "sanction2": "",
+            "sanction3": ""
+        },
+        "san_004": {
+            "id": "san_004",
+            "order": 4,
+            "paragraph": "§2",
+            "offense": "Respektloses Verhalten",
+            "sanction1": "$50.000",
+            "sanction2": "$75.000",
+            "sanction3": "$100.000"
+        },
+        "san_005": {
+            "id": "san_005",
+            "order": 5,
+            "paragraph": "§2.1",
+            "offense": "Missachten von Dienstaufgaben",
+            "sanction1": "$50.000",
+            "sanction2": "$75.000",
+            "sanction3": "$100.000"
+        },
+        "san_006": {
+            "id": "san_006",
+            "order": 6,
+            "paragraph": "§2.2",
+            "offense": "Im Dienst ohne zu Arbeiten",
+            "sanction1": "$50.000",
+            "sanction2": "$100.000",
+            "sanction3": "$200.000"
+        },
+        "san_007": {
+            "id": "san_007",
+            "order": 7,
+            "paragraph": "§2.3",
+            "offense": "Nicht erfüllen der Dienstlichen Aufgaben",
+            "sanction1": "$50.000",
+            "sanction2": "$100.000",
+            "sanction3": "$200.000"
+        },
+        "san_008": {
+            "id": "san_008",
+            "order": 8,
+            "paragraph": "§2.4",
+            "offense": "Nicht nennen der Dienstnummer",
+            "sanction1": "$25.000",
+            "sanction2": "$50.000",
+            "sanction3": "$100.000"
+        },
+        "san_009": {
+            "id": "san_009",
+            "order": 9,
+            "paragraph": "§2.5",
+            "offense": "Nicht einhalten der Hausregel",
+            "sanction1": "$15.000",
+            "sanction2": "$30.000",
+            "sanction3": "$50.000"
+        },
+        "san_010": {
+            "id": "san_010",
+            "order": 10,
+            "paragraph": "§2.6",
+            "offense": "Nicht anfahren von Dispatches",
+            "sanction1": "$50.000",
+            "sanction2": "$100.000",
+            "sanction3": "$200.000"
+        },
+        "san_011": {
+            "id": "san_011",
+            "order": 11,
+            "paragraph": "§2.7",
+            "offense": "Freiheitsberaubung der Patienten",
+            "sanction1": "$25.000",
+            "sanction2": "$50.000",
+            "sanction3": "$100.000"
+        },
+        "san_012": {
+            "id": "san_012",
+            "order": 12,
+            "paragraph": "§2.8",
+            "offense": "Behandeln Nicht ansprechbarer Patienten",
+            "sanction1": "$10.000",
+            "sanction2": "$25.000",
+            "sanction3": "$50.000"
+        },
+        "san_013": {
+            "id": "san_013",
+            "order": 13,
+            "paragraph": "§2.9",
+            "offense": "Falsche Rechnungs Stellung",
+            "sanction1": "Ausgestellter betrag + 50k",
+            "sanction2": "Ausgestellter betrag + 100k",
+            "sanction3": "Ausgestellter betrag + 250k"
+        },
+        "san_014": {
+            "id": "san_014",
+            "order": 14,
+            "paragraph": "§2.10",
+            "offense": "Privat / 2Job Aktivitäten im Dienst",
+            "sanction1": "$50.000 + Mahnung",
+            "sanction2": "$100.000 + Mahnung",
+            "sanction3": "$250.000 + Mahnung"
+        },
+        "san_015": {
+            "id": "san_015",
+            "order": 15,
+            "paragraph": "§2.11",
+            "offense": "Mitführen einer Waffe im Dienst",
+            "sanction1": "Kündigung",
+            "sanction2": "",
+            "sanction3": ""
+        },
+        "san_016": {
+            "id": "san_016",
+            "order": 16,
+            "paragraph": "§2.12",
+            "offense": "Nicht einhalten der Funkdisziplin",
+            "sanction1": "$25.000",
+            "sanction2": "$50.000",
+            "sanction3": "$75.000"
+        },
+        "san_017": {
+            "id": "san_017",
+            "order": 17,
+            "paragraph": "§2.13",
+            "offense": "Nicht einhaltung der StVO",
+            "sanction1": "PD + 1 Tag Ausendienst Sperre",
+            "sanction2": "PD + 3 Tage Ausendienst Sperre",
+            "sanction3": "PD + 7 Tage Ausendienst Sperre"
+        },
+        "san_018": {
+            "id": "san_018",
+            "order": 18,
+            "paragraph": "§2.14",
+            "offense": "Nicht An- oder Abmelden zur Dienstbesprechung",
+            "sanction1": "$25.000",
+            "sanction2": "$50.000",
+            "sanction3": "$75.000"
+        },
+        "san_019": {
+            "id": "san_019",
+            "order": 19,
+            "paragraph": "§2.15",
+            "offense": "Spätes An- oder Abmelden zur Dienstbesprechung",
+            "sanction1": "$25.000",
+            "sanction2": "$50.000",
+            "sanction3": "$75.000"
+        },
+        "san_020": {
+            "id": "san_020",
+            "order": 20,
+            "paragraph": "§2.16",
+            "offense": "Absage ohne Absprache",
+            "sanction1": "$25.000",
+            "sanction2": "$50.000",
+            "sanction3": "$75.000"
+        },
+        "san_021": {
+            "id": "san_021",
+            "order": 21,
+            "paragraph": "§2.17",
+            "offense": "Nicht Bestehen der Beobachtungsphase",
+            "sanction1": "Kündigung",
+            "sanction2": "",
+            "sanction3": ""
+        },
+        "san_022": {
+            "id": "san_022",
+            "order": 22,
+            "paragraph": "§3",
+            "offense": "Weitergabe von Mitarbeiterdaten",
+            "sanction1": "50k + Mahnung",
+            "sanction2": "100k + Mahnung",
+            "sanction3": "250k + Mahnung"
+        },
+        "san_023": {
+            "id": "san_023",
+            "order": 23,
+            "paragraph": "§3.1",
+            "offense": "Bruche der Ärztliche Schweigepflicht",
+            "sanction1": "Kündigung",
+            "sanction2": "",
+            "sanction3": ""
+        },
+        "san_024": {
+            "id": "san_024",
+            "order": 24,
+            "paragraph": "§4",
+            "offense": "Tragen von Privatkleidung im Dienst",
+            "sanction1": "$50.000",
+            "sanction2": "$100.000",
+            "sanction3": "$200.000"
+        },
+        "san_025": {
+            "id": "san_025",
+            "order": 25,
+            "paragraph": "§4.1",
+            "offense": "Tragen von Dienstkleidung wärend Privaten Zeiten",
+            "sanction1": "$50.000",
+            "sanction2": "$100.000",
+            "sanction3": "$200.000"
+        },
+        "san_026": {
+            "id": "san_026",
+            "order": 26,
+            "paragraph": "§4.2",
+            "offense": "Unerlaubtes Verändern der Dienstkleidung",
+            "sanction1": "$25.000",
+            "sanction2": "$50.000",
+            "sanction3": "$100.000"
+        },
+        "san_027": {
+            "id": "san_027",
+            "order": 27,
+            "paragraph": "§4.3",
+            "offense": "Tragen der Falschen Dienstkleidung",
+            "sanction1": "$100.000",
+            "sanction2": "$200.000",
+            "sanction3": "$300.000"
+        },
+        "san_028": {
+            "id": "san_028",
+            "order": 28,
+            "paragraph": "§4.4",
+            "offense": "Nicht tragen der Dienstbesprechungs Uniform",
+            "sanction1": "$25.000",
+            "sanction2": "$50.000",
+            "sanction3": "$100.000"
+        },
+        "san_029": {
+            "id": "san_029",
+            "order": 29,
+            "paragraph": "§4.6",
+            "offense": "Nicht tragen der Entsprechenden Abteilungs Kleidung",
+            "sanction1": "$25.000",
+            "sanction2": "$50.000",
+            "sanction3": "$100.000"
+        },
+        "san_030": {
+            "id": "san_030",
+            "order": 30,
+            "paragraph": "§4.7",
+            "offense": "Tragen der Medicap und oder Medic Rucksack außer dienst",
+            "sanction1": "$25.000",
+            "sanction2": "$50.000",
+            "sanction3": "$100.000"
+        },
+        "san_031": {
+            "id": "san_031",
+            "order": 31,
+            "paragraph": "§4.8",
+            "offense": "Tragen vom Winteroutfit in nicht Winterlichen Zeiten",
+            "sanction1": "$25.000",
+            "sanction2": "$50.000",
+            "sanction3": "$100.000"
+        },
+        "san_032": {
+            "id": "san_032",
+            "order": 32,
+            "paragraph": "§4.9",
+            "offense": "Verlieren der Medic Tasche",
+            "sanction1": "50.000$",
+            "sanction2": "",
+            "sanction3": ""
+        },
+        "san_033": {
+            "id": "san_033",
+            "order": 33,
+            "paragraph": "§4.10",
+            "offense": "Verlieren von Stethoskop oder Kugelzange",
+            "sanction1": "50.000$",
+            "sanction2": "",
+            "sanction3": ""
+        },
+        "san_034": {
+            "id": "san_034",
+            "order": 34,
+            "paragraph": "§4.11",
+            "offense": "Verlieren vom MDT - Tablet",
+            "sanction1": "250.000$",
+            "sanction2": "",
+            "sanction3": ""
+        },
+        "san_035": {
+            "id": "san_035",
+            "order": 35,
+            "paragraph": "§4.12",
+            "offense": "Nicht Anmelden und oder Beitreten von Funk/GPS 3",
+            "sanction1": "$50.000",
+            "sanction2": "$100.000",
+            "sanction3": "$150.000"
+        },
+        "san_036": {
+            "id": "san_036",
+            "order": 36,
+            "paragraph": "§4.13",
+            "offense": "Nicht Abmelden und oder Verlassen von Funk/GPS 3",
+            "sanction1": "$50.000",
+            "sanction2": "$100.000",
+            "sanction3": "$150.000"
+        },
+        "san_037": {
+            "id": "san_037",
+            "order": 37,
+            "paragraph": "§4.14",
+            "offense": "Verbleiben im Funk nach Dienstaustritt",
+            "sanction1": "$50.000",
+            "sanction2": "$100.000",
+            "sanction3": "$150.000"
+        },
+        "san_038": {
+            "id": "san_038",
+            "order": 38,
+            "paragraph": "§4.15",
+            "offense": "MD Ausrüstung nicht zurückgelegt",
+            "sanction1": "$100.000",
+            "sanction2": "$150.000",
+            "sanction3": "$200.000 + Mahnung"
+        },
+        "san_039": {
+            "id": "san_039",
+            "order": 39,
+            "paragraph": "§4.16",
+            "offense": "PD / DOJ Nicht infomiert",
+            "sanction1": "$10.000",
+            "sanction2": "$25.000",
+            "sanction3": "$50.000"
+        },
+        "san_040": {
+            "id": "san_040",
+            "order": 40,
+            "paragraph": "§4.18",
+            "offense": "Zu lange Pause",
+            "sanction1": "$150.000 + akt. Paycheck x 10",
+            "sanction2": "$300.000 + akt. Paycheck x 20",
+            "sanction3": "Kündigung"
+        },
+        "san_041": {
+            "id": "san_041",
+            "order": 41,
+            "paragraph": "§4.19",
+            "offense": "Rauchen im MD Gebäude",
+            "sanction1": "$10.000",
+            "sanction2": "$25.000",
+            "sanction3": "$50.000"
+        },
+        "san_042": {
+            "id": "san_042",
+            "order": 42,
+            "paragraph": "§5",
+            "offense": "Nicht anmeldung des 2 Jobs",
+            "sanction1": "$50.000",
+            "sanction2": "",
+            "sanction3": ""
+        },
+        "san_043": {
+            "id": "san_043",
+            "order": 43,
+            "paragraph": "§6",
+            "offense": "Behandlungssperren Ausnutzung",
+            "sanction1": "$250.000 + Verwarnung",
+            "sanction2": "$500.000 + Verwarnung",
+            "sanction3": "Kündigung"
+        },
+        "san_044": {
+            "id": "san_044",
+            "order": 44,
+            "paragraph": "§6.1",
+            "offense": "Unerlaube Lange Behandlungssperre",
+            "sanction1": "$250.000 + Mahnung",
+            "sanction2": "$500.000 + Mahnung",
+            "sanction3": "Kündigung"
+        },
+        "san_045": {
+            "id": "san_045",
+            "order": 45,
+            "paragraph": "§6.2",
+            "offense": "Ausnutzung der Sonderrechte",
+            "sanction1": "$100.000",
+            "sanction2": "$200.000",
+            "sanction3": "$300.000"
+        },
+        "san_046": {
+            "id": "san_046",
+            "order": 46,
+            "paragraph": "§7",
+            "offense": "Dienstfahrzeuge für Privataktivitäten Genutzt",
+            "sanction1": "$50.000",
+            "sanction2": "$75.000",
+            "sanction3": "$100.000"
+        },
+        "san_047": {
+            "id": "san_047",
+            "order": 47,
+            "paragraph": "§7.2",
+            "offense": "Nicht abschliesen von Dienstfahrzeuge",
+            "sanction1": "$50.000",
+            "sanction2": "$75.000",
+            "sanction3": "$100.000"
+        },
+        "san_048": {
+            "id": "san_048",
+            "order": 48,
+            "paragraph": "§7.3",
+            "offense": "Verleihen vom Dienstfahrzeug",
+            "sanction1": "$125.000",
+            "sanction2": "$250.000",
+            "sanction3": "$500.000"
+        },
+        "san_049": {
+            "id": "san_049",
+            "order": 49,
+            "paragraph": "§7.4",
+            "offense": "Unerlaubtes Mitnehmen Ziviler Personen",
+            "sanction1": "Mahnung",
+            "sanction2": "$250.000 + Mahnung",
+            "sanction3": "$500.000 + Mahnung"
+        },
+        "san_050": {
+            "id": "san_050",
+            "order": 50,
+            "paragraph": "§7.5",
+            "offense": "Mitführen Illegaler Gegenstände",
+            "sanction1": "Verwarnung",
+            "sanction2": "",
+            "sanction3": "Kündigung"
+        },
+        "san_051": {
+            "id": "san_051",
+            "order": 51,
+            "paragraph": "§7.6",
+            "offense": "Einmischen in Besprechungen oder Konflikten",
+            "sanction1": "$100.000",
+            "sanction2": "$200.000",
+            "sanction3": "$300.000"
+        },
+        "san_052": {
+            "id": "san_052",
+            "order": 52,
+            "paragraph": "§7.7",
+            "offense": "Nicht verlassen des Einsatzortes",
+            "sanction1": "$50.000",
+            "sanction2": "$75.000",
+            "sanction3": "$100.000"
+        },
+        "san_053": {
+            "id": "san_053",
+            "order": 53,
+            "paragraph": "§8",
+            "offense": "Nicht besetzen der Leitstelle",
+            "sanction1": "$100.000",
+            "sanction2": "$200.000",
+            "sanction3": "$300.000"
+        },
+        "san_054": {
+            "id": "san_054",
+            "order": 54,
+            "paragraph": "§8.4",
+            "offense": "Nicht Erfüllung der Co- / Leitstellen Arbeit",
+            "sanction1": "$100.000",
+            "sanction2": "$200.000",
+            "sanction3": "$300.000"
+        },
+        "san_055": {
+            "id": "san_055",
+            "order": 55,
+            "paragraph": "§8.5",
+            "offense": "Nicht ablösen der aktuellen Leitstelle",
+            "sanction1": "$100.000",
+            "sanction2": "$200.000",
+            "sanction3": "$300.000"
+        },
+        "san_056": {
+            "id": "san_056",
+            "order": 56,
+            "paragraph": "§9",
+            "offense": "Fliegen ohne Flugschein oder Erlaubnis",
+            "sanction1": "$125.000",
+            "sanction2": "$250.000",
+            "sanction3": "$500.000"
+        },
+        "san_057": {
+            "id": "san_057",
+            "order": 57,
+            "paragraph": "§9.1",
+            "offense": "Tragen von Schutzweste im MD",
+            "sanction1": "$25.000",
+            "sanction2": "$50.000",
+            "sanction3": "$75.000"
+        },
+        "san_058": {
+            "id": "san_058",
+            "order": 58,
+            "paragraph": "§9.2",
+            "offense": "Luftrettung ohne Streife 1",
+            "sanction1": "$50.000",
+            "sanction2": "$75.000",
+            "sanction3": "$100.000"
+        },
+        "san_059": {
+            "id": "san_059",
+            "order": 59,
+            "paragraph": "§9.3",
+            "offense": "Fliegen wie eine Kampfeinheit",
+            "sanction1": "$100.000",
+            "sanction2": "$200.000",
+            "sanction3": "$300.000"
+        },
+        "san_060": {
+            "id": "san_060",
+            "order": 60,
+            "paragraph": "§9.4",
+            "offense": "Landen auf nicht markierten Bereichen",
+            "sanction1": "$25.000",
+            "sanction2": "$50.000",
+            "sanction3": "$75.000"
+        }
+    },
+    "rules": {
+        "rule_1": {
+            "id": "rule_1",
+            "order": 1,
+            "text": "3x Mahnung = 1x Verwarnung"
+        },
+        "rule_2": {
+            "id": "rule_2",
+            "order": 2,
+            "text": "3x Verwarnung = Kündigung"
+        },
+        "rule_3": {
+            "id": "rule_3",
+            "order": 3,
+            "text": "Jede Verwarnung kommt mit einer $150.000 Zahlung und einer 24h Außendienstsperre"
+        },
+        "rule_4": {
+            "id": "rule_4",
+            "order": 4,
+            "text": "Sanktionen werden von der Chiefebene und der Personalabteilung ausgestellt"
+        },
+        "rule_5": {
+            "id": "rule_5",
+            "order": 5,
+            "text": "Je nach Schwere des Vergehens kann die Strafe auch vom High Command oder der Chiefebene verschärft werden (bis hin zur Kündigung)"
+        }
+    },
+    "updatedAt": 0,
+    "updatedBy": ""
+};
+cachedSanctionsCatalog = JSON.parse(JSON.stringify(defaultSanctionsCatalog));
+
 /* ── Chief Ebene: Materialverwaltung (Grundlage: SAMD-Materialliste) ── */
 const CHIEF_MATERIAL_DEFS = [
     { id:'wundreiniger', name:'Wundreiniger', defaultMax:2500 },
@@ -432,6 +1022,8 @@ const defaultRoles = {
         canEditPrices:true, canEditGuide:true, canEditCommands:true, canEditLinks:true,
         canViewChiefMaterials:true, canEditChiefMaterials:true,
         canManageMemberAccess:true, canManageMaintenance:true,
+        canEditSanctionsCatalog:true,
+        canViewExamSolutions:true,
         delPatient:true, delArchiv:true, delGuide:true, delCommands:true, delLinks:true, delNews:true, delExams:true, delUsers:true, canManageFeedback:true, delFeedback:true,
         allowedCmdKats: [], allowedLinkKats: []
     },
@@ -443,6 +1035,8 @@ const defaultRoles = {
         canEditPrices:true, canEditGuide:true, canEditCommands:true, canEditLinks:true,
         canViewChiefMaterials:true, canEditChiefMaterials:true,
         canManageMemberAccess:true, canManageMaintenance:true,
+        canEditSanctionsCatalog:true,
+        canViewExamSolutions:true,
         delPatient:true, delArchiv:true, delGuide:true, delCommands:true, delLinks:true, delNews:true, delExams:true, delUsers:false, canManageFeedback:true, delFeedback:true,
         allowedCmdKats: [], allowedLinkKats: []
     },
@@ -454,6 +1048,8 @@ const defaultRoles = {
         canEditPrices:false, canEditGuide:false, canEditCommands:false, canEditLinks:false,
         canViewChiefMaterials:false, canEditChiefMaterials:false,
         canManageMemberAccess:true, canManageMaintenance:false,
+        canEditSanctionsCatalog:false,
+        canViewExamSolutions:true,
         delPatient:false, delArchiv:false, delGuide:false, delCommands:false, delLinks:false, delNews:false, delExams:true, delUsers:false, canManageFeedback:false, delFeedback:false,
         allowedCmdKats: ['Ausbildung', 'Ausbildungsabteilung', 'Abkürzungen & Dokumente', 'T-Codes'],
         allowedLinkKats: ['Allgemein', 'Ausbildung', 'MD Intern']
@@ -466,6 +1062,8 @@ const defaultRoles = {
         canEditPrices:false, canEditGuide:false, canEditCommands:false, canEditLinks:false,
         canViewChiefMaterials:false, canEditChiefMaterials:false,
         canManageMemberAccess:false, canManageMaintenance:false,
+        canEditSanctionsCatalog:false,
+        canViewExamSolutions:true,
         delPatient:false, delArchiv:false, delGuide:false, delCommands:false, delLinks:false, delNews:false, delExams:false, delUsers:false, canManageFeedback:false, delFeedback:false,
         allowedCmdKats: ['Ausbildung', 'Ausbildungsabteilung', 'Abkürzungen & Dokumente', 'T-Codes'],
         allowedLinkKats: ['Allgemein', 'MD Intern']
@@ -478,6 +1076,8 @@ const defaultRoles = {
         canEditPrices:false, canEditGuide:false, canEditCommands:false, canEditLinks:false,
         canViewChiefMaterials:false, canEditChiefMaterials:false,
         canManageMemberAccess:false, canManageMaintenance:false,
+        canEditSanctionsCatalog:false,
+        canViewExamSolutions:false,
         delPatient:false, delArchiv:false, delGuide:false, delCommands:false, delLinks:false, delNews:false, delExams:false, delUsers:false, canManageFeedback:false, delFeedback:false,
         allowedCmdKats: ['Abkürzungen & Dokumente', 'T-Codes'],
         allowedLinkKats: ['Allgemein', 'CLS', 'MD Intern']
@@ -490,6 +1090,8 @@ const defaultRoles = {
         canEditPrices:false, canEditGuide:false, canEditCommands:false, canEditLinks:false,
         canViewChiefMaterials:false, canEditChiefMaterials:false,
         canManageMemberAccess:false, canManageMaintenance:false,
+        canEditSanctionsCatalog:false,
+        canViewExamSolutions:false,
         delPatient:false, delArchiv:false, delGuide:false, delCommands:false, delLinks:false, delNews:false, delExams:false, delUsers:false, canManageFeedback:false, delFeedback:false,
         allowedCmdKats: ['Abkürzungen & Dokumente', 'T-Codes'],
         allowedLinkKats: ['Allgemein', 'EHK', 'MD Intern']
@@ -502,6 +1104,8 @@ const defaultRoles = {
         canEditPrices:false, canEditGuide:false, canEditCommands:false, canEditLinks:false,
         canViewChiefMaterials:false, canEditChiefMaterials:false,
         canManageMemberAccess:false, canManageMaintenance:false,
+        canEditSanctionsCatalog:false,
+        canViewExamSolutions:false,
         delPatient:false, delArchiv:false, delGuide:false, delCommands:false, delLinks:false, delNews:false, delExams:false, delUsers:false, canManageFeedback:false, delFeedback:false,
         allowedCmdKats: ['Abkürzungen & Dokumente', 'Allgemein', 'T-Codes'],
         allowedLinkKats: ['MD Intern']
@@ -514,6 +1118,8 @@ const defaultRoles = {
         canEditPrices:false, canEditGuide:false, canEditCommands:false, canEditLinks:false,
         canViewChiefMaterials:false, canEditChiefMaterials:false,
         canManageMemberAccess:false, canManageMaintenance:false,
+        canEditSanctionsCatalog:false,
+        canViewExamSolutions:false,
         delPatient:false, delArchiv:false, delGuide:false, delCommands:false, delLinks:false, delNews:false, delExams:false, delUsers:false, canManageFeedback:false, delFeedback:false,
         allowedCmdKats: ['Abkürzungen & Dokumente', 'Psychologie', 'T-Codes'],
         allowedLinkKats: ['Allgemein', 'MD Intern', 'Psychologie']
@@ -526,6 +1132,8 @@ const defaultRoles = {
         canEditPrices:false, canEditGuide:false, canEditCommands:false, canEditLinks:false,
         canViewChiefMaterials:false, canEditChiefMaterials:false,
         canManageMemberAccess:true, canManageMaintenance:false,
+        canEditSanctionsCatalog:true,
+        canViewExamSolutions:false,
         delPatient:false, delArchiv:false, delGuide:false, delCommands:false, delLinks:false, delNews:true, delExams:false, delUsers:false, canManageFeedback:false, delFeedback:false,
         allowedCmdKats: ['Abkürzungen & Dokumente', 'T-Codes'],
         allowedLinkKats: ['Allgemein', 'MD Intern']
@@ -538,6 +1146,8 @@ const defaultRoles = {
         canEditPrices:false, canEditGuide:false, canEditCommands:false, canEditLinks:false,
         canViewChiefMaterials:false, canEditChiefMaterials:false,
         canManageMemberAccess:false, canManageMaintenance:false,
+        canEditSanctionsCatalog:false,
+        canViewExamSolutions:false,
         delPatient:false, delArchiv:false, delGuide:false, delCommands:false, delLinks:false, delNews:false, delExams:false, delUsers:false, canManageFeedback:false, delFeedback:false,
         allowedCmdKats: ['Abkürzungen & Dokumente', 'T-Codes'],
         allowedLinkKats: ['Allgemein', 'MD Intern']
@@ -622,6 +1232,7 @@ const ROLE_PROPERTY_MAP = {
     delFlagPhotos: 'delPhotos',
     roleFlagManageMemberAccess: 'canManageMemberAccess',
     roleFlagManageMaintenance: 'canManageMaintenance',
+    roleFlagEditSanctionsCatalog: 'canEditSanctionsCatalog',
     delFlagCalendar: 'delCalendar',
     roleFlagPostNews: 'canPostNews',
     roleFlagApproveNews: 'canApproveNews',
@@ -630,6 +1241,7 @@ const ROLE_PROPERTY_MAP = {
     roleFlagInstructor: 'isInstructor',
     roleFlagManageInstructors: 'canManageInstructors',
     roleFlagManageExams: 'canManageExams',
+    roleFlagViewExamSolutions: 'canViewExamSolutions',
     delFlagExams: 'delExams',
     roleFlagEditGuide: 'canEditGuide',
     delFlagGuide: 'delGuide',
@@ -939,7 +1551,7 @@ function logAdminAudit(action, details) {
 };
 
 // ============================================================
-//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.7.0
+//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.8.0
 //  Firebase Realtime Database (Compat SDK v10)
 // ============================================================
 
@@ -1109,7 +1721,7 @@ function isUserInstructor() {
 function canUserAccessInstructorArea() {
     if (!sessionUser) return false;
     const eff = getUserEffectivePermissions(sessionUser);
-    return !!(isUserInstructor() || eff.canManageMemberAccess || eff.isMasterAdmin);
+    return !!(isUserInstructor() || eff.canManageMemberAccess || eff.canViewExamSolutions || eff.isMasterAdmin);
 }
 
 function canInstructorAccessExam(examId) {
@@ -1120,6 +1732,29 @@ function canInstructorAccessExam(examId) {
     }
     const myPassed = (sessionUser.passedExams) || (cachedUsers[getUserAccountId(sessionUser)]?.passedExams) || {};
     return !!myPassed[examId];
+}
+
+function canCurrentUserViewExamSolutions() {
+    if (!sessionUser) return false;
+    const eff = getUserEffectivePermissions(sessionUser);
+    return !!(eff.isMasterAdmin || eff.canViewExamSolutions);
+}
+
+function canCurrentUserViewExamSolution(examId) {
+    if (!sessionUser || !examId) return false;
+    const eff = getUserEffectivePermissions(sessionUser);
+    if (eff.isMasterAdmin) return true;
+    if (!eff.canViewExamSolutions) return false;
+
+    // Leitungs-/Prüfungsverwaltung darf die hinterlegten Musterlösungen aller Prüfungen sehen.
+    if (eff.canManageInstructors || eff.canManageExams) return true;
+
+    // Reine Ausbilder bzw. andere Rollen mit diesem Recht sehen nur Prüfungen,
+    // die sie selbst bereits erfolgreich bestanden haben.
+    const accountId = getUserAccountId(sessionUser);
+    const me = cachedUsers[accountId] || sessionUser || {};
+    const passed = me.passedExams || {};
+    return passed[examId] === true;
 }
 
 function renderUserRoleBadges(user, isTopBar = false) {
@@ -1664,6 +2299,9 @@ function applyUserPermissions(user) {
     const gehaltEdit = document.getElementById('btnEditGehaltInline');
     if (gehaltEdit) gehaltEdit.style.display = isAdminOrMaster ? 'inline-block' : 'none';
 
+    const sanctionsEdit = document.getElementById('btnEditSanctionsCatalog');
+    if (sanctionsEdit) sanctionsEdit.style.display = (eff.canEditSanctionsCatalog || isMaster) ? 'inline-block' : 'none';
+
     const chiefBtn = document.getElementById('chiefTabNavBtn');
     const canViewChief = !!(eff.canViewChiefMaterials || eff.canEditChiefMaterials || isMaster);
     if (chiefBtn) chiefBtn.style.display = canViewChief ? 'inline-block' : 'none';
@@ -1696,6 +2334,9 @@ function applyUserPermissions(user) {
     const instrManageBtn = document.getElementById('instrTabManageBtn');
     if (instrManageBtn) instrManageBtn.style.display = (eff.canManageExams || isMaster) ? '' : 'none';
 
+    const instrSolutionsBtn = document.getElementById('instrTabSolutionsBtn');
+    if (instrSolutionsBtn) instrSolutionsBtn.style.display = (eff.canViewExamSolutions || isMaster) ? '' : 'none';
+
     const instructorCoreAccess = !!(eff.isInstructor || eff.canManageInstructors || eff.isMasterAdmin);
     const instrUnlocksBtn = document.getElementById('instrTabUnlocksBtn');
     const instrResultsBtn = document.getElementById('instrTabResultsBtn');
@@ -1703,7 +2344,7 @@ function applyUserPermissions(user) {
     if (instrResultsBtn) instrResultsBtn.style.display = instructorCoreAccess ? '' : 'none';
     const activeInstructorBtn = document.querySelector('#examInstructorView .admin-tab-btn.active');
     if (canUserAccessInstructorArea() && (!activeInstructorBtn || activeInstructorBtn.style.display === 'none')) {
-        const fallbackBtn = [instrUnlocksBtn, instrResultsBtn, instrManageBtn, allowedExamsBtn].find(btn => btn && btn.style.display !== 'none');
+        const fallbackBtn = [instrUnlocksBtn, instrResultsBtn, instrSolutionsBtn, instrManageBtn, allowedExamsBtn].find(btn => btn && btn.style.display !== 'none');
         if (fallbackBtn) fallbackBtn.click();
     }
 
@@ -2002,7 +2643,7 @@ function startFirebaseListeners() {
         'data/protokoll', 'data/archiv', 'data/hierarchie', 'data/gehaltstabelle',
         'data/guide', 'data/materialPreise', 'data/szenarioTemplates', 'data/szenarienConfig', 'data/dienstLinks',
         'data/dienstCommands', 'data/roles', 'data/users', 'data/exams', 'data/examSubmissions',
-        'data/news', 'data/calendar', 'data/employeePhotos', 'data/changelogs', 'data/auditLogs'
+        'data/news', 'data/calendar', 'data/employeePhotos', 'data/changelogs', 'data/auditLogs', 'data/sanctionsCatalog'
     ];
     endpoints.forEach(ep => db.ref(ep).off());
 
@@ -2038,6 +2679,12 @@ function startFirebaseListeners() {
             ? serverList 
             : JSON.parse(JSON.stringify(defaultGehaltData));
         renderGehaltTab(cachedGehaltData);
+    });
+    db.ref('data/sanctionsCatalog').on('value', s => {
+        const serverData = s.val();
+        cachedSanctionsCatalog = sanitizeSanctionsCatalog(serverData || defaultSanctionsCatalog);
+        renderSanctionsCatalog();
+        if (!serverData) initializeSanctionsCatalogIfAllowed();
     });
     db.ref('data/guide').on('value', s => {
         const serverData = s.val();
@@ -2079,7 +2726,7 @@ function startFirebaseListeners() {
             refreshSensitiveFirebaseListeners();
             const eff = getUserEffectivePermissions(sessionUser);
             if (eff.isAdmin || eff.isMasterAdmin) {
-                syncServerPermissionsForAllUsers().catch(err => console.error('Berechtigungen konnten nicht automatisch synchronisiert werden:', err));
+                syncServerPermissionsForAllUsers().then(() => initializeSanctionsCatalogIfAllowed()).catch(err => console.error('Berechtigungen konnten nicht automatisch synchronisiert werden:', err));
             }
         }
         renderCalendarMonth();
@@ -2562,7 +3209,7 @@ function saveAllSzenarienWorkflows() {
 }
 
 // ============================================================
-//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.7.0
+//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.8.0
 //  Firebase Realtime Database (Compat SDK v10)
 // ============================================================
 
@@ -4143,6 +4790,111 @@ function saveGehaltInline() {
     });
 }
 
+/* ── REITER: SANKTIONSKATALOG ──────────────────────────────── */
+let activeSanctionsFilter = 'all';
+let sanctionsEditorEntries = [];
+let sanctionsEditorRules = [];
+
+function sanctionsCatalogToObject(list) {
+    const out = {};
+    (list || []).forEach((item, idx) => {
+        const id = item.id || ('san_' + String(idx + 1).padStart(3, '0'));
+        out[id] = Object.assign({}, item, { id, order: Number(item.order) || (idx + 1) });
+    });
+    return out;
+}
+function sanctionsRulesToObject(list) {
+    const out = {};
+    (list || []).forEach((item, idx) => {
+        const id = item.id || ('rule_' + String(idx + 1));
+        out[id] = Object.assign({}, item, { id, order: Number(item.order) || (idx + 1) });
+    });
+    return out;
+}
+function compareSanctionsParagraphs(a, b) {
+    const parse = value => {
+        const m = String(value || '').replace(/[^\d.]/g, '').split('.').filter(Boolean).map(Number);
+        return [m[0] || 9999, m[1] || 0, m[2] || 0];
+    };
+    const av = parse(a), bv = parse(b);
+    for (let i = 0; i < 3; i++) if (av[i] !== bv[i]) return av[i] - bv[i];
+    return String(a || '').localeCompare(String(b || ''), 'de');
+}
+function getSanctionsEntries(catalog = cachedSanctionsCatalog) {
+    const raw = catalog?.entries || {};
+    const list = Array.isArray(raw) ? raw.filter(Boolean) : Object.values(raw);
+    return list.map((item, idx) => ({
+        id:item?.id || ('san_' + String(idx + 1).padStart(3,'0')), order:Number(item?.order) || (idx + 1),
+        paragraph:String(item?.paragraph || ''), offense:String(item?.offense || ''), sanction1:String(item?.sanction1 || ''), sanction2:String(item?.sanction2 || ''), sanction3:String(item?.sanction3 || '')
+    })).sort((a,b)=>(a.order-b.order)||compareSanctionsParagraphs(a.paragraph,b.paragraph));
+}
+function getSanctionsRules(catalog = cachedSanctionsCatalog) {
+    const raw = catalog?.rules || {};
+    const list = Array.isArray(raw) ? raw.filter(Boolean) : Object.values(raw);
+    return list.map((item, idx)=>({id:item?.id || ('rule_'+String(idx+1)),order:Number(item?.order)||(idx+1),text:String(item?.text||'')})).sort((a,b)=>a.order-b.order);
+}
+function sanitizeSanctionsCatalog(raw) {
+    const source = raw && typeof raw === 'object' ? raw : defaultSanctionsCatalog;
+    const entries=getSanctionsEntries(source), rules=getSanctionsRules(source);
+    return {version:String(source.version||'3.0'),entries:sanctionsCatalogToObject(entries.length?entries:getSanctionsEntries(defaultSanctionsCatalog)),rules:sanctionsRulesToObject(rules.length?rules:getSanctionsRules(defaultSanctionsCatalog)),updatedAt:Number(source.updatedAt)||0,updatedBy:String(source.updatedBy||'')};
+}
+function normalizeSanctionsText(value) {
+    let text=String(value||'').toLowerCase()
+        .replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue').replace(/ß/g,'ss')
+        .normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+    text=text.replace(/(\d+)\.(\d{3})/g,'$1$2').replace(/\b(\d+)\s*k\b/g,(_,n)=>String(Number(n)*1000));
+    // Suchhilfe: offensichtliche Schreibvariante aus der Quelldatei vereinheitlichen, ohne den sichtbaren Originaltext zu verändern.
+    text=text.replace(/\bausendienst\b/g,'aussendienst');
+    return text.replace(/[§$€]/g,'').replace(/\s+/g,' ').trim();
+}
+function sanctionsSearchHaystack(item) {
+    const normal=normalizeSanctionsText([item.paragraph,item.offense,item.sanction1,item.sanction2,item.sanction3].join(' '));
+    return `${normal} ${normal.replace(/[^a-z0-9]+/g,'')}`;
+}
+function matchesSanctionsSearch(item, query) {
+    const q=normalizeSanctionsText(query); if(!q) return true;
+    const hay=sanctionsSearchHaystack(item);
+    return q.split(' ').filter(Boolean).every(token=>hay.includes(token)||(token.replace(/[^a-z0-9]+/g,'')&&hay.includes(token.replace(/[^a-z0-9]+/g,''))));
+}
+function matchesSanctionsFilter(item, filter) {
+    if(!filter||filter==='all') return true;
+    const text=normalizeSanctionsText([item.sanction1,item.sanction2,item.sanction3].join(' '));
+    if(filter==='money') return /\d{4,}/.test(text)||text.includes('paycheck');
+    if(filter==='mahnung') return text.includes('mahnung');
+    if(filter==='verwarnung') return text.includes('verwarnung');
+    if(filter==='kuendigung') return text.includes('kuendigung');
+    if(filter==='aussendienst') return text.includes('aussendienst');
+    return true;
+}
+function renderSanctionsRules() {
+    const c=document.getElementById('sanctionsRulesList'); if(!c) return;
+    const rules=getSanctionsRules();
+    c.innerHTML=rules.length?rules.map(r=>`<div class="sanctions-rule-item"><span>•</span><div>${escapeHtml(r.text)}</div></div>`).join(''):'<div class="sanctions-rule-item"><div>Keine allgemeinen Regeln hinterlegt.</div></div>';
+}
+function renderSanctionsCatalog() {
+    const tbody=document.getElementById('sanctionsTableBody'); if(!tbody) return;
+    const q=document.getElementById('sanctionsSearchInput')?.value||''; const all=getSanctionsEntries();
+    const entries=all.filter(i=>matchesSanctionsSearch(i,q)).filter(i=>matchesSanctionsFilter(i,activeSanctionsFilter)).sort((a,b)=>compareSanctionsParagraphs(a.paragraph,b.paragraph));
+    tbody.innerHTML=entries.map(i=>`<tr><td data-label="Paragraf" class="sanctions-paragraph-cell">${escapeHtml(i.paragraph||'—')}</td><td data-label="Verstoß" class="sanctions-offense-cell">${escapeHtml(i.offense||'—')}</td><td data-label="1. Sanktion">${escapeHtml(i.sanction1||'—')}</td><td data-label="2. Sanktion">${escapeHtml(i.sanction2||'—')}</td><td data-label="3. Sanktion">${escapeHtml(i.sanction3||'—')}</td></tr>`).join('');
+    const count=document.getElementById('sanctionsResultCount'); if(count) count.textContent=entries.length===all.length?`${all.length} Einträge`:`${entries.length} von ${all.length} Einträgen`;
+    const none=document.getElementById('sanctionsNoResults'), wrap=document.querySelector('.sanctions-table-wrap'); if(none) none.style.display=entries.length?'none':'block'; if(wrap) wrap.style.display=entries.length?'block':'none';
+    const upd=document.getElementById('sanctionsLastUpdated'); if(upd){const ts=Number(cachedSanctionsCatalog?.updatedAt)||0;upd.textContent=ts?`Zuletzt aktualisiert: ${new Date(ts).toLocaleString('de-DE')}`:'Grundlage: Sanktionskatalog 3.0';}
+    renderSanctionsRules();
+}
+function setSanctionsFilter(filter,btn){activeSanctionsFilter=filter||'all';document.querySelectorAll('.sanctions-filter-chip').forEach(e=>e.classList.remove('active'));if(btn)btn.classList.add('active');renderSanctionsCatalog();}
+function resetSanctionsFilters(){const i=document.getElementById('sanctionsSearchInput');if(i)i.value='';activeSanctionsFilter='all';document.querySelectorAll('.sanctions-filter-chip').forEach(e=>e.classList.toggle('active',e.dataset.filter==='all'));renderSanctionsCatalog();if(i)i.focus();}
+function toggleSanctionsRules(){const l=document.getElementById('sanctionsRulesList'),b=document.getElementById('sanctionsRulesToggle'),ic=document.getElementById('sanctionsRulesToggleIcon');if(!l)return;const hidden=l.style.display==='none';l.style.display=hidden?'':'none';if(b)b.setAttribute('aria-expanded',hidden?'true':'false');if(ic)ic.textContent=hidden?'▾':'▸';}
+async function initializeSanctionsCatalogIfAllowed(){if(sanctionsCatalogBootstrapAttempted||!sessionUser)return;const eff=getUserEffectivePermissions(sessionUser);if(!eff.isMasterAdmin&&!eff.canEditSanctionsCatalog)return;sanctionsCatalogBootstrapAttempted=true;try{const s=await db.ref('data/sanctionsCatalog').once('value');if(!s.exists()){const p=sanitizeSanctionsCatalog(defaultSanctionsCatalog);p.updatedAt=Date.now();p.updatedBy=`${sessionUser.vorname||''} ${sessionUser.nachname||''}`.trim();await db.ref('data/sanctionsCatalog').set(p);logAdminAudit('Sanktionskatalog eingerichtet',`${p.updatedBy||'Berechtigte Person'} hat den Sanktionskatalog 3.0 erstmalig eingerichtet.`);}}catch(err){console.warn('Sanktionskatalog konnte noch nicht automatisch eingerichtet werden:',err);sanctionsCatalogBootstrapAttempted=false;}}
+function openSanctionsCatalogEditor(){if(!requirePermission(['canEditSanctionsCatalog','isMasterAdmin'],'Keine Berechtigung zur Bearbeitung des Sanktionskatalogs!'))return;sanctionsEditorEntries=getSanctionsEntries().map(i=>Object.assign({},i));sanctionsEditorRules=getSanctionsRules().map(i=>Object.assign({},i));renderSanctionsCatalogEditor();const m=document.getElementById('sanctionsCatalogEditorModal');if(m)m.style.display='flex';}
+function closeSanctionsCatalogEditor(){const m=document.getElementById('sanctionsCatalogEditorModal');if(m)m.style.display='none';}
+function renderSanctionsCatalogEditor(){const rc=document.getElementById('sanctionsRulesEditorContainer');if(rc)rc.innerHTML=sanctionsEditorRules.map((r,i)=>`<div class="sanctions-rule-editor-row"><textarea id="san_rule_text_${i}" rows="2" aria-label="Sanktionsregel ${i+1}">${escapeHtml(r.text||'')}</textarea><button type="button" class="btn-delete-row" onclick="removeSanctionsRuleEditorRow(${i})" title="Regel entfernen">🗑️</button></div>`).join('');const tb=document.getElementById('sanctionsEntriesEditorBody');if(tb)tb.innerHTML=sanctionsEditorEntries.map((it,i)=>`<tr><td data-label="Paragraf"><input type="text" id="san_para_${i}" value="${escapeHtml(it.paragraph||'')}" aria-label="Paragraf Zeile ${i+1}"></td><td data-label="Verstoß"><textarea id="san_offense_${i}" rows="2">${escapeHtml(it.offense||'')}</textarea></td><td data-label="1. Sanktion"><textarea id="san_s1_${i}" rows="2">${escapeHtml(it.sanction1||'')}</textarea></td><td data-label="2. Sanktion"><textarea id="san_s2_${i}" rows="2">${escapeHtml(it.sanction2||'')}</textarea></td><td data-label="3. Sanktion"><textarea id="san_s3_${i}" rows="2">${escapeHtml(it.sanction3||'')}</textarea></td><td data-label="Aktion"><button type="button" class="btn-delete-row" onclick="removeSanctionsEntryEditorRow(${i})" title="Eintrag entfernen">🗑️</button></td></tr>`).join('');}
+function readSanctionsEditorState(){sanctionsEditorRules=sanctionsEditorRules.map((r,i)=>({id:r.id||('rule_'+Date.now()+'_'+i),order:i+1,text:document.getElementById(`san_rule_text_${i}`)?.value.trim()||''}));sanctionsEditorEntries=sanctionsEditorEntries.map((it,i)=>({id:it.id||('san_'+Date.now()+'_'+i),order:i+1,paragraph:document.getElementById(`san_para_${i}`)?.value.trim()||'',offense:document.getElementById(`san_offense_${i}`)?.value.trim()||'',sanction1:document.getElementById(`san_s1_${i}`)?.value.trim()||'',sanction2:document.getElementById(`san_s2_${i}`)?.value.trim()||'',sanction3:document.getElementById(`san_s3_${i}`)?.value.trim()||''}));}
+function addSanctionsRuleEditorRow(){if(!requirePermission(['canEditSanctionsCatalog','isMasterAdmin']))return;readSanctionsEditorState();sanctionsEditorRules.push({id:'rule_'+Date.now(),order:sanctionsEditorRules.length+1,text:''});renderSanctionsCatalogEditor();const rows=document.querySelectorAll('.sanctions-rule-editor-row textarea');rows[rows.length-1]?.focus();}
+function removeSanctionsRuleEditorRow(i){if(!requirePermission(['canEditSanctionsCatalog','isMasterAdmin']))return;readSanctionsEditorState();if(!confirm('Diese allgemeine Regel wirklich entfernen?'))return;sanctionsEditorRules.splice(i,1);renderSanctionsCatalogEditor();}
+function addSanctionsEntryEditorRow(){if(!requirePermission(['canEditSanctionsCatalog','isMasterAdmin']))return;readSanctionsEditorState();sanctionsEditorEntries.push({id:'san_'+Date.now(),order:sanctionsEditorEntries.length+1,paragraph:'',offense:'',sanction1:'',sanction2:'',sanction3:''});renderSanctionsCatalogEditor();document.getElementById(`san_para_${sanctionsEditorEntries.length-1}`)?.focus();}
+function removeSanctionsEntryEditorRow(i){if(!requirePermission(['canEditSanctionsCatalog','isMasterAdmin']))return;readSanctionsEditorState();const it=sanctionsEditorEntries[i];if(!confirm(`Eintrag ${it?.paragraph||''} wirklich entfernen?`))return;sanctionsEditorEntries.splice(i,1);renderSanctionsCatalogEditor();}
+async function saveSanctionsCatalogEditor(){if(!requirePermission(['canEditSanctionsCatalog','isMasterAdmin'],'Keine Berechtigung zum Speichern des Sanktionskatalogs!'))return;readSanctionsEditorState();const entries=sanctionsEditorEntries.map((i,x)=>Object.assign({},i,{order:x+1})).filter(i=>i.paragraph||i.offense||i.sanction1||i.sanction2||i.sanction3);const rules=sanctionsEditorRules.map((i,x)=>Object.assign({},i,{order:x+1})).filter(i=>i.text);if(entries.find(i=>!i.paragraph||!i.offense)){alert('Bitte gib bei jedem Eintrag mindestens Paragraf und Verstoß an.');return;}if(!entries.length){alert('Der Sanktionskatalog muss mindestens einen Tabelleneintrag enthalten.');return;}if(!rules.length){alert('Bitte hinterlege mindestens eine allgemeine Sanktionsregel.');return;}const actor=`${sessionUser?.vorname||''} ${sessionUser?.nachname||''}`.trim();const payload={version:'3.0',entries:sanctionsCatalogToObject(entries),rules:sanctionsRulesToObject(rules),updatedAt:Date.now(),updatedBy:actor};try{await db.ref('data/sanctionsCatalog').set(payload);cachedSanctionsCatalog=sanitizeSanctionsCatalog(payload);renderSanctionsCatalog();closeSanctionsCatalogEditor();logAdminAudit('Sanktionskatalog aktualisiert',`${actor||'Berechtigte Person'} hat den Sanktionskatalog gespeichert (${entries.length} Einträge).`);alert('✅ Sanktionskatalog erfolgreich gespeichert!');}catch(err){console.error('Sanktionskatalog speichern fehlgeschlagen:',err);alert('Der Sanktionskatalog konnte nicht gespeichert werden. Bitte versuche es erneut.');}}
+
 /* ── REITER 3: FUNK & CODES (INLINE EDIT) ───────────────────── */
 function renderGuideTab() {
     _renderGuideSection('guideTenCodesBody',    cachedGuideData.tenCodes);
@@ -5084,6 +5836,7 @@ function renderExamTab() {
                 renderInstructorUnlocks();
                 renderInstructorSubmissions(cachedSubmissions);
             }
+            if (eff.canViewExamSolutions || eff.isMasterAdmin) renderInstructorExamSolutions();
             if (eff.canManageExams || eff.isMasterAdmin) renderInstructorExistingExams();
             if (eff.canManageMemberAccess || eff.isMasterAdmin) renderInstructorAllowedExams();
         } else {
@@ -5390,6 +6143,113 @@ function closeExamSubmissionDetailsModal() { document.getElementById('examSubmis
 function deleteExamSubmission(subId) {
     if (!sessionUser || !getUserEffectivePermissions(sessionUser).delExams) return;
     if (confirm('Ergebnis löschen?')) db.ref('data/examSubmissions/' + subId).remove();
+}
+
+function renderInstructorExamSolutions() {
+    const container = document.getElementById('instructorExamSolutionsList');
+    if (!container) return;
+    if (!canCurrentUserViewExamSolutions()) {
+        container.innerHTML = '<div class="exam-solution-empty">Keine Berechtigung zum Einsehen von Musterlösungen.</div>';
+        return;
+    }
+
+    const ids = sortExamIds(Object.keys(cachedExams)).filter(eid => canCurrentUserViewExamSolution(eid));
+    const eff = getUserEffectivePermissions(sessionUser);
+    const restrictedToPassed = !(eff.isMasterAdmin || eff.canManageInstructors || eff.canManageExams);
+
+    if (!ids.length) {
+        container.innerHTML = `<div class="exam-solution-empty">${restrictedToPassed
+            ? 'Noch keine Musterlösung verfügbar. Als Ausbilder werden hier nur Prüfungen angezeigt, die du selbst bestanden hast.'
+            : 'Keine Prüfungen mit Musterlösung vorhanden.'}</div>`;
+        return;
+    }
+
+    container.innerHTML = `
+        <div class="exam-solution-hint">
+            <div>👁️ <b>Musterlösungen</b></div>
+            <div>${restrictedToPassed
+                ? 'Du siehst ausschließlich Prüfungen, die du selbst erfolgreich bestanden hast. Die laufenden Eingaben eines Prüflings werden hier nicht angezeigt.'
+                : 'Diese Ansicht zeigt die hinterlegten Fragen und richtigen Antworten. Laufende Eingaben eines Prüflings werden nicht angezeigt.'}</div>
+        </div>
+        <div class="exam-solution-grid">
+            ${ids.map(eid => {
+                const ex = cachedExams[eid];
+                if (!ex) return '';
+                const qCount = (ex.questions || []).filter(q => !q.isInfo && q.type !== 'text').length;
+                return `
+                    <article class="exam-solution-card">
+                        <div class="exam-solution-card-main">
+                            <span class="exam-solution-category">${escapeHtml(ex.kat || 'Allgemein')}</span>
+                            <h5>${escapeHtml(ex.title || 'Prüfung')}</h5>
+                            <div class="exam-solution-meta">❓ ${qCount} Fachfragen · 🎯 ${Number(ex.passPercentage || 60)}% Mindestquote · ⏱️ ${Number(ex.timeLimitMinutes || 30)} Min</div>
+                        </div>
+                        <button type="button" class="btn exam-solution-open" onclick="openExamSolutionModal('${eid}')">👁️ Musterlösung öffnen</button>
+                    </article>`;
+            }).join('')}
+        </div>`;
+}
+
+function openExamSolutionModal(examId) {
+    if (!canCurrentUserViewExamSolution(examId)) {
+        alert('Für diese Musterlösung hast du keine Berechtigung. Ausbilder können nur Musterlösungen von Prüfungen öffnen, die sie selbst bestanden haben.');
+        return;
+    }
+    const ex = cachedExams[examId];
+    if (!ex) {
+        alert('Die Prüfung wurde nicht gefunden.');
+        return;
+    }
+    const modal = document.getElementById('examSolutionModal');
+    const title = document.getElementById('examSolutionModalTitle');
+    const content = document.getElementById('examSolutionModalContent');
+    if (!modal || !title || !content) return;
+
+    title.textContent = `👁️ Musterlösung – ${ex.title || 'Prüfung'}`;
+    let fachIndex = 0;
+    const questionsHtml = (ex.questions || []).map((q, idx) => {
+        if (q.isInfo || q.type === 'text') {
+            return `
+                <div class="exam-solution-question exam-solution-info">
+                    <div class="exam-solution-question-title">📋 Angabe ${idx + 1}: ${escapeHtml(q.text || '')}</div>
+                    <div class="exam-solution-info-text">Dieses Stammdatenfeld wird vom Prüfling ausgefüllt und besitzt keine Musterantwort.</div>
+                </div>`;
+        }
+        fachIndex++;
+        const correct = Array.isArray(q.correctAnswers)
+            ? q.correctAnswers.map(Number)
+            : [Number(q.correctAnswers ?? 0)];
+        const options = Array.isArray(q.options) ? q.options : [];
+        return `
+            <div class="exam-solution-question">
+                <div class="exam-solution-question-title">❓ Frage ${fachIndex}: ${escapeHtml(q.text || '')}</div>
+                <div class="exam-solution-options">
+                    ${options.map((opt, optIdx) => {
+                        const isCorrect = correct.includes(optIdx);
+                        return `<div class="exam-solution-option ${isCorrect ? 'correct' : ''}">
+                            <span class="exam-solution-marker">${isCorrect ? '✅' : '○'}</span>
+                            <span>${escapeHtml(opt || '')}</span>
+                            ${isCorrect ? '<strong>Richtige Antwort</strong>' : ''}
+                        </div>`;
+                    }).join('')}
+                </div>
+            </div>`;
+    }).join('');
+
+    content.innerHTML = `
+        <div class="exam-solution-summary">
+            <div><b>Kategorie:</b> ${escapeHtml(ex.kat || 'Allgemein')}</div>
+            <div><b>Zeit:</b> ${Number(ex.timeLimitMinutes || 30)} Minuten</div>
+            <div><b>Mindestquote:</b> ${Number(ex.passPercentage || 60)}%</div>
+        </div>
+        ${ex.introText ? `<div class="exam-solution-intro"><b>Einleitung:</b><br>${escapeHtml(ex.introText)}</div>` : ''}
+        <div class="exam-solution-privacy-note">ℹ️ Diese Musterlösung zeigt nur den hinterlegten Prüfungsinhalt. Antworten oder Eingaben eines aktuell prüfenden Mitarbeiters werden nicht live übertragen.</div>
+        <div class="exam-solution-question-list">${questionsHtml || '<div class="exam-solution-empty">Keine Fragen hinterlegt.</div>'}</div>`;
+    modal.style.display = 'flex';
+}
+
+function closeExamSolutionModal() {
+    const modal = document.getElementById('examSolutionModal');
+    if (modal) modal.style.display = 'none';
 }
 
 function renderInstructorExistingExams() {
@@ -6992,7 +7852,7 @@ function downloadSystemBackup() {
         const backup = {
             meta: {
                 app: 'MMD Cloud',
-                version: '6.7.0',
+                version: '6.8.0',
                 createdAt: Date.now(),
                 note: 'Passwörter und alte Passwort-Hashes werden aus Sicherheitsgründen nicht exportiert.'
             },
@@ -7086,7 +7946,7 @@ function restoreSystemBackupFromFile(event) {
 
 async function vollstaendigerReset() {
     if (!sessionUser || !getUserEffectivePermissions(sessionUser).isMasterAdmin) return;
-    if (!confirm('ACHTUNG: Wirklich alle Fachdaten zurücksetzen?\n\nMitarbeiterkonten, Rollen, Anmeldungen und die Chief-Materialliste bleiben erhalten.')) return;
+    if (!confirm('ACHTUNG: Wirklich alle Fachdaten zurücksetzen?\n\nMitarbeiterkonten, Rollen, Anmeldungen, Chief-Materialliste und Sanktionskatalog bleiben erhalten.')) return;
     if (!confirm('Patienten, Archive, Termine, Prüfungen, News, Feedback und weitere Fachdaten werden gelöscht. Fortfahren?')) return;
 
     try {
@@ -7100,6 +7960,7 @@ async function vollstaendigerReset() {
             loginDirectory: current.loginDirectory || {},
             employeePhotos: current.employeePhotos || {},
             chiefMaterials: current.chiefMaterials || {},
+            sanctionsCatalog: current.sanctionsCatalog || {},
             system: {
                 authMigrationComplete: system.authMigrationComplete === true,
                 authMigrationCompletedAt: system.authMigrationCompletedAt || null,
@@ -7804,6 +8665,7 @@ function switchTab(tabId, btn) {
     if (tabId === 'calendarTab') renderCalendarMonth();
     if (tabId === 'staffTab') renderStaffDirectory();
     if (tabId === 'miscTab') renderGehaltTab(cachedGehaltData);
+    if (tabId === 'sanctionsTab') renderSanctionsCatalog();
     if (tabId === 'chiefTab') renderChiefMaterialsTab();
     if (tabId === 'examTab') renderExamTab();
     if (tabId === 'settingsTab' && sessionUser) {
@@ -7815,6 +8677,7 @@ function switchTab(tabId, btn) {
 function settingsTabClick() { switchTab('settingsTab', document.getElementById('adminMainTabHeader')); }
 function switchInstructorTab(tabId, btnEl) {
     if (btnEl && btnEl.style.display === 'none') return;
+    if (tabId === 'instrTabSolutions') renderInstructorExamSolutions();
     document.querySelectorAll('#examInstructorView .admin-subtab-content').forEach(e => e.classList.remove('active'));
     document.querySelectorAll('#examInstructorView .admin-tab-btn').forEach(e => e.classList.remove('active'));
     const t = document.getElementById(tabId); if (t) t.classList.add('active');
@@ -7828,6 +8691,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     updateLiveDate(); setInterval(updateLiveDate, 60000);
     renderGuideTab(); renderHierarchieBoard(hierarchieDaten); baueMaterialUIAuf();
     renderGehaltTab(cachedGehaltData);
+    renderSanctionsCatalog();
 
     const authView = document.getElementById('authView');
     const mainView = document.getElementById('mainAppView');
@@ -7885,6 +8749,8 @@ _w.openEditNewsModal = openEditNewsModal;
 _w.openChangelogModal = openChangelogModal; _w.closeChangelogModal = closeChangelogModal;
 _w.openChangelogWriterModal = openChangelogWriterModal; _w.closeChangelogWriterModal = closeChangelogWriterModal; _w.saveCustomChangelogEntry = saveCustomChangelogEntry;
 _w.openGehaltInlineModal = openGehaltInlineModal; _w.closeGehaltInlineModal = closeGehaltInlineModal; _w.saveGehaltInline = saveGehaltInline; _w.addGehaltRowInline = addGehaltRowInline; _w.removeGehaltRowInline = removeGehaltRowInline;
+_w.renderSanctionsCatalog = renderSanctionsCatalog; _w.setSanctionsFilter = setSanctionsFilter; _w.resetSanctionsFilters = resetSanctionsFilters; _w.toggleSanctionsRules = toggleSanctionsRules;
+_w.openSanctionsCatalogEditor = openSanctionsCatalogEditor; _w.closeSanctionsCatalogEditor = closeSanctionsCatalogEditor; _w.addSanctionsRuleEditorRow = addSanctionsRuleEditorRow; _w.removeSanctionsRuleEditorRow = removeSanctionsRuleEditorRow; _w.addSanctionsEntryEditorRow = addSanctionsEntryEditorRow; _w.removeSanctionsEntryEditorRow = removeSanctionsEntryEditorRow; _w.saveSanctionsCatalogEditor = saveSanctionsCatalogEditor;
 _w.renderChiefMaterialsTab = renderChiefMaterialsTab; _w.updateChiefMaterialPreview = updateChiefMaterialPreview; _w.handleChiefRefilledToggle = handleChiefRefilledToggle; _w.saveChiefMaterialEntry = saveChiefMaterialEntry; _w.saveChiefMaterialConfig = saveChiefMaterialConfig; _w.deleteChiefMaterialEntry = deleteChiefMaterialEntry;
 _w.startExam = startExam; _w.cancelActiveExam = cancelActiveExam; _w.submitActiveExam = submitActiveExam;
 _w.addExamQuestionRow = addExamQuestionRow; _w.resetExamBuilderForm = resetExamBuilderForm; _w.neuePruefungSpeichern = neuePruefungSpeichern; _w.editExam = editExam; _w.deleteExam = deleteExam; _w.deleteExamSubmission = deleteExamSubmission;

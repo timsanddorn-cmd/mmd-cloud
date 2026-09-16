@@ -11,7 +11,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
-    <link rel="stylesheet" href="style.css?v=6.7.0-final1">
+    <link rel="stylesheet" href="style.css?v=6.8.0b">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏥</text></svg>">
 </head>
 <body>
@@ -141,6 +141,7 @@
                 📰 News <span id="newsUnreadBadge" class="unread-news-badge" style="display:none;">0</span>
             </button>
             <button type="button" class="tab-btn" onclick="switchTab('miscTab', this)">💰 Gehaltstabelle</button>
+            <button type="button" class="tab-btn" id="sanctionsTabNavBtn" onclick="switchTab('sanctionsTab', this)">⚖️ Sanktionskatalog</button>
             <button type="button" class="tab-btn" id="chiefTabNavBtn" style="display:none;" onclick="switchTab('chiefTab', this)">⭐ Chief Ebene</button>
             <button type="button" class="tab-btn" id="adminMainTabHeader" onclick="settingsTabClick()">⚙️ Einstellungen</button>
         </div>
@@ -651,6 +652,7 @@
                     <div class="admin-subtabs" style="margin-bottom:16px;">
                         <button type="button" class="admin-tab-btn active" id="instrTabUnlocksBtn" onclick="switchInstructorTab('instrTabUnlocks', this)">🔓 Prüfungen freischalten</button>
                         <button type="button" class="admin-tab-btn" id="instrTabResultsBtn" onclick="switchInstructorTab('instrTabResults', this)">📊 Absolvierte Prüfungen</button>
+                        <button type="button" class="admin-tab-btn" id="instrTabSolutionsBtn" onclick="switchInstructorTab('instrTabSolutions', this)">👁️ Musterlösungen</button>
                         <button type="button" class="admin-tab-btn" id="instrTabManageBtn" onclick="switchInstructorTab('instrTabManage', this)">📝 Prüfungen verwalten</button>
                         <button type="button" class="admin-tab-btn" id="instrAllowedExamsTabBtn" onclick="switchInstructorTab('instrTabInstructorAllowedExams', this)">👥 Mitglieder & Rollen</button>
                     </div>
@@ -679,6 +681,16 @@
                                 <tbody id="instructorSubmissionsTableBody"></tbody>
                             </table>
                         </div>
+                    </div>
+
+                    <div id="instrTabSolutions" class="admin-subtab-content">
+                        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:14px;">
+                            <div>
+                                <h4 style="margin:0;color:var(--primary);">👁️ Musterlösungen</h4>
+                                <p style="margin:5px 0 0;color:var(--text-muted);font-size:12px;line-height:1.5;">Ausbilder können hier ausschließlich Musterlösungen von Prüfungen öffnen, die sie selbst bestanden haben. Die Ansicht zeigt keine laufenden Antworten des Prüflings.</p>
+                            </div>
+                        </div>
+                        <div id="instructorExamSolutionsList"></div>
                     </div>
 
                     <div id="instrTabManage" class="admin-subtab-content">
@@ -789,6 +801,44 @@
                     </div>
                 </div>
             </div>
+        </div>
+
+        <!-- REITER: SANKTIONSKATALOG -->
+        <div id="sanctionsTab" class="tab-content">
+            <div class="content-header-bar sanctions-header-bar">
+                <div>
+                    <h2 style="margin:0 0 4px 0;">⚖️ Sanktionskatalog</h2>
+                    <p style="margin:0;color:var(--text-muted);font-size:13px;">Vollständiger Sanktionskatalog 3.0. Die Suche filtert die Tabelle nur bei Bedarf.</p>
+                </div>
+                <button type="button" id="btnEditSanctionsCatalog" class="btn-inline-edit" style="display:none;" onclick="openSanctionsCatalogEditor()" title="Sanktionskatalog live bearbeiten">✏️ Sanktionskatalog bearbeiten</button>
+            </div>
+            <div class="sanctions-rules-card">
+                <button type="button" class="sanctions-rules-toggle" onclick="toggleSanctionsRules()" aria-expanded="true" id="sanctionsRulesToggle"><span>ℹ️ Wichtige Sanktionsregeln</span><span id="sanctionsRulesToggleIcon">▾</span></button>
+                <div id="sanctionsRulesList" class="sanctions-rules-list"></div>
+            </div>
+            <div class="sanctions-toolbar">
+                <div class="sanctions-search-wrap">
+                    <label for="sanctionsSearchInput">Suchen</label>
+                    <input type="search" id="sanctionsSearchInput" placeholder="z. B. §2.13, Funk, Kündigung, Mahnung oder 50k" oninput="renderSanctionsCatalog()">
+                </div>
+                <button type="button" class="btn sanctions-reset-btn" onclick="resetSanctionsFilters()">↺ Zurücksetzen</button>
+            </div>
+            <div class="sanctions-filter-row" role="group" aria-label="Sanktionsfilter">
+                <button type="button" class="sanctions-filter-chip active" data-filter="all" onclick="setSanctionsFilter('all', this)">Alle</button>
+                <button type="button" class="sanctions-filter-chip" data-filter="money" onclick="setSanctionsFilter('money', this)">💵 Geldstrafe</button>
+                <button type="button" class="sanctions-filter-chip" data-filter="mahnung" onclick="setSanctionsFilter('mahnung', this)">📌 Mahnung</button>
+                <button type="button" class="sanctions-filter-chip" data-filter="verwarnung" onclick="setSanctionsFilter('verwarnung', this)">⚠️ Verwarnung</button>
+                <button type="button" class="sanctions-filter-chip" data-filter="kuendigung" onclick="setSanctionsFilter('kuendigung', this)">⛔ Kündigung</button>
+                <button type="button" class="sanctions-filter-chip" data-filter="aussendienst" onclick="setSanctionsFilter('aussendienst', this)">🚑 Außendienstsperre</button>
+            </div>
+            <div class="sanctions-summary"><span id="sanctionsResultCount">0 Einträge</span><span id="sanctionsLastUpdated"></span></div>
+            <div class="table-responsive sanctions-table-wrap">
+                <table class="guide-table sanctions-table">
+                    <thead><tr><th class="sub-head sanctions-paragraph-col">Paragraf</th><th class="sub-head">Verstoß</th><th class="sub-head">1. Sanktion</th><th class="sub-head">2. Sanktion</th><th class="sub-head">3. Sanktion</th></tr></thead>
+                    <tbody id="sanctionsTableBody"></tbody>
+                </table>
+            </div>
+            <div id="sanctionsNoResults" class="sanctions-no-results" style="display:none;">Keine passenden Einträge gefunden.</div>
         </div>
 
         <!-- REITER: CHIEF-EBENE / MATERIALVERWALTUNG -->
@@ -1021,8 +1071,8 @@
             <form onsubmit="event.preventDefault(); saveCustomChangelogEntry();">
                 <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:12px;">
                     <div>
-                        <label for="clNewVersion">Version (z. B. v6.7.0):</label>
-                        <input type="text" id="clNewVersion" placeholder="v6.7.0" required>
+                        <label for="clNewVersion">Version (z. B. v6.8.0):</label>
+                        <input type="text" id="clNewVersion" placeholder="v6.8.0" required>
                     </div>
                     <div>
                         <label for="clNewCategory">Kategorie:</label>
@@ -1083,6 +1133,25 @@
                     <button type="button" class="btn" style="width:auto; background:var(--success); color:#080c14; font-weight:800;" onclick="saveGehaltInline()">💾 Tabelle speichern</button>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- MODAL: SANKTIONSKATALOG LIVE BEARBEITEN -->
+    <div id="sanctionsCatalogEditorModal" class="modal-overlay">
+        <div class="modal-card sanctions-editor-modal">
+            <div class="sanctions-editor-head">
+                <div><h3 style="margin:0;color:var(--warning);">⚖️ Sanktionskatalog bearbeiten</h3><p style="margin:4px 0 0;color:var(--text-muted);font-size:12px;">Änderungen werden nach dem Speichern live für alle Mitarbeiter übernommen.</p></div>
+                <button type="button" class="btn-close" onclick="closeSanctionsCatalogEditor()">✖</button>
+            </div>
+            <div class="sanctions-editor-section">
+                <div class="sanctions-editor-section-head"><div><h4>ℹ️ Allgemeine Regeln</h4><span>Hinweise und Grundregeln des Sanktionskatalogs</span></div><button type="button" class="btn sanctions-editor-add" onclick="addSanctionsRuleEditorRow()">➕ Regel</button></div>
+                <div id="sanctionsRulesEditorContainer" class="sanctions-rules-editor"></div>
+            </div>
+            <div class="sanctions-editor-section">
+                <div class="sanctions-editor-section-head"><div><h4>📋 Tabelle</h4><span>Paragraf, Verstoß und bis zu drei Sanktionsstufen</span></div><button type="button" class="btn sanctions-editor-add" onclick="addSanctionsEntryEditorRow()">➕ Eintrag</button></div>
+                <div class="table-responsive sanctions-editor-table-wrap"><table class="sanctions-editor-table"><thead><tr><th>Paragraf</th><th>Verstoß</th><th>1. Sanktion</th><th>2. Sanktion</th><th>3. Sanktion</th><th>Aktion</th></tr></thead><tbody id="sanctionsEntriesEditorBody"></tbody></table></div>
+            </div>
+            <div class="sanctions-editor-actions"><button type="button" class="btn" style="background:var(--text-muted);" onclick="closeSanctionsCatalogEditor()">Abbrechen</button><button type="button" class="btn" style="background:var(--success);color:#080c14;font-weight:900;" onclick="saveSanctionsCatalogEditor()">💾 Sanktionskatalog speichern</button></div>
         </div>
     </div>
 
@@ -1352,6 +1421,17 @@
         </div>
     </div>
 
+    <!-- MODAL POPUP: MUSTERLÖSUNG -->
+    <div id="examSolutionModal" class="modal-overlay">
+        <div class="modal-card exam-solution-modal-card">
+            <div class="exam-solution-modal-head">
+                <h3 id="examSolutionModalTitle">👁️ Musterlösung</h3>
+                <button type="button" class="btn-close" onclick="closeExamSolutionModal()">✖</button>
+            </div>
+            <div id="examSolutionModalContent"></div>
+        </div>
+    </div>
+
     <!-- MODAL POPUP: NEUE PRÜFUNG ERSTELLEN / BEARBEITEN -->
     <div id="examBuilderModal" class="modal-overlay">
         <div class="modal-card" style="max-width: 1100px; width: 96vw; max-height: 92vh; overflow-y:auto;">
@@ -1497,6 +1577,7 @@
                                         <div class="role-perm-box"><label for="delFlagFeedback" class="perm-check"><input type="checkbox" id="delFlagFeedback"> <b>🗑️ Meldungen löschen</b></label><span class="perm-desc">Darf Wünsche und Fehlerberichte dauerhaft aus dem System löschen.</span></div>
                                         <div class="role-perm-box"><label for="roleFlagManageMemberAccess" class="perm-check"><input type="checkbox" id="roleFlagManageMemberAccess"> <b>👥 Mitarbeiter freigeben & Rollen verteilen</b></label><span class="perm-desc">Darf Mitarbeiter freigeben oder sperren und Rollen im dafür vorgesehenen Umfang vergeben.</span></div>
                                         <div class="role-perm-box"><label for="roleFlagManageMaintenance" class="perm-check"><input type="checkbox" id="roleFlagManageMaintenance"> <b>🛠️ Wartungsmodus verwalten</b></label><span class="perm-desc">Darf den Wartungsmodus ein- und ausschalten und behält währenddessen den nötigen Verwaltungszugriff.</span></div>
+                                        <div class="role-perm-box"><label for="roleFlagEditSanctionsCatalog" class="perm-check"><input type="checkbox" id="roleFlagEditSanctionsCatalog"> <b>⚖️ Sanktionskatalog bearbeiten</b></label><span class="perm-desc">Darf den vollständigen Sanktionskatalog und die allgemeinen Sanktionsregeln über das Stiftsymbol live bearbeiten.</span></div>
                                         <div class="role-perm-box"><label for="roleFlagViewChiefMaterials" class="perm-check"><input type="checkbox" id="roleFlagViewChiefMaterials"> <b>⭐ Chief Materialliste sehen</b></label><span class="perm-desc">Blendet den Hauptreiter „Chief Ebene“ mit Materialbestand und Historie ein.</span></div>
                                         <div class="role-perm-box"><label for="roleFlagEditChiefMaterials" class="perm-check"><input type="checkbox" id="roleFlagEditChiefMaterials"> <b>📦 Chief Materialliste bearbeiten</b></label><span class="perm-desc">Darf Bestandsaufnahmen speichern, Maximalbestände ändern und fehlerhafte Einträge löschen.</span></div>
                                     </div>
@@ -1545,6 +1626,7 @@
                                         <div class="role-perm-box"><label for="roleFlagInstructor" class="perm-check"><input type="checkbox" id="roleFlagInstructor"> <b>Ausbilder Modus</b></label><span class="perm-desc">Öffnet den Ausbilderbereich: Darf bestandene Prüfungen für Schüler freischalten.</span></div>
                                         <div class="role-perm-box"><label for="roleFlagManageInstructors" class="perm-check"><input type="checkbox" id="roleFlagManageInstructors"> <b>⚙️ Ausbildungsverwaltung</b></label><span class="perm-desc">Darf Ausbilderfunktionen und Prüfungsfreigaben auf Leitungsebene verwalten. Mitarbeiterfreigabe und Rollenvergabe werden separat gesteuert.</span></div>
                                         <div class="role-perm-box"><label for="roleFlagManageExams" class="perm-check"><input type="checkbox" id="roleFlagManageExams"> <b>✏️ Prüfungen bauen</b></label><span class="perm-desc">Darf Fragenkataloge, Prüfungen und Bestehensquoten neu anlegen oder ändern.</span></div>
+                                        <div class="role-perm-box"><label for="roleFlagViewExamSolutions" class="perm-check"><input type="checkbox" id="roleFlagViewExamSolutions"> <b>👁️ Musterlösungen ansehen</b></label><span class="perm-desc">Darf Musterlösungen öffnen. Ausbilder sehen dabei nur Prüfungen, die sie selbst bestanden haben; Leitungsrollen mit Prüfungsverwaltung sehen alle.</span></div>
                                         <div class="role-perm-box"><label for="delFlagExams" class="perm-check"><input type="checkbox" id="delFlagExams"> <b>🗑️ Prüfungen löschen</b></label><span class="perm-desc">Darf Prüfungen und absolvierte Prüfungsprotokolle dauerhaft löschen.</span></div>
                                     </div>
                                 </div>
@@ -1753,6 +1835,6 @@
         </div>
     </div>
 
-    <script src="app.js?v=6.7.0-final1"></script>
+    <script src="app.js?v=6.8.0b"></script>
 </body>
 </html>
