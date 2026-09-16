@@ -1,5 +1,5 @@
 // ============================================================
-//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.6.0
+//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.7.0
 //  Firebase Realtime Database (Compat SDK v10)
 // ============================================================
 
@@ -154,7 +154,7 @@ function withStableAccountId(uId, user) {
 function canCurrentUserManageFeedback() {
     if (!sessionUser) return false;
     const eff = getUserEffectivePermissions(sessionUser);
-    return !!(eff.isAdmin || eff.isMasterAdmin || eff.canManageFeedback);
+    return !!(eff.isMasterAdmin || eff.canManageFeedback);
 }
 
 function normalizeKats(raw) {
@@ -272,6 +272,18 @@ let hierarchieDaten = JSON.parse(JSON.stringify(defaultHierarchieData));
 
 /* ── Vollständiger Gesamt-Changelog (Entwicklungsverlauf) ───── */
 const systemChangelogs = [
+    {
+        id: "sys_v6_7_0", version: "v6.7.0", date: "16.09.2026", ts: 1789513200000,
+        category: "Update", title: "Rollen & Bedienung verbessert",
+        changes: [
+            "Rollen und Berechtigungen wurden vereinheitlicht und zuverlässiger miteinander verknüpft.",
+            "Personalabteilung und Ausbildungsleitung können Mitarbeiter freischalten und die festgelegten Rollen vergeben.",
+            "CLS und EHK wurden passend zu ihren Aufgaben umbenannt.",
+            "Kalendereinträge können von allen Mitarbeitern erstellt und eigene Termine wieder gelöscht werden.",
+            "Der Wartungsmodus besitzt jetzt eine eigene Berechtigung.",
+            "Die Bedienung auf Smartphones und kleineren Bildschirmen wurde verbessert."
+        ]
+    },
     {
         id: "sys_v6_6_0", version: "v6.6.0", date: "15.09.2026", ts: 1789426800000,
         category: "Update", title: "Materialliste & Wartungsmodus verbessert",
@@ -414,114 +426,118 @@ let chiefMaterialsListenerActive = false;
 const defaultRoles = {
     masteradmin: {
         id:'masteradmin', name:'Master Admin', color:'#eab308', icon:'👑', isSystem:true,
-        isAdmin:true, isMasterAdmin:true, canViewArchive:true, canEditAllPatients:true,
-        canCreateCalendar:true, delCalendar:true, canManagePhotos:true, delPhotos:true,
+        isAdmin:true, isMasterAdmin:true, canViewArchive:true, canEditAllPatients:true, delCalendar:true, canManagePhotos:true, delPhotos:true,
         isInstructor:true, canManageInstructors:true, canManageExams:true,
         canPostNews:true, canApproveNews:true, canViewNewsRead:true,
         canEditPrices:true, canEditGuide:true, canEditCommands:true, canEditLinks:true,
         canViewChiefMaterials:true, canEditChiefMaterials:true,
+        canManageMemberAccess:true, canManageMaintenance:true,
         delPatient:true, delArchiv:true, delGuide:true, delCommands:true, delLinks:true, delNews:true, delExams:true, delUsers:true, canManageFeedback:true, delFeedback:true,
         allowedCmdKats: [], allowedLinkKats: []
     },
     chiefebene: {
         id:'chiefebene', name:'Chief Ebene', color:'#fbbf24', icon:'⭐', isSystem:true,
-        isAdmin:true, isMasterAdmin:false, canViewArchive:true, canEditAllPatients:true,
-        canCreateCalendar:true, delCalendar:true, canManagePhotos:true, delPhotos:true,
+        isAdmin:true, isMasterAdmin:false, canViewArchive:true, canEditAllPatients:true, delCalendar:true, canManagePhotos:true, delPhotos:true,
         isInstructor:true, canManageInstructors:true, canManageExams:true,
         canPostNews:true, canApproveNews:true, canViewNewsRead:true,
         canEditPrices:true, canEditGuide:true, canEditCommands:true, canEditLinks:true,
         canViewChiefMaterials:true, canEditChiefMaterials:true,
+        canManageMemberAccess:true, canManageMaintenance:true,
         delPatient:true, delArchiv:true, delGuide:true, delCommands:true, delLinks:true, delNews:true, delExams:true, delUsers:false, canManageFeedback:true, delFeedback:true,
         allowedCmdKats: [], allowedLinkKats: []
     },
     ausbildungsleitung: {
         id:'ausbildungsleitung', name:'Ausbildungsleitung', color:'#c084fc', icon:'⚙️', isSystem:true,
-        isAdmin:false, isMasterAdmin:false, canViewArchive:false, canEditAllPatients:false,
-        canCreateCalendar:true, delCalendar:false, canManagePhotos:false, delPhotos:false,
+        isAdmin:false, isMasterAdmin:false, canViewArchive:false, canEditAllPatients:false, delCalendar:false, canManagePhotos:false, delPhotos:false,
         isInstructor:true, canManageInstructors:true, canManageExams:true,
         canPostNews:true, canApproveNews:true, canViewNewsRead:true,
         canEditPrices:false, canEditGuide:false, canEditCommands:false, canEditLinks:false,
+        canViewChiefMaterials:false, canEditChiefMaterials:false,
+        canManageMemberAccess:true, canManageMaintenance:false,
         delPatient:false, delArchiv:false, delGuide:false, delCommands:false, delLinks:false, delNews:false, delExams:true, delUsers:false, canManageFeedback:false, delFeedback:false,
         allowedCmdKats: ['Ausbildung', 'Ausbildungsabteilung', 'Abkürzungen & Dokumente', 'T-Codes'],
         allowedLinkKats: ['Allgemein', 'Ausbildung', 'MD Intern']
     },
     ausbilder: {
         id:'ausbilder', name:'Ausbilder', color:'#8b5cf6', icon:'🎓', isSystem:true,
-        isAdmin:false, isMasterAdmin:false, canViewArchive:false, canEditAllPatients:false,
-        canCreateCalendar:true, delCalendar:false, canManagePhotos:false, delPhotos:false,
+        isAdmin:false, isMasterAdmin:false, canViewArchive:false, canEditAllPatients:false, delCalendar:false, canManagePhotos:false, delPhotos:false,
         isInstructor:true, canManageInstructors:false, canManageExams:false,
         canPostNews:false, canApproveNews:false, canViewNewsRead:false,
         canEditPrices:false, canEditGuide:false, canEditCommands:false, canEditLinks:false,
         canViewChiefMaterials:false, canEditChiefMaterials:false,
+        canManageMemberAccess:false, canManageMaintenance:false,
         delPatient:false, delArchiv:false, delGuide:false, delCommands:false, delLinks:false, delNews:false, delExams:false, delUsers:false, canManageFeedback:false, delFeedback:false,
         allowedCmdKats: ['Ausbildung', 'Ausbildungsabteilung', 'Abkürzungen & Dokumente', 'T-Codes'],
         allowedLinkKats: ['Allgemein', 'MD Intern']
     },
     cls: {
-        id:'cls', name:'CLS Ausbilder', color:'#06b6d4', icon:'💉', isSystem:true,
-        isAdmin:false, isMasterAdmin:false, canViewArchive:false, canEditAllPatients:false,
-        canCreateCalendar:false, delCalendar:false, canManagePhotos:false, delPhotos:false,
+        id:'cls', name:'CLS', color:'#06b6d4', icon:'💉', isSystem:true,
+        isAdmin:false, isMasterAdmin:false, canViewArchive:false, canEditAllPatients:false, delCalendar:false, canManagePhotos:false, delPhotos:false,
         isInstructor:false, canManageInstructors:false, canManageExams:false,
         canPostNews:false, canApproveNews:false, canViewNewsRead:false,
         canEditPrices:false, canEditGuide:false, canEditCommands:false, canEditLinks:false,
         canViewChiefMaterials:false, canEditChiefMaterials:false,
+        canManageMemberAccess:false, canManageMaintenance:false,
         delPatient:false, delArchiv:false, delGuide:false, delCommands:false, delLinks:false, delNews:false, delExams:false, delUsers:false, canManageFeedback:false, delFeedback:false,
         allowedCmdKats: ['Abkürzungen & Dokumente', 'T-Codes'],
         allowedLinkKats: ['Allgemein', 'CLS', 'MD Intern']
     },
     ehk: {
-        id:'ehk', name:'EHK Ausbilder', color:'#10b981', icon:'🩺', isSystem:true,
-        isAdmin:false, isMasterAdmin:false, canViewArchive:false, canEditAllPatients:false,
-        canCreateCalendar:false, delCalendar:false, canManagePhotos:false, delPhotos:false,
+        id:'ehk', name:'EHK', color:'#10b981', icon:'🩺', isSystem:true,
+        isAdmin:false, isMasterAdmin:false, canViewArchive:false, canEditAllPatients:false, delCalendar:false, canManagePhotos:false, delPhotos:false,
         isInstructor:false, canManageInstructors:false, canManageExams:false,
         canPostNews:false, canApproveNews:false, canViewNewsRead:false,
         canEditPrices:false, canEditGuide:false, canEditCommands:false, canEditLinks:false,
         canViewChiefMaterials:false, canEditChiefMaterials:false,
+        canManageMemberAccess:false, canManageMaintenance:false,
         delPatient:false, delArchiv:false, delGuide:false, delCommands:false, delLinks:false, delNews:false, delExams:false, delUsers:false, canManageFeedback:false, delFeedback:false,
         allowedCmdKats: ['Abkürzungen & Dokumente', 'T-Codes'],
         allowedLinkKats: ['Allgemein', 'EHK', 'MD Intern']
     },
     luftrettung: {
         id:'luftrettung', name:'Luftrettung', color:'#0284c7', icon:'🚁', isSystem:true,
-        isAdmin:false, isMasterAdmin:false, canViewArchive:false, canEditAllPatients:false,
-        canCreateCalendar:true, delCalendar:false, canManagePhotos:false, delPhotos:false,
+        isAdmin:false, isMasterAdmin:false, canViewArchive:false, canEditAllPatients:false, delCalendar:false, canManagePhotos:false, delPhotos:false,
         isInstructor:false, canManageInstructors:false, canManageExams:false,
         canPostNews:false, canApproveNews:false, canViewNewsRead:false,
         canEditPrices:false, canEditGuide:false, canEditCommands:false, canEditLinks:false,
         canViewChiefMaterials:false, canEditChiefMaterials:false,
+        canManageMemberAccess:false, canManageMaintenance:false,
         delPatient:false, delArchiv:false, delGuide:false, delCommands:false, delLinks:false, delNews:false, delExams:false, delUsers:false, canManageFeedback:false, delFeedback:false,
         allowedCmdKats: ['Abkürzungen & Dokumente', 'Allgemein', 'T-Codes'],
         allowedLinkKats: ['MD Intern']
     },
     psychologie: {
         id:'psychologie', name:'Psychologie', color:'#ec4899', icon:'🧠', isSystem:true,
-        isAdmin:false, isMasterAdmin:false, canViewArchive:false, canEditAllPatients:false,
-        canCreateCalendar:true, delCalendar:true, canManagePhotos:false, delPhotos:false,
+        isAdmin:false, isMasterAdmin:false, canViewArchive:false, canEditAllPatients:false, delCalendar:true, canManagePhotos:false, delPhotos:false,
         isInstructor:false, canManageInstructors:false, canManageExams:false,
         canPostNews:true, canApproveNews:false, canViewNewsRead:true,
         canEditPrices:false, canEditGuide:false, canEditCommands:false, canEditLinks:false,
+        canViewChiefMaterials:false, canEditChiefMaterials:false,
+        canManageMemberAccess:false, canManageMaintenance:false,
         delPatient:false, delArchiv:false, delGuide:false, delCommands:false, delLinks:false, delNews:false, delExams:false, delUsers:false, canManageFeedback:false, delFeedback:false,
         allowedCmdKats: ['Abkürzungen & Dokumente', 'Psychologie', 'T-Codes'],
         allowedLinkKats: ['Allgemein', 'MD Intern', 'Psychologie']
     },
     personalabteilung: {
         id:'personalabteilung', name:'Personalabteilung', color:'#ec4899', icon:'💼', isSystem:true,
-        isAdmin:false, isMasterAdmin:false, canViewArchive:false, canEditAllPatients:false,
-        canCreateCalendar:true, delCalendar:false, canManagePhotos:true, delPhotos:true,
+        isAdmin:false, isMasterAdmin:false, canViewArchive:false, canEditAllPatients:false, delCalendar:false, canManagePhotos:true, delPhotos:true,
         isInstructor:false, canManageInstructors:false, canManageExams:false,
         canPostNews:true, canApproveNews:true, canViewNewsRead:true,
         canEditPrices:false, canEditGuide:false, canEditCommands:false, canEditLinks:false,
+        canViewChiefMaterials:false, canEditChiefMaterials:false,
+        canManageMemberAccess:true, canManageMaintenance:false,
         delPatient:false, delArchiv:false, delGuide:false, delCommands:false, delLinks:false, delNews:true, delExams:false, delUsers:false, canManageFeedback:false, delFeedback:false,
         allowedCmdKats: ['Abkürzungen & Dokumente', 'T-Codes'],
         allowedLinkKats: ['Allgemein', 'MD Intern']
     },
     mitarbeiter: {
         id:'mitarbeiter', name:'Mitarbeiter', color:'#64748b', icon:'👨‍⚕️', isSystem:true,
-        isAdmin:false, isMasterAdmin:false, canViewArchive:false, canEditAllPatients:false,
-        canCreateCalendar:true, delCalendar:false, canManagePhotos:false, delPhotos:false,
+        isAdmin:false, isMasterAdmin:false, canViewArchive:false, canEditAllPatients:false, delCalendar:false, canManagePhotos:false, delPhotos:false,
         isInstructor:false, canManageInstructors:false, canManageExams:false,
         canPostNews:false, canApproveNews:false, canViewNewsRead:false,
         canEditPrices:false, canEditGuide:false, canEditCommands:false, canEditLinks:false,
+        canViewChiefMaterials:false, canEditChiefMaterials:false,
+        canManageMemberAccess:false, canManageMaintenance:false,
         delPatient:false, delArchiv:false, delGuide:false, delCommands:false, delLinks:false, delNews:false, delExams:false, delUsers:false, canManageFeedback:false, delFeedback:false,
         allowedCmdKats: ['Abkürzungen & Dokumente', 'T-Codes'],
         allowedLinkKats: ['Allgemein', 'MD Intern']
@@ -550,8 +566,8 @@ const SYSTEM_ROLE_DISPLAY_NAMES = {
     ausbilder: 'Ausbilder',
     personalabteilung: 'Personalabteilung',
     psychologie: 'Psychologie',
-    cls: 'CLS Ausbilder',
-    ehk: 'EHK Ausbilder',
+    cls: 'CLS',
+    ehk: 'EHK',
     luftrettung: 'Luftrettung',
     mitarbeiter: 'Mitarbeiter'
 };
@@ -562,6 +578,21 @@ function normalizeSystemRoleDisplayData(rolesObj) {
         if (roles[roleId]) roles[roleId].name = displayName;
     });
     return roles;
+}
+
+// Systemrollen werden feldweise mit ihren Standards zusammengeführt.
+// Neue Berechtigungen erhalten dadurch einen definierten Standardwert,
+// während bewusst gespeicherte true/false-Werte erhalten bleiben.
+function mergeRolesWithDefaults(serverRoles = {}) {
+    const merged = {};
+    Object.entries(defaultRoles).forEach(([roleId, defaults]) => {
+        merged[roleId] = Object.assign({}, defaults, serverRoles[roleId] || {});
+    });
+    Object.entries(serverRoles || {}).forEach(([roleId, role]) => {
+        if (!merged[roleId]) merged[roleId] = Object.assign({}, role);
+    });
+    delete merged.admin;
+    return normalizeSystemRoleDisplayData(merged);
 }
 
 function sortRolesForDisplay(roleList) {
@@ -589,7 +620,8 @@ const ROLE_PROPERTY_MAP = {
     delFlagArchiv: 'delArchiv',
     roleFlagManagePhotos: 'canManagePhotos',
     delFlagPhotos: 'delPhotos',
-    roleFlagCreateCalendar: 'canCreateCalendar',
+    roleFlagManageMemberAccess: 'canManageMemberAccess',
+    roleFlagManageMaintenance: 'canManageMaintenance',
     delFlagCalendar: 'delCalendar',
     roleFlagPostNews: 'canPostNews',
     roleFlagApproveNews: 'canApproveNews',
@@ -606,6 +638,11 @@ const ROLE_PROPERTY_MAP = {
     roleFlagEditLinks: 'canEditLinks',
     delFlagLinks: 'delLinks'
 };
+
+// Zentrale Liste aller wirksamen Server-Berechtigungen.
+// Sie wird direkt aus dem Rollen-Editor abgeleitet, damit neue Rechte nicht
+// im Editor vorhanden sein können, aber in der Laufzeitberechnung fehlen.
+const SERVER_PERMISSION_KEYS = [...new Set(Object.values(ROLE_PROPERTY_MAP))];
 
 /* ── Standard-Guide-Daten ───────────────────────────────────── */
 let defaultGuideData = {
@@ -688,7 +725,7 @@ let defaultCommands = {
     cmd_6: { name:"EHK",          desc:"Erste Hilfe Kurs Vorlage", kat:"Abkürzungen & Dokumente" },
     cmd_7: { name:"!ausbildung",  desc:"Ausbildungsanfrage stellen", kat:"Ausbildung" },
     cmd_8: { name:"!pruefung",    desc:"Prüfungsanmeldung", kat:"Ausbildung" },
-    cmd_9: { name:"!ehkleiter",   desc:"Ausbildung zum EHK Ausbilder", kat:"Ausbildungsabteilung" },
+    cmd_9: { name:"!ehkleiter",   desc:"Ausbildung zum EHK", kat:"Ausbildungsabteilung" },
     cmd_10: { name:"!arzt3info",  desc:"Infoblatt Arzt 3", kat:"Ausbildungsabteilung" },
     cmd_11: { name:"!para3info",  desc:"Infoblatt Paramedic 3", kat:"Ausbildungsabteilung" },
     cmd_12: { name:"!info",       desc:"Infoblatt Schemen, Gerätschaften und Medikamente", kat:"Ausbildungsabteilung" },
@@ -712,14 +749,14 @@ const STANDARD_INFO_QUESTIONS = [
 /* ── Audit Logger ──────────────────────────────────────────── */
 
 /* ── Wartungsmodus ─────────────────────────────────────────── */
-function isChiefOrMasterUser(user = sessionUser) {
+function canUserManageMaintenance(user = sessionUser) {
     if (!user) return false;
-    const roles = getUserRolesList(user);
-    return !!user.isMasterAdmin || roles.includes('masteradmin') || roles.includes('chiefebene');
+    const eff = getUserEffectivePermissions(user);
+    return !!(eff.isMasterAdmin || eff.canManageMaintenance);
 }
 
 function canCurrentUserManageMaintenance() {
-    return !!sessionUser && isChiefOrMasterUser(sessionUser);
+    return canUserManageMaintenance(sessionUser);
 }
 
 function normalizeMaintenanceState(raw) {
@@ -749,7 +786,7 @@ async function readMaintenanceState() {
 }
 
 function isMaintenanceRestrictedSession() {
-    return !!(sessionUser && cachedMaintenanceState.enabled && !isChiefOrMasterUser(sessionUser));
+    return !!(sessionUser && cachedMaintenanceState.enabled && !canUserManageMaintenance(sessionUser));
 }
 
 function updateMaintenanceBanner() {
@@ -848,7 +885,7 @@ function renderMaintenanceAdminPanel() {
     if (details) {
         if (cachedMaintenanceState.enabled) {
             const when = cachedMaintenanceState.startedAt ? new Date(cachedMaintenanceState.startedAt).toLocaleString('de-DE') : '--';
-            details.textContent = `Aktiviert von ${cachedMaintenanceState.startedBy || 'Chief Ebene / Master Admin'} · ${when}`;
+            details.textContent = `Aktiviert von ${cachedMaintenanceState.startedBy || 'Berechtigte Verwaltung'} · ${when}`;
         } else {
             details.textContent = 'Alle Bereiche stehen den jeweils berechtigten Mitarbeitern normal zur Verfügung.';
         }
@@ -865,7 +902,7 @@ async function setMaintenanceMode(enabled) {
     }
     const msg = (document.getElementById('maintenanceMessageInput')?.value || '').trim();
     const question = enabled
-        ? 'Wartungsmodus jetzt aktivieren? Alle Mitarbeiter behalten Zugriff auf „Dokumentation & Einsatz“. Andere Bereiche sind währenddessen nur für Chief Ebene und Master Admin verfügbar.'
+        ? 'Wartungsmodus jetzt aktivieren? Alle Mitarbeiter behalten Zugriff auf „Dokumentation & Einsatz“. Andere Bereiche stehen währenddessen nur Personen mit entsprechender Wartungsberechtigung zur Verfügung.'
         : 'Wartungsmodus jetzt beenden und den normalen Zugriff wieder freigeben?';
     if (!confirm(question)) return;
     const payload = enabled ? {
@@ -902,7 +939,7 @@ function logAdminAudit(action, details) {
 };
 
 // ============================================================
-//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.6.0
+//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.7.0
 //  Firebase Realtime Database (Compat SDK v10)
 // ============================================================
 
@@ -926,22 +963,19 @@ function getUserRolesList(user) {
 }
 
 function getUserEffectivePermissions(user) {
-    const eff = {
-        isAdmin:false, isMasterAdmin:false, canViewArchive:false, canEditAllPatients:false,
-        canCreateCalendar:true, delCalendar:false, canManagePhotos:false, delPhotos:false,
-        isInstructor:false, canManageInstructors:false, canManageExams:false,
-        canPostNews:false, canApproveNews:false, canViewNewsRead:false,
-        canEditPrices:false, canEditGuide:false, canEditCommands:false, canEditLinks:false,
-        delPatient:false, delArchiv:false, delGuide:false, delCommands:false, delLinks:false, delNews:false, delExams:false, delUsers:false, canManageFeedback:false, delFeedback:false,
-        allowedCmdKats: [],
-        allowedLinkKats: []
-    };
+    const eff = Object.fromEntries(SERVER_PERMISSION_KEYS.map(key => [key, false]));
+    // Grundrecht: Jeder freigeschaltete Mitarbeiter darf Kalendereinträge erstellen.
+    // Das ist absichtlich kein Rollen-Häkchen.
+    eff.canCreateCalendar = true;
+    eff.allowedCmdKats = [];
+    eff.allowedLinkKats = [];
     if (!user) return eff;
 
     const roleIds = getUserRolesList(user);
     let accumulatedCmdKats = [];
     let accumulatedLinkKats = [];
-    let hasUnrestrictedRole = false;
+    let unrestrictedCmds = false;
+    let unrestrictedLinks = false;
 
     roleIds.forEach(rId => {
         const role = cachedRoles[rId] || defaultRoles[rId];
@@ -949,61 +983,29 @@ function getUserEffectivePermissions(user) {
 
         const cmdKats = normalizeKats(role.allowedCmdKats);
         const linkKats = normalizeKats(role.allowedLinkKats);
+        if (cmdKats.length === 0) unrestrictedCmds = true;
+        else accumulatedCmdKats.push(...cmdKats);
+        if (linkKats.length === 0) unrestrictedLinks = true;
+        else accumulatedLinkKats.push(...linkKats);
 
-        if (role.isAdmin || role.isMasterAdmin) {
-            hasUnrestrictedRole = true;
-        }
-
-        Object.keys(eff).forEach(prop => {
-            if (prop === 'allowedCmdKats') {
-                accumulatedCmdKats.push(...cmdKats);
-            } else if (prop === 'allowedLinkKats') {
-                accumulatedLinkKats.push(...linkKats);
-            } else if (role[prop]) {
-                eff[prop] = true;
-            }
+        SERVER_PERMISSION_KEYS.forEach(prop => {
+            if (role[prop] === true) eff[prop] = true;
         });
     });
 
-    // Abwärtskompatibilität: Ältere Chief-Rollendatensätze kennen die beiden neuen
-    // Materialrechte noch nicht. Nur wenn die Felder wirklich fehlen, gelten die
-    // Standardrechte. Ein später bewusst gespeichertes false wird dagegen respektiert.
-    if (roleIds.includes('chiefebene')) {
-        const chiefRole = cachedRoles.chiefebene || defaultRoles.chiefebene || {};
-        if (!Object.prototype.hasOwnProperty.call(chiefRole, 'canViewChiefMaterials')) eff.canViewChiefMaterials = true;
-        if (!Object.prototype.hasOwnProperty.call(chiefRole, 'canEditChiefMaterials')) eff.canEditChiefMaterials = true;
-    }
-
     const isMaster = !!user.isMasterAdmin || roleIds.includes('masteradmin');
-
-    if (isMaster || eff.isAdmin || hasUnrestrictedRole) {
-        eff.allowedCmdKats = [];
-        eff.allowedLinkKats = [];
-    } else {
-        eff.allowedCmdKats = [...new Set(accumulatedCmdKats)];
-        eff.allowedLinkKats = [...new Set(accumulatedLinkKats)];
-    }
-
     if (isMaster) {
-        Object.keys(eff).forEach(k => {
-            if (k !== 'allowedCmdKats' && k !== 'allowedLinkKats') eff[k] = true;
-        });
+        SERVER_PERMISSION_KEYS.forEach(k => { eff[k] = true; });
+        eff.canCreateCalendar = true;
         eff.allowedCmdKats = [];
         eff.allowedLinkKats = [];
+        return eff;
     }
+
+    eff.allowedCmdKats = unrestrictedCmds ? [] : [...new Set(accumulatedCmdKats)];
+    eff.allowedLinkKats = unrestrictedLinks ? [] : [...new Set(accumulatedLinkKats)];
     return eff;
 }
-
-const SERVER_PERMISSION_KEYS = [
-    'isAdmin','isMasterAdmin','canViewArchive','canEditAllPatients',
-    'canCreateCalendar','delCalendar','canManagePhotos','delPhotos',
-    'isInstructor','canManageInstructors','canManageExams',
-    'canPostNews','canApproveNews','canViewNewsRead',
-    'canEditPrices','canEditGuide','canEditCommands','canEditLinks',
-    'canViewChiefMaterials','canEditChiefMaterials',
-    'delPatient','delArchiv','delGuide','delCommands','delLinks',
-    'delNews','delExams','delUsers','canManageFeedback','delFeedback'
-];
 
 function buildServerPermissions(user) {
     const eff = getUserEffectivePermissions(user || {});
@@ -1065,10 +1067,16 @@ function isPrivilegedUser(user) {
     return !!(user.isAdmin || user.isMasterAdmin || hasPrivilegedRole);
 }
 
+function canCurrentUserManageMemberAccess() {
+    if (!sessionUser) return false;
+    const eff = getUserEffectivePermissions(sessionUser);
+    return !!(eff.isMasterAdmin || eff.canManageMemberAccess);
+}
+
 function canCurrentUserManageTargetUser(uId) {
     if (!sessionUser) return false;
     const eff = getUserEffectivePermissions(sessionUser);
-    if (!eff.isAdmin && !eff.isMasterAdmin && !eff.canManageInstructors) return false;
+    if (!eff.isMasterAdmin && !eff.isAdmin && !eff.canManageMemberAccess) return false;
     const target = cachedUsers[uId];
     if (target && isPrivilegedUser(target) && !eff.isMasterAdmin) return false;
     return true;
@@ -1083,27 +1091,31 @@ function requireTargetUserManagement(uId) {
 function canCurrentUserManageExams() {
     if (!sessionUser) return false;
     const eff = getUserEffectivePermissions(sessionUser);
-    return !!(eff.canManageExams || eff.isAdmin || eff.isMasterAdmin);
+    return !!(eff.canManageExams || eff.isMasterAdmin);
 }
 
 function canUserManageEmployeePhotos() {
     if (!sessionUser) return false;
     const eff = getUserEffectivePermissions(sessionUser);
-    const roles = getUserRolesList(sessionUser);
-    const isPersonalabteilung = roles.some(r => r.toLowerCase().includes('perso') || r.toLowerCase().includes('personal'));
-    return eff.canManagePhotos || eff.isAdmin || eff.isMasterAdmin || isPersonalabteilung;
+    return !!(eff.canManagePhotos || eff.isMasterAdmin);
 }
 
 function isUserInstructor() {
     if (!sessionUser) return false;
     const eff = getUserEffectivePermissions(sessionUser);
-    return eff.isInstructor || eff.canManageInstructors || eff.isAdmin || eff.isMasterAdmin;
+    return !!(eff.isInstructor || eff.canManageInstructors || eff.isMasterAdmin);
+}
+
+function canUserAccessInstructorArea() {
+    if (!sessionUser) return false;
+    const eff = getUserEffectivePermissions(sessionUser);
+    return !!(isUserInstructor() || eff.canManageMemberAccess || eff.isMasterAdmin);
 }
 
 function canInstructorAccessExam(examId) {
     if (!sessionUser) return false;
     const eff = getUserEffectivePermissions(sessionUser);
-    if (eff.isAdmin || eff.isMasterAdmin || eff.canManageInstructors || eff.canManageExams) {
+    if (eff.isMasterAdmin || eff.canManageInstructors || eff.canManageExams) {
         return true;
     }
     const myPassed = (sessionUser.passedExams) || (cachedUsers[getUserAccountId(sessionUser)]?.passedExams) || {};
@@ -1613,18 +1625,18 @@ function applyUserPermissions(user) {
     const canManagePhotos = canUserManageEmployeePhotos();
     const isMaster = !!eff.isMasterAdmin;
     const isAdminOrMaster = (eff.isAdmin || isMaster);
-    const canPostDirect = eff.canPostNews || isAdminOrMaster;
+    const canPostDirect = !!(eff.canPostNews || isMaster);
     
     const akBtn = document.getElementById('adminKeyBtn');
-    if (akBtn) akBtn.style.display = isAdminOrMaster ? 'inline-block' : 'none';
+    if (akBtn) akBtn.style.display = (isAdminOrMaster || eff.canManageMaintenance) ? 'inline-block' : 'none';
 
     const maintenanceAdminTabBtn = document.getElementById('btnAdminSubMaintenance');
-    if (maintenanceAdminTabBtn) maintenanceAdminTabBtn.style.display = isChiefOrMasterUser(user) ? 'inline-flex' : 'none';
-    if (!isChiefOrMasterUser(user) && document.getElementById('adminSubTabMaintenance')?.classList.contains('active')) {
+    if (maintenanceAdminTabBtn) maintenanceAdminTabBtn.style.display = canUserManageMaintenance(user) ? 'inline-flex' : 'none';
+    if (!canUserManageMaintenance(user) && document.getElementById('adminSubTabMaintenance')?.classList.contains('active')) {
         switchAdminTab('adminSubTabUsers', document.getElementById('btnAdminSubUsers'));
     }
 
-    const canManageFeedback = !!(eff.canManageFeedback || isAdminOrMaster);
+    const canManageFeedback = !!(eff.canManageFeedback || isMaster);
     const feedbackManageTabBtn = document.getElementById('feedbackManageTabBtn');
     if (feedbackManageTabBtn) feedbackManageTabBtn.style.display = canManageFeedback ? 'inline-flex' : 'none';
     if (!canManageFeedback && document.getElementById('feedbackManagePane')?.classList.contains('active')) {
@@ -1638,13 +1650,13 @@ function applyUserPermissions(user) {
     if (szEdit) szEdit.style.display = (eff.canEditPrices || isMaster) ? 'inline-block' : 'none';
 
     const gEdit = document.getElementById('btnEditGuideInline');
-    if (gEdit) gEdit.style.display = (eff.canEditGuide || isMaster) ? 'inline-block' : 'none';
+    if (gEdit) gEdit.style.display = (eff.canEditGuide || eff.delGuide || isMaster) ? 'inline-block' : 'none';
 
     const cEdit = document.getElementById('btnEditCommandsInline');
-    if (cEdit) cEdit.style.display = (eff.canEditCommands || isMaster) ? 'inline-block' : 'none';
+    if (cEdit) cEdit.style.display = (eff.canEditCommands || eff.delCommands || isMaster) ? 'inline-block' : 'none';
 
     const lEdit = document.getElementById('btnEditLinksInline');
-    if (lEdit) lEdit.style.display = (eff.canEditLinks || isMaster) ? 'inline-block' : 'none';
+    if (lEdit) lEdit.style.display = (eff.canEditLinks || eff.delLinks || isMaster) ? 'inline-block' : 'none';
 
     const hEdit = document.getElementById('btnEditHierarchieInline');
     if (hEdit) hEdit.style.display = isAdminOrMaster ? 'inline-block' : 'none';
@@ -1653,9 +1665,7 @@ function applyUserPermissions(user) {
     if (gehaltEdit) gehaltEdit.style.display = isAdminOrMaster ? 'inline-block' : 'none';
 
     const chiefBtn = document.getElementById('chiefTabNavBtn');
-    const currentRoleIds = getUserRolesList(sessionUser || {});
-    const hasChiefRole = currentRoleIds.includes('chiefebene');
-    const canViewChief = !!(eff.canViewChiefMaterials || eff.canEditChiefMaterials || hasChiefRole || isMaster);
+    const canViewChief = !!(eff.canViewChiefMaterials || eff.canEditChiefMaterials || isMaster);
     if (chiefBtn) chiefBtn.style.display = canViewChief ? 'inline-block' : 'none';
     if (!canViewChief && document.getElementById('chiefTab')?.classList.contains('active')) {
         switchTab('docTab', document.querySelector('.tab-nav .tab-btn'));
@@ -1663,7 +1673,7 @@ function applyUserPermissions(user) {
     refreshChiefMaterialsListener();
 
     const grpArchiv = document.getElementById('group-archiv');
-    if (grpArchiv) grpArchiv.style.display = (eff.canViewArchive || isAdminOrMaster) ? 'block' : 'none';
+    if (grpArchiv) grpArchiv.style.display = (eff.canViewArchive || isMaster) ? 'block' : 'none';
 
     const npBtn = document.getElementById('btnOpenPostNews');
     if (npBtn) npBtn.style.display = canPostDirect ? 'inline-block' : 'none';
@@ -1672,19 +1682,30 @@ function applyUserPermissions(user) {
     if (propNewsBtn) propNewsBtn.style.display = canPostDirect ? 'none' : 'inline-block';
 
     const btnCal = document.getElementById('btnCreateCalendarEvent');
-    if (btnCal) btnCal.style.display = (eff.canCreateCalendar || isAdminOrMaster) ? 'inline-block' : 'none';
+    if (btnCal) btnCal.style.display = 'inline-block';
 
     const btnPhotoAdmin = document.getElementById('btnOpenPhotoAdminModal');
     if (btnPhotoAdmin) btnPhotoAdmin.style.display = canManagePhotos ? 'inline-block' : 'none';
 
     const instrView = document.getElementById('examInstructorView');
-    if (instrView) instrView.style.display = isUserInstructor() ? 'block' : 'none';
+    if (instrView) instrView.style.display = canUserAccessInstructorArea() ? 'block' : 'none';
 
     const allowedExamsBtn = document.getElementById('instrAllowedExamsTabBtn');
-    if (allowedExamsBtn) allowedExamsBtn.style.display = (eff.canManageInstructors || isAdminOrMaster) ? '' : 'none';
+    if (allowedExamsBtn) allowedExamsBtn.style.display = (eff.canManageMemberAccess || isMaster) ? '' : 'none';
 
     const instrManageBtn = document.getElementById('instrTabManageBtn');
-    if (instrManageBtn) instrManageBtn.style.display = (eff.canManageExams || isAdminOrMaster) ? '' : 'none';
+    if (instrManageBtn) instrManageBtn.style.display = (eff.canManageExams || isMaster) ? '' : 'none';
+
+    const instructorCoreAccess = !!(eff.isInstructor || eff.canManageInstructors || eff.isMasterAdmin);
+    const instrUnlocksBtn = document.getElementById('instrTabUnlocksBtn');
+    const instrResultsBtn = document.getElementById('instrTabResultsBtn');
+    if (instrUnlocksBtn) instrUnlocksBtn.style.display = instructorCoreAccess ? '' : 'none';
+    if (instrResultsBtn) instrResultsBtn.style.display = instructorCoreAccess ? '' : 'none';
+    const activeInstructorBtn = document.querySelector('#examInstructorView .admin-tab-btn.active');
+    if (canUserAccessInstructorArea() && (!activeInstructorBtn || activeInstructorBtn.style.display === 'none')) {
+        const fallbackBtn = [instrUnlocksBtn, instrResultsBtn, instrManageBtn, allowedExamsBtn].find(btn => btn && btn.style.display !== 'none');
+        if (fallbackBtn) fallbackBtn.click();
+    }
 
     document.querySelectorAll('.admin-action-th').forEach(el => {
         el.style.display = (eff.delArchiv || isMaster) ? 'table-cell' : 'none';
@@ -1923,7 +1944,7 @@ function refreshSensitiveFirebaseListeners() {
     db.ref('data/examSubmissions').off();
 
     const eff = sessionUser ? getUserEffectivePermissions(sessionUser) : {};
-    const canArchive = !!(eff.canViewArchive || eff.isAdmin || eff.isMasterAdmin);
+    const canArchive = !!(eff.canViewArchive || eff.isMasterAdmin);
     const canAudit = !!(eff.isAdmin || eff.isMasterAdmin);
     const canManagePhotos = !!canUserManageEmployeePhotos();
     const canViewAllExamSubmissions = !!isUserInstructor();
@@ -2052,7 +2073,7 @@ function startFirebaseListeners() {
     db.ref('data/roles').on('value', s => {
         const serverRoles = Object.assign({}, s.val() || {});
         delete serverRoles.admin;
-        cachedRoles = normalizeSystemRoleDisplayData(Object.assign({}, defaultRoles, serverRoles));
+        cachedRoles = mergeRolesWithDefaults(serverRoles);
         if (sessionUser) {
             applyUserPermissions(sessionUser);
             refreshSensitiveFirebaseListeners();
@@ -2541,7 +2562,7 @@ function saveAllSzenarienWorkflows() {
 }
 
 // ============================================================
-//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.6.0
+//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.7.0
 //  Firebase Realtime Database (Compat SDK v10)
 // ============================================================
 
@@ -2899,7 +2920,7 @@ function deletePatient(k) {
 function exportArchivCSV() {
     if (!sessionUser) return;
     const eff = getUserEffectivePermissions(sessionUser);
-    if (!eff.canViewArchive && !eff.isAdmin && !eff.isMasterAdmin) {
+    if (!eff.canViewArchive && !eff.isMasterAdmin) {
         alert('Keine Berechtigung zum Exportieren des Archivs!');
         return;
     }
@@ -2921,7 +2942,7 @@ const MONTH_NAMES_DE = ["Januar", "Februar", "März", "April", "Mai", "Juni", "J
 function cleanOldCalendarEvents() {
     if (!sessionUser) return;
     const eff = getUserEffectivePermissions(sessionUser);
-    if (!eff.delCalendar && !eff.isAdmin && !eff.isMasterAdmin) return;
+    if (!eff.delCalendar && !eff.isMasterAdmin) return;
     const oneWeekAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
     db.ref('data/calendar').once('value', snap => {
         const events = snap.val() || {};
@@ -3082,7 +3103,7 @@ function handleCalendarCreatorSelectionChange() {
 function openCreateEventModal(prefillDate = null) {
     if (!sessionUser) return;
     const eff = getUserEffectivePermissions(sessionUser);
-    if (!eff.canCreateCalendar && !eff.isAdmin && !eff.isMasterAdmin) {
+    if (!eff.canCreateCalendar) {
         alert('Keine Berechtigung zum Erstellen von Kalenderterminen!');
         return;
     }
@@ -3139,8 +3160,8 @@ function openCreateEventModal(prefillDate = null) {
             { id: 'self', label: `👤 ${playerName}`, val: 'self', color: '#38bdf8' },
             { id: 'masteradmin', label: '👑 Leitungsebene', val: 'Leitungsebene', color: '#eab308' },
             { id: 'ausbildungsleitung', label: '🎓 Bereich Ausbildung', val: 'Ausbildung', color: '#8b5cf6' },
-            { id: 'cls', label: '💉 CLS Ausbilder', val: 'CLS Ausbilder', color: '#06b6d4' },
-            { id: 'ehk', label: '🩺 EHK Ausbilder', val: 'EHK Ausbilder', color: '#10b981' },
+            { id: 'cls', label: '💉 CLS', val: 'CLS', color: '#06b6d4' },
+            { id: 'ehk', label: '🩺 EHK', val: 'EHK', color: '#10b981' },
             { id: 'luftrettung', label: '🚁 Luftrettung', val: 'Luftrettung', color: '#0284c7' },
             { id: 'psychologie', label: '🧠 Psychologie', val: 'Psychologie', color: '#f59e0b' },
             { id: 'personalabteilung', label: '💼 Personalabteilung', val: 'Personalabteilung', color: '#ec4899' }
@@ -3258,7 +3279,7 @@ function saveCalendarEvent() {
         const existingEv = cachedCalendar[editId] || {};
         const myName = `${sessionUser.vorname || ''} ${sessionUser.nachname || ''}`.trim().toLowerCase();
         const legacyOwner = !existingEv.creatorId && ((existingEv.enteredBy || existingEv.creator || '').trim().toLowerCase() === myName);
-        const canEditExisting = existingEv.creatorId === myId || legacyOwner || eff.isAdmin || eff.isMasterAdmin;
+        const canEditExisting = existingEv.creatorId === myId || legacyOwner || eff.delCalendar || eff.isMasterAdmin;
         if (!canEditExisting) {
             alert('Keine Berechtigung zum Bearbeiten dieses Termins!');
             return;
@@ -3295,7 +3316,7 @@ function saveCalendarEvent() {
         return;
     }
 
-    if (!eff.canCreateCalendar && !eff.isAdmin && !eff.isMasterAdmin) {
+    if (!eff.canCreateCalendar) {
         alert('Keine Berechtigung zum Erstellen von Kalenderterminen!');
         return;
     }
@@ -3389,7 +3410,7 @@ function openCalendarEventDetailsModal(eventId) {
     const eff = sessionUser ? getUserEffectivePermissions(sessionUser) : {};
     const myName = `${sessionUser.vorname || ''} ${sessionUser.nachname || ''}`.trim().toLowerCase();
     const legacyOwner = !ev.creatorId && ((ev.enteredBy || ev.creator || '').trim().toLowerCase() === myName);
-    const isOwnerOrAdmin = (ev.creatorId === myId) || legacyOwner || eff.isAdmin || eff.isMasterAdmin;
+    const isOwnerOrAdmin = (ev.creatorId === myId) || legacyOwner || eff.delCalendar || eff.isMasterAdmin;
     const isInvitedGuest = ev.invitedUsers && Array.isArray(ev.invitedUsers) && ev.invitedUsers.includes(myId) && (ev.creatorId !== myId);
     const myCurrentStatus = (ev.invitationStatus && ev.invitationStatus[myId]) ? ev.invitationStatus[myId] : 'pending';
 
@@ -3467,7 +3488,7 @@ function editCalendarEventAction() {
     const eff = getUserEffectivePermissions(sessionUser);
     const myName = `${sessionUser.vorname || ''} ${sessionUser.nachname || ''}`.trim().toLowerCase();
     const legacyOwner = !ev.creatorId && ((ev.enteredBy || ev.creator || '').trim().toLowerCase() === myName);
-    if (ev.creatorId !== myId && !legacyOwner && !eff.isAdmin && !eff.isMasterAdmin) {
+    if (ev.creatorId !== myId && !legacyOwner && !eff.delCalendar && !eff.isMasterAdmin) {
         alert('Keine Berechtigung zum Bearbeiten dieses Termins!');
         return;
     }
@@ -3512,8 +3533,8 @@ function editCalendarEventAction() {
             { id: 'self', label: `👤 ${playerName}`, val: 'self', color: '#38bdf8' },
             { id: 'masteradmin', label: '👑 Leitungsebene', val: 'Leitungsebene', color: '#eab308' },
             { id: 'ausbildungsleitung', label: '🎓 Bereich Ausbildung', val: 'Ausbildung', color: '#8b5cf6' },
-            { id: 'cls', label: '💉 CLS Ausbilder', val: 'CLS Ausbilder', color: '#06b6d4' },
-            { id: 'ehk', label: '🩺 EHK Ausbilder', val: 'EHK Ausbilder', color: '#10b981' },
+            { id: 'cls', label: '💉 CLS', val: 'CLS', color: '#06b6d4' },
+            { id: 'ehk', label: '🩺 EHK', val: 'EHK', color: '#10b981' },
             { id: 'luftrettung', label: '🚁 Luftrettung', val: 'Luftrettung', color: '#0284c7' },
             { id: 'psychologie', label: '🧠 Psychologie', val: 'Psychologie', color: '#f59e0b' },
             { id: 'personalabteilung', label: '💼 Personalabteilung', val: 'Personalabteilung', color: '#ec4899' }
@@ -3590,7 +3611,7 @@ function deleteCalendarEventAction() {
     const eff = sessionUser ? getUserEffectivePermissions(sessionUser) : {};
     const myName = `${sessionUser.vorname || ''} ${sessionUser.nachname || ''}`.trim().toLowerCase();
     const legacyOwner = !ev.creatorId && ((ev.enteredBy || ev.creator || '').trim().toLowerCase() === myName);
-    const isOwnerOrAdmin = (ev.creatorId === myId) || legacyOwner || eff.isAdmin || eff.isMasterAdmin || eff.delCalendar;
+    const isOwnerOrAdmin = (ev.creatorId === myId) || legacyOwner || eff.delCalendar || eff.isMasterAdmin;
 
     if (!isOwnerOrAdmin) {
         alert('Keine Berechtigung zum Löschen dieses Termins!');
@@ -3645,7 +3666,7 @@ function renderStaffDirectory() {
     const q = (document.getElementById('searchStaffInput')?.value || '').trim().toLowerCase();
     const canManagePhotos = canUserManageEmployeePhotos();
     const eff = sessionUser ? getUserEffectivePermissions(sessionUser) : {};
-    const canManageRegistrations = !!(eff.canManageInstructors || eff.isAdmin || eff.isMasterAdmin);
+    const canManageRegistrations = !!(eff.canManageMemberAccess || eff.isMasterAdmin);
 
     const staffList = Object.entries(cachedUsers || {}).filter(([, u]) => {
         if (canManageRegistrations) return true;
@@ -3894,7 +3915,7 @@ function uploadProcessedStaffPhoto(event, uId) {
 function deleteSubmittedRawPhoto(uId) {
     if (!canUserManageEmployeePhotos()) return;
     const eff = sessionUser ? getUserEffectivePermissions(sessionUser) : {};
-    if (!eff.isMasterAdmin && !eff.delPhotos && !eff.isAdmin) {
+    if (!eff.isMasterAdmin && !eff.delPhotos) {
         alert('Keine Berechtigung zum Löschen aus dem Fotoordner!');
         return;
     }
@@ -4142,7 +4163,9 @@ function _renderGuideKeineRechnung() {
 }
 
 function openGuideInlineModal() {
-    if (!requirePermission(['canEditGuide','isMasterAdmin'], 'Keine Berechtigung zur Bearbeitung von Funk & Codes!')) return;
+    if (!requirePermission(['canEditGuide','delGuide','isMasterAdmin'], 'Keine Berechtigung zur Verwaltung von Funk & Codes!')) return;
+    const eff = sessionUser ? getUserEffectivePermissions(sessionUser) : {};
+    const canEditGuide = !!(eff.canEditGuide || eff.isMasterAdmin);
     const cont = document.getElementById('guideInlineEditorContainer');
     if (!cont) return;
     
@@ -4151,7 +4174,7 @@ function openGuideInlineModal() {
             <div style="background:rgba(15,23,42,0.6);padding:16px;border-radius:12px;border:1px solid var(--border);">
                 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
                     <h4 style="margin:0;color:var(--primary);">📻 Ten Codes</h4>
-                    <button type="button" class="btn" style="width:auto;margin:0;padding:5px 12px;font-size:12px;" onclick="addGuideRow('tenCodes')">➕ Zeile hinzufügen</button>
+                    ${canEditGuide ? `<button type="button" class="btn" style="width:auto;margin:0;padding:5px 12px;font-size:12px;" onclick="addGuideRow('tenCodes')">➕ Zeile hinzufügen</button>` : ''}
                 </div>
                 <div id="inlineGuide_tenCodes"></div>
             </div>
@@ -4159,7 +4182,7 @@ function openGuideInlineModal() {
             <div style="background:rgba(15,23,42,0.6);padding:16px;border-radius:12px;border:1px solid var(--border);">
                 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
                     <h4 style="margin:0;color:var(--warning);">📟 Status Codes</h4>
-                    <button type="button" class="btn" style="width:auto;margin:0;padding:5px 12px;font-size:12px;" onclick="addGuideRow('statusCodes')">➕ Zeile hinzufügen</button>
+                    ${canEditGuide ? `<button type="button" class="btn" style="width:auto;margin:0;padding:5px 12px;font-size:12px;" onclick="addGuideRow('statusCodes')">➕ Zeile hinzufügen</button>` : ''}
                 </div>
                 <div id="inlineGuide_statusCodes"></div>
             </div>
@@ -4167,7 +4190,7 @@ function openGuideInlineModal() {
             <div style="background:rgba(15,23,42,0.6);padding:16px;border-radius:12px;border:1px solid var(--border);">
                 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
                     <h4 style="margin:0;color:var(--primary);">🚑 Streifen-Anordnung</h4>
-                    <button type="button" class="btn" style="width:auto;margin:0;padding:5px 12px;font-size:12px;" onclick="addGuideRow('streifen')">➕ Zeile hinzufügen</button>
+                    ${canEditGuide ? `<button type="button" class="btn" style="width:auto;margin:0;padding:5px 12px;font-size:12px;" onclick="addGuideRow('streifen')">➕ Zeile hinzufügen</button>` : ''}
                 </div>
                 <div id="inlineGuide_streifen"></div>
             </div>
@@ -4175,7 +4198,7 @@ function openGuideInlineModal() {
             <div style="background:rgba(15,23,42,0.6);padding:16px;border-radius:12px;border:1px solid var(--border);">
                 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
                     <h4 style="margin:0;color:var(--success);">🚫 Keine Rechnung (Ausnahmen)</h4>
-                    <button type="button" class="btn" style="width:auto;margin:0;padding:5px 12px;font-size:12px;" onclick="addKeineRechnungRow()">➕ Ausnahme hinzufügen</button>
+                    ${canEditGuide ? `<button type="button" class="btn" style="width:auto;margin:0;padding:5px 12px;font-size:12px;" onclick="addKeineRechnungRow()">➕ Ausnahme hinzufügen</button>` : ''}
                 </div>
                 <div id="inlineGuide_keineRechnung"></div>
             </div>
@@ -4198,10 +4221,11 @@ function renderGuideInlineRows(section) {
     const c = document.getElementById('inlineGuide_' + section); if (!c) return;
     const list = cachedGuideData[section] || [];
     const eff = sessionUser ? getUserEffectivePermissions(sessionUser) : {};
+    const canEdit = !!(eff.canEditGuide || eff.isMasterAdmin);
     c.innerHTML = list.map((item, idx) => `
         <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;">
-            <input type="text" id="${section}_code_${idx}" aria-label="${section} Code Zeile ${idx+1}" value="${escapeHtml(item.code||'')}" style="width:110px;" placeholder="Code">
-            <input type="text" id="${section}_desc_${idx}" aria-label="${section} Beschreibung Zeile ${idx+1}" value="${escapeHtml(item.desc||'')}" style="flex:1;" placeholder="Beschreibung">
+            <input type="text" id="${section}_code_${idx}" aria-label="${section} Code Zeile ${idx+1}" value="${escapeHtml(item.code||'')}" style="width:110px;" placeholder="Code" ${canEdit ? '' : 'disabled'}>
+            <input type="text" id="${section}_desc_${idx}" aria-label="${section} Beschreibung Zeile ${idx+1}" value="${escapeHtml(item.desc||'')}" style="flex:1;" placeholder="Beschreibung" ${canEdit ? '' : 'disabled'}>
             ${eff.delGuide ? `<button type="button" class="btn-delete-row" aria-label="${section} Eintrag ${idx+1} löschen" onclick="removeGuideRow('${section}', ${idx})">🗑️</button>` : ''}
         </div>
     `).join('');
@@ -4211,11 +4235,12 @@ function renderKeineRechnungInlineRows() {
     const c = document.getElementById('inlineGuide_keineRechnung'); if (!c) return;
     const list = cachedGuideData.keineRechnung || [];
     const eff = sessionUser ? getUserEffectivePermissions(sessionUser) : {};
+    const canEdit = !!(eff.canEditGuide || eff.isMasterAdmin);
     c.innerHTML = list.map((item, idx) => `
         <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;">
-            <input type="text" id="kr_name_${idx}" value="${escapeHtml(item.name||'')}" style="width:180px;" placeholder="Fraktion / Name">
-            <input type="text" id="kr_note_${idx}" value="${escapeHtml(item.note||'')}" style="width:180px;" placeholder="Zusatz (z.B. SAPD...)">
-            <input type="text" id="kr_desc_${idx}" value="${escapeHtml(item.desc||'')}" style="flex:1;" placeholder="Bedingung">
+            <input type="text" id="kr_name_${idx}" value="${escapeHtml(item.name||'')}" style="width:180px;" placeholder="Fraktion / Name" ${canEdit ? '' : 'disabled'}>
+            <input type="text" id="kr_note_${idx}" value="${escapeHtml(item.note||'')}" style="width:180px;" placeholder="Zusatz (z.B. SAPD...)" ${canEdit ? '' : 'disabled'}>
+            <input type="text" id="kr_desc_${idx}" value="${escapeHtml(item.desc||'')}" style="flex:1;" placeholder="Bedingung" ${canEdit ? '' : 'disabled'}>
             ${eff.delGuide ? `<button type="button" class="btn-delete-row" onclick="removeKeineRechnungRow(${idx})">🗑️</button>` : ''}
         </div>
     `).join('');
@@ -4248,8 +4273,10 @@ function removeKeineRechnungRow(idx) {
 }
 
 function saveGuideInline() {
-    if (!requirePermission(['canEditGuide','isMasterAdmin'], 'Keine Berechtigung zum Speichern von Funk & Codes!')) return;
-    ['tenCodes', 'statusCodes', 'streifen'].forEach(sec => {
+    if (!requirePermission(['canEditGuide','delGuide','isMasterAdmin'], 'Keine Berechtigung zum Speichern von Funk & Codes!')) return;
+    const eff = getUserEffectivePermissions(sessionUser);
+    const canEdit = !!(eff.canEditGuide || eff.isMasterAdmin);
+    if (canEdit) ['tenCodes', 'statusCodes', 'streifen'].forEach(sec => {
         (cachedGuideData[sec] || []).forEach((item, idx) => {
             const cInp = document.getElementById(`${sec}_code_${idx}`);
             const dInp = document.getElementById(`${sec}_desc_${idx}`);
@@ -4258,7 +4285,7 @@ function saveGuideInline() {
         });
     });
 
-    (cachedGuideData.keineRechnung || []).forEach((item, idx) => {
+    if (canEdit) (cachedGuideData.keineRechnung || []).forEach((item, idx) => {
         const nInp = document.getElementById(`kr_name_${idx}`);
         const noInp = document.getElementById(`kr_note_${idx}`);
         const dInp = document.getElementById(`kr_desc_${idx}`);
@@ -4284,7 +4311,7 @@ function renderCommandsTab(obj) {
     let kats = [...new Set(validEntries.map(([, c]) => c.kat || 'Allgemein'))].sort((a,b) => a.localeCompare(b, 'de'));
     const eff = sessionUser ? getUserEffectivePermissions(sessionUser) : {};
 
-    if (!eff.isAdmin && !eff.isMasterAdmin && eff.allowedCmdKats && eff.allowedCmdKats.length > 0) {
+    if (!eff.isMasterAdmin && eff.allowedCmdKats && eff.allowedCmdKats.length > 0) {
         kats = kats.filter(k => eff.allowedCmdKats.includes(k));
     }
 
@@ -4309,7 +4336,7 @@ function renderCommandsTab(obj) {
 }
 
 function openCommandsInlineModal() {
-    if (!requirePermission(['canEditCommands','isMasterAdmin'], 'Keine Berechtigung zur Bearbeitung der Commands!')) return;
+    if (!requirePermission(['canEditCommands','delCommands','isMasterAdmin'], 'Keine Berechtigung zur Verwaltung der Commands!')) return;
     const cont = document.getElementById('commandsInlineEditorContainer');
     if (!cont) return;
 
@@ -4317,6 +4344,7 @@ function openCommandsInlineModal() {
         const cloudData = snap.val() || {};
         const allCmds = Object.assign({}, defaultCommands, cloudData);
         const eff = sessionUser ? getUserEffectivePermissions(sessionUser) : {};
+        const canEditCommands = !!(eff.canEditCommands || eff.isMasterAdmin);
 
         const entries = Object.entries(allCmds).filter(([, c]) => !c.deleted)
             .sort((a,b) => {
@@ -4327,11 +4355,11 @@ function openCommandsInlineModal() {
 
         let existingRowsHtml = entries.map(([k, c]) => `
             <div style="background:rgba(30,41,59,0.4);border:1px solid var(--border);border-radius:10px;padding:10px;display:grid;grid-template-columns:1.5fr 2.5fr 1.5fr auto;gap:8px;align-items:center;margin-bottom:8px;">
-                <input type="text" id="cmd_name_${k}" aria-label="Command Name" value="${escapeHtml(c.name || '')}" placeholder="Name">
-                <input type="text" id="cmd_desc_${k}" aria-label="Command Beschreibung" value="${escapeHtml(c.desc || c.description || '')}" placeholder="Beschreibung (inkl. https:// Links)">
-                <input type="text" id="cmd_kat_${k}" aria-label="Command Kategorie" value="${escapeHtml(c.kat || 'Allgemein')}" placeholder="Kategorie">
+                <input type="text" id="cmd_name_${k}" aria-label="Command Name" value="${escapeHtml(c.name || '')}" placeholder="Name" ${canEditCommands ? '' : 'disabled'}>
+                <input type="text" id="cmd_desc_${k}" aria-label="Command Beschreibung" value="${escapeHtml(c.desc || c.description || '')}" placeholder="Beschreibung (inkl. https:// Links)" ${canEditCommands ? '' : 'disabled'}>
+                <input type="text" id="cmd_kat_${k}" aria-label="Command Kategorie" value="${escapeHtml(c.kat || 'Allgemein')}" placeholder="Kategorie" ${canEditCommands ? '' : 'disabled'}>
                 <div style="display:flex;gap:6px;">
-                    <button type="button" class="btn" style="width:auto;margin:0;padding:6px 12px;font-size:12px;background:var(--primary);color:#080c14;font-weight:800;" onclick="editCommandInline('${k}')">💾</button>
+                    ${canEditCommands ? `<button type="button" class="btn" style="width:auto;margin:0;padding:6px 12px;font-size:12px;background:var(--primary);color:#080c14;font-weight:800;" onclick="editCommandInline('${k}')">💾</button>` : ''}
                     ${eff.delCommands ? `<button type="button" class="btn-delete-row" onclick="deleteDienstCommand('${k}')">🗑️</button>` : ''}
                 </div>
             </div>
@@ -4339,7 +4367,7 @@ function openCommandsInlineModal() {
 
         cont.innerHTML = `
             <div style="display:flex;flex-direction:column;gap:18px;">
-                <div style="background:rgba(15,23,42,0.6);padding:14px;border-radius:10px;border:1px solid var(--border);">
+                ${canEditCommands ? `<div style="background:rgba(15,23,42,0.6);padding:14px;border-radius:10px;border:1px solid var(--border);">
                     <h4 style="margin:0 0 10px 0;color:var(--success);">➕ Neuen Command anlegen</h4>
                     <div style="display:grid;grid-template-columns:1.5fr 2.5fr 1.5fr auto;gap:8px;">
                         <input type="text" id="inlineNewCmdName" placeholder="Name (z.B. !funk)">
@@ -4347,10 +4375,10 @@ function openCommandsInlineModal() {
                         <input type="text" id="inlineNewCmdKat" placeholder="Kategorie">
                         <button type="button" class="btn" style="width:auto;margin:0;padding:8px 16px;" onclick="addCommandInline()">Hinzufügen</button>
                     </div>
-                </div>
+                </div>` : ''}
 
                 <div>
-                    <h4 style="margin:0 0 10px 0;color:var(--primary);">📋 Bestehende Commands bearbeiten (Alphabetisch A-Z)</h4>
+                    <h4 style="margin:0 0 10px 0;color:var(--primary);">📋 Bestehende Commands verwalten (Alphabetisch A bis Z)</h4>
                     <div style="max-height:55vh;overflow-y:auto;padding-right:4px;">
                         ${existingRowsHtml || '<p style="color:var(--text-muted);">Keine Einträge vorhanden.</p>'}
                     </div>
@@ -4423,7 +4451,7 @@ function renderLinksTab(obj) {
     let kats = [...new Set(Object.values(cleanedLinks).map(l => l.kat || l.thema || 'Allgemein'))].sort((a,b) => a.localeCompare(b, 'de'));
     const eff = sessionUser ? getUserEffectivePermissions(sessionUser) : {};
 
-    if (!eff.isAdmin && !eff.isMasterAdmin && eff.allowedLinkKats && eff.allowedLinkKats.length > 0) {
+    if (!eff.isMasterAdmin && eff.allowedLinkKats && eff.allowedLinkKats.length > 0) {
         kats = kats.filter(k => eff.allowedLinkKats.includes(k));
     }
 
@@ -4454,7 +4482,7 @@ function renderLinksTab(obj) {
 }
 
 function openLinksInlineModal() {
-    if (!requirePermission(['canEditLinks','isMasterAdmin'], 'Keine Berechtigung zur Bearbeitung der Links!')) return;
+    if (!requirePermission(['canEditLinks','delLinks','isMasterAdmin'], 'Keine Berechtigung zur Verwaltung der Links!')) return;
     const cont = document.getElementById('linksInlineEditorContainer');
     if (!cont) return;
 
@@ -4462,6 +4490,7 @@ function openLinksInlineModal() {
         const cloudData = snap.val() || {};
         const allLinks = Object.assign({}, defaultLinks, cloudData);
         const eff = sessionUser ? getUserEffectivePermissions(sessionUser) : {};
+        const canEditLinks = !!(eff.canEditLinks || eff.isMasterAdmin);
 
         const entries = Object.entries(allLinks).filter(([, l]) => !l.deleted)
             .sort((a,b) => {
@@ -4473,14 +4502,14 @@ function openLinksInlineModal() {
         let existingRowsHtml = entries.map(([k, l]) => `
             <div style="background:rgba(30,41,59,0.4);border:1px solid var(--border);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:8px;margin-bottom:10px;" id="link_row_${k}">
                 <div style="grid-template-columns:1fr 1fr;gap:8px;display:grid;">
-                    <input type="text" id="link_name_${k}" aria-label="Link Titel" value="${escapeHtml(l.name || '')}" placeholder="Titel">
-                    <input type="text" id="link_url_${k}" aria-label="Link Webadresse" value="${escapeHtml(l.url || '')}" placeholder="https://docs.google.com/...">
+                    <input type="text" id="link_name_${k}" aria-label="Link Titel" value="${escapeHtml(l.name || '')}" placeholder="Titel" ${canEditLinks ? '' : 'disabled'}>
+                    <input type="text" id="link_url_${k}" aria-label="Link Webadresse" value="${escapeHtml(l.url || '')}" placeholder="https://docs.google.com/..." ${canEditLinks ? '' : 'disabled'}>
                 </div>
                 <div style="grid-template-columns:2fr 1fr auto;gap:8px;align-items:center;display:grid;">
-                    <input type="text" id="link_desc_${k}" aria-label="Link Beschreibung" value="${escapeHtml(l.desc || l.description || '')}" placeholder="Beschreibung">
-                    <input type="text" id="link_kat_${k}" aria-label="Link Kategorie" value="${escapeHtml(l.kat || l.thema || 'Allgemein')}" placeholder="Kategorie">
+                    <input type="text" id="link_desc_${k}" aria-label="Link Beschreibung" value="${escapeHtml(l.desc || l.description || '')}" placeholder="Beschreibung" ${canEditLinks ? '' : 'disabled'}>
+                    <input type="text" id="link_kat_${k}" aria-label="Link Kategorie" value="${escapeHtml(l.kat || l.thema || 'Allgemein')}" placeholder="Kategorie" ${canEditLinks ? '' : 'disabled'}>
                     <div style="display:flex;gap:6px;">
-                        <button type="button" class="btn" style="width:auto;margin:0;padding:6px 12px;font-size:12px;background:var(--primary);color:#080c14;font-weight:800;" onclick="editLinkInline('${k}')">💾</button>
+                        ${canEditLinks ? `<button type="button" class="btn" style="width:auto;margin:0;padding:6px 12px;font-size:12px;background:var(--primary);color:#080c14;font-weight:800;" onclick="editLinkInline('${k}')">💾</button>` : ''}
                         ${eff.delLinks ? `<button type="button" class="btn-delete-row" onclick="deleteDienstLink('${k}')">🗑️</button>` : ''}
                     </div>
                 </div>
@@ -4489,21 +4518,21 @@ function openLinksInlineModal() {
 
         cont.innerHTML = `
             <div style="display:flex;flex-direction:column;gap:18px;">
-                <div style="background:rgba(15,23,42,0.6);padding:14px;border-radius:10px;border:1px solid var(--border);">
-                    <h4 style="margin:0 0 10px 0;color:var(--primary);">➕ Neuen Dokumenten-Link anlegen</h4>
+                ${canEditLinks ? `<div style="background:rgba(15,23,42,0.6);padding:14px;border-radius:10px;border:1px solid var(--border);">
+                    <h4 style="margin:0 0 10px 0;color:var(--primary);">➕ Neuen Dokumentenlink anlegen</h4>
                     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
                         <input type="text" id="inlineNewLinkName" placeholder="Titel des Links">
-                        <input type="text" id="inlineNewLinkUrl" placeholder="https://docs.google.com/...">
+                        <input type="text" id="inlineNewLinkUrl" placeholder="https://docs.google.com/..." ${canEditLinks ? '' : 'disabled'}>
                     </div>
                     <div style="display:grid;grid-template-columns:2fr 1fr auto;gap:8px;">
                         <input type="text" id="inlineNewLinkDesc" placeholder="Beschreibung">
                         <input type="text" id="inlineNewLinkKat" placeholder="Kategorie (z.B. MD Intern)">
                         <button type="button" class="btn" style="width:auto;margin:0;padding:8px 16px;" onclick="addLinkInline()">Hinzufügen</button>
                     </div>
-                </div>
+                </div>` : ''}
 
                 <div>
-                    <h4 style="margin:0 0 10px 0;color:var(--primary);">📁 Bestehende Links bearbeiten (Alphabetisch A-Z)</h4>
+                    <h4 style="margin:0 0 10px 0;color:var(--primary);">📁 Bestehende Links verwalten (Alphabetisch A bis Z)</h4>
                     <div style="max-height:55vh;overflow-y:auto;padding-right:4px;">
                         ${existingRowsHtml || '<p style="color:var(--text-muted);">Keine Links vorhanden.</p>'}
                     </div>
@@ -4740,7 +4769,7 @@ function renderNewsFeedData(obj) {
         const readCount = Object.keys(readBy).length;
         const authorNormalized = (n.author || '').trim().toLowerCase();
         const isAuthor = (n.authorId && n.authorId === myId) || (authorNormalized === myName && myName.length > 0);
-        const canEditThisNews = isAuthor || eff.canPostNews || eff.isAdmin || eff.isMasterAdmin;
+        const canEditThisNews = isAuthor || eff.canPostNews || eff.isMasterAdmin;
 
         return `
             <div class="news-feed-card" style="background:rgba(15,23,42,0.7);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:16px;">
@@ -4787,7 +4816,7 @@ function markNewsAsRead(newsId) {
 function openNewsReadersModal(newsId) {
     if (!sessionUser) return;
     const eff = getUserEffectivePermissions(sessionUser);
-    if (!eff.canViewNewsRead && !eff.isAdmin && !eff.isMasterAdmin) {
+    if (!eff.canViewNewsRead && !eff.isMasterAdmin) {
         alert('Keine Berechtigung zur Einsicht der Leseliste!');
         return;
     }
@@ -4811,7 +4840,7 @@ function togglePostNewsForm() {
     const isHidden = (e.style.display === 'none' || !e.style.display);
     if (isHidden) {
         const eff = getUserEffectivePermissions(sessionUser);
-        if (!eff.canPostNews && !eff.isAdmin && !eff.isMasterAdmin) {
+        if (!eff.canPostNews && !eff.isMasterAdmin) {
             alert('Keine Berechtigung zum Veröffentlichen von News!');
             return;
         }
@@ -4841,7 +4870,7 @@ function openEditNewsModal(newsId) {
     const myId = getUserAccountId(sessionUser);
     const myName = `${sessionUser.vorname || ''} ${sessionUser.nachname || ''}`.trim().toLowerCase();
     const isAuthor = (n.authorId && n.authorId === myId) || ((n.author || '').trim().toLowerCase() === myName && myName.length > 0);
-    if (!isAuthor && !eff.canPostNews && !eff.isAdmin && !eff.isMasterAdmin) {
+    if (!isAuthor && !eff.canPostNews && !eff.isMasterAdmin) {
         alert('Keine Berechtigung zum Bearbeiten dieses News-Beitrags!');
         return;
     }
@@ -4876,7 +4905,7 @@ function speichereNeueNews() {
         const existing = cachedNews[editId] || {};
         const eff = getUserEffectivePermissions(sessionUser);
         const isOwn = (existing.authorId && existing.authorId === myId) || ((existing.author || '').trim().toLowerCase() === `${sessionUser.vorname} ${sessionUser.nachname}`.trim().toLowerCase());
-        if (!isOwn && !eff.canPostNews && !eff.isAdmin && !eff.isMasterAdmin) {
+        if (!isOwn && !eff.canPostNews && !eff.isMasterAdmin) {
             alert('Keine Berechtigung zum Bearbeiten dieses News-Beitrags!');
             return;
         }
@@ -4899,7 +4928,7 @@ function speichereNeueNews() {
 
     {
         const eff = getUserEffectivePermissions(sessionUser);
-        if (!eff.canPostNews && !eff.isAdmin && !eff.isMasterAdmin) return;
+        if (!eff.canPostNews && !eff.isMasterAdmin) return;
     }
 
     db.ref('data/news').push({
@@ -4938,7 +4967,7 @@ function approveNewsProposal(newsId) {
     const item = cachedNews[newsId];
     if (!item || item.status !== 'pending_approval') return;
     const eff = getUserEffectivePermissions(sessionUser);
-    if (!eff.canApproveNews && !eff.isAdmin && !eff.isMasterAdmin) {
+    if (!eff.canApproveNews && !eff.isMasterAdmin) {
         alert('Keine Berechtigung zum Freigeben von News-Vorschlägen!');
         return;
     }
@@ -5047,12 +5076,16 @@ function sortExamIds(ids) {
 function renderExamTab() {
     const iv = document.getElementById('examInstructorView');
     if (iv) {
-        if (isUserInstructor()) {
+        if (canUserAccessInstructorArea()) {
             iv.style.display = 'block';
-            renderInstructorUnlocks();
-            renderInstructorSubmissions(cachedSubmissions);
-            renderInstructorExistingExams();
-            renderInstructorAllowedExams();
+            const eff = getUserEffectivePermissions(sessionUser);
+            const instructorCoreAccess = !!(eff.isInstructor || eff.canManageInstructors || eff.isMasterAdmin);
+            if (instructorCoreAccess) {
+                renderInstructorUnlocks();
+                renderInstructorSubmissions(cachedSubmissions);
+            }
+            if (eff.canManageExams || eff.isMasterAdmin) renderInstructorExistingExams();
+            if (eff.canManageMemberAccess || eff.isMasterAdmin) renderInstructorAllowedExams();
         } else {
             iv.style.display = 'none';
         }
@@ -5115,7 +5148,7 @@ function renderInstructorUnlocks() {
     const myId = sessionUser ? getUserAccountId(sessionUser) : '';
     const myPassed = (cachedUsers[myId]?.passedExams) || {};
     const eff = sessionUser ? getUserEffectivePermissions(sessionUser) : {};
-    const isLeitung = eff.canManageInstructors || eff.isAdmin || eff.isMasterAdmin;
+    const isLeitung = eff.canManageInstructors || eff.isMasterAdmin;
 
     const userList = Object.entries(cachedUsers).sort((a, b) => {
         const nameA = ((a[1].nachname || '') + ' ' + (a[1].vorname || '')).trim().toLowerCase();
@@ -5184,7 +5217,7 @@ function toggleExamUnlockForUser(uId, examId, isUnlocked) {
     const eff = getUserEffectivePermissions(sessionUser);
     const myId = getUserAccountId(sessionUser);
     const myPassed = (cachedUsers[myId]?.passedExams) || {};
-    const isLeitung = eff.canManageInstructors || eff.isAdmin || eff.isMasterAdmin;
+    const isLeitung = eff.canManageInstructors || eff.isMasterAdmin;
 
     if (!isLeitung && !myPassed[examId]) {
         alert('Keine Berechtigung zur Freischaltung dieser Prüfung!');
@@ -5206,7 +5239,7 @@ function toggleExamPassedForUser(uId, examId, isPassed) {
     const eff = getUserEffectivePermissions(sessionUser);
     const myId = getUserAccountId(sessionUser);
     const myPassed = (cachedUsers[myId]?.passedExams) || {};
-    const isLeitung = eff.canManageInstructors || eff.isAdmin || eff.isMasterAdmin;
+    const isLeitung = eff.canManageInstructors || eff.isMasterAdmin;
 
     if (!isLeitung && !myPassed[examId]) {
         alert('Keine Berechtigung zur Statusänderung dieser Prüfung!');
@@ -5578,7 +5611,7 @@ function renderInstructorAllowedExams() {
     const mt = document.getElementById('instructorMembersApprovalTableBody'); if (!mt) return;
     if (!sessionUser) { mt.innerHTML = ''; return; }
     const eff = getUserEffectivePermissions(sessionUser);
-    if (!eff.canManageInstructors && !eff.isAdmin && !eff.isMasterAdmin) { mt.innerHTML = ''; return; }
+    if (!eff.canManageMemberAccess && !eff.isMasterAdmin) { mt.innerHTML = ''; return; }
     const userList = Object.entries(cachedUsers).sort((a, b) => {
         const nameA = ((a[1].nachname || '') + ' ' + (a[1].vorname || '')).trim().toLowerCase();
         const nameB = ((b[1].nachname || '') + ' ' + (b[1].vorname || '')).trim().toLowerCase();
@@ -5753,7 +5786,7 @@ function submitActiveExam() {
 function openAdminKeyModal() {
     if (isMaintenanceRestrictedSession()) { alert('🛠️ Dieser Bereich ist während der Wartungsarbeiten vorübergehend nicht verfügbar.'); return; }
     const eff = sessionUser ? getUserEffectivePermissions(sessionUser) : {};
-    if (!eff.isAdmin && !eff.isMasterAdmin) return;
+    if (!eff.isAdmin && !eff.isMasterAdmin && !eff.canManageMaintenance) return;
     const pi = document.getElementById('adminAuthPassInput'); if (pi) pi.value = '';
     const m = document.getElementById('adminAuthModal');
     if (m) { m.style.display = 'flex'; if (pi) pi.focus(); }
@@ -5762,12 +5795,25 @@ function closeAdminAuthModal() { document.getElementById('adminAuthModal').style
 
 async function verifyAdminKeyPassword() {
     const p = (document.getElementById('adminAuthPassInput')?.value || '').trim();
-    if (!sessionUser || !requireAdminAccess() || !auth.currentUser) return;
+    if (!sessionUser || !auth.currentUser) return;
+    const eff = getUserEffectivePermissions(sessionUser);
+    if (!eff.isAdmin && !eff.isMasterAdmin && !eff.canManageMaintenance) return;
     try {
         const credential = firebase.auth.EmailAuthProvider.credential(auth.currentUser.email, p);
         await auth.currentUser.reauthenticateWithCredential(credential);
         closeAdminAuthModal();
         document.getElementById('adminManagementModal').style.display = 'flex';
+        const onlyMaintenanceAccess = !eff.isAdmin && !eff.isMasterAdmin && eff.canManageMaintenance;
+        ['btnAdminSubUsers','btnAdminSubRoles','btnAdminSubAudit'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.style.display = onlyMaintenanceAccess ? 'none' : '';
+        });
+        if (onlyMaintenanceAccess) {
+            const maintenanceBtn = document.getElementById('btnAdminSubMaintenance');
+            switchAdminTab('adminSubTabMaintenance', maintenanceBtn);
+            renderMaintenanceAdminPanel();
+            return;
+        }
         try {
             await refreshUsersFromFirebase();
         } catch (_) {
@@ -5811,6 +5857,7 @@ function getUserStatusDisplay(status) {
 function renderAdminUserTable(obj) {
     const tbody = document.getElementById('adminUserTableBody'); if (!tbody) return;
     const eff = sessionUser ? getUserEffectivePermissions(sessionUser) : {};
+    const canManageMemberAccess = !!(eff.isMasterAdmin || eff.canManageMemberAccess);
     const userList = Object.entries(obj || {}).sort((a, b) => {
         const nameA = ((a[1].nachname || '') + ' ' + (a[1].vorname || '')).trim().toLowerCase();
         const nameB = ((b[1].nachname || '') + ' ' + (b[1].vorname || '')).trim().toLowerCase();
@@ -5833,11 +5880,11 @@ function renderAdminUserTable(obj) {
             <td style="color:var(--text-muted);font-size:12px;">${escapeHtml(u.date||'--')}</td>
             <td style="text-align:right;">
                 <div style="display:flex;gap:6px;justify-content:flex-end;">
-                    ${u.status !== 'approved'
+                    ${canManageMemberAccess ? (u.status !== 'approved'
                         ? `<button type="button" class="btn" style="width:auto;margin:0;padding:4px 10px;font-size:12px;background:var(--success);color:#080c14;font-weight:800;" onclick="approveUser('${uId}')">✅ Freischalten</button>`
                         : `<button type="button" class="btn" style="width:auto;margin:0;padding:4px 10px;font-size:12px;background:rgba(244,63,94,0.15);color:var(--danger);border:1px solid var(--danger);" onclick="revokeUser('${uId}')">⛔ Sperren</button>`
-                    }
-                    <button type="button" class="btn" style="width:auto;margin:0;padding:4px 10px;font-size:12px;" onclick="openAssignRolesModal('${uId}', null, false)">🎭 Rollen</button>
+                    ) : ''}
+                    ${canManageMemberAccess ? `<button type="button" class="btn" style="width:auto;margin:0;padding:4px 10px;font-size:12px;" onclick="openAssignRolesModal('${uId}', null, false)">🎭 Rollen</button>` : ''}
                     <button type="button" class="btn" style="width:auto;margin:0;padding:4px 10px;font-size:12px;background:rgba(168,85,247,0.15);color:#a855f7;border:1px solid #a855f7;" onclick="openUserPermissionsModal('${uId}')">✏️ Edit</button>
                     ${eff.delUsers ? `<button type="button" class="btn-delete-row" onclick="deleteUserAccount('${uId}')" title="Mitarbeiter löschen">🗑️</button>` : ''}
                 </div>
@@ -6307,7 +6354,7 @@ async function runFirebaseAuthMigration() {
 async function approveUser(uId) {
     if (!sessionUser) return;
     const eff = getUserEffectivePermissions(sessionUser);
-    if (!eff.canManageInstructors && !eff.isAdmin && !eff.isMasterAdmin) {
+    if (!eff.canManageMemberAccess && !eff.isMasterAdmin) {
         alert('Keine Berechtigung zum Freischalten von Mitarbeitern!');
         return;
     }
@@ -6325,7 +6372,7 @@ async function approveUser(uId) {
 async function revokeUser(uId) {
     if (!sessionUser) return;
     const eff = getUserEffectivePermissions(sessionUser);
-    if (!eff.canManageInstructors && !eff.isAdmin && !eff.isMasterAdmin) {
+    if (!eff.canManageMemberAccess && !eff.isMasterAdmin) {
         alert('Keine Berechtigung zum Sperren von Mitarbeitern!');
         return;
     }
@@ -6381,7 +6428,13 @@ function openUserPermissionsModal(uId) {
         const eff = getUserEffectivePermissions(sessionUser);
         passwordResetContainer.style.display = eff.isMasterAdmin ? 'block' : 'none';
     }
-    document.getElementById('permStatus').value = u.status || 'approved';
+    const statusEl = document.getElementById('permStatus');
+    if (statusEl) {
+        statusEl.value = u.status || 'approved';
+        const eff = getUserEffectivePermissions(sessionUser);
+        statusEl.disabled = !(eff.isMasterAdmin || eff.canManageMemberAccess);
+        statusEl.title = statusEl.disabled ? 'Für Statusänderungen fehlt die Berechtigung „Mitarbeiter freigeben & Rollen verteilen“.' : '';
+    }
     document.getElementById('userPermissionsModal').style.display = 'flex';
 }
 function closeUserPermissionsModal() { document.getElementById('userPermissionsModal').style.display = 'none'; }
@@ -6454,7 +6507,9 @@ async function saveUserPermissions() {
     const vorname = document.getElementById('permVorname')?.value.trim() || '';
     const nachname = document.getElementById('permNachname')?.value.trim() || '';
     const dn = document.getElementById('permDN')?.value.trim() || '';
-    const status = document.getElementById('permStatus')?.value || 'approved';
+    const editorEff = getUserEffectivePermissions(sessionUser);
+    const mayChangeStatus = !!(editorEff.isMasterAdmin || editorEff.canManageMemberAccess);
+    const status = mayChangeStatus ? (document.getElementById('permStatus')?.value || 'approved') : (original.status || 'approved');
 
     if (!vorname || !nachname) {
         alert('Vorname und Nachname dürfen nicht leer sein!');
@@ -6522,12 +6577,24 @@ async function saveUserPermissions() {
 }
 
 
-let activeRoleAssignmentRestricted = false;
+const LIMITED_MEMBER_ROLE_ASSIGNMENT_IDS = new Set(['ausbildungsleitung', 'ausbilder', 'mitarbeiter']);
 
-function isRoleAssignableByTrainingLead(roleDef) {
-    if (!roleDef || roleDef.isAdmin || roleDef.isMasterAdmin || roleDef.id === 'admin' || roleDef.id === 'masteradmin') return false;
-    const allowed = new Set(['isInstructor', 'canManageInstructors', 'canManageExams', 'delExams', 'canCreateCalendar', 'canPostNews', 'canApproveNews', 'canViewNewsRead']);
-    return SERVER_PERMISSION_KEYS.every(key => !roleDef[key] || allowed.has(key));
+function getAssignableRoleIdsForOperator(user = sessionUser) {
+    if (!user) return new Set();
+    const eff = getUserEffectivePermissions(user);
+    if (eff.isMasterAdmin) return new Set(Object.keys(cachedRoles));
+    if (!eff.canManageMemberAccess) return new Set();
+
+    const operatorRoleIds = getUserRolesList(user);
+    if (operatorRoleIds.includes('chiefebene')) {
+        // Chief Ebene darf mit dem Mitgliedsrecht alle nicht geschützten Rollen unterhalb von Chief verteilen.
+        return new Set(Object.entries(cachedRoles)
+            .filter(([roleId, role]) => roleId !== 'masteradmin' && roleId !== 'chiefebene' && roleId !== 'admin' && !role?.isMasterAdmin && !role?.isAdmin)
+            .map(([roleId]) => roleId));
+    }
+
+    // Ausbildungsleitung, Personalabteilung und andere Rollen mit diesem Recht: bewusst nur diese drei Rollen.
+    return new Set([...LIMITED_MEMBER_ROLE_ASSIGNMENT_IDS].filter(roleId => !!cachedRoles[roleId]));
 }
 
 function openAssignRolesModal(uId, name, isRestrictedByLeitung = false) {
@@ -6535,18 +6602,15 @@ function openAssignRolesModal(uId, name, isRestrictedByLeitung = false) {
     const eff = getUserEffectivePermissions(sessionUser);
     const target = cachedUsers[uId];
     if (target && isPrivilegedUser(target) && !eff.isMasterAdmin) {
-        alert('Privilegierte Admin Konten dürfen nur von einem Master Admin verändert werden!');
+        alert('Geschützte Admin Konten dürfen nur von einem Master Admin verändert werden!');
         return;
     }
-    const isMasterOperator = !!eff.isMasterAdmin;
-    const canAdminManage = !!(eff.isAdmin || eff.isMasterAdmin);
-    const canLeitungManage = !!eff.canManageInstructors;
-    if (!canAdminManage && !canLeitungManage) {
+    const assignableIds = getAssignableRoleIdsForOperator(sessionUser);
+    if (!eff.isMasterAdmin && assignableIds.size === 0) {
         alert('Keine Berechtigung zur Rollenvergabe!');
         return;
     }
 
-    activeRoleAssignmentRestricted = !canAdminManage || !!isRestrictedByLeitung;
     const m = document.getElementById('assignRolesModal'); if (!m) return;
     document.getElementById('assignRoleUserId').value = uId;
     const u = cachedUsers[uId] || {};
@@ -6554,12 +6618,7 @@ function openAssignRolesModal(uId, name, isRestrictedByLeitung = false) {
     document.getElementById('assignRoleUserName').textContent = displayName;
     const rids = getUserRolesList(u);
 
-    const rolesToShow = Object.values(cachedRoles).filter(r => {
-        if ((r.id === 'masteradmin' || r.id === 'admin' || r.isAdmin || r.isMasterAdmin) && !isMasterOperator) return false;
-        if (activeRoleAssignmentRestricted && (r.isAdmin || r.isMasterAdmin || r.id === 'admin' || r.id === 'masteradmin')) return false;
-        if (!canAdminManage && canLeitungManage && !isRoleAssignableByTrainingLead(r)) return false;
-        return true;
-    });
+    const rolesToShow = Object.values(cachedRoles).filter(r => assignableIds.has(r.id));
     const sortedRolesToShow = sortRolesForDisplay(rolesToShow);
 
     const myId = getUserAccountId(sessionUser);
@@ -6569,10 +6628,10 @@ function openAssignRolesModal(uId, name, isRestrictedByLeitung = false) {
         const isSelfMasterProtection = isSelfMasterAdmin && (r.id === 'masteradmin');
         const isChecked = rids.includes(r.id);
         return `
-            <label for="assignRoleInput_${r.id}" style="display:flex;align-items:center;gap:10px;padding:8px;cursor:pointer;background:rgba(30,41,59,0.3);border-radius:8px;">
-                <input type="checkbox" ${isChecked ? 'checked' : ''} ${isSelfMasterProtection ? 'disabled checked title="Selbstausschluss-Schutz: Du kannst dir als Master Admin deine eigene Rolle nicht entziehen."' : ''} id="assignRoleInput_${r.id}">
+            <label for="assignRoleInput_${r.id}" class="assign-role-option">
+                <input type="checkbox" ${isChecked ? 'checked' : ''} ${isSelfMasterProtection ? 'disabled checked title="Selbstausschluss Schutz: Du kannst dir als Master Admin deine eigene Rolle nicht entziehen."' : ''} id="assignRoleInput_${r.id}">
                 <b style="color:${sanitizeRoleColor(r.color)};">${r.icon ? escapeHtml(r.icon) : ''} ${escapeHtml(r.name)}</b>
-                ${isSelfMasterProtection ? '<span style="font-size:11px;color:var(--warning);margin-left:auto;">🔒 Geschützt</span>' : ''}
+                ${isSelfMasterProtection ? '<span class="assign-role-protected">🔒 Geschützt</span>' : ''}
             </label>
         `;
     }).join('');
@@ -6584,42 +6643,30 @@ function closeAssignRolesModal() { document.getElementById('assignRolesModal').s
 function saveAssignedRoles() {
     if (!sessionUser) return;
     const eff = getUserEffectivePermissions(sessionUser);
-    const isMasterOperator = !!eff.isMasterAdmin;
-    const canAdminManage = !!(eff.isAdmin || eff.isMasterAdmin);
-    const canLeitungManage = !!eff.canManageInstructors;
-    if (!canAdminManage && !canLeitungManage) {
+    const assignableIds = getAssignableRoleIdsForOperator(sessionUser);
+    if (!eff.isMasterAdmin && assignableIds.size === 0) {
         alert('Keine Berechtigung zur Rollenvergabe!');
         return;
     }
 
     const uId = document.getElementById('assignRoleUserId')?.value; if (!uId) return;
     const target = cachedUsers[uId];
-    if (target && isPrivilegedUser(target) && !isMasterOperator) {
-        alert('Privilegierte Admin Konten dürfen nur von einem Master Admin verändert werden!');
+    if (target && isPrivilegedUser(target) && !eff.isMasterAdmin) {
+        alert('Geschützte Admin Konten dürfen nur von einem Master Admin verändert werden!');
         return;
     }
+
     let cleanRoles = {};
     const existingUser = cachedUsers[uId] || {};
     const existingRoleList = getUserRolesList(existingUser);
 
     Object.keys(cachedRoles).forEach(rId => {
-        const roleDef = cachedRoles[rId] || defaultRoles[rId] || {};
-        const isPrivilegedRole = rId === 'admin' || rId === 'masteradmin' || roleDef.isAdmin || roleDef.isMasterAdmin;
-        if (isPrivilegedRole && !isMasterOperator) {
+        if (!assignableIds.has(rId)) {
             if (existingRoleList.includes(rId)) cleanRoles[rId] = true;
             return;
         }
-        if (!canAdminManage && canLeitungManage && !isRoleAssignableByTrainingLead(roleDef)) {
-            if (existingRoleList.includes(rId)) cleanRoles[rId] = true;
-            return;
-        }
-
         const el = document.getElementById('assignRoleInput_' + rId);
-        if (el) {
-            if (el.checked) cleanRoles[rId] = true;
-        } else if (existingRoleList.includes(rId)) {
-            cleanRoles[rId] = true;
-        }
+        if (el?.checked) cleanRoles[rId] = true;
     });
 
     const myId = getUserAccountId(sessionUser);
@@ -6657,9 +6704,12 @@ function saveAssignedRoles() {
         renderAdminUserTable(cachedUsers);
         renderStaffDirectory();
         renderExamTab();
-        logAdminAudit('Rollen angepasst & bereinigt', `Rollen für ${uId} von ${sessionUser.vorname} ${sessionUser.nachname} gespeichert.`);
-        alert('✅ Rollen erfolgreich und dauerhaft aktualisiert!');
-    }).catch(err => alert('Die Rollen konnten nicht gespeichert werden. Bitte versuche es erneut.'));
+        logAdminAudit('Rollen angepasst', `Rollen für ${uId} von ${sessionUser.vorname} ${sessionUser.nachname} gespeichert.`);
+        alert('✅ Rollen erfolgreich aktualisiert!');
+    }).catch(err => {
+        console.error('Rollen konnten nicht gespeichert werden:', err);
+        alert('Die Rollen konnten nicht gespeichert werden. Bitte versuche es erneut.');
+    });
 }
 
 function renderAdminRolesList() {
@@ -6731,21 +6781,20 @@ function selectRole(roleId) {
     }
 
     const isMaster = (roleId === 'masteradmin');
-    const privilegeAdminEl = document.getElementById('roleFlagAdmin');
-    const privilegeMasterEl = document.getElementById('roleFlagMasterAdmin');
-    if (privilegeAdminEl) privilegeAdminEl.disabled = !operatorEff.isMasterAdmin;
-    if (privilegeMasterEl) privilegeMasterEl.disabled = !operatorEff.isMasterAdmin;
 
     Object.keys(ROLE_PROPERTY_MAP).forEach(elementId => {
         const propName = ROLE_PROPERTY_MAP[elementId];
         const chk = document.getElementById(elementId);
-        if (chk) {
-            if (isMaster) {
-                chk.checked = true;
-            } else {
-                chk.checked = !!r[propName];
-            }
-        }
+        if (!chk) return;
+        chk.checked = isMaster ? true : !!r[propName];
+        // Master Admin und das endgültige Löschen von Accounts sind feste Master-Funktionen.
+        // Für alle übrigen konfigurierbaren Rechte gilt exakt: Häkchen an = Recht vorhanden.
+        if (isMaster) chk.disabled = true;
+        else if (elementId === 'roleFlagMasterAdmin' || elementId === 'delFlagUsers') {
+            chk.checked = false;
+            chk.disabled = true;
+        } else if (elementId === 'roleFlagAdmin') chk.disabled = !operatorEff.isMasterAdmin;
+        else chk.disabled = false;
     });
 
     const btnDel = document.getElementById('btnDeleteRole');
@@ -6798,12 +6847,17 @@ function neueRolleErstellen() {
     const btnDel = document.getElementById('btnDeleteRole');
     if (btnDel) btnDel.style.display = 'none';
     
-    document.querySelectorAll('#adminRoleEditorCard input[type="checkbox"]').forEach(c => c.checked = false);
     const operatorEff = getUserEffectivePermissions(sessionUser);
+    document.querySelectorAll('#adminRoleEditorCard input[type="checkbox"]').forEach(c => {
+        c.checked = false;
+        c.disabled = false;
+    });
     const privilegeAdminEl = document.getElementById('roleFlagAdmin');
     const privilegeMasterEl = document.getElementById('roleFlagMasterAdmin');
+    const deleteUsersEl = document.getElementById('delFlagUsers');
     if (privilegeAdminEl) privilegeAdminEl.disabled = !operatorEff.isMasterAdmin;
-    if (privilegeMasterEl) privilegeMasterEl.disabled = !operatorEff.isMasterAdmin;
+    if (privilegeMasterEl) { privilegeMasterEl.checked = false; privilegeMasterEl.disabled = true; }
+    if (deleteUsersEl) { deleteUsersEl.checked = false; deleteUsersEl.disabled = true; }
 
     db.ref('data/dienstCommands').once('value', sCmd => {
         const allCmds = Object.assign({}, defaultCommands, sCmd.val() || {});
@@ -6853,7 +6907,8 @@ function speichereRolle() {
     Object.keys(ROLE_PROPERTY_MAP).forEach(elementId => {
         const propName = ROLE_PROPERTY_MAP[elementId];
         const el = document.getElementById(elementId);
-        r[propName] = isMaster ? true : !!(el && el.checked);
+        if (propName === 'isMasterAdmin' || propName === 'delUsers') r[propName] = isMaster;
+        else r[propName] = isMaster ? true : !!(el && el.checked);
     });
 
     if (!operatorEff.isMasterAdmin) {
@@ -6937,7 +6992,7 @@ function downloadSystemBackup() {
         const backup = {
             meta: {
                 app: 'MMD Cloud',
-                version: '6.6.0',
+                version: '6.7.0',
                 createdAt: Date.now(),
                 note: 'Passwörter und alte Passwort-Hashes werden aus Sicherheitsgründen nicht exportiert.'
             },
@@ -7195,7 +7250,7 @@ function submitUserFeedback() {
 
 function renderFeedbackRowsHtml(list, targetPrefix) {
     const eff = sessionUser ? getUserEffectivePermissions(sessionUser) : {};
-    const canDelete = eff.isAdmin || eff.isMasterAdmin || eff.delFeedback || (sessionUser && sessionUser.isMasterAdmin);
+    const canDelete = eff.isMasterAdmin || eff.delFeedback || (sessionUser && sessionUser.isMasterAdmin);
 
     const badgeClassMap = {
         'Neu': 'badge-status-neu',
@@ -7278,7 +7333,7 @@ function renderFeedbackManagementTable() {
     if (!tbody) return;
 
     const eff = sessionUser ? getUserEffectivePermissions(sessionUser) : {};
-    if (!eff.isAdmin && !eff.isMasterAdmin && !eff.canManageFeedback) {
+    if (!eff.isMasterAdmin && !eff.canManageFeedback) {
         tbody.innerHTML = '';
         return;
     }
@@ -7312,7 +7367,7 @@ function renderFeedbackManagementTable() {
 function handleFeedbackStatusSelect(prefix, fbId, newStatus) {
     if (!sessionUser) return;
     const eff = getUserEffectivePermissions(sessionUser);
-    if (!eff.isAdmin && !eff.isMasterAdmin && !eff.canManageFeedback) return;
+    if (!eff.isMasterAdmin && !eff.canManageFeedback) return;
 
     const rejectBox = document.getElementById(`${prefix}_rejectBox_${fbId}`);
 
@@ -7360,7 +7415,7 @@ function closeInlineRejectBox(prefix, fbId) {
 function saveInlineRejection(prefix, fbId) {
     if (!fbId || !sessionUser) return;
     const eff = getUserEffectivePermissions(sessionUser);
-    if (!eff.isAdmin && !eff.isMasterAdmin && !eff.canManageFeedback) {
+    if (!eff.isMasterAdmin && !eff.canManageFeedback) {
         alert('Keine Berechtigung zum Ablehnen von Meldungen!');
         return;
     }
@@ -7393,7 +7448,7 @@ function saveInlineRejection(prefix, fbId) {
 function deleteFeedbackEntry(fbId) {
     if (!sessionUser) return;
     const eff = getUserEffectivePermissions(sessionUser);
-    const canDelete = !!(sessionUser.isMasterAdmin || eff.isMasterAdmin || eff.isAdmin || eff.delFeedback);
+    const canDelete = !!(sessionUser.isMasterAdmin || eff.isMasterAdmin || eff.delFeedback);
 
     if (!canDelete) {
         alert('Keine Berechtigung zum Löschen von Meldungen!');
@@ -7509,8 +7564,9 @@ async function importChiefMaterialLegacyV660Once() {
 function canCurrentUserViewChiefMaterials() {
     if (!sessionUser) return false;
     const eff = getUserEffectivePermissions(sessionUser);
-    const hasChiefRole = getUserRolesList(sessionUser).includes('chiefebene');
-    return !!(eff.isMasterAdmin || hasChiefRole || eff.canViewChiefMaterials || eff.canEditChiefMaterials);
+    // Variante A: Auch Chief Ebene folgt ausschließlich den konfigurierbaren Häkchen.
+    // Nur Master Admin besitzt unveränderlichen Vollzugriff.
+    return !!(eff.isMasterAdmin || eff.canViewChiefMaterials || eff.canEditChiefMaterials);
 }
 
 function canCurrentUserEditChiefMaterials() {
@@ -7758,6 +7814,7 @@ function switchTab(tabId, btn) {
 }
 function settingsTabClick() { switchTab('settingsTab', document.getElementById('adminMainTabHeader')); }
 function switchInstructorTab(tabId, btnEl) {
+    if (btnEl && btnEl.style.display === 'none') return;
     document.querySelectorAll('#examInstructorView .admin-subtab-content').forEach(e => e.classList.remove('active'));
     document.querySelectorAll('#examInstructorView .admin-tab-btn').forEach(e => e.classList.remove('active'));
     const t = document.getElementById(tabId); if (t) t.classList.add('active');
