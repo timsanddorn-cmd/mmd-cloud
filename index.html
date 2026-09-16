@@ -11,7 +11,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
-    <link rel="stylesheet" href="style.css?v=6.8.0c">
+    <link rel="stylesheet" href="style.css?v=6.8.0d">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏥</text></svg>">
 </head>
 <body>
@@ -813,7 +813,8 @@
                 <button type="button" id="btnEditSanctionsCatalog" class="btn-inline-edit" style="display:none;" onclick="openSanctionsCatalogEditor()" title="Sanktionskatalog live bearbeiten">✏️ Sanktionskatalog bearbeiten</button>
             </div>
             <div class="sanctions-rules-card">
-                <button type="button" class="sanctions-rules-toggle" onclick="toggleSanctionsRules()" aria-expanded="true" id="sanctionsRulesToggle"><span>ℹ️ Wichtige Sanktionsregeln</span><span id="sanctionsRulesToggleIcon">▾</span></button>
+                <button type="button" class="sanctions-rules-toggle" onclick="toggleSanctionsRules()" aria-expanded="true" id="sanctionsRulesToggle"><span>⚠️ Wichtige Sanktionsregeln</span><span id="sanctionsRulesToggleIcon">▾</span></button>
+                <div class="sanctions-rules-hint">Diese Regeln gelten zusätzlich zu den einzelnen Sanktionen in der Tabelle und sollten vor Anwendung einer Sanktion beachtet werden.</div>
                 <div id="sanctionsRulesList" class="sanctions-rules-list"></div>
             </div>
             <div class="sanctions-toolbar">
@@ -1835,6 +1836,6 @@
         </div>
     </div>
 
-    <script src="app.js?v=6.8.0c"></script>
+    <script src="app.js?v=6.8.0d"></script>
 </body>
 </html>

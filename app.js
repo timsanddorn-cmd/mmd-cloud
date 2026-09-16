@@ -285,6 +285,8 @@ const systemChangelogs = [
             "Prüfungen werden jetzt nach einzelnen richtigen Antwortmöglichkeiten bepunktet; falsch gesetzte Antworten ziehen innerhalb der jeweiligen Frage Punkte ab, jedoch nie unter 0 Punkte.",
             "Prüfungsdetails zeigen zuerst vollständig richtige und danach falsche oder nicht vollständig richtige Antworten inklusive Punktestand und hinterlegter richtiger Lösung.",
             "Nicht bestandene Prüfungen können von berechtigten Ausbildern oder der Ausbildungsleitung zur Wiederholung freigegeben werden, ohne den Fehlversuch zu löschen.",
+            "Ältere nicht bestandene Prüfungsergebnisse ohne gespeicherte Prüfungs-ID werden – wenn eindeutig möglich – über den Prüfungsnamen der aktuellen Prüfung zugeordnet und können ebenfalls wieder freigegeben werden.",
+            "Die wichtigen allgemeinen Sanktionsregeln wurden deutlich größer und auffälliger hervorgehoben.",
             "Die Darstellung wurde für Computer, Tablets und Smartphones angepasst."
         ]
     },
@@ -4869,10 +4871,20 @@ function matchesSanctionsFilter(item, filter) {
     if(filter==='aussendienst') return text.includes('aussendienst');
     return true;
 }
+function getSanctionsRuleImportanceClass(text) {
+    const normalized = normalizeSanctionsText(text);
+    if (normalized.includes('3x verwarnung') && normalized.includes('kuendigung')) return 'sanctions-rule-critical';
+    if (normalized.includes('3x mahnung') && normalized.includes('verwarnung')) return 'sanctions-rule-warning';
+    if (normalized.includes('jede verwarnung') || normalized.includes('aussendienstsperre')) return 'sanctions-rule-important';
+    return '';
+}
 function renderSanctionsRules() {
     const c=document.getElementById('sanctionsRulesList'); if(!c) return;
     const rules=getSanctionsRules();
-    c.innerHTML=rules.length?rules.map(r=>`<div class="sanctions-rule-item"><span>•</span><div>${escapeHtml(r.text)}</div></div>`).join(''):'<div class="sanctions-rule-item"><div>Keine allgemeinen Regeln hinterlegt.</div></div>';
+    c.innerHTML=rules.length?rules.map(r=>{
+        const importanceClass=getSanctionsRuleImportanceClass(r.text);
+        return `<div class="sanctions-rule-item ${importanceClass}"><span class="sanctions-rule-bullet">!</span><div>${escapeHtml(r.text)}</div></div>`;
+    }).join(''):'<div class="sanctions-rule-item"><div>Keine allgemeinen Regeln hinterlegt.</div></div>';
 }
 function renderSanctionsCatalog() {
     const tbody=document.getElementById('sanctionsTableBody'); if(!tbody) return;
@@ -6014,13 +6026,64 @@ function getExamPassPercentage(exam) {
     return Math.max(60, Math.min(100, Number.isFinite(configured) ? configured : 60));
 }
 
+function normalizeExamLookupText(value) {
+    return String(value || '')
+        .toLowerCase()
+        .replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue').replace(/ß/g,'ss')
+        .replace(/[^a-z0-9]+/g,' ')
+        .replace(/\s+/g,' ')
+        .trim();
+}
+
+function resolveSubmissionExamId(sub) {
+    if (!sub || typeof sub !== 'object') return '';
+    if (sub.examId && cachedExams[sub.examId]) return sub.examId;
+
+    const wantedTitle = normalizeExamLookupText(sub.examTitle);
+    if (!wantedTitle) return '';
+
+    const matches = Object.entries(cachedExams || {})
+        .filter(([, exam]) => normalizeExamLookupText(exam?.title) === wantedTitle)
+        .map(([examId]) => examId);
+
+    return matches.length === 1 ? matches[0] : '';
+}
+
+function resolveSubmissionUserId(sub) {
+    if (!sub || typeof sub !== 'object') return '';
+    if (sub.userId && cachedUsers[sub.userId]) return sub.userId;
+
+    const wantedDn = String(sub.userDN || '').trim().toLowerCase();
+    if (wantedDn) {
+        const dnMatches = Object.entries(cachedUsers || {})
+            .filter(([, user]) => String(user?.dn || '').trim().toLowerCase() === wantedDn)
+            .map(([userId]) => userId);
+        if (dnMatches.length === 1) return dnMatches[0];
+    }
+
+    const wantedName = normalizeExamLookupText(sub.userName);
+    if (wantedName) {
+        const nameMatches = Object.entries(cachedUsers || {})
+            .filter(([, user]) => normalizeExamLookupText(`${user?.vorname || ''} ${user?.nachname || ''}`) === wantedName)
+            .map(([userId]) => userId);
+        if (nameMatches.length === 1) return nameMatches[0];
+    }
+
+    return '';
+}
+
 function canCurrentUserRepeatExamForSubmission(sub) {
-    if (!sessionUser || !sub || sub.passed || !sub.examId) return false;
+    if (!sessionUser || !sub || sub.passed) return false;
+    const examId = resolveSubmissionExamId(sub);
+    const targetUserId = resolveSubmissionUserId(sub);
+    if (!examId || !targetUserId) return false;
+
     const eff = getUserEffectivePermissions(sessionUser);
     if (!(eff.isMasterAdmin || eff.canManageInstructors || eff.isInstructor)) return false;
-    if (!canInstructorAccessExam(sub.examId)) return false;
-    const target = cachedUsers[sub.userId] || {};
-    if (target.passedExams?.[sub.examId] === true) return false;
+    if (!canInstructorAccessExam(examId)) return false;
+
+    const target = cachedUsers[targetUserId] || {};
+    if (target.passedExams?.[examId] === true) return false;
     return true;
 }
 
@@ -6031,23 +6094,37 @@ function repeatFailedExam(subId) {
         alert('Diese Prüfung kann nicht zur Wiederholung freigegeben werden.');
         return;
     }
+
+    const examId = resolveSubmissionExamId(sub);
+    const targetUserId = resolveSubmissionUserId(sub);
+    if (!examId) {
+        alert('Die zugehörige aktuelle Prüfung konnte nicht eindeutig gefunden werden. Bitte prüfe, ob der Prüfungsname noch mit dem alten Ergebnis übereinstimmt.');
+        return;
+    }
+    if (!targetUserId) {
+        alert('Der zugehörige Mitarbeiter konnte nicht eindeutig gefunden werden. Bitte prüfe Name und Dienstnummer des alten Ergebnisses.');
+        return;
+    }
     if (!canCurrentUserRepeatExamForSubmission(sub)) {
         alert('Keine Berechtigung, diese Prüfung zur Wiederholung freizugeben.');
         return;
     }
-    const target = cachedUsers[sub.userId] || {};
-    if (target.passedExams?.[sub.examId] === true) {
+
+    const target = cachedUsers[targetUserId] || {};
+    if (target.passedExams?.[examId] === true) {
         alert('Der Mitarbeiter hat diese Prüfung inzwischen bereits bestanden.');
         return;
     }
-    if (!confirm(`Soll ${sub.userName || 'der Mitarbeiter'} die Prüfung „${sub.examTitle || 'Prüfung'}“ erneut absolvieren dürfen?`)) return;
 
-    db.ref(`data/users/${sub.userId}/unlockedExams/${sub.examId}`).set(true).then(() => {
-        if (cachedUsers[sub.userId]) {
-            cachedUsers[sub.userId].unlockedExams = cachedUsers[sub.userId].unlockedExams || {};
-            cachedUsers[sub.userId].unlockedExams[sub.examId] = true;
+    const exam = cachedExams[examId] || {};
+    if (!confirm(`Soll ${sub.userName || 'der Mitarbeiter'} die Prüfung „${exam.title || sub.examTitle || 'Prüfung'}“ erneut absolvieren dürfen?`)) return;
+
+    db.ref(`data/users/${targetUserId}/unlockedExams/${examId}`).set(true).then(() => {
+        if (cachedUsers[targetUserId]) {
+            cachedUsers[targetUserId].unlockedExams = cachedUsers[targetUserId].unlockedExams || {};
+            cachedUsers[targetUserId].unlockedExams[examId] = true;
         }
-        logAdminAudit('Prüfung zur Wiederholung freigegeben', `${sessionUser.vorname} ${sessionUser.nachname} hat ${sub.userName || sub.userId} die Prüfung „${sub.examTitle || sub.examId}“ erneut freigeschaltet.`);
+        logAdminAudit('Prüfung zur Wiederholung freigegeben', `${sessionUser.vorname} ${sessionUser.nachname} hat ${sub.userName || targetUserId} die Prüfung „${exam.title || sub.examTitle || examId}“ erneut freigeschaltet.`);
         renderInstructorSubmissions(cachedSubmissions);
         closeExamSubmissionDetailsModal();
         alert('✅ Die Prüfung wurde zur Wiederholung freigegeben. Der bisherige Fehlversuch bleibt in der Historie erhalten.');
@@ -6068,7 +6145,10 @@ function renderInstructorSubmissionsInto(subs, tbodyId, searchInputId) {
     if (!isUserInstructor()) {
         ee = ee.filter(([, sub]) => sub.userId === myId);
     } else {
-        ee = ee.filter(([, sub]) => canInstructorAccessExam(sub.examId));
+        ee = ee.filter(([, sub]) => {
+            const resolvedExamId = resolveSubmissionExamId(sub);
+            return !!resolvedExamId && canInstructorAccessExam(resolvedExamId);
+        });
     }
 
     if (q) {
@@ -6090,7 +6170,7 @@ function renderInstructorSubmissionsInto(subs, tbodyId, searchInputId) {
                 <td><b>${sub.percentage||0}%</b>${Number.isFinite(Number(sub.earnedPoints)) && Number.isFinite(Number(sub.maxPoints)) ? `<div style="font-size:11px;color:var(--text-muted);margin-top:2px;">${Number(sub.earnedPoints)} / ${Number(sub.maxPoints)} Punkte</div>` : ''}</td>
                 <td><span style="color:${sub.passed?'var(--success)':'var(--danger)'};font-weight:800;">${sub.passed?'✅ Bestanden':'⛔ Nicht bestanden'}</span></td>
                 <td>
-                    ${isUserInstructor() ? `<div style="display:flex;gap:6px;flex-wrap:wrap;"><button type="button" class="btn" style="width:auto;margin:0;padding:4px 10px;font-size:12px;" onclick="openExamSubmissionDetailsModal('${subId}')">👁️ Details</button>${canCurrentUserRepeatExamForSubmission(sub) ? `<button type="button" class="btn" style="width:auto;margin:0;padding:4px 10px;font-size:12px;" onclick="repeatFailedExam('${subId}')">🔄 Wiederholen</button>` : ''}</div>` : '--'}
+                    ${isUserInstructor() ? `<div style="display:flex;gap:6px;flex-wrap:wrap;"><button type="button" class="btn" style="width:auto;margin:0;padding:4px 10px;font-size:12px;" onclick="openExamSubmissionDetailsModal('${subId}')">👁️ Details</button>${canCurrentUserRepeatExamForSubmission(sub) ? `<button type="button" class="btn exam-repeat-btn" style="width:auto;margin:0;padding:4px 10px;font-size:12px;" onclick="repeatFailedExam('${subId}')">🔄 Wiederholen</button>` : ''}</div>` : '--'}
                 </td>
                 <td>${eff.delExams ? `<button type="button" class="btn-delete-row" onclick="deleteExamSubmission('${subId}')">🗑️</button>` : '--'}</td>
             </tr>
@@ -6112,8 +6192,9 @@ function openExamSubmissionDetailsModal(subId) {
     }
     const sub = cachedSubmissions[subId]; 
     if (!sub) return;
-    if (!canInstructorAccessExam(sub.examId)) {
-        alert('Keine Berechtigung zur Einsicht dieser Prüfung!');
+    const resolvedExamId = resolveSubmissionExamId(sub);
+    if (!resolvedExamId || !canInstructorAccessExam(resolvedExamId)) {
+        alert('Keine Berechtigung zur Einsicht dieser Prüfung oder die zugehörige aktuelle Prüfung konnte nicht eindeutig gefunden werden.');
         return;
     }
     
@@ -6189,7 +6270,7 @@ function openExamSubmissionDetailsModal(subId) {
 
     const hasPointTotals = Number.isFinite(Number(sub.earnedPoints)) && Number.isFinite(Number(sub.maxPoints));
     const repeatBtn = canCurrentUserRepeatExamForSubmission(sub)
-        ? `<button type="button" class="btn" style="margin-top:12px;width:auto;" onclick="repeatFailedExam('${subId}')">🔄 Prüfung zur Wiederholung freigeben</button>`
+        ? `<button type="button" class="btn exam-repeat-btn" style="margin-top:12px;width:auto;" onclick="repeatFailedExam('${subId}')">🔄 Prüfung zur Wiederholung freigeben</button>`
         : '';
 
     cont.innerHTML = `
