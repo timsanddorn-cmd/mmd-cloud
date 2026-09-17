@@ -3061,19 +3061,19 @@ function startPresenceWatcher() {
         const now = Date.now();
         const unique = new Map();
         Object.entries(raw).forEach(([presenceId, value]) => {
-            if (value && typeof value === 'object') {
-                if (!isPresenceFresh(value, now)) return;
-                const name = String(value.name || '').trim() || 'Unbekannt';
-                const key = String(value.accountId || name.toLowerCase() || presenceId);
-                if (!unique.has(key)) unique.set(key, {
-                    accountId: String(value.accountId || '').trim(),
-                    name,
-                    dn: String(value.dn || '').trim()
-                });
-            } else {
-                const name = String(value || '').trim();
-                if (name && !unique.has(name.toLowerCase())) unique.set(name.toLowerCase(), { accountId: '', name, dn: '' });
-            }
+            // Seit v6.8.1 gilt für "Im Dienst" dieselbe Grundlage wie für
+            // "Sitzungen & Updates": nur strukturierte, frische Presence-Einträge
+            // mit stabiler Account-ID. Alte reine Namens-/Legacy-Einträge werden
+            // nicht mehr als aktiver Medic-Dienst angezeigt.
+            if (!value || typeof value !== 'object' || !isPresenceFresh(value, now)) return;
+            const accountId = String(value.accountId || '').trim();
+            if (!accountId) return;
+            const name = String(value.name || '').trim() || 'Unbekannt';
+            if (!unique.has(accountId)) unique.set(accountId, {
+                accountId,
+                name,
+                dn: String(value.dn || '').trim()
+            });
         });
 
         const medics = [...unique.values()].map(m => {
