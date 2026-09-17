@@ -1403,6 +1403,135 @@ const STANDARD_INFO_QUESTIONS = [
     { id: 3, text: "Vor- und Nachname des Mitarbeiters", type: "text", isInfo: true }
 ];
 
+/* ── Mitgelieferte Prüfungen ───────────────────────────────── */
+const BUNDLED_EXAMS = {
+    exam_flugausbildung_20260917: {
+        id: "exam_flugausbildung_20260917",
+        title: "LSMD Flugausbildung",
+        kat: "Flugausbildung",
+        timeLimitMinutes: 30,
+        passPercentage: 60,
+        introText: "Prüfung Flugausbildung",
+        questions: [
+            ...STANDARD_INFO_QUESTIONS,
+            {
+                id: 4,
+                text: "Was ist der Unterschied zwischen einem Primäreinsatz und einem Sekundäreinsatz bei der Luftrettung?",
+                type: "choice",
+                options: [
+                    "Ein Primäreinsatz ist der direkte Einsatz am Unfallort zur schnellen medizinischen Versorgung.",
+                    "Ein Primäreinsatz ist ausschließlich der Transport zwischen zwei Krankenhäusern.",
+                    "Ein Sekundäreinsatz ist der Transport eines Patienten zwischen medizinischen Einrichtungen.",
+                    "Ein Sekundäreinsatz findet ausschließlich direkt an einer Unfallstelle statt."
+                ],
+                correctAnswers: [0, 2]
+            },
+            {
+                id: 5,
+                text: "Welche drei Hauptpersonen befinden sich in der Regel an Bord eines Rettungshubschraubers?",
+                type: "choice",
+                options: [
+                    "Bergführer/in",
+                    "Pilot/in",
+                    "Notfallsanitäter/in (HEMS-Crew-Mitglied)",
+                    "Notarzt/Notärztin"
+                ],
+                correctAnswers: [1, 2, 3]
+            },
+            {
+                id: 6,
+                text: "Warum ist der Heckrotor eines Hubschraubers besonders gefährlich und wie sollte man sich in seiner Nähe verhalten?",
+                type: "choice",
+                options: [
+                    "Der Heckrotor dreht sich mit hoher Geschwindigkeit und ist teilweise nur schwer zu erkennen.",
+                    "Man darf sich niemals direkt hinter dem Hubschrauber aufhalten.",
+                    "Der Heckrotor ist ungefährlich, solange der Hubschrauber am Boden steht.",
+                    "Man sollte sich dem Hubschrauber nur aus angewiesenen beziehungsweise sicheren Bereichen nähern."
+                ],
+                correctAnswers: [0, 1, 3]
+            },
+            {
+                id: 7,
+                text: "Welche Anforderungen hat eine geeignete Landefläche für einen Rettungshubschrauber?",
+                type: "choice",
+                options: [
+                    "Mindestens 25 x 25 Meter groß",
+                    "Eben und frei von Hindernissen (z. B. Bäume, Leitungen)",
+                    "Keine losen Gegenstände auf der Fläche",
+                    "Kein Fahrzeug- oder Personenverkehr"
+                ],
+                correctAnswers: [0, 1, 2, 3]
+            },
+            {
+                id: 8,
+                text: "Wie sollte man sich einem Hubschrauber am Boden nähern?",
+                type: "choice",
+                options: [
+                    "Nur auf Anweisung, gebückt und von vorne beziehungsweise aus einem sicheren angewiesenen Bereich.",
+                    "Direkt von hinten, damit der Pilot nicht gestört wird.",
+                    "Aufrecht und möglichst schnell von der Seite.",
+                    "Von jeder Richtung, solange der Hubschrauber am Boden steht."
+                ],
+                correctAnswers: [0]
+            },
+            {
+                id: 9,
+                text: "Was ist bei der Kennzeichnung einer Landefläche bei Nacht besonders zu beachten?",
+                type: "choice",
+                options: [
+                    "Die Landefläche muss beleuchtet werden, z. B. mit Positionslichtern oder Blinklichtern, ohne den Piloten direkt zu blenden.",
+                    "Die Beleuchtung sollte direkt auf das Cockpit gerichtet werden.",
+                    "Bei Nacht ist keine Kennzeichnung der Landefläche notwendig.",
+                    "Lose Fackeln oder andere ungesicherte Lichtquellen sollten auf der Landefläche verteilt werden."
+                ],
+                correctAnswers: [0]
+            },
+            {
+                id: 10,
+                text: "Welche Maßnahmen sollten Ersthelfer oder Einsatzkräfte während der Landung eines Hubschraubers treffen?",
+                type: "choice",
+                options: [
+                    "Anweisungen der Crew befolgen",
+                    "Patienten vom Landeplatz entfernen",
+                    "Lose Gegenstände sichern",
+                    "Sichere Umgebung schaffen"
+                ],
+                correctAnswers: [0, 1, 2, 3]
+            },
+            {
+                id: 11,
+                text: "Welche Gefahren können durch den Bodenabwind des Hubschraubers entstehen?",
+                type: "choice",
+                options: [
+                    "Staub, Sand oder Schmutz aufwirbeln",
+                    "Personen verletzen oder Sicht behindern",
+                    "Lose Gegenstände umherfliegen lassen",
+                    "Beschädigung vom Rasen"
+                ],
+                correctAnswers: [0, 1, 2]
+            }
+        ],
+        ts: 1789678800000
+    }
+};
+
+let bundledExamBootstrapAttempted = false;
+async function initializeBundledExamsIfAllowed() {
+    if (bundledExamBootstrapAttempted || !sessionUser || !canCurrentUserManageExams()) return;
+    bundledExamBootstrapAttempted = true;
+    try {
+        const updates = {};
+        for (const [examId, examData] of Object.entries(BUNDLED_EXAMS)) {
+            const snap = await db.ref(`data/exams/${examId}`).once('value');
+            if (!snap.exists()) updates[`data/exams/${examId}`] = examData;
+        }
+        if (Object.keys(updates).length) await db.ref().update(updates);
+    } catch (err) {
+        console.warn('Mitgelieferte Prüfung konnte noch nicht automatisch angelegt werden:', err);
+        bundledExamBootstrapAttempted = false;
+    }
+}
+
 /* ── Audit Logger ──────────────────────────────────────────── */
 
 /* ── Wartungsmodus ─────────────────────────────────────────── */
@@ -2876,6 +3005,7 @@ function startFirebaseListeners() {
             }
         });
         renderExamTab();
+        initializeBundledExamsIfAllowed();
     });
     db.ref('data/news').on('value', s => {
         cachedNews = s.val() || {};
