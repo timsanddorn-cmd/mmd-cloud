@@ -7085,7 +7085,7 @@ function refreshExamQuestionsDisplay() {
         return `
             <div style="background:rgba(15,23,42,0.6);border:1px solid var(--border);border-radius:10px;padding:12px;">
                 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-                    <b>Fachfrage ${currentFachNumber} <span style="font-size:12px;color:var(--primary);">(Mehrfachauswahl aktiv)</span></b>
+                    <b>Fachfrage ${currentFachNumber}${q.correctAnswers.length > 1 ? ' <span style="font-size:12px;color:var(--primary);">(Mehrfachauswahl aktiv)</span>' : ''}</b>
                     <button class="btn-delete-row" type="button" onclick="_examBuilderQuestions.splice(${idx},1);refreshExamQuestionsDisplay();">🗑️</button>
                 </div>
                 <input type="text" value="${escapeHtml(q.text||'')}" oninput="_examBuilderQuestions[${idx}].text=this.value" placeholder="Fragetext..." style="margin-bottom:8px;">
@@ -7269,7 +7269,7 @@ function startExam(eid) {
             fachIndex++;
             return `
                 <div class="exam-q-box">
-                    <p style="font-weight:800;margin:0 0 8px 0;">❓ Frage ${fachIndex}: ${escapeHtml(q.text)} <span style="font-size:12px;color:var(--warning);font-weight:normal;float:right;">(Mehrfachauswahl möglich)</span></p>
+                    <p style="font-weight:800;margin:0 0 8px 0;">❓ Frage ${fachIndex}: ${escapeHtml(q.text)}${Array.isArray(q.correctAnswers) && q.correctAnswers.length > 1 ? ' <span style="font-size:12px;color:var(--warning);font-weight:normal;float:right;">(Mehrfachauswahl möglich)</span>' : ''}</p>
                     ${(q.options || []).map((opt, oIdx) => `
                         <label class="exam-opt-label">
                             <input type="checkbox" name="q_${idx}" value="${oIdx}">
