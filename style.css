@@ -1100,10 +1100,12 @@ body {
 }
 
 .staff-portrait-img {
-    width: 78%;
     height: 78%;
-    object-fit: cover;
-    object-position: top center;
+    width: auto;
+    aspect-ratio: 1 / 1;
+    max-width: 78%;
+    object-fit: contain;
+    object-position: center;
     transition: transform 0.3s ease;
     display: block;
 }
