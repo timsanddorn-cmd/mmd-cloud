@@ -1,0 +1,42 @@
+name: Deploy MMD Cloud v6.8.1 from chunks
+
+on:
+  push:
+    paths:
+      - 'deploy-v6.8.1.part.12'
+
+permissions:
+  contents: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Repository auschecken
+        uses: actions/checkout@v4
+
+      - name: Release-Paket zusammensetzen und entpacken
+        shell: bash
+        run: |
+          cat deploy-v6.8.1.part.* | base64 -d > /tmp/mmd-v6.8.1.tar.gz
+          mkdir -p /tmp/mmd-v6.8.1
+          tar -xzf /tmp/mmd-v6.8.1.tar.gz -C /tmp/mmd-v6.8.1
+          cp /tmp/mmd-v6.8.1/index.html ./index.html
+          cp /tmp/mmd-v6.8.1/app.js ./app.js
+          cp /tmp/mmd-v6.8.1/style.css ./style.css
+          cp /tmp/mmd-v6.8.1/database.rules.final.json ./database.rules.final.json
+          cp /tmp/mmd-v6.8.1/PROJECT_STATUS.md ./PROJECT_STATUS_v6.8.1.md
+          rm -f deploy-v6.8.1.part.* deploy-v6.8.1.payload
+
+      - name: v6.8.1 committen
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "Keine Änderungen zu committen."
+            exit 0
+          fi
+          git commit -m "Release MMD Cloud v6.8.1"
+          git push
