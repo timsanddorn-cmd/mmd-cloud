@@ -355,6 +355,13 @@ body {
     transform: translateY(-1px);
 }
 
+.auth-action-btn:disabled {
+    opacity: 0.78;
+    cursor: wait;
+    transform: none;
+    box-shadow: 0 6px 18px rgba(2, 132, 199, 0.12);
+}
+
 @media (max-width: 820px) {
     .auth-screen { padding: 18px 8px; align-items: flex-start; }
     .auth-shell { max-width: 560px; grid-template-columns: 1fr; }

@@ -1,5 +1,5 @@
 // ============================================================
-//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.8.0
+//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.8.0e
 //  Firebase Realtime Database (Compat SDK v10)
 // ============================================================
 
@@ -274,6 +274,15 @@ let hierarchieDaten = JSON.parse(JSON.stringify(defaultHierarchieData));
 
 /* ── Vollständiger Gesamt-Changelog (Entwicklungsverlauf) ───── */
 const systemChangelogs = [
+    {
+        id: "sys_v6_8_0e", version: "v6.8.0e", date: "17.09.2026", ts: 1789623960000,
+        category: "Bugfix", title: "Registrierung wieder möglich",
+        changes: [
+            "Neue Mitarbeiter können ihren Account wieder zuverlässig über die Registrierung beantragen.",
+            "Während des Registrierens zeigt der Button sichtbar an, dass der Antrag verarbeitet wird und verhindert versehentliche Doppelklicks.",
+            "Fehler bei der Registrierung werden verständlicher angezeigt, ohne bestehende Konten oder Rollen zu verändern."
+        ]
+    },
     {
         id: "sys_v6_8_0", version: "v6.8.0", date: "16.09.2026", ts: 1789552800000,
         category: "Neue Funktion", title: "Sanktionskatalog hinzugefügt",
@@ -1556,7 +1565,7 @@ function logAdminAudit(action, details) {
 };
 
 // ============================================================
-//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.8.0
+//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.8.0e
 //  Firebase Realtime Database (Compat SDK v10)
 // ============================================================
 
@@ -2132,27 +2141,40 @@ async function registerNewFirebaseUser(v, n, p, dn) {
 }
 
 async function handleAuthAction() {
+    const actionTab = currentAuthTab;
+    const isRegisterAction = actionTab === 'register';
+    const actionBtn = document.getElementById('mainAuthActionBtn');
     const v = (document.getElementById('authVorname')?.value || '').trim();
     const n = (document.getElementById('authNachname')?.value || '').trim();
     const p = (document.getElementById('authPassword')?.value || '').trim();
     if (!v || !n || !p) { alert('Bitte alle Felder ausfüllen!'); return; }
     const loginKey = generateUserId(v, n);
 
+    let dn = '';
+    if (isRegisterAction) {
+        dn = (document.getElementById('authDN')?.value || '').trim();
+        if (!dn) { alert('Bitte Dienstnummer eingeben!'); return; }
+        if (p.length < 6) { alert('Das Passwort muss mindestens 6 Zeichen lang sein!'); return; }
+    }
+
+    if (actionBtn) {
+        actionBtn.disabled = true;
+        actionBtn.setAttribute('aria-busy', 'true');
+        actionBtn.textContent = isRegisterAction ? '⏳ Registrierung wird gesendet …' : '⏳ Anmeldung läuft …';
+    }
+
     try {
         await configureFirebaseAuthPersistence();
 
-        if (currentAuthTab === 'register') {
+        if (isRegisterAction) {
             const maintenance = await readMaintenanceState();
             if (maintenance.enabled) {
                 alert('🛠️ Eine Registrierung ist während der Wartungsarbeiten vorübergehend nicht möglich. Bitte versuche es später erneut.');
                 return;
             }
-            const dn = (document.getElementById('authDN')?.value || '').trim();
-            if (!dn) { alert('Bitte Dienstnummer eingeben!'); return; }
-            if (p.length < 6) { alert('Das Passwort muss mindestens 6 Zeichen lang sein!'); return; }
 
             await registerNewFirebaseUser(v, n, p, dn);
-            alert('Registrierung erfolgreich! Bitte warten Sie auf die Freischaltung durch die Leitung.');
+            alert('Registrierung erfolgreich! Bitte warte auf die Freischaltung durch die Leitung.');
             location.reload();
             return;
         }
@@ -2205,14 +2227,31 @@ async function handleAuthAction() {
         profile = await forcePasswordChangeAfterTransition(profile);
         initDienstEintritt(profile.user);
     } catch (err) {
-        console.error('Anmeldefehler:', err);
+        console.error(isRegisterAction ? 'Registrierungsfehler:' : 'Anmeldefehler:', err);
         try { await auth.signOut(); } catch (_) {}
-        if (err?.code === 'mmd/invalid-credentials') {
+
+        if (isRegisterAction) {
+            if (err?.code === 'mmd/already-registered') {
+                alert('Dieser Name ist bereits registriert. Bitte prüfe Vor- und Nachnamen.');
+            } else if (err?.code === 'auth/weak-password') {
+                alert('Das Passwort ist zu schwach. Bitte verwende mindestens 6 Zeichen.');
+            } else if (err?.code === 'mmd/registration-version-exhausted' || err?.code === 'mmd/old-auth-account-conflict') {
+                alert(err.message || 'Für diesen Namen besteht bereits ein älterer Zugang. Bitte den Master Admin kontaktieren.');
+            } else {
+                alert('Die Registrierung konnte nicht abgeschlossen werden. Bitte prüfe deine Angaben und versuche es erneut.');
+            }
+        } else if (err?.code === 'mmd/invalid-credentials') {
             alert('Falscher Name oder falsches Passwort!');
         } else if (err?.code === 'mmd/password-change-required') {
             alert(err.message);
         } else {
             alert('Die Anmeldung konnte nicht abgeschlossen werden. Bitte prüfe deine Angaben und versuche es erneut.');
+        }
+    } finally {
+        if (actionBtn) {
+            actionBtn.disabled = false;
+            actionBtn.removeAttribute('aria-busy');
+            actionBtn.textContent = currentAuthTab === 'register' ? 'Account beantragen' : 'Dienst antreten';
         }
     }
 }
@@ -3214,7 +3253,7 @@ function saveAllSzenarienWorkflows() {
 }
 
 // ============================================================
-//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.8.0
+//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.8.0e
 //  Firebase Realtime Database (Compat SDK v10)
 // ============================================================
 
