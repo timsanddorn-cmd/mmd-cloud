@@ -1,5 +1,5 @@
 // ============================================================
-//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.8.0e
+//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.8.1
 //  Firebase Realtime Database (Compat SDK v10)
 // ============================================================
 
@@ -182,6 +182,12 @@ const db = firebase.database();
 const auth = firebase.auth();
 const FIREBASE_AUTH_EMAIL_DOMAIN = 'mmd-login.invalid';
 
+const APP_VERSION = 'v6.8.1';
+const PRESENCE_HEARTBEAT_MS = 30 * 1000;
+const PRESENCE_STALE_MS = 3 * 60 * 1000;
+const INACTIVITY_LIMIT_MS = 20 * 60 * 1000;
+const INACTIVITY_WARNING_MS = 30 * 1000;
+
 async function configureFirebaseAuthPersistence() {
     try {
         await auth.setPersistence(firebase.auth.Auth.Persistence.SESSION);
@@ -221,6 +227,21 @@ let maintenanceModeListenerActive = false;
 let maintenanceRestrictedLast = false;
 let dailyForcedLogoutTimeoutId = null;
 let dailyLogoutEventsBound = false;
+let presenceHeartbeatIntervalId = null;
+let inactivityCheckIntervalId = null;
+let inactivityWarningIntervalId = null;
+let inactivityEventsBound = false;
+let inactivityWarningActive = false;
+let lastUserActivityAt = 0;
+let inactivityWarningDeadline = 0;
+let sessionStartedAt = 0;
+let sessionControlRef = null;
+let clientReleaseRef = null;
+let appUpdateCountdownIntervalId = null;
+let appUpdateReloadAt = 0;
+let originalDocumentTitle = '';
+let cachedPresence = {};
+let cachedClientRelease = null;
 let cachedUsers       = {};
 let cachedExams       = {};
 let cachedSubmissions = {};
@@ -274,6 +295,16 @@ let hierarchieDaten = JSON.parse(JSON.stringify(defaultHierarchieData));
 
 /* ── Vollständiger Gesamt-Changelog (Entwicklungsverlauf) ───── */
 const systemChangelogs = [
+    {
+        id: "sys_v6_8_1", version: "v6.8.1", date: "17.09.2026", ts: 1789628400000,
+        category: "Verbesserung", title: "Dienststatus & Browser-Aktualisierung verbessert",
+        changes: [
+            "Nach 20 Minuten ohne Aktivität fragt die MMD Cloud nach, ob der Mitarbeiter noch im Dienst ist.",
+            "Wird die Rückfrage innerhalb von 30 Sekunden nicht bestätigt, endet die Sitzung automatisch und der Mitarbeiter verschwindet aus „Im Dienst“.",
+            "Master Admins können aktive Sitzungen gezielt aus dem Dienst entfernen.",
+            "Neue Versionen können künftig an bereits geöffnete Browser gemeldet und automatisch neu geladen werden."
+        ]
+    },
     {
         id: "sys_v6_8_0e", version: "v6.8.0e", date: "17.09.2026", ts: 1789623960000,
         category: "Bugfix", title: "Registrierung wieder möglich",
@@ -1565,7 +1596,7 @@ function logAdminAudit(action, details) {
 };
 
 // ============================================================
-//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.8.0e
+//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.8.1
 //  Firebase Realtime Database (Compat SDK v10)
 // ============================================================
 
@@ -2286,15 +2317,7 @@ function checkDailyForcedLogout() {
 
 async function executeDailyForcedLogout() {
     if (!sessionUser) return;
-    if (mySessionRef) {
-        try { await mySessionRef.remove(); } catch (_) {}
-        mySessionRef = null;
-    }
-    clearStoredSessionData();
-    sessionUser = null;
-    try { await auth.signOut(); } catch (_) {}
-    alert('🛑 Der vorherige Dienst wurde zum Tageswechsel automatisch beendet. Bitte melde dich für den neuen Dienst erneut an.');
-    location.reload();
+    await performManagedLogout('🛑 Der vorherige Dienst wurde zum Tageswechsel automatisch beendet. Bitte melde dich für den neuen Dienst erneut an.');
 }
 
 /* ── Dienst-Start & App Init ───────────────────────────────── */
@@ -2312,6 +2335,12 @@ function applyUserPermissions(user) {
     const maintenanceAdminTabBtn = document.getElementById('btnAdminSubMaintenance');
     if (maintenanceAdminTabBtn) maintenanceAdminTabBtn.style.display = canUserManageMaintenance(user) ? 'inline-flex' : 'none';
     if (!canUserManageMaintenance(user) && document.getElementById('adminSubTabMaintenance')?.classList.contains('active')) {
+        switchAdminTab('adminSubTabUsers', document.getElementById('btnAdminSubUsers'));
+    }
+
+    const sessionsAdminTabBtn = document.getElementById('btnAdminSubSessions');
+    if (sessionsAdminTabBtn) sessionsAdminTabBtn.style.display = isMaster ? 'inline-flex' : 'none';
+    if (!isMaster && document.getElementById('adminSubTabSessions')?.classList.contains('active')) {
         switchAdminTab('adminSubTabUsers', document.getElementById('btnAdminSubUsers'));
     }
 
@@ -2476,7 +2505,7 @@ function initDienstEintritt(user) {
 
     applyUserPermissions(sessionUser);
     startPresenceWatcher();
-    updateOnlineStatus();
+    setupSessionLifecycleServices();
     updateLiveDate();
     baueMaterialUIAuf();
     startFirebaseListeners();
@@ -2863,34 +2892,184 @@ function startFirebaseListeners() {
     refreshSensitiveFirebaseListeners();
 }
 
-/* ── Presence Watcher ──────────────────────────────────────── */
-function updateOnlineStatus() {
-    if (!sessionUser) return;
-    if (!mySessionRef) {
-        mySessionRef = db.ref('data/presence').push();
-        mySessionRef.onDisconnect().remove();
+/* ── Sitzungs-, Inaktivitäts- & Presence-Steuerung ─────────── */
+function getPresenceTimestamp(value) {
+    if (!value || typeof value !== 'object') return 0;
+    return Number(value.lastSeen || value.ts) || 0;
+}
+
+function isPresenceFresh(value, now = Date.now()) {
+    const ts = getPresenceTimestamp(value);
+    return !!ts && (now - ts) <= PRESENCE_STALE_MS;
+}
+
+function compareAppVersions(a, b) {
+    const parse = value => {
+        const m = String(value || '').trim().match(/^v?(\d+)\.(\d+)\.(\d+)([a-z]?)$/i);
+        if (!m) return null;
+        return [Number(m[1]), Number(m[2]), Number(m[3]), m[4] ? (m[4].toLowerCase().charCodeAt(0) - 96) : 0];
+    };
+    const pa = parse(a);
+    const pb = parse(b);
+    if (!pa || !pb) return String(a || '').localeCompare(String(b || ''), 'de', { numeric: true, sensitivity: 'base' });
+    for (let i = 0; i < pa.length; i++) {
+        if (pa[i] > pb[i]) return 1;
+        if (pa[i] < pb[i]) return -1;
     }
-    mySessionRef.set({
-        accountId: getUserAccountId(sessionUser),
-        name: `${sessionUser.vorname || ''} ${sessionUser.nachname || ''}`.trim(),
-        dn: sessionUser.dn || '',
-        ts: Date.now()
+    return 0;
+}
+
+function cleanupSessionLifecycleServices() {
+    if (presenceHeartbeatIntervalId) clearInterval(presenceHeartbeatIntervalId);
+    if (inactivityCheckIntervalId) clearInterval(inactivityCheckIntervalId);
+    if (inactivityWarningIntervalId) clearInterval(inactivityWarningIntervalId);
+    if (appUpdateCountdownIntervalId) clearInterval(appUpdateCountdownIntervalId);
+    presenceHeartbeatIntervalId = null;
+    inactivityCheckIntervalId = null;
+    inactivityWarningIntervalId = null;
+    appUpdateCountdownIntervalId = null;
+    inactivityWarningActive = false;
+    inactivityWarningDeadline = 0;
+    appUpdateReloadAt = 0;
+    if (sessionControlRef) {
+        sessionControlRef.off();
+        sessionControlRef = null;
+    }
+    if (clientReleaseRef) {
+        clientReleaseRef.off();
+        clientReleaseRef = null;
+    }
+    const inactivityModal = document.getElementById('inactivityWarningModal');
+    if (inactivityModal) inactivityModal.style.display = 'none';
+    const updateModal = document.getElementById('appUpdateModal');
+    if (updateModal) updateModal.style.display = 'none';
+    if (originalDocumentTitle) document.title = originalDocumentTitle;
+}
+
+async function performManagedLogout(message = '') {
+    cleanupSessionLifecycleServices();
+    if (mySessionRef) {
+        try { await mySessionRef.remove(); } catch (_) {}
+        mySessionRef = null;
+    }
+    clearStoredSessionData();
+    sessionUser = null;
+    try { await auth.signOut(); } catch (_) {}
+    if (message) alert(message);
+    location.reload();
+}
+
+async function updateOnlineStatus() {
+    if (!sessionUser) return;
+    const isNewPresence = !mySessionRef;
+    if (!mySessionRef) mySessionRef = db.ref('data/presence').push();
+
+    const now = Date.now();
+    try {
+        await mySessionRef.set({
+            accountId: getUserAccountId(sessionUser),
+            authUid: auth.currentUser?.uid || '',
+            name: `${sessionUser.vorname || ''} ${sessionUser.nachname || ''}`.trim(),
+            dn: sessionUser.dn || '',
+            ts: now,
+            lastSeen: now,
+            clientVersion: APP_VERSION
+        });
+        if (isNewPresence) await mySessionRef.onDisconnect().remove();
+    } catch (err) {
+        console.warn('Presence konnte nicht aktualisiert werden:', err);
+    }
+}
+
+function startPresenceHeartbeat() {
+    if (presenceHeartbeatIntervalId) clearInterval(presenceHeartbeatIntervalId);
+    updateOnlineStatus();
+    presenceHeartbeatIntervalId = setInterval(updateOnlineStatus, PRESENCE_HEARTBEAT_MS);
+}
+
+function renderActiveSessionAdminPanel() {
+    const box = document.getElementById('activeSessionsList');
+    const summary = document.getElementById('activeSessionsSummary');
+    if (!box) return;
+
+    const eff = sessionUser ? getUserEffectivePermissions(sessionUser) : {};
+    if (!eff.isMasterAdmin) {
+        box.innerHTML = '';
+        if (summary) summary.textContent = '';
+        return;
+    }
+
+    const now = Date.now();
+    const grouped = new Map();
+    Object.entries(cachedPresence || {}).forEach(([presenceId, value]) => {
+        if (!value || typeof value !== 'object' || !isPresenceFresh(value, now)) return;
+        const accountId = String(value.accountId || '').trim();
+        if (!accountId) return;
+        const item = grouped.get(accountId) || {
+            accountId,
+            name: String(value.name || '').trim() || accountId,
+            dn: String(value.dn || '').trim(),
+            clientVersion: String(value.clientVersion || '').trim() || 'älter',
+            lastSeen: 0,
+            sessions: []
+        };
+        item.lastSeen = Math.max(item.lastSeen, getPresenceTimestamp(value));
+        item.sessions.push(presenceId);
+        if (String(value.clientVersion || '').trim()) item.clientVersion = String(value.clientVersion || '').trim();
+        grouped.set(accountId, item);
     });
+
+    const entries = [...grouped.values()].sort((a, b) => a.name.localeCompare(b.name, 'de'));
+    if (summary) summary.textContent = `${entries.length} aktive${entries.length === 1 ? ' Sitzung' : ' Sitzungen'} erkannt`;
+
+    if (!entries.length) {
+        box.innerHTML = '<div class="session-empty-state">Aktuell ist niemand aktiv in der MMD Cloud angemeldet.</div>';
+        return;
+    }
+
+    const myId = getUserAccountId(sessionUser);
+    box.innerHTML = entries.map(item => {
+        const seconds = Math.max(0, Math.round((now - item.lastSeen) / 1000));
+        const lastSeenText = seconds < 10 ? 'gerade eben' : `vor ${seconds} Sek.`;
+        const isSelf = item.accountId === myId;
+        return `
+            <div class="session-admin-row">
+                <div class="session-admin-main">
+                    <div class="session-admin-name">${escapeHtml(item.name)}</div>
+                    <div class="session-admin-meta">
+                        ${item.dn ? `DN ${escapeHtml(item.dn)} · ` : ''}
+                        ${escapeHtml(item.clientVersion)} · Lebenszeichen ${escapeHtml(lastSeenText)}
+                        ${item.sessions.length > 1 ? ` · ${item.sessions.length} Browser` : ''}
+                    </div>
+                </div>
+                <button type="button" class="btn session-kick-btn" ${isSelf ? 'disabled title="Eigene Sitzung bitte über Dienst beenden schließen."' : `onclick="forceUserOutOfService(${escapeJsArg(item.accountId)})"`}>
+                    ${isSelf ? 'Eigene Sitzung' : '🚪 Aus Dienst entfernen'}
+                </button>
+            </div>
+        `;
+    }).join('');
 }
 
 function startPresenceWatcher() {
     db.ref('data/presence').off();
     db.ref('data/presence').on('value', snap => {
         const raw = snap.val() || {};
+        cachedPresence = raw;
         const d = document.getElementById('onlineMedicsList');
         if (!d) return;
 
+        const now = Date.now();
         const unique = new Map();
         Object.entries(raw).forEach(([presenceId, value]) => {
             if (value && typeof value === 'object') {
+                if (!isPresenceFresh(value, now)) return;
                 const name = String(value.name || '').trim() || 'Unbekannt';
                 const key = String(value.accountId || name.toLowerCase() || presenceId);
-                if (!unique.has(key)) unique.set(key, { accountId: String(value.accountId || '').trim(), name, dn: String(value.dn || '').trim() });
+                if (!unique.has(key)) unique.set(key, {
+                    accountId: String(value.accountId || '').trim(),
+                    name,
+                    dn: String(value.dn || '').trim()
+                });
             } else {
                 const name = String(value || '').trim();
                 if (name && !unique.has(name.toLowerCase())) unique.set(name.toLowerCase(), { accountId: '', name, dn: '' });
@@ -2906,17 +3085,257 @@ function startPresenceWatcher() {
             const nameDn = nameMatch ? String(nameMatch.dn || '').trim() : '';
             return Object.assign({}, m, { dn: m.dn || accountDn || nameDn });
         }).sort((a, b) => a.name.localeCompare(b.name, 'de'));
+
         if (!medics.length) {
             d.innerHTML = '<span class="online-medic-name online-medic-empty">Keiner im Dienst</span>';
-            return;
+        } else {
+            d.innerHTML = medics.map(m => `
+                <span class="online-medic-name" title="${escapeHtml(m.dn ? `${m.name} • DN: ${m.dn}` : m.name)}">${escapeHtml(m.name)}</span>
+            `).join('');
         }
-
-        d.innerHTML = medics.map(m => `
-            <span class="online-medic-name" title="${escapeHtml(m.dn ? `${m.name} • DN: ${m.dn}` : m.name)}">${escapeHtml(m.name)}</span>
-        `).join('');
+        renderActiveSessionAdminPanel();
     });
 }
 
+function recordUserActivity() {
+    if (!sessionUser || inactivityWarningActive) return;
+    lastUserActivityAt = Date.now();
+}
+
+function bindInactivityEventsOnce() {
+    if (inactivityEventsBound) return;
+    inactivityEventsBound = true;
+    let lastMoveMark = 0;
+    const mark = () => recordUserActivity();
+    const markMove = () => {
+        const now = Date.now();
+        if (now - lastMoveMark < 5000) return;
+        lastMoveMark = now;
+        recordUserActivity();
+    };
+    ['pointerdown', 'keydown', 'touchstart', 'wheel', 'scroll'].forEach(eventName => {
+        document.addEventListener(eventName, mark, { passive: true });
+    });
+    document.addEventListener('mousemove', markMove, { passive: true });
+    document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) checkInactivityState();
+    });
+    window.addEventListener('focus', checkInactivityState);
+}
+
+function updateInactivityWarningCountdown() {
+    if (!inactivityWarningActive) return;
+    const remainingMs = Math.max(0, inactivityWarningDeadline - Date.now());
+    const remaining = Math.ceil(remainingMs / 1000);
+    const el = document.getElementById('inactivityCountdown');
+    if (el) el.textContent = String(remaining);
+    document.title = `MMD Cloud – noch ${remaining} Sek.`;
+    if (remainingMs <= 0) {
+        inactivityWarningActive = false;
+        if (inactivityWarningIntervalId) clearInterval(inactivityWarningIntervalId);
+        inactivityWarningIntervalId = null;
+        performManagedLogout('🛑 Deine MMD-Cloud-Sitzung wurde nach 20 Minuten Inaktivität und 30 Sekunden ohne Bestätigung automatisch beendet.');
+    }
+}
+
+function showInactivityWarning() {
+    if (!sessionUser || inactivityWarningActive) return;
+    inactivityWarningActive = true;
+    inactivityWarningDeadline = Date.now() + INACTIVITY_WARNING_MS;
+    const modal = document.getElementById('inactivityWarningModal');
+    if (modal) modal.style.display = 'flex';
+    updateInactivityWarningCountdown();
+    if (inactivityWarningIntervalId) clearInterval(inactivityWarningIntervalId);
+    inactivityWarningIntervalId = setInterval(updateInactivityWarningCountdown, 250);
+}
+
+function confirmStillOnDuty() {
+    if (!sessionUser || !inactivityWarningActive) return;
+    inactivityWarningActive = false;
+    inactivityWarningDeadline = 0;
+    lastUserActivityAt = Date.now();
+    if (inactivityWarningIntervalId) clearInterval(inactivityWarningIntervalId);
+    inactivityWarningIntervalId = null;
+    const modal = document.getElementById('inactivityWarningModal');
+    if (modal) modal.style.display = 'none';
+    document.title = originalDocumentTitle || 'MMD Cloud Patientenverwaltung Live';
+    updateOnlineStatus();
+}
+
+function checkInactivityState() {
+    if (!sessionUser) return;
+    if (inactivityWarningActive) {
+        updateInactivityWarningCountdown();
+        return;
+    }
+    if (!lastUserActivityAt) lastUserActivityAt = Date.now();
+    if ((Date.now() - lastUserActivityAt) >= INACTIVITY_LIMIT_MS) showInactivityWarning();
+}
+
+function setupInactivityWatcher() {
+    bindInactivityEventsOnce();
+    lastUserActivityAt = Date.now();
+    inactivityWarningActive = false;
+    inactivityWarningDeadline = 0;
+    if (inactivityCheckIntervalId) clearInterval(inactivityCheckIntervalId);
+    inactivityCheckIntervalId = setInterval(checkInactivityState, 1000);
+}
+
+function startSessionControlListener() {
+    if (!sessionUser) return;
+    if (sessionControlRef) sessionControlRef.off();
+    const accountId = getUserAccountId(sessionUser);
+    sessionControlRef = db.ref(`data/sessionControl/${accountId}`);
+    sessionControlRef.on('value', snap => {
+        const raw = snap.val() || {};
+        const forceLogoutAt = Number(raw.forceLogoutAt) || 0;
+        if (!forceLogoutAt || forceLogoutAt <= sessionStartedAt) return;
+        const reason = String(raw.reason || '').trim();
+        performManagedLogout(`🚪 Deine MMD-Cloud-Sitzung wurde durch die Verwaltung beendet.${reason ? `\n\nGrund: ${reason}` : ''}`);
+    }, err => console.warn('Sitzungssteuerung konnte nicht gelesen werden:', err));
+}
+
+async function forceUserOutOfService(accountId) {
+    const eff = sessionUser ? getUserEffectivePermissions(sessionUser) : {};
+    if (!eff.isMasterAdmin) {
+        alert('Diese Funktion ist ausschließlich für Master Admins verfügbar.');
+        return;
+    }
+    const targetId = String(accountId || '').trim();
+    if (!targetId) return;
+    if (targetId === getUserAccountId(sessionUser)) {
+        alert('Die eigene Sitzung bitte über „Dienst beenden“ schließen.');
+        return;
+    }
+
+    const target = cachedUsers[targetId] || {};
+    const targetName = `${target.vorname || ''} ${target.nachname || ''}`.trim() || targetId;
+    if (!confirm(`${targetName} wirklich aus der MMD Cloud abmelden und aus „Im Dienst“ entfernen?`)) return;
+
+    const updates = {};
+    updates[`data/sessionControl/${targetId}`] = {
+        forceLogoutAt: firebase.database.ServerValue.TIMESTAMP,
+        forcedBy: `${sessionUser.vorname || ''} ${sessionUser.nachname || ''}`.trim(),
+        forcedById: getUserAccountId(sessionUser),
+        reason: 'Durch Master Admin aus dem Dienst entfernt'
+    };
+    Object.entries(cachedPresence || {}).forEach(([presenceId, value]) => {
+        if (String(value?.accountId || '').trim() === targetId) updates[`data/presence/${presenceId}`] = null;
+    });
+
+    try {
+        await db.ref().update(updates);
+        logAdminAudit('Sitzung beendet', `${targetName} wurde durch ${sessionUser.vorname} ${sessionUser.nachname} aus dem Dienst entfernt.`);
+        alert(`✅ ${targetName} wurde aus dem Dienst entfernt.`);
+    } catch (err) {
+        console.error('Sitzung konnte nicht beendet werden:', err);
+        alert('Die Sitzung konnte nicht beendet werden. Bitte versuche es erneut.');
+    }
+}
+
+function normalizeClientRelease(raw) {
+    const x = raw && typeof raw === 'object' ? raw : {};
+    return {
+        version: String(x.version || '').trim(),
+        publishedAt: Number(x.publishedAt) || 0,
+        publishedBy: String(x.publishedBy || '').trim(),
+        message: String(x.message || '').trim()
+    };
+}
+
+function updateClientReleaseAdminPanel() {
+    const current = document.getElementById('currentClientVersionText');
+    const live = document.getElementById('publishedClientVersionText');
+    const input = document.getElementById('clientReleaseVersionInput');
+    if (current) current.textContent = APP_VERSION;
+    if (live) live.textContent = cachedClientRelease?.version || 'Noch nicht gesetzt';
+    if (input && !input.value) input.value = APP_VERSION;
+}
+
+function startClientReleaseListener() {
+    if (!sessionUser) return;
+    if (clientReleaseRef) clientReleaseRef.off();
+    clientReleaseRef = db.ref('data/systemStatus/clientRelease');
+    clientReleaseRef.on('value', snap => {
+        cachedClientRelease = normalizeClientRelease(snap.val());
+        updateClientReleaseAdminPanel();
+        const remoteVersion = cachedClientRelease.version;
+        if (!remoteVersion) return;
+        const comparison = compareAppVersions(remoteVersion, APP_VERSION);
+        if (comparison > 0) {
+            showAppUpdateNotice(cachedClientRelease);
+        }
+    }, err => console.warn('Live-Version konnte nicht gelesen werden:', err));
+}
+
+function showAppUpdateNotice(release) {
+    if (!sessionUser || appUpdateReloadAt) return;
+    appUpdateReloadAt = Date.now() + 10 * 1000;
+    const modal = document.getElementById('appUpdateModal');
+    const versionEl = document.getElementById('appUpdateVersionText');
+    const messageEl = document.getElementById('appUpdateMessageText');
+    if (versionEl) versionEl.textContent = release.version || 'neue Version';
+    if (messageEl) messageEl.textContent = release.message || 'Die MMD Cloud wurde aktualisiert. Die Seite wird automatisch neu geladen.';
+    if (modal) modal.style.display = 'flex';
+    updateAppUpdateCountdown();
+    if (appUpdateCountdownIntervalId) clearInterval(appUpdateCountdownIntervalId);
+    appUpdateCountdownIntervalId = setInterval(updateAppUpdateCountdown, 250);
+}
+
+function updateAppUpdateCountdown() {
+    if (!appUpdateReloadAt) return;
+    const remainingMs = Math.max(0, appUpdateReloadAt - Date.now());
+    const remaining = Math.ceil(remainingMs / 1000);
+    const el = document.getElementById('appUpdateCountdown');
+    if (el) el.textContent = String(remaining);
+    if (remainingMs <= 0) reloadForAppUpdate();
+}
+
+function reloadForAppUpdate() {
+    if (appUpdateCountdownIntervalId) clearInterval(appUpdateCountdownIntervalId);
+    appUpdateCountdownIntervalId = null;
+    appUpdateReloadAt = 0;
+    location.reload();
+}
+
+async function publishClientRelease() {
+    const eff = sessionUser ? getUserEffectivePermissions(sessionUser) : {};
+    if (!eff.isMasterAdmin) {
+        alert('Diese Funktion ist ausschließlich für Master Admins verfügbar.');
+        return;
+    }
+    const version = String(document.getElementById('clientReleaseVersionInput')?.value || '').trim();
+    const message = String(document.getElementById('clientReleaseMessageInput')?.value || '').trim();
+    if (!/^v?\d+\.\d+\.\d+[a-z]?$/i.test(version)) {
+        alert('Bitte gib eine gültige Version ein, z. B. v6.8.2.');
+        return;
+    }
+    const normalizedVersion = version.startsWith('v') ? version : `v${version}`;
+    if (!confirm(`Live-Version ${normalizedVersion} veröffentlichen?\n\nAlle bereits kompatiblen geöffneten MMD-Cloud-Browser erhalten anschließend einen 10-Sekunden-Hinweis und laden automatisch neu.`)) return;
+
+    try {
+        await db.ref('data/systemStatus/clientRelease').set({
+            version: normalizedVersion,
+            publishedAt: firebase.database.ServerValue.TIMESTAMP,
+            publishedBy: `${sessionUser.vorname || ''} ${sessionUser.nachname || ''}`.trim(),
+            publishedById: getUserAccountId(sessionUser),
+            message: message.slice(0, 180)
+        });
+        logAdminAudit('Live-Version veröffentlicht', `${normalizedVersion} wurde für geöffnete Browser freigegeben.`);
+    } catch (err) {
+        console.error('Live-Version konnte nicht veröffentlicht werden:', err);
+        alert('Die Live-Version konnte nicht veröffentlicht werden.');
+    }
+}
+
+function setupSessionLifecycleServices() {
+    originalDocumentTitle = document.title;
+    sessionStartedAt = Date.now();
+    startPresenceHeartbeat();
+    setupInactivityWatcher();
+    startSessionControlListener();
+    startClientReleaseListener();
+}
 /* ── REITER 1: DOKUMENTATION & EINSATZ ─────────────────────── */
 function updateSzenarioDropdownOptions() {
     const sel = document.getElementById('verletzungSelect');
@@ -3253,7 +3672,7 @@ function saveAllSzenarienWorkflows() {
 }
 
 // ============================================================
-//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.8.0e
+//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.8.1
 //  Firebase Realtime Database (Compat SDK v10)
 // ============================================================
 
@@ -5846,14 +6265,7 @@ function berechneDienstTage(shouldPersist = false) {
 }
 
 async function handleDienstEndeLogout() {
-    if (mySessionRef) {
-        try { await mySessionRef.remove(); } catch (_) {}
-        mySessionRef = null;
-    }
-    clearStoredSessionData();
-    sessionUser = null;
-    try { await auth.signOut(); } catch (_) {}
-    location.reload();
+    await performManagedLogout();
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -6870,7 +7282,7 @@ async function verifyAdminKeyPassword() {
         closeAdminAuthModal();
         document.getElementById('adminManagementModal').style.display = 'flex';
         const onlyMaintenanceAccess = !eff.isAdmin && !eff.isMasterAdmin && eff.canManageMaintenance;
-        ['btnAdminSubUsers','btnAdminSubRoles','btnAdminSubAudit'].forEach(id => {
+        ['btnAdminSubUsers','btnAdminSubRoles','btnAdminSubAudit','btnAdminSubSessions'].forEach(id => {
             const el = document.getElementById(id);
             if (el) el.style.display = onlyMaintenanceAccess ? 'none' : '';
         });
@@ -6890,6 +7302,8 @@ async function verifyAdminKeyPassword() {
         refreshFirebaseAuthMigrationPanel();
         renderPasswordChangeStatusPanel();
         renderMaintenanceAdminPanel();
+        renderActiveSessionAdminPanel();
+        updateClientReleaseAdminPanel();
     } catch (err) {
         console.error('Admin-Verifizierung fehlgeschlagen:', err);
         if (['auth/wrong-password', 'auth/invalid-credential', 'auth/invalid-login-credentials'].includes(err?.code)) {
@@ -6907,11 +7321,19 @@ function switchAdminTab(tabId, btnEl) {
         alert('Du hast dafür keine Berechtigung.');
         return;
     }
+    if (tabId === 'adminSubTabSessions' && !getUserEffectivePermissions(sessionUser || {}).isMasterAdmin) {
+        alert('Dieser Bereich ist ausschließlich für Master Admins verfügbar.');
+        return;
+    }
     document.querySelectorAll('#adminManagementModal .admin-subtab-content').forEach(e => e.classList.remove('active'));
     document.querySelectorAll('#adminManagementModal .admin-tab-btn').forEach(e => e.classList.remove('active'));
     const t = document.getElementById(tabId); if (t) t.classList.add('active');
     if (btnEl) btnEl.classList.add('active');
     if (tabId === 'adminSubTabMaintenance') renderMaintenanceAdminPanel();
+    if (tabId === 'adminSubTabSessions') {
+        renderActiveSessionAdminPanel();
+        updateClientReleaseAdminPanel();
+    }
 }
 
 function getUserStatusDisplay(status) {
@@ -8058,7 +8480,7 @@ function downloadSystemBackup() {
         const backup = {
             meta: {
                 app: 'MMD Cloud',
-                version: '6.8.0',
+                version: '6.8.1',
                 createdAt: Date.now(),
                 note: 'Passwörter und alte Passwort-Hashes werden aus Sicherheitsgründen nicht exportiert.'
             },
@@ -8939,7 +9361,7 @@ const _w = window;
 _w.switchTab = switchTab; _w.settingsTabClick = settingsTabClick; _w.switchAdminTab = switchAdminTab; _w.switchInstructorTab = switchInstructorTab;
 _w.handleAuthAction = handleAuthAction; _w.toggleAuthTab = toggleAuthTab;
 _w.openAdminKeyModal = openAdminKeyModal; _w.closeAdminAuthModal = closeAdminAuthModal; _w.verifyAdminKeyPassword = verifyAdminKeyPassword; _w.closeAdminManagementModal = closeAdminManagementModal;
-_w.handleDienstEndeLogout = handleDienstEndeLogout; _w.berechneDienstTage = berechneDienstTage; _w.passwortAendern = passwortAendern;
+_w.handleDienstEndeLogout = handleDienstEndeLogout; _w.confirmStillOnDuty = confirmStillOnDuty; _w.forceUserOutOfService = forceUserOutOfService; _w.publishClientRelease = publishClientRelease; _w.reloadForAppUpdate = reloadForAppUpdate; _w.berechneDienstTage = berechneDienstTage; _w.passwortAendern = passwortAendern;
 _w.toggleGroupCollapse = toggleGroupCollapse; _w.stepVerletzungenAnzahl = stepVerletzungenAnzahl; _w.stepKosten = stepKosten; _w.stepMat = stepMat; _w.ladeCheckliste = ladeCheckliste; _w.patientHinzufuegen = patientHinzufuegen; _w.toggleTodo = toggleTodo;
 _w.resetMedicalWorkflow = resetMedicalWorkflow; _w.openEditModal = openEditModal; _w.closeEditModal = closeEditModal; _w.speicherePatientEdit = speicherePatientEdit;
 _w.deletePatient = deletePatient; _w.deleteArchivSchicht = deleteArchivSchicht; _w.deleteDienstLink = deleteDienstLink; _w.deleteDienstCommand = deleteDienstCommand; _w.exportArchivCSV = exportArchivCSV;

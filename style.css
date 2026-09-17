@@ -1,5 +1,5 @@
 /* ============================================================
-   MMD CLOUD – Medical Center Web-App  |  style.css  v6.8.0
+   MMD CLOUD – Medical Center Web-App  |  style.css  v6.8.1
    ============================================================ */
 
 :root {
@@ -1978,4 +1978,187 @@ html, body { max-width: 100%; overflow-x: hidden; }
     .exam-solution-card { padding: 12px; }
     .exam-solution-question { padding: 12px 10px; }
     .exam-solution-option { padding: 8px; }
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   v6.8.1 – Sitzungen, Inaktivität & Browser-Updates
+══════════════════════════════════════════════════════════════ */
+.session-admin-card{
+    background:rgba(15,23,42,.72);
+    padding:20px 24px;
+    border-radius:16px;
+    border:1px solid var(--border);
+    margin-bottom:18px;
+}
+.session-admin-head{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:14px;
+    flex-wrap:wrap;
+    margin-bottom:16px;
+}
+.session-admin-summary{
+    padding:8px 12px;
+    border-radius:999px;
+    background:rgba(56,189,248,.1);
+    border:1px solid rgba(56,189,248,.28);
+    color:var(--primary);
+    font-size:12px;
+    font-weight:800;
+}
+.session-admin-list{
+    display:grid;
+    gap:10px;
+}
+.session-admin-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:14px;
+    padding:13px 14px;
+    border-radius:12px;
+    background:rgba(8,12,20,.56);
+    border:1px solid rgba(148,163,184,.18);
+}
+.session-admin-main{min-width:0;}
+.session-admin-name{
+    color:var(--text-main);
+    font-weight:850;
+    line-height:1.25;
+}
+.session-admin-meta{
+    margin-top:4px;
+    color:var(--text-muted);
+    font-size:11px;
+    line-height:1.4;
+}
+.session-kick-btn{
+    width:auto;
+    margin:0;
+    padding:8px 12px;
+    flex:0 0 auto;
+    background:rgba(244,63,94,.12);
+    color:#fb7185;
+    border:1px solid rgba(244,63,94,.34);
+}
+.session-kick-btn:hover:not(:disabled){
+    background:rgba(244,63,94,.2);
+}
+.session-kick-btn:disabled{
+    opacity:.5;
+    cursor:not-allowed;
+}
+.session-empty-state{
+    padding:18px;
+    text-align:center;
+    color:var(--text-muted);
+    border:1px dashed rgba(148,163,184,.24);
+    border-radius:12px;
+}
+.release-version-grid{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:12px;
+    margin-bottom:16px;
+}
+.release-version-box{
+    padding:13px 14px;
+    border-radius:12px;
+    background:rgba(8,12,20,.58);
+    border:1px solid rgba(56,189,248,.18);
+}
+.release-version-box span{
+    display:block;
+    color:var(--text-muted);
+    font-size:11px;
+    margin-bottom:4px;
+}
+.release-version-box b{
+    color:var(--primary);
+    font-size:16px;
+}
+.session-release-note{
+    margin-top:12px;
+    padding:11px 13px;
+    border-radius:10px;
+    background:rgba(245,158,11,.08);
+    border:1px solid rgba(245,158,11,.24);
+    color:#fcd34d;
+    font-size:12px;
+    line-height:1.5;
+}
+.release-publish-btn{
+    width:auto;
+    margin-top:14px;
+    padding:10px 16px;
+    background:var(--primary);
+    color:#07111d;
+    font-weight:850;
+}
+.session-warning-overlay{
+    z-index:10050;
+    background:rgba(2,6,23,.82);
+    backdrop-filter:blur(8px);
+}
+.session-warning-card{
+    max-width:520px;
+    text-align:center;
+    border:1px solid rgba(245,158,11,.44);
+    box-shadow:0 24px 70px rgba(0,0,0,.65),0 0 35px rgba(245,158,11,.08);
+}
+.update-warning-card{
+    border-color:rgba(56,189,248,.42);
+}
+.session-warning-icon{
+    font-size:42px;
+    margin-bottom:8px;
+}
+.session-warning-card h2{
+    margin:0 0 12px;
+    color:var(--text-main);
+}
+.session-warning-card p{
+    color:var(--text-muted);
+    line-height:1.55;
+}
+.session-warning-strong{
+    color:var(--text-main)!important;
+    font-weight:800;
+    font-size:17px;
+}
+.session-warning-strong span{
+    color:var(--warning);
+    font-size:22px;
+}
+.update-warning-card .session-warning-strong span{
+    color:var(--primary);
+}
+.session-warning-note{
+    margin:14px 0;
+    padding:10px 12px;
+    border-radius:10px;
+    background:rgba(244,63,94,.08);
+    border:1px solid rgba(244,63,94,.2);
+    color:#fda4af;
+    font-size:11px;
+    line-height:1.5;
+}
+.session-confirm-btn{
+    margin-top:8px;
+    background:var(--success);
+    color:#06150f;
+    font-weight:900;
+}
+.app-update-message{
+    margin:8px 0 10px;
+}
+
+@media (max-width: 700px){
+    .session-admin-card{padding:16px;}
+    .session-admin-row{align-items:stretch;flex-direction:column;}
+    .session-kick-btn{width:100%;}
+    .release-version-grid{grid-template-columns:1fr;}
+    .session-warning-card{width:calc(100vw - 24px);padding:22px 18px;}
 }

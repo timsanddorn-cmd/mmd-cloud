@@ -11,7 +11,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
-    <link rel="stylesheet" href="style.css?v=6.8.0e">
+    <link rel="stylesheet" href="style.css?v=6.8.1">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏥</text></svg>">
 </head>
 <body>
@@ -1511,6 +1511,7 @@
                 <button type="button" class="admin-tab-btn" id="btnAdminSubSystem" onclick="switchAdminTab('adminSubTabSystem', this)">💾 Backup & Wiederherstellung</button>
                 <button type="button" class="admin-tab-btn" id="btnAdminSubAudit" onclick="switchAdminTab('adminSubTabAudit', this)">📋 Systemprotokoll (Heute)</button>
                 <button type="button" class="admin-tab-btn" id="btnAdminSubMaintenance" onclick="switchAdminTab('adminSubTabMaintenance', this)">🛠️ Wartungsarbeiten</button>
+                <button type="button" class="admin-tab-btn" id="btnAdminSubSessions" style="display:none;" onclick="switchAdminTab('adminSubTabSessions', this)">🖥️ Sitzungen & Updates</button>
             </div>
 
             <!-- SUB-TAB 1: MITARBEITER KARTEI -->
@@ -1737,6 +1738,46 @@
                 </div>
             </div>
 
+
+            <!-- SUB-TAB: SITZUNGEN & UPDATES (MASTER ONLY) -->
+            <div id="adminSubTabSessions" class="admin-subtab-content">
+                <div class="session-admin-card">
+                    <div class="session-admin-head">
+                        <div>
+                            <h3 style="margin:0;">🖥️ Aktive MMD-Cloud-Sitzungen</h3>
+                            <p style="margin:5px 0 0;color:var(--text-muted);font-size:12px;line-height:1.5;">
+                                Zeigt aktive Browser-Sitzungen anhand regelmäßiger Lebenszeichen. Master Admins können fremde Sitzungen gezielt beenden.
+                            </p>
+                        </div>
+                        <div id="activeSessionsSummary" class="session-admin-summary">Wird geladen …</div>
+                    </div>
+                    <div id="activeSessionsList" class="session-admin-list"></div>
+                </div>
+
+                <div class="session-admin-card release-admin-card">
+                    <div class="session-admin-head">
+                        <div>
+                            <h3 style="margin:0;">🔄 Browser-Aktualisierung</h3>
+                            <p style="margin:5px 0 0;color:var(--text-muted);font-size:12px;line-height:1.5;">
+                                Nach dem Veröffentlichen neuer Webdateien kann hier die neue Live-Version bekanntgegeben werden. Bereits kompatible offene Browser zeigen 10 Sekunden lang einen Hinweis und laden anschließend automatisch neu.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="release-version-grid">
+                        <div class="release-version-box"><span>Dieser Browser</span><b id="currentClientVersionText">--</b></div>
+                        <div class="release-version-box"><span>Veröffentlichte Live-Version</span><b id="publishedClientVersionText">--</b></div>
+                    </div>
+                    <label for="clientReleaseVersionInput">Neue Live-Version</label>
+                    <input type="text" id="clientReleaseVersionInput" placeholder="z. B. v6.8.2" autocomplete="off">
+                    <label for="clientReleaseMessageInput">Hinweis für geöffnete Browser (optional)</label>
+                    <input type="text" id="clientReleaseMessageInput" maxlength="180" placeholder="z. B. Neue Funktionen und Fehlerbehebungen wurden veröffentlicht.">
+                    <div class="session-release-note">
+                        Wichtig: Erst die neue <b>index.html</b>, <b>app.js</b> und <b>style.css</b> veröffentlichen. Danach hier die neue Versionsnummer freigeben.
+                    </div>
+                    <button type="button" class="btn release-publish-btn" onclick="publishClientRelease()">🚀 Version veröffentlichen & Browser aktualisieren</button>
+                </div>
+            </div>
+
             <div id="adminSubTabAudit" class="admin-subtab-content">
                 <div style="background:rgba(15, 23, 42, 0.7); padding:20px 24px; border-radius:16px; border:1px solid var(--border);">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:10px;">
@@ -1836,6 +1877,32 @@
         </div>
     </div>
 
-    <script src="app.js?v=6.8.0e"></script>
+
+    <!-- MODAL: INAKTIVITÄTSWARNUNG -->
+    <div id="inactivityWarningModal" class="modal-overlay session-warning-overlay" role="dialog" aria-modal="true" aria-labelledby="inactivityWarningTitle">
+        <div class="modal-card session-warning-card">
+            <div class="session-warning-icon">⏱️</div>
+            <h2 id="inactivityWarningTitle">Bist du noch im Dienst?</h2>
+            <p>Seit 20 Minuten wurde keine Aktivität auf der MMD Cloud festgestellt.</p>
+            <p class="session-warning-strong">Bitte bestätige innerhalb von <span id="inactivityCountdown">30</span> Sekunden, dass du noch da bist.</p>
+            <div class="session-warning-note">Nicht gespeicherte Eingaben können bei der automatischen Abmeldung verloren gehen.</div>
+            <button type="button" class="btn session-confirm-btn" onclick="confirmStillOnDuty()">✅ Ja, ich bin noch im Dienst</button>
+        </div>
+    </div>
+
+    <!-- MODAL: NEUE VERSION -->
+    <div id="appUpdateModal" class="modal-overlay session-warning-overlay" role="dialog" aria-modal="true" aria-labelledby="appUpdateTitle">
+        <div class="modal-card session-warning-card update-warning-card">
+            <div class="session-warning-icon">🔄</div>
+            <h2 id="appUpdateTitle">Neue MMD-Cloud-Version verfügbar</h2>
+            <p>Version <b id="appUpdateVersionText">--</b> wurde veröffentlicht.</p>
+            <p id="appUpdateMessageText" class="app-update-message">Die Seite wird automatisch aktualisiert.</p>
+            <p class="session-warning-strong">Automatische Aktualisierung in <span id="appUpdateCountdown">10</span> Sekunden.</p>
+            <div class="session-warning-note">Die Anmeldung bleibt bestehen. Nicht gespeicherte Eingaben auf der Seite können durch das Neuladen verloren gehen.</div>
+            <button type="button" class="btn session-confirm-btn" onclick="reloadForAppUpdate()">🔄 Jetzt aktualisieren</button>
+        </div>
+    </div>
+
+    <script src="app.js?v=6.8.1"></script>
 </body>
 </html>
