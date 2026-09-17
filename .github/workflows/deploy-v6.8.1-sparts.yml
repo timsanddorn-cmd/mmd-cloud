@@ -1,0 +1,36 @@
+name: Deploy MMD Cloud v6.8.1 from small chunks
+
+on:
+  push:
+    paths:
+      - 'deploy-v6.8.1.spart.12'
+
+permissions:
+  contents: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build release files
+        shell: bash
+        run: |
+          cat deploy-v6.8.1.spart.* | base64 -d > /tmp/mmd-v6.8.1.tar.xz
+          mkdir -p /tmp/mmd-v6.8.1
+          tar -xJf /tmp/mmd-v6.8.1.tar.xz -C /tmp/mmd-v6.8.1
+          cp /tmp/mmd-v6.8.1/index.html ./index.html
+          cp /tmp/mmd-v6.8.1/app.js ./app.js
+          cp /tmp/mmd-v6.8.1/style.css ./style.css
+          cp /tmp/mmd-v6.8.1/database.rules.final.json ./database.rules.final.json
+          cp /tmp/mmd-v6.8.1/PROJECT_STATUS.md ./PROJECT_STATUS_v6.8.1.md
+          rm -f deploy-v6.8.1.spart.* deploy-v6.8.1.xzpart.* deploy-v6.8.1.part.* deploy-v6.8.1.payload
+          rm -f .github/workflows/deploy-v6.8.1.yml .github/workflows/deploy-v6.8.1-chunks.yml .github/workflows/deploy-v6.8.1-xz.yml .github/workflows/deploy-v6.8.1-sparts.yml
+      - name: Commit release
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Release MMD Cloud v6.8.1"
+          git push
