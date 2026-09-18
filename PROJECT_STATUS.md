@@ -1,23 +1,23 @@
 # MMD Cloud – PROJECT STATUS
 
-**Aktuell bestätigte stabile Live-Version:** v6.8.5b  
+**Aktuell bestätigte stabile Live-Version:** v6.8.5c  
 **Aktueller Entwicklungsstand:** v6.8.5c  
-**Status v6.8.5c:** 🟡 KLEINE KORREKTUR / LIVE-GEGENCHECK AUSSTEHEND  
+**Status v6.8.5c:** ✅ LIVE / STABIL BESTÄTIGT  
 **Datum:** 18.09.2026
 
 ---
 
 ## 1. Verbindliche Basis
 
-**v6.8.5b = bestätigte stabile Live-Version und Rollback-Basis**
+**v6.8.5c = bestätigte stabile Live-Version und Rollback-Basis**
 
-v6.8.5c enthält ausschließlich die Korrektur der Accessibility-Warnung bei der Mitarbeiter-Empfängerauswahl. Die sichtbare Beschriftung „Mitarbeiter:“ ist nun korrekt als Gruppenbeschriftung mit der Checkbox-Gruppe verknüpft. Es wurden keine Firebase-, Auth-, Rollen-, Berechtigungs- oder Datenänderungen vorgenommen.
+v6.8.5c enthält ausschließlich die Korrektur der Accessibility-Warnung bei der Mitarbeiter-Empfängerauswahl. Die sichtbare Beschriftung „Mitarbeiter:“ ist korrekt als Gruppenbeschriftung mit der Checkbox-Gruppe verknüpft. Der Live-Gegencheck wurde erfolgreich abgeschlossen; in den Browser-DevTools werden keine Probleme mehr angezeigt. Es wurden keine Firebase-, Auth-, Rollen-, Berechtigungs- oder Datenänderungen vorgenommen.
 
-**v6.8.5b = bestätigte stabile Live-Version**
+**v6.8.5b = vorherige stabile Live-Version**
 
 Der Live-Test von v6.8.5b wurde am 18.09.2026 erfolgreich und ohne funktionale Fehler abgeschlossen.
 
-**v6.8.5b ist damit die aktuelle stabile Rollback-Basis.**
+**v6.8.5c ist damit die aktuelle stabile Rollback-Basis.**
 
 ---
 
@@ -123,13 +123,13 @@ Bestätigt wurden:
 16. Berechtigungen, normaler Newsfeed und bisherige Mitarbeiteransicht wurden erfolgreich gegengeprüft.
 
 Hinweis:
-- In den Browser-DevTools erscheint eine Accessibility-/Verbesserungswarnung **„No label associated with a form field“**.
-- Dies ist kein funktionaler Laufzeitfehler und hat den Live-Test nicht beeinträchtigt.
+- Die zuvor angezeigte Accessibility-/Verbesserungswarnung **„No label associated with a form field“** wurde mit v6.8.5c behoben.
+- Der Live-Gegencheck zeigt keine Probleme mehr in den Browser-DevTools.
 
 ---
 
 ## 7. Rollback
 
-**v6.8.5b = aktuelle stabile Rollback-Basis**
+**v6.8.5c = aktuelle stabile Rollback-Basis**
 
 Die Firebase Rules müssen bei einem Rollback auf diesen Stand nicht verändert werden, da v6.8.5b keine Rules-Änderung enthält.
