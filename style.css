@@ -1,5 +1,5 @@
 /* ============================================================
-   MMD CLOUD – Medical Center Web-App  |  style.css v6.8.2
+   MMD CLOUD – Medical Center Web-App  |  style.css v6.8.3
    ============================================================ */
 
 :root {
@@ -2161,4 +2161,171 @@ html, body { max-width: 100%; overflow-x: hidden; }
     .session-kick-btn{width:100%;}
     .release-version-grid{grid-template-columns:1fr;}
     .session-warning-card{width:calc(100vw - 24px);padding:22px 18px;}
+}
+
+
+/* ============================================================
+   v6.8.3 – Navigation & Verwaltungsübersicht
+   ============================================================ */
+.nav-group {
+    position: relative;
+    flex: 1 1 calc(20% - 8px);
+    min-width: 165px;
+}
+.nav-group > .tab-btn {
+    width: 100%;
+    min-width: 0;
+    height: 100%;
+    flex: none;
+}
+.nav-chevron {
+    font-size: 11px;
+    opacity: .75;
+    transition: transform .18s ease;
+}
+.nav-group.open .nav-chevron { transform: rotate(180deg); }
+
+.nav-group-menu {
+    display: none;
+    position: absolute;
+    z-index: 120;
+    left: 0;
+    top: calc(100% + 7px);
+    min-width: 275px;
+    width: max-content;
+    max-width: min(360px, 90vw);
+    padding: 8px;
+    border-radius: 13px;
+    border: 1px solid var(--border);
+    background: rgba(8, 12, 20, .98);
+    box-shadow: 0 18px 40px rgba(0, 0, 0, .35);
+}
+.nav-group.open .nav-group-menu {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.nav-sub-btn {
+    appearance: none;
+    width: 100%;
+    border: 1px solid transparent;
+    background: rgba(30, 41, 59, .55);
+    color: var(--text-muted);
+    border-radius: 9px;
+    padding: 10px 12px;
+    text-align: left;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 750;
+    cursor: pointer;
+    transition: .18s ease;
+}
+.nav-sub-btn:hover,
+.nav-sub-btn.active {
+    color: var(--primary);
+    border-color: rgba(56, 189, 248, .35);
+    background: rgba(56, 189, 248, .12);
+}
+.nav-group-toggle.active {
+    background: var(--grad-primary);
+    color: #fff;
+    border-color: var(--primary);
+    box-shadow: 0 0 14px rgba(56, 189, 248, .35);
+}
+.tab-btn-calendar {
+    border-color: rgba(56, 189, 248, .35);
+}
+
+.admin-subtabs-priority .admin-tab-danger {
+    color: var(--danger);
+    border-color: rgba(244, 63, 94, .25);
+}
+.admin-subtabs-priority .admin-tab-danger:hover,
+.admin-subtabs-priority .admin-tab-danger.active {
+    background: rgba(244, 63, 94, .13);
+    color: var(--danger);
+    border-color: rgba(244, 63, 94, .5);
+}
+
+.admin-danger-zone {
+    background: rgba(244, 63, 94, .055);
+    padding: 20px;
+    border-radius: 16px;
+    border: 1px solid rgba(244, 63, 94, .42);
+    box-shadow: inset 0 0 0 1px rgba(244, 63, 94, .04);
+}
+.admin-danger-kicker {
+    display: inline-flex;
+    margin-bottom: 9px;
+    padding: 3px 8px;
+    border-radius: 999px;
+    color: #fff;
+    background: rgba(244, 63, 94, .82);
+    font-size: 10px;
+    line-height: 1;
+    font-weight: 900;
+    letter-spacing: .8px;
+}
+
+.role-perm-section {
+    border-top: 1px solid rgba(148, 163, 184, .10);
+    padding-top: 12px;
+}
+.role-perm-section:first-child {
+    border-top: 0;
+    padding-top: 0;
+}
+.role-perm-section-toggle {
+    position: relative;
+    cursor: pointer;
+    user-select: none;
+    padding-right: 26px;
+    outline: none;
+}
+.role-perm-section-toggle::after {
+    content: "▾";
+    position: absolute;
+    right: 3px;
+    top: 0;
+    color: var(--text-muted);
+    transition: transform .18s ease;
+}
+.role-perm-section.collapsed .role-perm-section-toggle::after {
+    transform: rotate(-90deg);
+}
+.role-perm-section.collapsed > :not(.role-perm-section-toggle) {
+    display: none !important;
+}
+.role-perm-section-toggle:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 4px;
+    border-radius: 4px;
+}
+
+@media (max-width: 768px) {
+    .nav-group {
+        flex: 1 1 100%;
+        min-width: 0;
+    }
+    .nav-group-menu {
+        position: static;
+        width: 100%;
+        max-width: none;
+        min-width: 0;
+        margin-top: 6px;
+        box-shadow: none;
+        background: rgba(8, 12, 20, .62);
+    }
+    .nav-group.open .nav-group-menu {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .nav-sub-btn {
+        text-align: center;
+        font-size: 12px;
+    }
+}
+
+@media (max-width: 480px) {
+    .nav-group.open .nav-group-menu { grid-template-columns: 1fr; }
 }
