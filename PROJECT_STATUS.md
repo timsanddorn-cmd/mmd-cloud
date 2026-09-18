@@ -1,8 +1,8 @@
 # MMD Cloud – PROJECT STATUS
 
 **Aktuell bestätigte stabile Live-Version:** v6.8.5c  
-**Aktueller Entwicklungsstand:** v6.8.5c  
-**Status v6.8.5c:** ✅ LIVE / STABIL BESTÄTIGT  
+**Aktueller Entwicklungsstand:** v6.8.5d  
+**Status v6.8.5d:** 🟡 KLEINE TEXTKORREKTUR / LIVE-GEGENCHECK AUSSTEHEND  
 **Datum:** 18.09.2026
 
 ---
@@ -10,6 +10,8 @@
 ## 1. Verbindliche Basis
 
 **v6.8.5c = bestätigte stabile Live-Version und Rollback-Basis**
+
+v6.8.5d korrigiert ausschließlich zwei veraltete 20-Minuten-Textangaben auf den aktuellen 30-Minuten-Stand. Die technische Inaktivitätsgrenze war bereits korrekt auf 30 Minuten gesetzt. Die Presence-/„Im Dienst“-Logik wurde geprüft und nicht verändert.
 
 v6.8.5c enthält ausschließlich die Korrektur der Accessibility-Warnung bei der Mitarbeiter-Empfängerauswahl. Die sichtbare Beschriftung „Mitarbeiter:“ ist korrekt als Gruppenbeschriftung mit der Checkbox-Gruppe verknüpft. Der Live-Gegencheck wurde erfolgreich abgeschlossen; in den Browser-DevTools werden keine Probleme mehr angezeigt. Es wurden keine Firebase-, Auth-, Rollen-, Berechtigungs- oder Datenänderungen vorgenommen.
 
