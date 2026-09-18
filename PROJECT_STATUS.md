@@ -1,9 +1,9 @@
 # MMD Cloud – PROJECT STATUS
 
 **Aktuell bestätigte stabile Live-Version:** v6.8.5c  
-**Aktueller Entwicklungsstand:** v6.8.5f  
-**Status v6.8.5f:** 🟡 KOMPATIBILITÄTSFIX „IM DIENST“ / LIVE-GEGENCHECK AUSSTEHEND  
-**Datum:** 18.09.2026
+**Aktueller Entwicklungsstand:** v6.8.5g  
+**Status v6.8.5g:** 🟡 LIVE-GEGENCHECK AUSSTEHEND  
+**Datum:** 19.09.2026
 
 ---
 
@@ -11,99 +11,48 @@
 
 **v6.8.5c = bestätigte stabile Live-Version und Rollback-Basis**
 
-v6.8.5d korrigiert ausschließlich veraltete Zeitangaben auf den aktuellen 30-Minuten-Stand. Die technische Inaktivitätsgrenze ist korrekt auf 30 Minuten gesetzt. Die Presence-/„Im Dienst“-Logik wurde erneut geprüft und nicht verändert.
-
-v6.8.5c enthält ausschließlich die Korrektur der Accessibility-Warnung bei der Mitarbeiter-Empfängerauswahl. Die sichtbare Beschriftung „Mitarbeiter:“ ist korrekt als Gruppenbeschriftung mit der Checkbox-Gruppe verknüpft. Der Live-Gegencheck wurde erfolgreich abgeschlossen; in den Browser-DevTools werden keine Probleme mehr angezeigt. Es wurden keine Firebase-, Auth-, Rollen-, Berechtigungs- oder Datenänderungen vorgenommen.
-
-**v6.8.5b = vorherige stabile Live-Version**
-
-Der Live-Test von v6.8.5b wurde am 18.09.2026 erfolgreich und ohne funktionale Fehler abgeschlossen.
-
-**v6.8.5c ist damit die aktuelle stabile Rollback-Basis.**
+Der aktuelle Entwicklungsstand v6.8.5g baut auf dem bestehenden stabilen Stand auf. Firebase Auth, Registrierung, Login, Rollen, Berechtigungen, stabile Account-IDs, Benutzerstruktur und Realtime-Database-Rules wurden nicht verändert.
 
 ---
 
-## v6.8.5f – Rückwärtskompatible „Im Dienst“-Anzeige
+## 2. v6.8.5g – Inaktivitätsautomatik entfernt
 
-Die Live-Anzeige unterstützt jetzt zusätzlich ältere, bereits geöffnete MMD-Cloud-Sitzungen, die noch das frühere Presence-Format verwenden.
+Die bisherige automatische Inaktivitätsabmeldung wurde vollständig aus der Anwendung entfernt.
 
-Korrektur:
-- aktuelle Presence-Einträge mit Heartbeat werden weiterhin über die Frischeprüfung bewertet,
-- ältere strukturierte Presence-Einträge ohne Heartbeat-Felder werden wieder in „Im Dienst“ berücksichtigt,
-- sehr alte reine Namenseinträge werden nur angezeigt, wenn sie eindeutig einem freigeschalteten Mitarbeiterkonto zugeordnet werden können,
-- gesperrte bzw. nicht freigeschaltete Konten werden nicht als Legacy-Dienststatus übernommen,
-- bestehendes `onDisconnect()` kann Legacy-Einträge beim Verbindungsende weiterhin entfernen,
-- keine Firebase-Rules, Auth-, Rollen- oder Benutzerdaten geändert.
+Entfernt wurden:
+- Inaktivitäts-Timer,
+- Aktivitätsüberwachung über Maus, Tastatur, Scrollen und Fensterfokus,
+- Warnfenster „Bist du noch im Dienst?“,
+- Bestätigungs-Countdown,
+- automatische Abmeldung wegen Inaktivität.
 
-Ziel ist, dass Mitarbeiter mit bereits länger geöffneten Browsern wieder sichtbar werden, ohne dass sie selbst einen Hard Refresh oder eine Neuanmeldung durchführen müssen.
-
----
-
-## v6.8.5e – „Im Dienst“-Anzeige
-
-Die bisherige Presence-Stale-Grenze von 3 Minuten war deutlich kürzer als die 30-Minuten-Inaktivitätslogik. Dadurch konnten weiterhin angemeldete Mitarbeiter aus der „Im Dienst“-Anzeige verschwinden, obwohl ihre Sitzung noch aktiv war.
-
-Korrektur:
-- Presence-Stale-Grenze auf 31 Minuten angehoben,
-- 30-Minuten-Inaktivitätsgrenze bleibt unverändert,
-- 30-Sekunden-Warnung bleibt unverändert,
-- Heartbeat bleibt bei 30 Sekunden,
-- `onDisconnect()` und „Dienst beenden“ entfernen die Presence weiterhin sofort,
-- keine Firebase-Rules geändert.
-
-Live-Gegencheck ausstehend: zwei Mitarbeiter gleichzeitig anmelden und prüfen, ob beide zuverlässig unter „Im Dienst“ sichtbar bleiben.
+Unverändert bleiben:
+- der normale Button **„Dienst beenden“**,
+- der tägliche erzwungene Dienstwechsel,
+- die Master-Admin-Funktion **„Aus Dienst entfernen“**,
+- Firebase Auth und alle bestehenden Sicherheitsregeln.
 
 ---
 
-## 2. v6.8.5b – Profilbild-Übersicht
+## 3. v6.8.5g – „Im Dienst“-Anzeige bereinigt
 
-Im Bereich **Mitarbeiter** gibt es für den Master Admin einen neuen Button **„📋 Foto-Liste“** direkt neben dem Foto-Ordner.
+Die Anzeige **„Im Dienst“** basiert jetzt ausschließlich auf aktuellen Presence-Einträgen mit regelmäßigem Heartbeat.
 
-Die Liste:
-- ist ausschließlich für Master Admin sichtbar,
-- zeigt bei fehlendem Profilbild direkt den Button **„📨 Foto-Hinweis“**,
-- verschickt darüber einen automatisch personalisierten Hinweis mit dem Namen des Mitarbeiters,
-- weist zusätzlich auf das **Besprechungsoutfit** hin,
-- bittet darum, sich bei Motiv und Position an den bereits vorhandenen Mitarbeiterfotos zu orientieren,
-- stellt klar, dass das Foto **nicht selbst bearbeitet werden muss**, weil die Bearbeitung durch **DN 07 Tim Sanddorn** übernommen wird,
-- nennt weiterhin **Fabio Leroux** als Unterstützung bei der Aufnahme,
-- der versendete Hinweis erscheint automatisch unter **„Mitarbeiterhinweise Übersicht“** und behält die normale Lesebestätigung,
-- enthält alle registrierten Mitarbeiter, auch neu registrierte noch nicht freigeschaltete Konten,
-- ist nach Dienstnummer sortiert,
-- zeigt Dienstnummer, Vorname und Nachname,
-- markiert Mitarbeiter ohne eigenes Profilbild als offen,
-- markiert Mitarbeiter mit eigenem Profilbild automatisch mit ✅,
-- aktualisiert sich automatisch über den bestehenden Live-Listener von `data/users`,
-- setzt den Status wieder auf offen, wenn ein Profilbild auf das Standardlogo zurückgesetzt wird.
+Technischer Stand:
+- Heartbeat alle 30 Sekunden,
+- ein Presence-Eintrag gilt nach 3 Minuten ohne neues Lebenszeichen als nicht mehr aktiv,
+- aktuelle Einträge benötigen `lastSeen`, `clientVersion` und `authUid`,
+- alte Legacy-/Altdaten ohne diese Felder werden nicht mehr als aktiver Dienst angezeigt,
+- mehrere Browser desselben Mitarbeiters werden weiterhin nur einmal in der normalen „Im Dienst“-Anzeige dargestellt,
+- `onDisconnect()` und **„Dienst beenden“** entfernen aktuelle Presence-Einträge weiterhin direkt.
 
-Es wird dafür **kein neuer Firebase-Datenpfad** angelegt. Der Status wird direkt aus dem bestehenden Feld `photoUrl` abgeleitet.
-
----
-
-## 3. v6.8.5b – Mitarbeiterhinweis an mehrere Empfänger
-
-Der bestehende Mitarbeiterhinweis bleibt ein persönlicher Hinweis und kein Chat.
-
-Neu:
-- mehrere freigeschaltete Mitarbeiter können gleichzeitig ausgewählt werden,
-- Auswahl erfolgt über Checkboxen,
-- Dienstnummer steht in der Auswahl vorne, z. B. **DN 05 – Mike Gonzalo**,
-- Empfänger sind nach Dienstnummer sortiert,
-- jeder ausgewählte Mitarbeiter erhält einen eigenen Hinweis,
-- jeder Empfänger besitzt weiterhin seine eigene Lesebestätigung,
-- Lesestatus und Löschfunktion funktionieren weiterhin pro Mitarbeiter und Hinweis.
-
-Die vorhandene Datenstruktur bleibt unverändert:
-
-`data/employeeNotices/{recipientId}/{noticeId}`
-
-Mehrere Hinweise werden beim Senden gesammelt in einem Firebase-Update geschrieben.
+Damit beeinflussen alte, stehengebliebene Presence-Daten die sichtbare Dienstanzeige nicht mehr.
 
 ---
 
 ## 4. Sicherheit / Firebase
 
-Für v6.8.5b wurden **keine Firebase Rules geändert**.
+Für v6.8.5g wurden **keine Firebase Rules geändert**.
 
 Unverändert bleiben insbesondere:
 - Firebase Auth
@@ -115,55 +64,21 @@ Unverändert bleiben insbesondere:
 - Benutzerverwaltung
 - bestehende Realtime-Database-Rules
 
-Die Foto-Liste ist zusätzlich in der Oberfläche und in der JavaScript-Funktion auf Master Admin begrenzt.
+---
+
+## 5. Live-Gegencheck v6.8.5g
+
+Noch zu prüfen:
+1. aktuelle Mitarbeiter mit neuer Version erscheinen zuverlässig unter **„Im Dienst“**,
+2. alte Legacy-/Altdaten erscheinen nicht mehr,
+3. **„Dienst beenden“** entfernt den Mitarbeiter direkt,
+4. Browser-/Verbindungsende entfernt bzw. verwirft den Presence-Status,
+5. keine automatische Inaktivitätswarnung oder Inaktivitätsabmeldung erscheint mehr.
 
 ---
 
-## 5. Geänderte Dateien v6.8.5b
+## 6. Rollback
 
-- `app.js`
-- `index.html`
-- `style.css`
-- `PROJECT_STATUS.md`
+**v6.8.5c = aktuelle bestätigte stabile Rollback-Basis**
 
-Unverändert:
-- `database.rules.final.json`
-- `mdlogo.png`
-
----
-
-## 6. Live-Test v6.8.5b
-
-Die Überschrift **„Mitarbeiterhinweise – Übersicht“** wurde außerdem zu **„Mitarbeiterhinweise Übersicht“** geändert.
-
-Der Live-Test wurde am **18.09.2026 erfolgreich abgeschlossen**.
-
-Bestätigt wurden:
-1. Master Admin sieht **„📋 Foto-Liste“**.
-2. Nicht-Master sieht Button und Foto-Liste nicht.
-3. Foto-Liste zeigt Dienstnummer, Vorname und Nachname korrekt und nach DN sortiert.
-4. Mitarbeiter ohne eigenes Foto werden als offen angezeigt.
-5. Eigenes Foto über **„Foto einstellen“** setzt den Status automatisch auf ✅.
-6. Zurücksetzen auf das Standardlogo setzt den Status wieder auf offen.
-7. Neu registrierte Konten erscheinen automatisch in der Foto-Liste.
-8. **„📨 Foto-Hinweis“** erzeugt den vorgesehenen personalisierten Mitarbeiterhinweis.
-9. Der Hinweis erscheint unter **„Mitarbeiterhinweise Übersicht“**.
-10. Lesebestätigung mit Datum/Uhrzeit funktioniert.
-11. Mehrere Empfänger können per Checkbox ausgewählt werden.
-12. Die Empfängeranzeige beginnt mit der Dienstnummer.
-13. Ein Hinweis kann gleichzeitig an mindestens zwei Mitarbeiter gesendet werden.
-14. Jeder Empfänger erhält einen eigenen Hinweis.
-15. Die Lesebestätigungen funktionieren weiterhin getrennt.
-16. Berechtigungen, normaler Newsfeed und bisherige Mitarbeiteransicht wurden erfolgreich gegengeprüft.
-
-Hinweis:
-- Die zuvor angezeigte Accessibility-/Verbesserungswarnung **„No label associated with a form field“** wurde mit v6.8.5c behoben.
-- Der Live-Gegencheck zeigt keine Probleme mehr in den Browser-DevTools.
-
----
-
-## 7. Rollback
-
-**v6.8.5c = aktuelle stabile Rollback-Basis**
-
-Die Firebase Rules müssen bei einem Rollback auf diesen Stand nicht verändert werden, da v6.8.5b keine Rules-Änderung enthält.
+Die Firebase Rules müssen bei einem Rollback nicht verändert werden.
