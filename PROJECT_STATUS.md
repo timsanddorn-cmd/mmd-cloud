@@ -1,8 +1,8 @@
 # MMD Cloud – PROJECT STATUS
 
 **Aktuell bestätigte stabile Live-Version:** v6.8.5c  
-**Aktueller Entwicklungsstand:** v6.8.5d  
-**Status v6.8.5d:** 🟡 KLEINE TEXTKORREKTUR / LIVE-GEGENCHECK AUSSTEHEND  
+**Aktueller Entwicklungsstand:** v6.8.5e  
+**Status v6.8.5e:** 🟡 BUGFIX „IM DIENST“ / LIVE-GEGENCHECK AUSSTEHEND  
 **Datum:** 18.09.2026
 
 ---
@@ -20,6 +20,22 @@ v6.8.5c enthält ausschließlich die Korrektur der Accessibility-Warnung bei der
 Der Live-Test von v6.8.5b wurde am 18.09.2026 erfolgreich und ohne funktionale Fehler abgeschlossen.
 
 **v6.8.5c ist damit die aktuelle stabile Rollback-Basis.**
+
+---
+
+## v6.8.5e – „Im Dienst“-Anzeige
+
+Die bisherige Presence-Stale-Grenze von 3 Minuten war deutlich kürzer als die 30-Minuten-Inaktivitätslogik. Dadurch konnten weiterhin angemeldete Mitarbeiter aus der „Im Dienst“-Anzeige verschwinden, obwohl ihre Sitzung noch aktiv war.
+
+Korrektur:
+- Presence-Stale-Grenze auf 31 Minuten angehoben,
+- 30-Minuten-Inaktivitätsgrenze bleibt unverändert,
+- 30-Sekunden-Warnung bleibt unverändert,
+- Heartbeat bleibt bei 30 Sekunden,
+- `onDisconnect()` und „Dienst beenden“ entfernen die Presence weiterhin sofort,
+- keine Firebase-Rules geändert.
+
+Live-Gegencheck ausstehend: zwei Mitarbeiter gleichzeitig anmelden und prüfen, ob beide zuverlässig unter „Im Dienst“ sichtbar bleiben.
 
 ---
 
