@@ -182,7 +182,7 @@ const db = firebase.database();
 const auth = firebase.auth();
 const FIREBASE_AUTH_EMAIL_DOMAIN = 'mmd-login.invalid';
 
-const APP_VERSION = 'v6.8.3';
+const APP_VERSION = 'v6.8.4';
 const PRESENCE_HEARTBEAT_MS = 30 * 1000;
 const PRESENCE_STALE_MS = 3 * 60 * 1000;
 const INACTIVITY_LIMIT_MS = 30 * 60 * 1000;
@@ -246,6 +246,11 @@ let cachedUsers       = {};
 let cachedExams       = {};
 let cachedSubmissions = {};
 let cachedNews        = {};
+let cachedMyEmployeeNotices = {};
+let cachedManagedEmployeeNotices = {};
+let employeeNoticeOwnRef = null;
+let employeeNoticeAdminRef = null;
+let activeEmployeeNoticeId = '';
 let cachedArchiv      = {};
 let cachedAuditLogs   = {};
 let cachedCalendar    = {};
@@ -295,6 +300,16 @@ let hierarchieDaten = JSON.parse(JSON.stringify(defaultHierarchieData));
 
 /* ── Vollständiger Gesamt-Changelog (Entwicklungsverlauf) ───── */
 const systemChangelogs = [
+    {
+        id: "sys_v6_8_4", version: "v6.8.4", date: "18.09.2026", ts: 1789714800000,
+        category: "Neue Funktion", title: "Persönliche Mitarbeiterhinweise",
+        changes: [
+            "Berechtigte Rollen können im Newsfeed gezielte Hinweise an einzelne Mitarbeiter senden.",
+            "Neue persönliche Hinweise erscheinen beim Login oder während einer laufenden Sitzung als bestätigungspflichtiges Pop-up.",
+            "Lesestatus und Löschrechte für Mitarbeiterhinweise werden getrennt über die Rollenberechtigungen gesteuert.",
+            "Persönliche Hinweise bleiben vom allgemeinen Nachrichtenaustausch getrennt und besitzen keine Antwortfunktion."
+        ]
+    },
     {
         id: "sys_v6_8_3", version: "v6.8.3", date: "18.09.2026", ts: 1789711200000,
         category: "Verbesserung", title: "Navigation & Verwaltung übersichtlicher",
@@ -1084,6 +1099,7 @@ const defaultRoles = {
         isAdmin:true, isMasterAdmin:true, canViewArchive:true, canEditAllPatients:true, delCalendar:true, canManagePhotos:true, delPhotos:true,
         isInstructor:true, canManageInstructors:true, canManageExams:true,
         canPostNews:true, canApproveNews:true, canViewNewsRead:true,
+        canSendEmployeeNotices:true, canViewEmployeeNoticeRead:true, delEmployeeNotices:true,
         canEditPrices:true, canEditGuide:true, canEditCommands:true, canEditLinks:true,
         canViewChiefMaterials:true, canEditChiefMaterials:true,
         canManageMemberAccess:true, canManageMaintenance:true,
@@ -1097,6 +1113,7 @@ const defaultRoles = {
         isAdmin:true, isMasterAdmin:false, canViewArchive:true, canEditAllPatients:true, delCalendar:true, canManagePhotos:true, delPhotos:true,
         isInstructor:true, canManageInstructors:true, canManageExams:true,
         canPostNews:true, canApproveNews:true, canViewNewsRead:true,
+        canSendEmployeeNotices:true, canViewEmployeeNoticeRead:true, delEmployeeNotices:true,
         canEditPrices:true, canEditGuide:true, canEditCommands:true, canEditLinks:true,
         canViewChiefMaterials:true, canEditChiefMaterials:true,
         canManageMemberAccess:true, canManageMaintenance:true,
@@ -1110,6 +1127,7 @@ const defaultRoles = {
         isAdmin:false, isMasterAdmin:false, canViewArchive:false, canEditAllPatients:false, delCalendar:false, canManagePhotos:false, delPhotos:false,
         isInstructor:true, canManageInstructors:true, canManageExams:true,
         canPostNews:true, canApproveNews:true, canViewNewsRead:true,
+        canSendEmployeeNotices:true, canViewEmployeeNoticeRead:true, delEmployeeNotices:false,
         canEditPrices:false, canEditGuide:false, canEditCommands:false, canEditLinks:false,
         canViewChiefMaterials:false, canEditChiefMaterials:false,
         canManageMemberAccess:true, canManageMaintenance:false,
@@ -1124,6 +1142,7 @@ const defaultRoles = {
         isAdmin:false, isMasterAdmin:false, canViewArchive:false, canEditAllPatients:false, delCalendar:false, canManagePhotos:false, delPhotos:false,
         isInstructor:true, canManageInstructors:false, canManageExams:false,
         canPostNews:false, canApproveNews:false, canViewNewsRead:false,
+        canSendEmployeeNotices:false, canViewEmployeeNoticeRead:false, delEmployeeNotices:false,
         canEditPrices:false, canEditGuide:false, canEditCommands:false, canEditLinks:false,
         canViewChiefMaterials:false, canEditChiefMaterials:false,
         canManageMemberAccess:false, canManageMaintenance:false,
@@ -1138,6 +1157,7 @@ const defaultRoles = {
         isAdmin:false, isMasterAdmin:false, canViewArchive:false, canEditAllPatients:false, delCalendar:false, canManagePhotos:false, delPhotos:false,
         isInstructor:false, canManageInstructors:false, canManageExams:false,
         canPostNews:false, canApproveNews:false, canViewNewsRead:false,
+        canSendEmployeeNotices:false, canViewEmployeeNoticeRead:false, delEmployeeNotices:false,
         canEditPrices:false, canEditGuide:false, canEditCommands:false, canEditLinks:false,
         canViewChiefMaterials:false, canEditChiefMaterials:false,
         canManageMemberAccess:false, canManageMaintenance:false,
@@ -1152,6 +1172,7 @@ const defaultRoles = {
         isAdmin:false, isMasterAdmin:false, canViewArchive:false, canEditAllPatients:false, delCalendar:false, canManagePhotos:false, delPhotos:false,
         isInstructor:false, canManageInstructors:false, canManageExams:false,
         canPostNews:false, canApproveNews:false, canViewNewsRead:false,
+        canSendEmployeeNotices:false, canViewEmployeeNoticeRead:false, delEmployeeNotices:false,
         canEditPrices:false, canEditGuide:false, canEditCommands:false, canEditLinks:false,
         canViewChiefMaterials:false, canEditChiefMaterials:false,
         canManageMemberAccess:false, canManageMaintenance:false,
@@ -1166,6 +1187,7 @@ const defaultRoles = {
         isAdmin:false, isMasterAdmin:false, canViewArchive:false, canEditAllPatients:false, delCalendar:false, canManagePhotos:false, delPhotos:false,
         isInstructor:false, canManageInstructors:false, canManageExams:false,
         canPostNews:false, canApproveNews:false, canViewNewsRead:false,
+        canSendEmployeeNotices:false, canViewEmployeeNoticeRead:false, delEmployeeNotices:false,
         canEditPrices:false, canEditGuide:false, canEditCommands:false, canEditLinks:false,
         canViewChiefMaterials:false, canEditChiefMaterials:false,
         canManageMemberAccess:false, canManageMaintenance:false,
@@ -1180,6 +1202,7 @@ const defaultRoles = {
         isAdmin:false, isMasterAdmin:false, canViewArchive:false, canEditAllPatients:false, delCalendar:true, canManagePhotos:false, delPhotos:false,
         isInstructor:false, canManageInstructors:false, canManageExams:false,
         canPostNews:true, canApproveNews:false, canViewNewsRead:true,
+        canSendEmployeeNotices:false, canViewEmployeeNoticeRead:false, delEmployeeNotices:false,
         canEditPrices:false, canEditGuide:false, canEditCommands:false, canEditLinks:false,
         canViewChiefMaterials:false, canEditChiefMaterials:false,
         canManageMemberAccess:false, canManageMaintenance:false,
@@ -1194,6 +1217,7 @@ const defaultRoles = {
         isAdmin:false, isMasterAdmin:false, canViewArchive:false, canEditAllPatients:false, delCalendar:false, canManagePhotos:true, delPhotos:true,
         isInstructor:false, canManageInstructors:false, canManageExams:false,
         canPostNews:true, canApproveNews:true, canViewNewsRead:true,
+        canSendEmployeeNotices:true, canViewEmployeeNoticeRead:true, delEmployeeNotices:false,
         canEditPrices:false, canEditGuide:false, canEditCommands:false, canEditLinks:false,
         canViewChiefMaterials:false, canEditChiefMaterials:false,
         canManageMemberAccess:true, canManageMaintenance:false,
@@ -1208,6 +1232,7 @@ const defaultRoles = {
         isAdmin:false, isMasterAdmin:false, canViewArchive:false, canEditAllPatients:false, delCalendar:false, canManagePhotos:false, delPhotos:false,
         isInstructor:false, canManageInstructors:false, canManageExams:false,
         canPostNews:false, canApproveNews:false, canViewNewsRead:false,
+        canSendEmployeeNotices:false, canViewEmployeeNoticeRead:false, delEmployeeNotices:false,
         canEditPrices:false, canEditGuide:false, canEditCommands:false, canEditLinks:false,
         canViewChiefMaterials:false, canEditChiefMaterials:false,
         canManageMemberAccess:false, canManageMaintenance:false,
@@ -1303,6 +1328,9 @@ const ROLE_PROPERTY_MAP = {
     roleFlagApproveNews: 'canApproveNews',
     roleFlagViewNewsRead: 'canViewNewsRead',
     delFlagNews: 'delNews',
+    roleFlagSendEmployeeNotices: 'canSendEmployeeNotices',
+    roleFlagViewEmployeeNoticeRead: 'canViewEmployeeNoticeRead',
+    delFlagEmployeeNotices: 'delEmployeeNotices',
     roleFlagInstructor: 'isInstructor',
     roleFlagManageInstructors: 'canManageInstructors',
     roleFlagManageExams: 'canManageExams',
@@ -2417,6 +2445,11 @@ function applyUserPermissions(user) {
     const npBtn = document.getElementById('btnOpenPostNews');
     if (npBtn) npBtn.style.display = canPostDirect ? 'inline-block' : 'none';
 
+    const employeeNoticeBtn = document.getElementById('btnOpenEmployeeNoticeComposer');
+    const employeeNoticePerms = getEmployeeNoticePermissions();
+    if (employeeNoticeBtn) employeeNoticeBtn.style.display = employeeNoticePerms.canSend ? 'inline-flex' : 'none';
+    refreshEmployeeNoticeListeners();
+
     const propNewsBtn = document.getElementById('btnProposeNews');
     if (propNewsBtn) propNewsBtn.style.display = canPostDirect ? 'none' : 'inline-block';
 
@@ -2672,6 +2705,7 @@ async function refreshUsersFromFirebase() {
         renderAdminUserTable(cachedUsers);
         renderStaffDirectory();
         renderExamTab();
+        renderEmployeeNoticeRecipientOptions();
         return cachedUsers;
     } catch (err) {
         console.error('Mitarbeiterliste konnte nicht aktualisiert werden:', err);
@@ -2868,6 +2902,8 @@ function startFirebaseListeners() {
         renderPasswordChangeStatusPanel();
         renderCalendarMonth();
         renderStaffDirectory();
+        renderEmployeeNoticeRecipientOptions();
+        renderEmployeeNoticeFeedPanels();
     });
     db.ref('data/exams').on('value', s => {
         const raw = s.val() || {};
@@ -2967,6 +3003,19 @@ function cleanupSessionLifecycleServices() {
         clientReleaseRef.off();
         clientReleaseRef = null;
     }
+    if (employeeNoticeOwnRef) {
+        employeeNoticeOwnRef.off();
+        employeeNoticeOwnRef = null;
+    }
+    if (employeeNoticeAdminRef) {
+        employeeNoticeAdminRef.off();
+        employeeNoticeAdminRef = null;
+    }
+    cachedMyEmployeeNotices = {};
+    cachedManagedEmployeeNotices = {};
+    activeEmployeeNoticeId = '';
+    const employeeNoticeModal = document.getElementById('employeeNoticePopupModal');
+    if (employeeNoticeModal) employeeNoticeModal.style.display = 'none';
     const inactivityModal = document.getElementById('inactivityWarningModal');
     if (inactivityModal) inactivityModal.style.display = 'none';
     const updateModal = document.getElementById('appUpdateModal');
@@ -5949,6 +5998,358 @@ function renderChangelogModal() {
     }).join('');
 }
 
+/* ── PERSÖNLICHE MITARBEITERHINWEISE ───────────────────────── */
+function getEmployeeNoticePermissions() {
+    const eff = sessionUser ? getUserEffectivePermissions(sessionUser) : {};
+    return {
+        canSend: !!(eff.canSendEmployeeNotices || eff.isMasterAdmin),
+        canViewRead: !!(eff.canViewEmployeeNoticeRead || eff.isMasterAdmin),
+        canDelete: !!(eff.delEmployeeNotices || eff.isMasterAdmin)
+    };
+}
+
+function isEmployeeNoticeExpired(notice) {
+    const expiresAt = Number(notice?.expiresAt || 0);
+    return expiresAt > 0 && expiresAt < Date.now();
+}
+
+function getPendingEmployeeNoticeEntries() {
+    return Object.entries(cachedMyEmployeeNotices || {})
+        .filter(([, notice]) => notice && !notice.ack && !isEmployeeNoticeExpired(notice))
+        .sort((a, b) => (a[1].createdAt || 0) - (b[1].createdAt || 0));
+}
+
+function refreshEmployeeNoticeListeners() {
+    if (employeeNoticeOwnRef) {
+        employeeNoticeOwnRef.off();
+        employeeNoticeOwnRef = null;
+    }
+    if (employeeNoticeAdminRef) {
+        employeeNoticeAdminRef.off();
+        employeeNoticeAdminRef = null;
+    }
+    cachedMyEmployeeNotices = {};
+    cachedManagedEmployeeNotices = {};
+
+    if (!sessionUser || isMaintenanceRestrictedSession()) {
+        renderEmployeeNoticeFeedPanels();
+        return;
+    }
+
+    const myId = getUserAccountId(sessionUser);
+    if (!myId) return;
+
+    employeeNoticeOwnRef = db.ref('data/employeeNotices/' + myId);
+    employeeNoticeOwnRef.on('value', snap => {
+        cachedMyEmployeeNotices = snap.val() || {};
+        renderEmployeeNoticeFeedPanels();
+        renderNewsFeedData(cachedNews);
+        showNextEmployeeNoticePopup();
+    }, err => console.error('Mitarbeiterhinweise konnten nicht geladen werden:', err));
+
+    const perms = getEmployeeNoticePermissions();
+    if (perms.canViewRead || perms.canDelete) {
+        employeeNoticeAdminRef = db.ref('data/employeeNotices');
+        employeeNoticeAdminRef.on('value', snap => {
+            cachedManagedEmployeeNotices = snap.val() || {};
+            renderEmployeeNoticeFeedPanels();
+        }, err => console.error('Mitarbeiterhinweis-Übersicht konnte nicht geladen werden:', err));
+    }
+
+    renderEmployeeNoticeRecipientOptions();
+    renderEmployeeNoticeFeedPanels();
+}
+
+function renderEmployeeNoticeRecipientOptions() {
+    const select = document.getElementById('employeeNoticeRecipient');
+    if (!select) return;
+    const currentValue = select.value;
+    const users = Object.entries(cachedUsers || {})
+        .filter(([, user]) => user && (user.status || 'pending') === 'approved')
+        .sort((a, b) => {
+            const an = `${a[1].nachname || ''} ${a[1].vorname || ''}`.trim();
+            const bn = `${b[1].nachname || ''} ${b[1].vorname || ''}`.trim();
+            return an.localeCompare(bn, 'de');
+        });
+
+    select.innerHTML = '<option value="">-- Mitarbeiter auswählen --</option>' +
+        users.map(([uId, user]) => {
+            const name = `${user.vorname || ''} ${user.nachname || ''}`.trim() || uId;
+            const dn = user.dn ? ` · DN ${user.dn}` : '';
+            return `<option value="${escapeHtml(uId)}">${escapeHtml(name + dn)}</option>`;
+        }).join('');
+
+    if (currentValue && cachedUsers[currentValue]) select.value = currentValue;
+}
+
+function toggleEmployeeNoticeComposer(forceOpen = null) {
+    const box = document.getElementById('employeeNoticeComposer');
+    if (!box) return;
+    const perms = getEmployeeNoticePermissions();
+    if (!perms.canSend) {
+        box.style.display = 'none';
+        return;
+    }
+    const shouldOpen = forceOpen === null ? box.style.display === 'none' || !box.style.display : !!forceOpen;
+    box.style.display = shouldOpen ? 'block' : 'none';
+    if (shouldOpen) {
+        renderEmployeeNoticeRecipientOptions();
+        document.getElementById('employeeNoticeRecipient')?.focus();
+    }
+}
+
+function clearEmployeeNoticeComposer() {
+    ['employeeNoticeRecipient','employeeNoticeTitle','employeeNoticeMessage','employeeNoticeExpiresAt'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+    });
+}
+
+async function sendEmployeeNotice() {
+    if (!sessionUser) return;
+    const perms = getEmployeeNoticePermissions();
+    if (!perms.canSend) {
+        alert('Keine Berechtigung zum Senden von Mitarbeiterhinweisen!');
+        return;
+    }
+
+    const recipientId = document.getElementById('employeeNoticeRecipient')?.value || '';
+    const title = document.getElementById('employeeNoticeTitle')?.value.trim() || '';
+    const message = document.getElementById('employeeNoticeMessage')?.value.trim() || '';
+    const expiresRaw = document.getElementById('employeeNoticeExpiresAt')?.value || '';
+    const recipient = cachedUsers[recipientId];
+
+    if (!recipientId || !recipient) {
+        alert('Bitte einen Mitarbeiter auswählen.');
+        return;
+    }
+    if (!title || !message) {
+        alert('Bitte Betreff und Hinweistext ausfüllen.');
+        return;
+    }
+
+    let expiresAt = 0;
+    if (expiresRaw) {
+        const expiry = new Date(expiresRaw + 'T23:59:59');
+        if (Number.isNaN(expiry.getTime())) {
+            alert('Das Ablaufdatum ist ungültig.');
+            return;
+        }
+        if (expiry.getTime() < Date.now()) {
+            alert('Das Ablaufdatum muss in der Zukunft liegen.');
+            return;
+        }
+        expiresAt = expiry.getTime();
+    }
+
+    const ref = db.ref(`data/employeeNotices/${recipientId}`).push();
+    const notice = {
+        id: ref.key,
+        recipientId,
+        recipientName: `${recipient.vorname || ''} ${recipient.nachname || ''}`.trim(),
+        recipientDn: recipient.dn || '',
+        title,
+        message,
+        senderId: getUserAccountId(sessionUser),
+        senderName: `${sessionUser.vorname || ''} ${sessionUser.nachname || ''}`.trim(),
+        createdAt: Date.now(),
+        expiresAt
+    };
+
+    try {
+        await ref.set(notice);
+        clearEmployeeNoticeComposer();
+        toggleEmployeeNoticeComposer(false);
+        logAdminAudit('Mitarbeiterhinweis gesendet', `${notice.senderName} → ${notice.recipientName}: ${title}`);
+        alert('✅ Mitarbeiterhinweis wurde gesendet.');
+    } catch (err) {
+        console.error('Mitarbeiterhinweis konnte nicht gesendet werden:', err);
+        alert('Der Mitarbeiterhinweis konnte nicht gesendet werden. Bitte Berechtigung und Firebase Rules prüfen.');
+    }
+}
+
+function renderEmployeeNoticeFeedPanels() {
+    const myBox = document.getElementById('myEmployeeNoticesContainer');
+    const manageBox = document.getElementById('employeeNoticeManagementContainer');
+    const sendBtn = document.getElementById('btnOpenEmployeeNoticeComposer');
+    const perms = getEmployeeNoticePermissions();
+
+    if (sendBtn) sendBtn.style.display = perms.canSend ? 'inline-flex' : 'none';
+
+    if (myBox) {
+        const entries = Object.entries(cachedMyEmployeeNotices || {})
+            .filter(([, notice]) => !!notice)
+            .sort((a, b) => (b[1].createdAt || 0) - (a[1].createdAt || 0));
+
+        if (!entries.length) {
+            myBox.style.display = 'none';
+            myBox.innerHTML = '';
+        } else {
+            myBox.style.display = 'block';
+            myBox.innerHTML = `
+                <div class="employee-notice-section-head">
+                    <div>
+                        <h3>📨 Meine Mitarbeiterhinweise</h3>
+                        <p>Persönliche Informationen für dich. Antworten sind hier nicht vorgesehen.</p>
+                    </div>
+                </div>
+                <div class="employee-notice-list">
+                    ${entries.map(([noticeId, notice]) => {
+                        const expired = isEmployeeNoticeExpired(notice);
+                        const acknowledged = !!notice.ack;
+                        const state = acknowledged
+                            ? '<span class="employee-notice-badge done">✅ Bestätigt</span>'
+                            : expired
+                                ? '<span class="employee-notice-badge expired">⌛ Abgelaufen</span>'
+                                : '<span class="employee-notice-badge open">🔔 Offen</span>';
+                        return `
+                            <div class="employee-notice-card ${acknowledged ? 'acknowledged' : ''}">
+                                <div class="employee-notice-card-head">
+                                    <div>
+                                        <b>${escapeHtml(notice.title || 'Hinweis')}</b>
+                                        <span>von ${escapeHtml(notice.senderName || 'Leitung')} · ${formatTimestampShort(notice.createdAt)}</span>
+                                    </div>
+                                    ${state}
+                                </div>
+                                <div class="employee-notice-message">${formatTextWithLinks(notice.message || '')}</div>
+                                ${notice.expiresAt ? `<div class="employee-notice-meta">Gültig bis: ${escapeHtml(new Date(notice.expiresAt).toLocaleDateString('de-DE'))}</div>` : ''}
+                                ${!acknowledged && !expired ? `<button type="button" class="btn employee-notice-ack-inline" onclick="acknowledgeEmployeeNotice('${noticeId}')">✅ Zur Kenntnis genommen</button>` : ''}
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            `;
+        }
+    }
+
+    if (manageBox) {
+        if (!perms.canViewRead && !perms.canDelete) {
+            manageBox.style.display = 'none';
+            manageBox.innerHTML = '';
+        } else {
+            const flat = [];
+            Object.entries(cachedManagedEmployeeNotices || {}).forEach(([recipientId, notices]) => {
+                Object.entries(notices || {}).forEach(([noticeId, notice]) => {
+                    if (notice) flat.push({ recipientId, noticeId, notice });
+                });
+            });
+            flat.sort((a,b)=>(b.notice.createdAt||0)-(a.notice.createdAt||0));
+
+            manageBox.style.display = 'block';
+            manageBox.innerHTML = `
+                <div class="employee-notice-section-head">
+                    <div>
+                        <h3>📋 Mitarbeiterhinweise – Übersicht</h3>
+                        <p>${perms.canViewRead ? 'Hier ist sichtbar, ob und wann ein persönlicher Hinweis bestätigt wurde.' : 'Hier können vorhandene Mitarbeiterhinweise verwaltet werden.'}</p>
+                    </div>
+                </div>
+                <div class="employee-notice-management-list">
+                    ${flat.length ? flat.map(({recipientId, noticeId, notice}) => {
+                        const ack = notice.ack;
+                        const expired = isEmployeeNoticeExpired(notice);
+                        let status = '<span class="employee-notice-badge open">🔔 Offen</span>';
+                        if (perms.canViewRead && ack) status = `<span class="employee-notice-badge done">✅ Bestätigt · ${formatTimestampShort(ack.ts)}</span>`;
+                        else if (expired) status = '<span class="employee-notice-badge expired">⌛ Abgelaufen</span>';
+                        else if (!perms.canViewRead) status = '<span class="employee-notice-badge neutral">📨 Hinweis</span>';
+                        return `
+                            <div class="employee-notice-manage-row">
+                                <div class="employee-notice-manage-main">
+                                    <b>${escapeHtml(notice.recipientName || recipientId)}</b>
+                                    <span>${notice.recipientDn ? 'DN ' + escapeHtml(notice.recipientDn) + ' · ' : ''}${escapeHtml(notice.title || 'Hinweis')}</span>
+                                    <small>von ${escapeHtml(notice.senderName || 'Leitung')} · ${formatTimestampShort(notice.createdAt)}</small>
+                                </div>
+                                <div class="employee-notice-manage-actions">
+                                    ${status}
+                                    ${perms.canDelete ? `<button type="button" class="btn-delete-row" onclick="deleteEmployeeNotice('${recipientId}','${noticeId}')" title="Mitarbeiterhinweis löschen">🗑️</button>` : ''}
+                                </div>
+                            </div>
+                        `;
+                    }).join('') : '<div class="employee-notice-empty">Noch keine Mitarbeiterhinweise vorhanden.</div>'}
+                </div>
+            `;
+        }
+    }
+}
+
+function formatTimestampShort(ts) {
+    if (!ts) return '--';
+    try {
+        return new Date(ts).toLocaleString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' });
+    } catch (_) {
+        return '--';
+    }
+}
+
+function showNextEmployeeNoticePopup() {
+    if (!sessionUser) return;
+    const modal = document.getElementById('employeeNoticePopupModal');
+    if (!modal) return;
+
+    const pending = getPendingEmployeeNoticeEntries();
+    if (!pending.length) {
+        activeEmployeeNoticeId = '';
+        modal.style.display = 'none';
+        return;
+    }
+
+    if (activeEmployeeNoticeId && cachedMyEmployeeNotices[activeEmployeeNoticeId] && !cachedMyEmployeeNotices[activeEmployeeNoticeId].ack && !isEmployeeNoticeExpired(cachedMyEmployeeNotices[activeEmployeeNoticeId])) {
+        return;
+    }
+
+    const [noticeId, notice] = pending[0];
+    activeEmployeeNoticeId = noticeId;
+    const titleEl = document.getElementById('employeeNoticePopupTitle');
+    const messageEl = document.getElementById('employeeNoticePopupMessage');
+    const metaEl = document.getElementById('employeeNoticePopupMeta');
+    const expiryEl = document.getElementById('employeeNoticePopupExpiry');
+    if (titleEl) titleEl.textContent = notice.title || 'Mitarbeiterhinweis';
+    if (messageEl) messageEl.innerHTML = formatTextWithLinks(notice.message || '');
+    if (metaEl) metaEl.textContent = `Von ${notice.senderName || 'Leitung'} · ${formatTimestampShort(notice.createdAt)}`;
+    if (expiryEl) {
+        expiryEl.textContent = notice.expiresAt ? `Gültig bis ${new Date(notice.expiresAt).toLocaleDateString('de-DE')}` : '';
+        expiryEl.style.display = notice.expiresAt ? 'block' : 'none';
+    }
+    modal.style.display = 'flex';
+}
+
+async function acknowledgeEmployeeNotice(noticeId = activeEmployeeNoticeId) {
+    if (!sessionUser || !noticeId) return;
+    const myId = getUserAccountId(sessionUser);
+    if (!myId || !cachedMyEmployeeNotices[noticeId]) return;
+
+    try {
+        await db.ref(`data/employeeNotices/${myId}/${noticeId}/ack`).set({
+            name: `${sessionUser.vorname || ''} ${sessionUser.nachname || ''}`.trim(),
+            dn: sessionUser.dn || '',
+            ts: Date.now()
+        });
+        activeEmployeeNoticeId = '';
+        const modal = document.getElementById('employeeNoticePopupModal');
+        if (modal) modal.style.display = 'none';
+        showNextEmployeeNoticePopup();
+    } catch (err) {
+        console.error('Mitarbeiterhinweis konnte nicht bestätigt werden:', err);
+        alert('Der Hinweis konnte gerade nicht bestätigt werden. Bitte versuche es erneut.');
+    }
+}
+
+async function deleteEmployeeNotice(recipientId, noticeId) {
+    const perms = getEmployeeNoticePermissions();
+    if (!perms.canDelete) {
+        alert('Keine Berechtigung zum Löschen von Mitarbeiterhinweisen!');
+        return;
+    }
+    if (!recipientId || !noticeId || !confirm('Diesen persönlichen Mitarbeiterhinweis wirklich löschen?')) return;
+
+    try {
+        await db.ref(`data/employeeNotices/${recipientId}/${noticeId}`).remove();
+        logAdminAudit('Mitarbeiterhinweis gelöscht', `Hinweis ${noticeId} gelöscht durch ${sessionUser.vorname} ${sessionUser.nachname}`);
+    } catch (err) {
+        console.error('Mitarbeiterhinweis konnte nicht gelöscht werden:', err);
+        alert('Der Mitarbeiterhinweis konnte nicht gelöscht werden.');
+    }
+}
+
 /* ── REITER: NEWS / SCHWARZES BRETT ────────────────────────── */
 function renderNewsFeedData(obj) {
     const c = document.getElementById('newsFeedList'); if (!c) return;
@@ -5970,8 +6371,10 @@ function renderNewsFeedData(obj) {
     });
 
     if (unreadBadge) {
-        if (unreadCount > 0) {
-            unreadBadge.textContent = unreadCount;
+        const employeeNoticeUnread = getPendingEmployeeNoticeEntries().length;
+        const totalUnread = unreadCount + employeeNoticeUnread;
+        if (totalUnread > 0) {
+            unreadBadge.textContent = totalUnread;
             unreadBadge.style.display = 'inline-flex';
         } else {
             unreadBadge.style.display = 'none';
