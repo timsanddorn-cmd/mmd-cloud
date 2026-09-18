@@ -1,5 +1,5 @@
 // ============================================================
-//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.8.5a
+//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.8.5b
 //  Firebase Realtime Database (Compat SDK v10)
 // ============================================================
 
@@ -182,7 +182,7 @@ const db = firebase.database();
 const auth = firebase.auth();
 const FIREBASE_AUTH_EMAIL_DOMAIN = 'mmd-login.invalid';
 
-const APP_VERSION = 'v6.8.5a';
+const APP_VERSION = 'v6.8.5b';
 const PRESENCE_HEARTBEAT_MS = 30 * 1000;
 const PRESENCE_STALE_MS = 3 * 60 * 1000;
 const INACTIVITY_LIMIT_MS = 30 * 60 * 1000;
@@ -5043,8 +5043,8 @@ async function sendMissingPhotoEmployeeNotice(uId) {
     const title = 'Fehlendes Mitarbeiterfoto';
     const message =
         `Sehr geehrter Mitarbeiter ${recipientName},\n\n` +
-        'für Ihre Mitarbeiterkartei fehlt aktuell noch ein Mitarbeiterfoto. Bitte reichen Sie dieses unter Mitarbeiter → Mitarbeiterkartei → Foto einreichen nach.\n\n' +
-        'Alternativ können Sie das Foto per D-Funk an DN 07 Tim Sanddorn senden. Falls Sie Unterstützung beim Erstellen eines geeigneten Fotos benötigen, hilft Ihnen auch Fabio Leroux gerne weiter.\n\n' +
+        'für Ihre Mitarbeiterkartei fehlt aktuell noch ein Mitarbeiterfoto. Bitte tragen Sie für die Aufnahme das Besprechungsoutfit und orientieren Sie sich bei Motiv und Position an den bereits vorhandenen Mitarbeiterfotos.\n\n' +
+        'Das Foto können Sie unter Mitarbeiter → Mitarbeiterkartei → Foto einreichen hochladen oder per D-Funk an DN 07 Tim Sanddorn senden. Das Bild muss nicht bearbeitet werden; die Bearbeitung übernimmt DN 07. Falls Sie Unterstützung bei der Aufnahme benötigen, hilft Ihnen auch Fabio Leroux gerne weiter.\n\n' +
         'Vielen Dank.';
 
     const ref = db.ref(`data/employeeNotices/${uId}`).push();
