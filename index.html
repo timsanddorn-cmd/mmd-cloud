@@ -11,7 +11,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
-    <link rel="stylesheet" href="style.css?v=6.8.3-hover1">
+    <link rel="stylesheet" href="style.css?v=6.8.4">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏥</text></svg>">
 </head>
 <body>
@@ -647,7 +647,7 @@
                     <div class="exam-timer-sticky">
                         <div>
                             <h3 id="activeExamTitle" style="margin:0; color:var(--primary); font-size:20px;">Prüfung</h3>
-                            <span id="activeExamSubtitle" style="font-size:12px; color:var(--text-muted);">Echtzeit Prüfungslauf (Mehrfachauswahl möglich)</span>
+                            <span id="activeExamSubtitle" style="font-size:12px; color:var(--text-muted);">Echtzeit Prüfungslauf</span>
                         </div>
                         <div class="exam-timer-label">⏱️ <span>Zeit:</span><span id="activeExamTimerDisplay" class="exam-timer-text">00:00</span></div>
                     </div>
@@ -755,8 +755,42 @@
                     <button type="button" id="btnOpenChangelogWriter" class="btn-inline-edit" style="display:none;" onclick="openChangelogWriterModal()">✏️ Changelog eintragen</button>
                     <button type="button" id="btnProposeNews" class="btn" style="width:auto; margin:0; padding:8px 16px; background:rgba(56,189,248,0.15); color:var(--primary); border:1px solid var(--primary); font-weight:700;" onclick="toggleProposeNewsForm()">💡 News vorschlagen</button>
                     <button type="button" id="btnOpenPostNews" class="btn" style="width: auto; margin: 0; padding: 8px 18px; background: var(--primary); color: #080c14; font-weight: 800; font-size: 13px; display: none;" onclick="togglePostNewsForm()">➕ Neue News posten</button>
+                    <button type="button" id="btnOpenEmployeeNoticeComposer" class="btn employee-notice-send-btn" style="display:none;" onclick="toggleEmployeeNoticeComposer()">📨 Mitarbeiterhinweis</button>
                 </div>
             </div>
+
+            <!-- PERSÖNLICHE MITARBEITERHINWEISE -->
+            <div id="employeeNoticeComposer" class="employee-notice-composer" style="display:none;">
+                <div class="employee-notice-section-head">
+                    <div>
+                        <h3>📨 Mitarbeiterhinweis senden</h3>
+                        <p>Gezielte Information an einen einzelnen Mitarbeiter. Es gibt keine Antwortfunktion.</p>
+                    </div>
+                </div>
+                <div class="employee-notice-form-grid">
+                    <div>
+                        <label for="employeeNoticeRecipient">Mitarbeiter:</label>
+                        <select id="employeeNoticeRecipient"><option value="">-- Mitarbeiter auswählen --</option></select>
+                    </div>
+                    <div>
+                        <label for="employeeNoticeTitle">Betreff:</label>
+                        <input type="text" id="employeeNoticeTitle" maxlength="120" placeholder="z. B. Mitarbeiterfoto fehlt">
+                    </div>
+                    <div>
+                        <label for="employeeNoticeExpiresAt">Gültig bis (optional):</label>
+                        <input type="date" id="employeeNoticeExpiresAt">
+                    </div>
+                </div>
+                <label for="employeeNoticeMessage">Hinweis:</label>
+                <textarea id="employeeNoticeMessage" rows="4" maxlength="1200" placeholder="Kurzen Mitarbeiterhinweis eingeben..."></textarea>
+                <div class="employee-notice-form-actions">
+                    <button type="button" class="btn" onclick="sendEmployeeNotice()">📨 Hinweis senden</button>
+                    <button type="button" class="btn employee-notice-cancel-btn" onclick="toggleEmployeeNoticeComposer(false)">Abbrechen</button>
+                </div>
+            </div>
+
+            <div id="myEmployeeNoticesContainer" class="employee-notice-panel" style="display:none;"></div>
+            <div id="employeeNoticeManagementContainer" class="employee-notice-panel" style="display:none;"></div>
 
             <!-- NEWS VORSCHLAGEN -->
             <div id="proposeNewsContainer" style="display:none; background:rgba(30,41,59,0.5); border:1px dashed var(--primary); border-radius:14px; padding:20px; margin-bottom:24px;">
@@ -1636,6 +1670,9 @@
                                         <div class="role-perm-box"><label for="roleFlagApproveNews" class="perm-check"><input type="checkbox" id="roleFlagApproveNews"> <b>Vorschläge annehmen</b></label><span class="perm-desc">Darf eingereichte News-Vorschläge normaler Mitarbeiter prüfen und freigeben.</span></div>
                                         <div class="role-perm-box"><label for="roleFlagViewNewsRead" class="perm-check"><input type="checkbox" id="roleFlagViewNewsRead"> <b>👁️ Gelesen Liste</b></label><span class="perm-desc">Sieht mit einem Klick genau, welche Mitarbeiter die News bereits bestätigt haben.</span></div>
                                         <div class="role-perm-box"><label for="delFlagNews" class="perm-check"><input type="checkbox" id="delFlagNews"> <b>🗑️ News löschen</b></label><span class="perm-desc">Darf Beiträge dauerhaft vom Schwarzen Brett entfernen.</span></div>
+                                        <div class="role-perm-box"><label for="roleFlagSendEmployeeNotices" class="perm-check"><input type="checkbox" id="roleFlagSendEmployeeNotices"> <b>📨 Mitarbeiterhinweise senden</b></label><span class="perm-desc">Darf gezielte persönliche Hinweise an einzelne Mitarbeiter senden. Dies ist kein Chat und besitzt keine Antwortfunktion.</span></div>
+                                        <div class="role-perm-box"><label for="roleFlagViewEmployeeNoticeRead" class="perm-check"><input type="checkbox" id="roleFlagViewEmployeeNoticeRead"> <b>👁️ Lesestatus Mitarbeiterhinweise</b></label><span class="perm-desc">Darf im Newsfeed kontrollieren, ob und wann persönliche Mitarbeiterhinweise bestätigt wurden.</span></div>
+                                        <div class="role-perm-box"><label for="delFlagEmployeeNotices" class="perm-check"><input type="checkbox" id="delFlagEmployeeNotices"> <b>🗑️ Mitarbeiterhinweise löschen</b></label><span class="perm-desc">Darf persönliche Mitarbeiterhinweise dauerhaft entfernen. Master Admin besitzt dieses Recht immer.</span></div>
                                     </div>
                                 </div>
 
@@ -1870,6 +1907,18 @@
         </div>
     </div>
 
+    <!-- MODAL: PERSÖNLICHER MITARBEITERHINWEIS -->
+    <div id="employeeNoticePopupModal" class="modal-overlay employee-notice-popup-overlay" role="dialog" aria-modal="true" aria-labelledby="employeeNoticePopupTitle">
+        <div class="modal-card employee-notice-popup-card">
+            <div class="employee-notice-popup-icon">📨</div>
+            <h2 id="employeeNoticePopupTitle">Mitarbeiterhinweis</h2>
+            <div id="employeeNoticePopupMeta" class="employee-notice-popup-meta"></div>
+            <div id="employeeNoticePopupMessage" class="employee-notice-popup-message"></div>
+            <div id="employeeNoticePopupExpiry" class="employee-notice-popup-expiry" style="display:none;"></div>
+            <button type="button" class="btn employee-notice-popup-confirm" onclick="acknowledgeEmployeeNotice()">✅ Zur Kenntnis genommen</button>
+        </div>
+    </div>
+
     <!-- MODAL: LESER-LISTE NEWS -->
     <div id="newsReadersModal" class="modal-overlay">
         <div class="modal-card" style="max-width: 500px;">
@@ -1921,6 +1970,6 @@
         </div>
     </div>
 
-    <script src="app.js?v=6.8.3"></script>
+    <script src="app.js?v=6.8.4"></script>
 </body>
 </html>
