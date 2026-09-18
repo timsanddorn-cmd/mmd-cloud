@@ -2531,7 +2531,7 @@ html, body { max-width: 100%; overflow-x: hidden; }
 }
 .staff-photo-checklist-row {
     display: grid;
-    grid-template-columns: 24px 72px minmax(0, 1fr) auto;
+    grid-template-columns: 24px 72px minmax(0, 1fr) auto auto;
     align-items: center;
     gap: 8px;
     padding: 9px 11px;
@@ -2559,6 +2559,18 @@ html, body { max-width: 100%; overflow-x: hidden; }
 .staff-photo-checklist-state { color: var(--text-muted); font-size: 10px; white-space: nowrap; }
 .staff-photo-checklist-row.done .staff-photo-checklist-state { color: var(--success); }
 .staff-photo-checklist-row.open .staff-photo-checklist-state { color: var(--warning); }
+.staff-photo-notice-btn {
+    width: auto;
+    margin: 0;
+    padding: 6px 9px;
+    border: 1px solid rgba(192, 132, 252, .36);
+    background: rgba(192, 132, 252, .12);
+    color: #c084fc;
+    font-size: 10px;
+    font-weight: 800;
+    white-space: nowrap;
+}
+.staff-photo-notice-btn:hover { background: rgba(192, 132, 252, .22); }
 .staff-photo-checklist-empty { color: var(--text-muted); text-align: center; padding: 16px; }
 
 .employee-notice-recipient-list {
@@ -2604,4 +2616,5 @@ html, body { max-width: 100%; overflow-x: hidden; }
     .staff-photo-checklist-head { flex-direction: column; }
     .staff-photo-checklist-row { grid-template-columns: 24px 68px minmax(0, 1fr); }
     .staff-photo-checklist-state { grid-column: 2 / -1; }
+    .staff-photo-notice-btn { grid-column: 2 / -1; justify-self: start; }
 }
