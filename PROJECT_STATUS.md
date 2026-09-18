@@ -1,8 +1,8 @@
 # MMD Cloud – PROJECT STATUS
 
 **Aktuell bestätigte stabile Live-Version:** v6.8.4  
-**Aktueller Entwicklungsstand:** v6.8.5a  
-**Status v6.8.5a:** 🟡 VORBEREITET / LIVE-TEST AUSSTEHEND  
+**Aktueller Entwicklungsstand:** v6.8.5b  
+**Status v6.8.5b:** 🟡 VORBEREITET / LIVE-TEST AUSSTEHEND  
 **Datum:** 18.09.2026
 
 ---
@@ -11,11 +11,11 @@
 
 **v6.8.4 = bestätigte stabile Live-Version**
 
-v6.8.4 bleibt bis zur erfolgreichen Live-Bestätigung von v6.8.5a die verbindliche Rollback-Basis.
+v6.8.4 bleibt bis zur erfolgreichen Live-Bestätigung von v6.8.5b die verbindliche Rollback-Basis.
 
 ---
 
-## 2. Entwicklung v6.8.5a – Profilbild-Übersicht
+## 2. Entwicklung v6.8.5b – Profilbild-Übersicht
 
 Im Bereich **Mitarbeiter** gibt es für den Master Admin einen neuen Button **„📋 Foto-Liste“** direkt neben dem Foto-Ordner.
 
@@ -23,6 +23,10 @@ Die Liste:
 - ist ausschließlich für Master Admin sichtbar,
 - zeigt bei fehlendem Profilbild direkt den Button **„📨 Foto-Hinweis“**,
 - verschickt darüber einen automatisch personalisierten Hinweis mit dem Namen des Mitarbeiters,
+- weist zusätzlich auf das **Besprechungsoutfit** hin,
+- bittet darum, sich bei Motiv und Position an den bereits vorhandenen Mitarbeiterfotos zu orientieren,
+- stellt klar, dass das Foto **nicht selbst bearbeitet werden muss**, weil die Bearbeitung durch **DN 07 Tim Sanddorn** übernommen wird,
+- nennt weiterhin **Fabio Leroux** als Unterstützung bei der Aufnahme,
 - der versendete Hinweis erscheint automatisch unter **„Mitarbeiterhinweise Übersicht“** und behält die normale Lesebestätigung,
 - enthält alle registrierten Mitarbeiter, auch neu registrierte noch nicht freigeschaltete Konten,
 - ist nach Dienstnummer sortiert,
@@ -36,7 +40,7 @@ Es wird dafür **kein neuer Firebase-Datenpfad** angelegt. Der Status wird direk
 
 ---
 
-## 3. Entwicklung v6.8.5a – Mitarbeiterhinweis an mehrere Empfänger
+## 3. Entwicklung v6.8.5b – Mitarbeiterhinweis an mehrere Empfänger
 
 Der bestehende Mitarbeiterhinweis bleibt ein persönlicher Hinweis und kein Chat.
 
@@ -59,7 +63,7 @@ Mehrere Hinweise werden beim Senden gesammelt in einem Firebase-Update geschrieb
 
 ## 4. Sicherheit / Firebase
 
-Für v6.8.5a wurden **keine Firebase Rules geändert**.
+Für v6.8.5b wurden **keine Firebase Rules geändert**.
 
 Unverändert bleiben insbesondere:
 - Firebase Auth
@@ -75,7 +79,7 @@ Die Foto-Liste ist zusätzlich in der Oberfläche und in der JavaScript-Funktion
 
 ---
 
-## 5. Geänderte Dateien v6.8.5a
+## 5. Geänderte Dateien v6.8.5b
 
 - `app.js`
 - `index.html`
@@ -88,7 +92,7 @@ Unverändert:
 
 ---
 
-## 6. Live-Test v6.8.5a
+## 6. Live-Test v6.8.5b
 
 Die Überschrift **„Mitarbeiterhinweise – Übersicht“** wurde außerdem zu **„Mitarbeiterhinweise Übersicht“** geändert.
 
@@ -119,4 +123,4 @@ Bis zur erfolgreichen Live-Bestätigung:
 
 **v6.8.4 = stabile Rollback-Basis**
 
-Die Firebase Rules müssen bei einem Rollback nicht verändert werden, da v6.8.5a keine Rules-Änderung enthält.
+Die Firebase Rules müssen bei einem Rollback nicht verändert werden, da v6.8.5b keine Rules-Änderung enthält.
