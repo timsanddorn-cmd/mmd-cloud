@@ -1,5 +1,5 @@
 // ============================================================
-//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.8.5d
+//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.8.5e
 //  Firebase Realtime Database (Compat SDK v10)
 // ============================================================
 
@@ -182,9 +182,9 @@ const db = firebase.database();
 const auth = firebase.auth();
 const FIREBASE_AUTH_EMAIL_DOMAIN = 'mmd-login.invalid';
 
-const APP_VERSION = 'v6.8.5d';
+const APP_VERSION = 'v6.8.5e';
 const PRESENCE_HEARTBEAT_MS = 30 * 1000;
-const PRESENCE_STALE_MS = 3 * 60 * 1000;
+const PRESENCE_STALE_MS = 31 * 60 * 1000;
 const INACTIVITY_LIMIT_MS = 30 * 60 * 1000;
 const INACTIVITY_WARNING_MS = 30 * 1000;
 
