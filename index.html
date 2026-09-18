@@ -11,7 +11,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
-    <link rel="stylesheet" href="style.css?v=6.8.4">
+    <link rel="stylesheet" href="style.css?v=6.8.5">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏥</text></svg>">
 </head>
 <body>
@@ -316,8 +316,20 @@
                     <div style="display:flex; align-items:center; gap:8px;">
                         <button type="button" class="btn" style="width:auto; margin:0; padding:8px 16px; background:var(--primary); color:#080c14; font-weight:800;" onclick="openStaffPhotoUploadModal()">📷 Foto einreichen</button>
                         <button type="button" id="btnOpenPhotoAdminModal" class="btn" style="width:auto; margin:0; padding:8px 16px; background:rgba(245,158,11,0.15); color:var(--warning); border:1px solid var(--warning); font-weight:800; display:none;" onclick="openStaffPhotoAdminModal()">📁 Foto Ordner (Bearbeitung)</button>
+                        <button type="button" id="btnTogglePhotoChecklist" class="btn photo-checklist-toggle-btn" style="display:none;" aria-expanded="false" onclick="toggleStaffPhotoChecklist()">📋 Foto-Liste</button>
                     </div>
                 </div>
+            </div>
+
+            <div id="staffPhotoChecklistPanel" class="staff-photo-checklist-panel" style="display:none;">
+                <div class="staff-photo-checklist-head">
+                    <div>
+                        <h3>📋 Profilbild-Übersicht</h3>
+                        <p>Nur für Master Admin. Neue Registrierungen erscheinen automatisch in dieser Liste.</p>
+                    </div>
+                    <span id="staffPhotoChecklistSummary" class="staff-photo-checklist-summary">0 / 0 mit eigenem Profilbild</span>
+                </div>
+                <div id="staffPhotoChecklistList" class="staff-photo-checklist-list"></div>
             </div>
 
             <div style="margin-bottom:14px; font-size:12px; color:var(--text-muted); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
@@ -764,13 +776,16 @@
                 <div class="employee-notice-section-head">
                     <div>
                         <h3>📨 Mitarbeiterhinweis senden</h3>
-                        <p>Gezielte Information an einen einzelnen Mitarbeiter. Es gibt keine Antwortfunktion.</p>
+                        <p>Gezielte Information an einen oder mehrere Mitarbeiter. Jeder Empfänger bestätigt den Hinweis separat.</p>
                     </div>
                 </div>
                 <div class="employee-notice-form-grid">
                     <div>
-                        <label for="employeeNoticeRecipient">Mitarbeiter:</label>
-                        <select id="employeeNoticeRecipient"><option value="">-- Mitarbeiter auswählen --</option></select>
+                        <label>Mitarbeiter:</label>
+                        <div id="employeeNoticeRecipientList" class="employee-notice-recipient-list" role="group" aria-label="Empfänger auswählen">
+                            <div class="employee-notice-recipient-empty">Keine freigeschalteten Mitarbeiter vorhanden.</div>
+                        </div>
+                        <div id="employeeNoticeRecipientCount" class="employee-notice-recipient-count">0 Mitarbeiter ausgewählt</div>
                     </div>
                     <div>
                         <label for="employeeNoticeTitle">Betreff:</label>
@@ -1970,6 +1985,6 @@
         </div>
     </div>
 
-    <script src="app.js?v=6.8.4"></script>
+    <script src="app.js?v=6.8.5"></script>
 </body>
 </html>
