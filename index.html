@@ -11,7 +11,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
-    <link rel="stylesheet" href="style.css?v=6.8.2">
+    <link rel="stylesheet" href="style.css?v=6.8.3">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏥</text></svg>">
 </head>
 <body>
@@ -127,21 +127,38 @@
         <div id="maintenanceModeBanner" class="maintenance-banner" style="display:none;"></div>
 
         <!-- HAUPT-NAVIGATION -->
-        <div class="tab-nav">
+        <div class="tab-nav" id="mainTabNav">
             <button type="button" class="tab-btn active" onclick="switchTab('docTab', this)">📝 Dokumentation & Einsatz</button>
             <button type="button" class="tab-btn" onclick="switchTab('statsTab', this)">📊 Statistik & Archiv</button>
-            <button type="button" class="tab-btn" id="calendarTabNavBtn" onclick="switchTab('calendarTab', this)">📅 Kalender</button>
-            <button type="button" class="tab-btn" id="staffTabNavBtn" onclick="switchTab('staffTab', this)">👥 Mitarbeiter Kartei</button>
-            <button type="button" class="tab-btn" onclick="switchTab('hierarchieTab', this)">🌳 Hierarchie</button>
-            <button type="button" class="tab-btn" onclick="switchTab('guideTab', this)">📋 Funk & Codes</button>
-            <button type="button" class="tab-btn" onclick="switchTab('commandTab', this)">💻 Commands</button>
+            <button type="button" class="tab-btn tab-btn-calendar" id="calendarTabNavBtn" onclick="switchTab('calendarTab', this)">📅 Kalender</button>
             <button type="button" class="tab-btn" id="examTabNavBtn" onclick="switchTab('examTab', this)">🎓 Ausbildung</button>
-            <button type="button" class="tab-btn" id="linksTabBtn" onclick="switchTab('linksTab', this)">🔗 Links & Dokumente</button>
+
+            <div class="nav-group">
+                <button type="button" class="tab-btn nav-group-toggle" id="staffNavGroupBtn" aria-expanded="false" aria-controls="staffNavGroupMenu" onclick="toggleMainNavGroup('staffNavGroupMenu', this, event)">
+                    👥 Mitarbeiter <span class="nav-chevron" aria-hidden="true">▾</span>
+                </button>
+                <div class="nav-group-menu" id="staffNavGroupMenu">
+                    <button type="button" class="nav-sub-btn" id="staffTabNavBtn" onclick="switchTab('staffTab', this)">👥 Mitarbeiter Kartei</button>
+                    <button type="button" class="nav-sub-btn" onclick="switchTab('hierarchieTab', this)">🌳 Hierarchie</button>
+                    <button type="button" class="nav-sub-btn" onclick="switchTab('miscTab', this)">💰 Gehaltstabelle</button>
+                </div>
+            </div>
+
+            <div class="nav-group">
+                <button type="button" class="tab-btn nav-group-toggle" id="knowledgeNavGroupBtn" aria-expanded="false" aria-controls="knowledgeNavGroupMenu" onclick="toggleMainNavGroup('knowledgeNavGroupMenu', this, event)">
+                    📚 Wissen & Dokumente <span class="nav-chevron" aria-hidden="true">▾</span>
+                </button>
+                <div class="nav-group-menu" id="knowledgeNavGroupMenu">
+                    <button type="button" class="nav-sub-btn" onclick="switchTab('guideTab', this)">📋 Funk & Codes</button>
+                    <button type="button" class="nav-sub-btn" onclick="switchTab('commandTab', this)">💻 Commands</button>
+                    <button type="button" class="nav-sub-btn" id="linksTabBtn" onclick="switchTab('linksTab', this)">🔗 Links & Dokumente</button>
+                    <button type="button" class="nav-sub-btn" id="sanctionsTabNavBtn" onclick="switchTab('sanctionsTab', this)">⚖️ Sanktionskatalog</button>
+                </div>
+            </div>
+
             <button type="button" class="tab-btn btn-tab-news" id="newsTabBtn" onclick="switchTab('newsTab', this)">
                 📰 News <span id="newsUnreadBadge" class="unread-news-badge" style="display:none;">0</span>
             </button>
-            <button type="button" class="tab-btn" onclick="switchTab('miscTab', this)">💰 Gehaltstabelle</button>
-            <button type="button" class="tab-btn" id="sanctionsTabNavBtn" onclick="switchTab('sanctionsTab', this)">⚖️ Sanktionskatalog</button>
             <button type="button" class="tab-btn" id="chiefTabNavBtn" style="display:none;" onclick="switchTab('chiefTab', this)">⭐ Chief Ebene</button>
             <button type="button" class="tab-btn" id="adminMainTabHeader" onclick="settingsTabClick()">⚙️ Einstellungen</button>
         </div>
@@ -654,7 +671,7 @@
                         <button type="button" class="admin-tab-btn" id="instrTabResultsBtn" onclick="switchInstructorTab('instrTabResults', this)">📊 Absolvierte Prüfungen</button>
                         <button type="button" class="admin-tab-btn" id="instrTabSolutionsBtn" onclick="switchInstructorTab('instrTabSolutions', this)">👁️ Musterlösungen</button>
                         <button type="button" class="admin-tab-btn" id="instrTabManageBtn" onclick="switchInstructorTab('instrTabManage', this)">📝 Prüfungen verwalten</button>
-                        <button type="button" class="admin-tab-btn" id="instrAllowedExamsTabBtn" onclick="switchInstructorTab('instrTabInstructorAllowedExams', this)">👥 Mitglieder & Rollen</button>
+                        <button type="button" class="admin-tab-btn" id="instrAllowedExamsTabBtn" onclick="switchInstructorTab('instrTabInstructorAllowedExams', this)">👥 Mitarbeiterfreigabe</button>
                     </div>
 
                     <div id="instrTabUnlocks" class="admin-subtab-content active">
@@ -702,8 +719,8 @@
                     </div>
 
                     <div id="instrTabInstructorAllowedExams" class="admin-subtab-content">
-                        <h4 style="margin:0 0 8px 0; color:#a855f7;">👥 Mitgliederfreigabe & Rollenvergabe</h4>
-                        <p style="color:var(--text-muted); font-size:12px; margin-top:0;">Berechtigte Rollen können neue Mitarbeiter freigeben oder sperren. Ausbildungsleitung und Personalabteilung dürfen dabei ausschließlich Ausbildungsleitung, Ausbilder und Mitarbeiter vergeben.</p>
+                        <h4 style="margin:0 0 8px 0; color:#a855f7;">👥 Mitarbeiterfreigabe & Ausbildungsrollen</h4>
+                        <p style="color:var(--text-muted); font-size:12px; margin-top:0;">Hier werden neue Mitarbeiter freigegeben oder gesperrt und die vorgesehenen Ausbildungsrollen verwaltet. Ausbildungsleitung und Personalabteilung dürfen dabei ausschließlich Ausbildungsleitung, Ausbilder und Mitarbeiter vergeben.</p>
                         <div class="table-responsive">
                             <table>
                                 <thead><tr><th>Mitarbeiter Name</th><th>DN</th><th>Rollen</th><th>Status</th><th style="text-align:right;">Aktion</th></tr></thead>
@@ -1505,13 +1522,13 @@
                 <button type="button" class="btn-close" onclick="closeAdminManagementModal()">✖</button>
             </div>
 
-            <div class="admin-subtabs">
-                <button type="button" class="admin-tab-btn active" id="btnAdminSubUsers" onclick="switchAdminTab('adminSubTabUsers', this)">👥 Mitarbeiter Kartei</button>
-                <button type="button" class="admin-tab-btn" id="btnAdminSubRoles" onclick="switchAdminTab('adminSubTabRoles', this)">🎭 Rollen & Berechtigungsmatrix</button>
-                <button type="button" class="admin-tab-btn" id="btnAdminSubSystem" onclick="switchAdminTab('adminSubTabSystem', this)">💾 Backup & Wiederherstellung</button>
-                <button type="button" class="admin-tab-btn" id="btnAdminSubAudit" onclick="switchAdminTab('adminSubTabAudit', this)">📋 Systemprotokoll (Heute)</button>
-                <button type="button" class="admin-tab-btn" id="btnAdminSubMaintenance" onclick="switchAdminTab('adminSubTabMaintenance', this)">🛠️ Wartungsarbeiten</button>
+            <div class="admin-subtabs admin-subtabs-priority">
+                <button type="button" class="admin-tab-btn active" id="btnAdminSubUsers" onclick="switchAdminTab('adminSubTabUsers', this)">👥 Mitarbeiter</button>
+                <button type="button" class="admin-tab-btn" id="btnAdminSubRoles" onclick="switchAdminTab('adminSubTabRoles', this)">🎭 Rollen & Rechte</button>
                 <button type="button" class="admin-tab-btn" id="btnAdminSubSessions" style="display:none;" onclick="switchAdminTab('adminSubTabSessions', this)">🖥️ Sitzungen & Updates</button>
+                <button type="button" class="admin-tab-btn" id="btnAdminSubAudit" onclick="switchAdminTab('adminSubTabAudit', this)">📋 Systemprotokoll</button>
+                <button type="button" class="admin-tab-btn" id="btnAdminSubMaintenance" onclick="switchAdminTab('adminSubTabMaintenance', this)">🛠️ Wartung</button>
+                <button type="button" class="admin-tab-btn admin-tab-danger" id="btnAdminSubSystem" onclick="switchAdminTab('adminSubTabSystem', this)">💾 Backup & Gefahrenzone</button>
             </div>
 
             <!-- SUB-TAB 1: MITARBEITER KARTEI -->
@@ -1709,9 +1726,10 @@
                     </div>
                 </div>
 
-                <div style="background:rgba(244, 63, 94, 0.06); padding:20px; border-radius:16px; border:1px solid rgba(244, 63, 94, 0.25);">
-                    <h3 style="margin:0 0 8px 0; color:var(--danger);">⚠️ Fachdaten Reset</h3>
-                    <p style="color:var(--text-muted); font-size:12px; margin-top:0;">Nur für den Master Admin verfügbar. Löscht Patienten, Archiv, Kalender, Prüfungen und weitere Fachdaten. Mitarbeiterkonten, Rollen und Anmeldungen bleiben aus Sicherheitsgründen erhalten.</p>
+                <div class="admin-danger-zone">
+                    <div class="admin-danger-kicker">GEFAHRENZONE</div>
+                    <h3 style="margin:0 0 8px 0; color:var(--danger);">⚠️ Fachdaten vollständig zurücksetzen</h3>
+                    <p style="color:var(--text-muted); font-size:12px; margin-top:0;"><b>Vorher immer ein Backup herunterladen.</b> Nur für den Master Admin verfügbar. Löscht Patienten, Archiv, Kalender, Prüfungen, News, Feedback und weitere Fachdaten. Mitarbeiterkonten, Rollen und Anmeldungen bleiben aus Sicherheitsgründen erhalten.</p>
                     <button type="button" class="btn-full-reset" style="width:auto; padding:10px 20px;" onclick="vollstaendigerReset()">Fachdaten zurücksetzen</button>
                 </div>
             </div>
@@ -1768,7 +1786,7 @@
                         <div class="release-version-box"><span>Veröffentlichte Live-Version</span><b id="publishedClientVersionText">--</b></div>
                     </div>
                     <label for="clientReleaseVersionInput">Neue Live-Version</label>
-                    <input type="text" id="clientReleaseVersionInput" placeholder="z. B. v6.8.2" autocomplete="off">
+                    <input type="text" id="clientReleaseVersionInput" placeholder="z. B. v6.8.3" autocomplete="off">
                     <label for="clientReleaseMessageInput">Hinweis für geöffnete Browser (optional)</label>
                     <input type="text" id="clientReleaseMessageInput" maxlength="180" placeholder="z. B. Neue Funktionen und Fehlerbehebungen wurden veröffentlicht.">
                     <div class="session-release-note">
@@ -1883,7 +1901,7 @@
         <div class="modal-card session-warning-card">
             <div class="session-warning-icon">⏱️</div>
             <h2 id="inactivityWarningTitle">Bist du noch im Dienst?</h2>
-            <p>Seit 20 Minuten wurde keine Aktivität auf der MMD Cloud festgestellt.</p>
+            <p>Seit 30 Minuten wurde keine Aktivität auf der MMD Cloud festgestellt.</p>
             <p class="session-warning-strong">Bitte bestätige innerhalb von <span id="inactivityCountdown">30</span> Sekunden, dass du noch da bist.</p>
             <div class="session-warning-note">Nicht gespeicherte Eingaben können bei der automatischen Abmeldung verloren gehen.</div>
             <button type="button" class="btn session-confirm-btn" onclick="confirmStillOnDuty()">✅ Ja, ich bin noch im Dienst</button>
@@ -1903,6 +1921,6 @@
         </div>
     </div>
 
-    <script src="app.js?v=6.8.2-final"></script>
+    <script src="app.js?v=6.8.3"></script>
 </body>
 </html>
