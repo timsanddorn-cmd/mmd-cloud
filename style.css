@@ -2482,3 +2482,126 @@ html, body { max-width: 100%; overflow-x: hidden; }
     .employee-notice-card-head { flex-direction: column; align-items: stretch; }
     .employee-notice-manage-actions { justify-content: space-between; }
 }
+
+
+/* ============================================================
+   v6.8.5 – Foto-Checkliste & Mehrfach-Empfänger
+   ============================================================ */
+.photo-checklist-toggle-btn {
+    width: auto;
+    margin: 0;
+    padding: 8px 16px;
+    background: rgba(16, 185, 129, .12);
+    color: var(--success);
+    border: 1px solid rgba(16, 185, 129, .38);
+    font-weight: 800;
+}
+.photo-checklist-toggle-btn:hover { background: rgba(16, 185, 129, .22); }
+
+.staff-photo-checklist-panel {
+    margin-bottom: 16px;
+    padding: 16px 18px;
+    border: 1px solid rgba(16, 185, 129, .28);
+    border-radius: 14px;
+    background: rgba(15, 23, 42, .72);
+}
+.staff-photo-checklist-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+.staff-photo-checklist-head h3 { margin: 0; color: var(--success); font-size: 16px; }
+.staff-photo-checklist-head p { margin: 4px 0 0; color: var(--text-muted); font-size: 12px; }
+.staff-photo-checklist-summary {
+    flex: 0 0 auto;
+    padding: 5px 9px;
+    border-radius: 999px;
+    color: var(--success);
+    background: rgba(16, 185, 129, .10);
+    border: 1px solid rgba(16, 185, 129, .24);
+    font-size: 11px;
+    font-weight: 800;
+}
+.staff-photo-checklist-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 8px;
+}
+.staff-photo-checklist-row {
+    display: grid;
+    grid-template-columns: 24px 72px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 11px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: rgba(8, 12, 20, .48);
+}
+.staff-photo-checklist-row.done { border-color: rgba(16, 185, 129, .28); }
+.staff-photo-checklist-row.open { border-color: rgba(245, 158, 11, .24); }
+.staff-photo-checklist-icon { text-align: center; }
+.staff-photo-checklist-dn {
+    color: var(--primary);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 800;
+}
+.staff-photo-checklist-name {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 12px;
+    font-weight: 800;
+}
+.staff-photo-checklist-state { color: var(--text-muted); font-size: 10px; white-space: nowrap; }
+.staff-photo-checklist-row.done .staff-photo-checklist-state { color: var(--success); }
+.staff-photo-checklist-row.open .staff-photo-checklist-state { color: var(--warning); }
+.staff-photo-checklist-empty { color: var(--text-muted); text-align: center; padding: 16px; }
+
+.employee-notice-recipient-list {
+    max-height: 220px;
+    overflow-y: auto;
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    background: rgba(8, 12, 20, .48);
+    padding: 6px;
+}
+.employee-notice-recipient-option {
+    display: grid;
+    grid-template-columns: 22px 72px minmax(0, 1fr);
+    align-items: center;
+    gap: 7px;
+    padding: 7px 8px;
+    margin: 0;
+    border-radius: 7px;
+    cursor: pointer;
+}
+.employee-notice-recipient-option:hover { background: rgba(192, 132, 252, .10); }
+.employee-notice-recipient-option input {
+    width: 16px;
+    height: 16px;
+    margin: 0;
+    accent-color: #c084fc;
+}
+.employee-notice-recipient-dn {
+    color: var(--primary);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 800;
+}
+.employee-notice-recipient-name { font-size: 12px; font-weight: 700; }
+.employee-notice-recipient-count {
+    margin-top: 6px;
+    color: var(--text-muted);
+    font-size: 11px;
+}
+.employee-notice-recipient-empty { color: var(--text-muted); padding: 10px; text-align: center; font-size: 12px; }
+
+@media (max-width: 820px) {
+    .staff-photo-checklist-head { flex-direction: column; }
+    .staff-photo-checklist-row { grid-template-columns: 24px 68px minmax(0, 1fr); }
+    .staff-photo-checklist-state { grid-column: 2 / -1; }
+}
