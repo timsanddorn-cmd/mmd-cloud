@@ -1,172 +1,156 @@
 # MMD Cloud – PROJECT STATUS
 
 **Aktuell bestätigte stabile Live-Version:** v6.8.3  
-**Aktueller Entwicklungsstand:** v6.8.3  
-**Status v6.8.3:** ✅ LIVE / STABIL BESTÄTIGT  
+**Aktueller Entwicklungsstand:** v6.8.4  
+**Status v6.8.4:** 🟡 VORBEREITET / LIVE-TEST AUSSTEHEND  
 **Datum:** 18.09.2026
 
 ---
 
 ## 1. Verbindliche Basis
 
-Die aktuell bestätigte stabile Live-Version ist:
+**v6.8.3 = bestätigte stabile Live- und Rollback-Basis**
 
-**v6.8.3**
-
-Die Zwischenänderungen aus v6.8.2 sind vollständig in v6.8.3 enthalten. v6.8.1 bleibt die vorherige stabile Rückfallbasis; v6.8.0e bleibt zusätzlich als ältere dokumentierte Rückfallbasis erhalten.
+v6.8.4 baut ausschließlich auf diesem Stand auf. Vor dem Live-Test von v6.8.4 bleibt v6.8.3 die verbindliche Rückfallversion.
 
 ---
 
-## 2. Bereits enthaltene Verbesserungen
+## 2. Neue Funktion v6.8.4 – Persönliche Mitarbeiterhinweise
 
-### Prüfungen
+Die Funktion ist bewusst **kein Chat und kein internes Nachrichtensystem**.
 
-- Fragen mit einer richtigen Antwort lassen optisch keine Lösungshilfe erkennen.
-- Alle Antwortfelder sehen für Prüflinge gleich aus.
-- Bei Einzelauswahl kann technisch trotzdem nur eine Antwort gleichzeitig gesetzt werden.
-- Echte Mehrfachfragen erlauben mehrere Antworten.
-- Der Hinweis zur Mehrfachauswahl wurde aus der Prüflingsansicht entfernt.
-- Die Punkteberechnung und historische Prüfungsergebnisse bleiben unverändert.
-- Prüfungen werden ausschließlich in Firebase verwaltet; die Flugausbildungsprüfung ist nicht mehr dauerhaft in `app.js` eingebaut.
+Berechtigte Rollen können im bestehenden Newsfeed einen persönlichen Hinweis an genau einen Mitarbeiter senden.
 
-### Sitzung / Inaktivität
+Der Empfänger:
+- bekommt einen neuen offenen Hinweis beim Login als Pop-up,
+- bekommt ihn auch während einer bereits laufenden Sitzung live angezeigt,
+- muss ihn über **„Zur Kenntnis genommen“** bestätigen,
+- kann nicht antworten,
+- sieht seine Hinweise zusätzlich im Newsfeed.
 
-- Inaktivitätsgrenze: **30 Minuten**.
-- Anschließend weiterhin **30 Sekunden Rückfrage**.
-- Ohne Bestätigung erfolgt die vollständige Abmeldung.
+Mehrere offene Hinweise werden nacheinander angezeigt.
 
----
-
-## 3. Aufräumrunde v6.8.3
-
-### Hauptnavigation
-
-- **Hover-Navigation:** Auf Desktop-Geräten mit Maus öffnen sich die Gruppen „Mitarbeiter“ und „Wissen & Dokumente“ bereits beim Darüberfahren. Auf Touch-Geräten bleibt die Klick-/Tap-Bedienung erhalten.
-
-Der Kalender bleibt ausdrücklich als eigener Hauptpunkt direkt sichtbar.
-
-Direkt erreichbar bleiben außerdem:
-- Dokumentation & Einsatz
-- Statistik & Archiv
-- Ausbildung
-- News
-- Chief Ebene (bei Berechtigung)
-- Einstellungen
-
-Zusammengefasst wurden:
-- **Mitarbeiter:** Mitarbeiter Kartei, Hierarchie, Gehaltstabelle
-- **Wissen & Dokumente:** Funk & Codes, Commands, Links & Dokumente, Sanktionskatalog
-
-Die Gruppen sind auf Desktop als kompakte Menüs und auf mobilen Geräten als aufklappbare Bereiche umgesetzt.
-
-### Ausbildung
-
-- „Mitglieder & Rollen“ wurde verständlicher in „Mitarbeiterfreigabe“ umbenannt.
-- Die Beschreibung grenzt Mitarbeiterfreigabe und Ausbildungsrollen klarer voneinander ab.
-
-### Admin-Zentralverwaltung
-
-Die Reihenfolge orientiert sich stärker am täglichen Arbeitsablauf:
-
-1. Mitarbeiter
-2. Rollen & Rechte
-3. Sitzungen & Updates
-4. Systemprotokoll
-5. Wartung
-6. Backup & Gefahrenzone
-
-Zusätzlich:
-- Backup/Wiederherstellung/Fachdaten-Reset ist im UI nur noch für Master Admins sichtbar.
-- Der Systemtab wird auch programmatisch gegen Nicht-Master geschützt.
-- Der Fachdaten-Reset ist als deutliche Gefahrenzone gekennzeichnet.
-- Bei reiner Wartungsberechtigung werden fremde Verwaltungsbereiche ausgeblendet.
-- Rollenberechtigungen sind in einklappbare Themenbereiche gegliedert.
-
-### Konsistenzkorrekturen
-
-- Der Inaktivitätshinweis zeigt jetzt ebenfalls korrekt **30 Minuten** statt des alten Textes mit 20 Minuten.
-- Backup-Dateien tragen automatisch die aktuelle `APP_VERSION` statt einer fest eingetragenen alten Versionsnummer.
-- Cache- und Dateiversionen sind einheitlich auf **v6.8.3** gesetzt.
+Optional kann beim Erstellen ein Ablaufdatum gesetzt werden. Abgelaufene, nicht bestätigte Hinweise werden nicht mehr als Pop-up erzwungen, bleiben aber sichtbar, bis sie gelöscht werden.
 
 ---
 
-## 4. Sicherheit / Firebase
+## 3. Rollenberechtigungen
 
-Für v6.8.3 wurden keine Firebase Rules geändert.
+Neu in **Rollen & Rechte → News & Schwarzes Brett**:
 
-Unverändert bleiben:
-- Firebase Auth
-- Registrierung und Login
-- authIndex / loginDirectory
-- Benutzerkonten
-- Rollenlogik und Berechtigungsmodell
-- Passwörter
-- vorhandene Prüfungen und Prüfungsergebnisse
-- bestehende Live-Daten
+- **canSendEmployeeNotices** – Mitarbeiterhinweise senden
+- **canViewEmployeeNoticeRead** – Lesestatus kontrollieren
+- **delEmployeeNotices** – Mitarbeiterhinweise löschen
 
-Es ist keine Datenmigration erforderlich.
+Master Admin besitzt alle drei Rechte automatisch.
+
+Standardvorgabe:
+- Master Admin: senden / Lesestatus / löschen
+- Chief Ebene: senden / Lesestatus / löschen
+- Ausbildungsleitung: senden / Lesestatus
+- Personalabteilung: senden / Lesestatus
+- andere Rollen: standardmäßig keine Rechte
+
+Die Rechte können über die bestehende Rollenmatrix geändert werden. Beim Speichern einer Rolle werden die Server-Berechtigungen der Mitarbeiter wie bisher synchronisiert.
+
+Das Löschrecht ist nicht an eine alte sichtbare „Admin“-Rolle gekoppelt, sondern an die neue konfigurierbare Berechtigung.
 
 ---
 
-## 5. Dateien v6.8.3
+## 4. Newsfeed
 
-Geändert:
+Neu im bestehenden Newsfeed:
+
+- Button **„📨 Mitarbeiterhinweis“** für berechtigte Rollen
+- Formular mit Mitarbeiter, Betreff, Text und optionalem Ablaufdatum
+- Bereich **„Meine Mitarbeiterhinweise“** für den Empfänger
+- Bereich **„Mitarbeiterhinweise – Übersicht“** für Rollen mit Lesestatus-/Löschrecht
+- Lesestatus mit Datum/Uhrzeit
+- Mülleimer-Symbol für Rollen mit Löschrecht
+
+Der normale Newsfeed, News-Vorschläge und die bisherigen News-Lesebestätigungen bleiben getrennt und unverändert.
+
+---
+
+## 5. Firebase
+
+Neuer Datenpfad:
+
+`data/employeeNotices/{recipientId}/{noticeId}`
+
+Firebase Rules wurden erweitert:
+- Mitarbeiter dürfen nur ihre eigenen persönlichen Hinweise lesen.
+- Nur Rollen mit `canSendEmployeeNotices` oder Master Admin dürfen neue Hinweise erstellen.
+- Nur der jeweilige Empfänger darf seinen Hinweis bestätigen.
+- Rollen mit `canViewEmployeeNoticeRead` dürfen Übersicht und Lesestatus sehen.
+- Rollen mit `delEmployeeNotices` oder Master Admin dürfen Hinweise löschen.
+- Wartungsmodus wird berücksichtigt.
+
+**Wichtig:** `database.rules.final.json` muss vor dem Live-Test in Firebase veröffentlicht werden.
+
+Keine bestehende Datenstruktur wird umgebaut. Es ist **keine Datenmigration** erforderlich.
+
+---
+
+## 6. Zusätzlich korrigiert
+
+Der alte sichtbare Prüfungshinweis **„Mehrfachauswahl möglich“** wurde aus dem Untertitel des laufenden Prüfungslaufs entfernt.
+
+---
+
+## 7. Geänderte Dateien
+
 - `app.js`
 - `index.html`
 - `style.css`
+- `database.rules.final.json`
 - `PROJECT_STATUS.md`
 
 Unverändert:
-- `database.rules.final.json`
 - `mdlogo.png`
 - `wuensche_und_bugs.md`
 
 ---
 
-## 6. Live-Test – erfolgreich abgeschlossen
+## 8. Veröffentlichung / Reihenfolge
 
-Am 18.09.2026 wurden die vorgesehenen Live-Tests erfolgreich bestätigt:
+Vor Veröffentlichung:
+1. über die stabile v6.8.3-Seite ein aktuelles JSON-Backup herunterladen,
+2. v6.8.3 als Rollback beibehalten.
 
-- Login / Dienstantritt
-- Hauptnavigation Desktop inklusive Hover-Menüs
-- Hauptnavigation Mobil / schmales Fenster
-- Kalender weiterhin direkt erreichbar
-- beide neuen Navigationsgruppen
-- Ausbildung / Prüfungen
-- Single- und Multiple-Choice-Verhalten
-- Mitarbeiterfreigabe
-- Admin-Mitarbeiter
-- Rollen & Rechte inklusive Einklappen
-- Sitzungen & Updates als Master Admin
-- Systemprotokoll
-- Wartungsmodus
-- Backup & Gefahrenzone nur als Master Admin
-- normaler Nicht-Master-Admin sieht keine Backup-/Reset-Funktionen
-- Inaktivitätswarnung nach 30 Minuten
-- Dienst beenden / Presence
+Danach:
+1. **Firebase Rules aus `database.rules.final.json` veröffentlichen**
+2. `index.html`, `app.js`, `style.css` veröffentlichen
+3. Browser hart neu laden
+4. v6.8.4 live testen
+5. erst nach erfolgreichem Test v6.8.4 über „Sitzungen & Updates“ als Live-Version bekanntgeben
 
 ---
 
-## 7. Google-Dokumente
+## 9. Live-Test v6.8.4
 
-Die hinterlegten Links bleiben unverändert. Die tatsächlichen Google-Freigaberechte können nicht aus dem Quellcode geprüft werden.
-
-Empfehlung: EHK, CLS, Psychologie, Dienstvorschriften und Sanktionskatalog jeweils einmal in einem privaten/Inkognito-Browser ohne Google-Anmeldung öffnen.
+- Login als Master Admin
+- Rollenmatrix: drei neue Rechte sichtbar
+- gewünschte Rollen konfigurieren und speichern
+- Hinweis an Testmitarbeiter senden
+- Hinweis erscheint beim bereits eingeloggten Testmitarbeiter live als Pop-up
+- „Zur Kenntnis genommen“ bestätigen
+- Lesestatus erscheint in der Übersicht mit Zeit
+- zweiten Hinweis erstellen, Testmitarbeiter abmelden und neu anmelden
+- Hinweis erscheint direkt nach Login
+- Mülleimer als Chief Ebene / berechtigte Rolle testen
+- unberechtigte Rolle sieht keinen Senden-Button und keine Lesestatus-Übersicht
+- normaler Newsfeed weiterhin funktionsfähig
+- News-Lesebestätigung weiterhin funktionsfähig
+- Prüfung starten: kein Hinweis „Mehrfachauswahl möglich“ sichtbar
+- Dienst beenden / Presence / Inaktivität kurz gegenprüfen
 
 ---
 
-## 8. Rollback
+## 10. Rollback
 
-**v6.8.1 = vorherige stabile Rollback-Basis**
+Bis zur erfolgreichen Live-Bestätigung:
 
-v6.8.2 war ein Zwischenstand und ist vollständig in v6.8.3 aufgegangen. v6.8.0e bleibt als ältere dokumentierte Rückfallbasis erhalten.
+**v6.8.3 = stabile Rollback-Basis**
 
-Firebase Rules müssen bei einem reinen Web-Rollback dieser Runde nicht verändert werden.
-
----
-
-## 9. Stabil-Markierung
-
-**v6.8.3 – ✅ LIVE / STABIL BESTÄTIGT**
-
-Bestätigt am **18.09.2026** nach erfolgreichem Test der Navigation, Unterseiten, Prüfungen, Admin-Bereiche, Backup/Gefahrenzone, Presence, Dienstende und Inaktivitätssteuerung.
+Bei reinem Web-Rollback auf v6.8.3 kann der neue Firebase-Pfad `employeeNotices` bestehen bleiben. Für einen vollständigen Rückbau können zusätzlich die vorherigen Firebase Rules wiederhergestellt werden.
