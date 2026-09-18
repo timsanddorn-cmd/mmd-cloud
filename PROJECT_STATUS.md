@@ -1,19 +1,19 @@
 # MMD Cloud – PROJECT STATUS
 
-**Aktuell bestätigte stabile Live-Version:** v6.8.1  
+**Aktuell bestätigte stabile Live-Version:** v6.8.3  
 **Aktueller Entwicklungsstand:** v6.8.3  
-**Status v6.8.3:** 🟡 VORBEREITET / LIVE-TEST AUSSTEHEND  
+**Status v6.8.3:** ✅ LIVE / STABIL BESTÄTIGT  
 **Datum:** 18.09.2026
 
 ---
 
 ## 1. Verbindliche Basis
 
-Die letzte vollständig bestätigte stabile Live-Basis bleibt bis zum Live-Test der neuen Aufräumrunde:
+Die aktuell bestätigte stabile Live-Version ist:
 
-**v6.8.1**
+**v6.8.3**
 
-Die Zwischenänderungen aus v6.8.2 sind vollständig in v6.8.3 enthalten. v6.8.0e bleibt zusätzlich als ältere dokumentierte Rückfallbasis erhalten.
+Die Zwischenänderungen aus v6.8.2 sind vollständig in v6.8.3 enthalten. v6.8.1 bleibt die vorherige stabile Rückfallbasis; v6.8.0e bleibt zusätzlich als ältere dokumentierte Rückfallbasis erhalten.
 
 ---
 
@@ -123,9 +123,9 @@ Unverändert:
 
 ---
 
-## 6. Empfohlener Live-Test
+## 6. Live-Test – erfolgreich abgeschlossen
 
-Nach Veröffentlichung prüfen:
+Am 18.09.2026 wurden die vorgesehenen Live-Tests erfolgreich bestätigt:
 
 - Login / Dienstantritt
 - Hauptnavigation Desktop inklusive Hover-Menüs
@@ -157,11 +157,9 @@ Empfehlung: EHK, CLS, Psychologie, Dienstvorschriften und Sanktionskatalog jewei
 
 ## 8. Rollback
 
-Bis v6.8.3 erfolgreich live getestet wurde:
+**v6.8.1 = vorherige stabile Rollback-Basis**
 
-**v6.8.1 = verbindliche stabile Rollback-Basis**
-
-v6.8.2 war ein Zwischenstand und ist vollständig in v6.8.3 aufgegangen.
+v6.8.2 war ein Zwischenstand und ist vollständig in v6.8.3 aufgegangen. v6.8.0e bleibt als ältere dokumentierte Rückfallbasis erhalten.
 
 Firebase Rules müssen bei einem reinen Web-Rollback dieser Runde nicht verändert werden.
 
@@ -169,6 +167,6 @@ Firebase Rules müssen bei einem reinen Web-Rollback dieser Runde nicht verände
 
 ## 9. Stabil-Markierung
 
-Nach erfolgreichem Live-Test:
-
 **v6.8.3 – ✅ LIVE / STABIL BESTÄTIGT**
+
+Bestätigt am **18.09.2026** nach erfolgreichem Test der Navigation, Unterseiten, Prüfungen, Admin-Bereiche, Backup/Gefahrenzone, Presence, Dienstende und Inaktivitätssteuerung.
