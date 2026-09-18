@@ -1,21 +1,23 @@
 # MMD Cloud – PROJECT STATUS
 
-**Aktuell bestätigte stabile Live-Version:** v6.8.4  
+**Aktuell bestätigte stabile Live-Version:** v6.8.5b  
 **Aktueller Entwicklungsstand:** v6.8.5b  
-**Status v6.8.5b:** 🟡 VORBEREITET / LIVE-TEST AUSSTEHEND  
+**Status v6.8.5b:** ✅ LIVE / STABIL BESTÄTIGT  
 **Datum:** 18.09.2026
 
 ---
 
 ## 1. Verbindliche Basis
 
-**v6.8.4 = bestätigte stabile Live-Version**
+**v6.8.5b = bestätigte stabile Live-Version**
 
-v6.8.4 bleibt bis zur erfolgreichen Live-Bestätigung von v6.8.5b die verbindliche Rollback-Basis.
+Der Live-Test von v6.8.5b wurde am 18.09.2026 erfolgreich und ohne funktionale Fehler abgeschlossen.
+
+**v6.8.5b ist damit die aktuelle stabile Rollback-Basis.**
 
 ---
 
-## 2. Entwicklung v6.8.5b – Profilbild-Übersicht
+## 2. v6.8.5b – Profilbild-Übersicht
 
 Im Bereich **Mitarbeiter** gibt es für den Master Admin einen neuen Button **„📋 Foto-Liste“** direkt neben dem Foto-Ordner.
 
@@ -40,7 +42,7 @@ Es wird dafür **kein neuer Firebase-Datenpfad** angelegt. Der Status wird direk
 
 ---
 
-## 3. Entwicklung v6.8.5b – Mitarbeiterhinweis an mehrere Empfänger
+## 3. v6.8.5b – Mitarbeiterhinweis an mehrere Empfänger
 
 Der bestehende Mitarbeiterhinweis bleibt ein persönlicher Hinweis und kein Chat.
 
@@ -96,31 +98,34 @@ Unverändert:
 
 Die Überschrift **„Mitarbeiterhinweise – Übersicht“** wurde außerdem zu **„Mitarbeiterhinweise Übersicht“** geändert.
 
-Nach Veröffentlichung prüfen:
+Der Live-Test wurde am **18.09.2026 erfolgreich abgeschlossen**.
 
-1. Master Admin: Im Bereich Mitarbeiter ist **„📋 Foto-Liste“** sichtbar.
-2. Nicht-Master: Der Button und die Foto-Liste sind nicht sichtbar.
-3. Foto-Liste: Dienstnummer, Vorname und Nachname werden korrekt und nach DN sortiert angezeigt.
+Bestätigt wurden:
+1. Master Admin sieht **„📋 Foto-Liste“**.
+2. Nicht-Master sieht Button und Foto-Liste nicht.
+3. Foto-Liste zeigt Dienstnummer, Vorname und Nachname korrekt und nach DN sortiert.
 4. Mitarbeiter ohne eigenes Foto werden als offen angezeigt.
-5. Über **„Foto einstellen“** ein Bild hinterlegen: Eintrag springt automatisch auf ✅.
-6. Foto auf Standardlogo zurücksetzen: Eintrag wird automatisch wieder offen.
-7. Neues Testkonto registrieren: Das Konto erscheint automatisch in der Foto-Liste des Master Admin.
-8. Bei einem Mitarbeiter ohne Foto auf **„📨 Foto-Hinweis“** klicken und den Versand bestätigen.
-9. Der personalisierte Hinweis erscheint unter **„Mitarbeiterhinweise Übersicht“**.
-10. Empfänger bestätigt den Hinweis; Datum/Uhrzeit der Lesebestätigung erscheinen in der Übersicht.
-11. Mitarbeiterhinweis öffnen: Mehrere Empfänger können per Checkbox ausgewählt werden.
-12. Empfängeranzeige beginnt mit der Dienstnummer.
-13. Einen Hinweis gleichzeitig an mindestens zwei Mitarbeiter senden.
-14. Beide Empfänger erhalten jeweils ihren eigenen Hinweis.
-15. Beide Lesebestätigungen funktionieren weiterhin getrennt.
-16. Berechtigungen, normaler Newsfeed und bisherige Mitarbeiteransicht kurz gegenprüfen.
+5. Eigenes Foto über **„Foto einstellen“** setzt den Status automatisch auf ✅.
+6. Zurücksetzen auf das Standardlogo setzt den Status wieder auf offen.
+7. Neu registrierte Konten erscheinen automatisch in der Foto-Liste.
+8. **„📨 Foto-Hinweis“** erzeugt den vorgesehenen personalisierten Mitarbeiterhinweis.
+9. Der Hinweis erscheint unter **„Mitarbeiterhinweise Übersicht“**.
+10. Lesebestätigung mit Datum/Uhrzeit funktioniert.
+11. Mehrere Empfänger können per Checkbox ausgewählt werden.
+12. Die Empfängeranzeige beginnt mit der Dienstnummer.
+13. Ein Hinweis kann gleichzeitig an mindestens zwei Mitarbeiter gesendet werden.
+14. Jeder Empfänger erhält einen eigenen Hinweis.
+15. Die Lesebestätigungen funktionieren weiterhin getrennt.
+16. Berechtigungen, normaler Newsfeed und bisherige Mitarbeiteransicht wurden erfolgreich gegengeprüft.
+
+Hinweis:
+- In den Browser-DevTools erscheint eine Accessibility-/Verbesserungswarnung **„No label associated with a form field“**.
+- Dies ist kein funktionaler Laufzeitfehler und hat den Live-Test nicht beeinträchtigt.
 
 ---
 
 ## 7. Rollback
 
-Bis zur erfolgreichen Live-Bestätigung:
+**v6.8.5b = aktuelle stabile Rollback-Basis**
 
-**v6.8.4 = stabile Rollback-Basis**
-
-Die Firebase Rules müssen bei einem Rollback nicht verändert werden, da v6.8.5b keine Rules-Änderung enthält.
+Die Firebase Rules müssen bei einem Rollback auf diesen Stand nicht verändert werden, da v6.8.5b keine Rules-Änderung enthält.
