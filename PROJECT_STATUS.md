@@ -1,17 +1,17 @@
 # MMD Cloud – PROJECT STATUS
 
-**Aktuell bestätigte stabile Live-Version:** v6.8.3  
+**Aktuell bestätigte stabile Live-Version:** v6.8.4  
 **Aktueller Entwicklungsstand:** v6.8.4  
-**Status v6.8.4:** 🟡 VORBEREITET / LIVE-TEST AUSSTEHEND  
+**Status v6.8.4:** ✅ LIVE / STABIL BESTÄTIGT  
 **Datum:** 18.09.2026
 
 ---
 
 ## 1. Verbindliche Basis
 
-**v6.8.3 = bestätigte stabile Live- und Rollback-Basis**
+**v6.8.4 = bestätigte stabile Live-Version**
 
-v6.8.4 baut ausschließlich auf diesem Stand auf. Vor dem Live-Test von v6.8.4 bleibt v6.8.3 die verbindliche Rückfallversion.
+v6.8.3 bleibt die vorherige stabile Rollback-Basis.
 
 ---
 
@@ -127,30 +127,34 @@ Danach:
 
 ---
 
-## 9. Live-Test v6.8.4
+## 9. Live-Test v6.8.4 – erfolgreich abgeschlossen
 
-- Login als Master Admin
-- Rollenmatrix: drei neue Rechte sichtbar
-- gewünschte Rollen konfigurieren und speichern
-- Hinweis an Testmitarbeiter senden
-- Hinweis erscheint beim bereits eingeloggten Testmitarbeiter live als Pop-up
-- „Zur Kenntnis genommen“ bestätigen
-- Lesestatus erscheint in der Übersicht mit Zeit
-- zweiten Hinweis erstellen, Testmitarbeiter abmelden und neu anmelden
-- Hinweis erscheint direkt nach Login
-- Mülleimer als Chief Ebene / berechtigte Rolle testen
-- unberechtigte Rolle sieht keinen Senden-Button und keine Lesestatus-Übersicht
-- normaler Newsfeed weiterhin funktionsfähig
-- News-Lesebestätigung weiterhin funktionsfähig
-- Prüfung starten: kein Hinweis „Mehrfachauswahl möglich“ sichtbar
-- Dienst beenden / Presence / Inaktivität kurz gegenprüfen
+Am 18.09.2026 wurden die vorgesehenen Live-Tests erfolgreich bestätigt:
+
+- drei neue Rollenrechte sichtbar
+- Mitarbeiterhinweis an eingeloggten Mitarbeiter live zugestellt
+- Bestätigung „Zur Kenntnis genommen“ funktioniert
+- Lesestatus mit Datum/Uhrzeit funktioniert
+- offener Hinweis erscheint nach erneutem Login
+- Löschen über Mülleimer funktioniert und synchronisiert beim Empfänger
+- unberechtigte Rollen sehen weder Senden-Button noch Lesestatus-Übersicht
+- normaler Newsfeed funktioniert weiterhin
+- normale News-Lesebestätigung funktioniert weiterhin
+- Prüfung zeigt keinen Hinweis „Mehrfachauswahl möglich“ mehr
 
 ---
 
 ## 10. Rollback
 
-Bis zur erfolgreichen Live-Bestätigung:
-
-**v6.8.3 = stabile Rollback-Basis**
+**v6.8.3 = vorherige stabile Rollback-Basis**
 
 Bei reinem Web-Rollback auf v6.8.3 kann der neue Firebase-Pfad `employeeNotices` bestehen bleiben. Für einen vollständigen Rückbau können zusätzlich die vorherigen Firebase Rules wiederhergestellt werden.
+
+
+---
+
+## 11. Stabil-Markierung
+
+**v6.8.4 – ✅ LIVE / STABIL BESTÄTIGT**
+
+Bestätigt am **18.09.2026** nach erfolgreichem Live-Test der Mitarbeiterhinweise, Lesebestätigung, Berechtigungen, Löschfunktion, Login-Pop-up, bestehendem Newsfeed und Prüfungsanzeige.
