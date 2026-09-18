@@ -11,7 +11,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
-    <link rel="stylesheet" href="style.css?v=6.8.5b">
+    <link rel="stylesheet" href="style.css?v=6.8.5c">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏥</text></svg>">
 </head>
 <body>
@@ -781,8 +781,8 @@
                 </div>
                 <div class="employee-notice-form-grid">
                     <div>
-                        <label>Mitarbeiter:</label>
-                        <div id="employeeNoticeRecipientList" class="employee-notice-recipient-list" role="group" aria-label="Empfänger auswählen">
+                        <div id="employeeNoticeRecipientLabel" style="font-size:12px;font-weight:800;color:var(--text-muted);display:block;margin-bottom:6px;margin-top:10px;text-transform:uppercase;letter-spacing:.3px;user-select:none;">Mitarbeiter:</div>
+                        <div id="employeeNoticeRecipientList" class="employee-notice-recipient-list" role="group" aria-labelledby="employeeNoticeRecipientLabel">
                             <div class="employee-notice-recipient-empty">Keine freigeschalteten Mitarbeiter vorhanden.</div>
                         </div>
                         <div id="employeeNoticeRecipientCount" class="employee-notice-recipient-count">0 Mitarbeiter ausgewählt</div>
@@ -1985,6 +1985,6 @@
         </div>
     </div>
 
-    <script src="app.js?v=6.8.5b"></script>
+    <script src="app.js?v=6.8.5c"></script>
 </body>
 </html>
