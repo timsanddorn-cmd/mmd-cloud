@@ -2302,6 +2302,28 @@ html, body { max-width: 100%; overflow-x: hidden; }
     border-radius: 4px;
 }
 
+
+@media (hover: hover) and (pointer: fine) {
+    .nav-group:hover > .nav-group-menu {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+    .nav-group:hover > .nav-group-toggle .nav-chevron {
+        transform: rotate(180deg);
+    }
+    .nav-group:hover > .nav-group-toggle {
+        color: var(--primary);
+        border-color: rgba(56, 189, 248, .35);
+        background: rgba(56, 189, 248, .12);
+    }
+    .nav-group:hover > .nav-group-toggle.active {
+        color: #fff;
+        border-color: var(--primary);
+        background: var(--grad-primary);
+    }
+}
+
 @media (max-width: 768px) {
     .nav-group {
         flex: 1 1 100%;
