@@ -1,5 +1,5 @@
 // ============================================================
-//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.8.5c
+//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.8.5d
 //  Firebase Realtime Database (Compat SDK v10)
 // ============================================================
 
@@ -182,7 +182,7 @@ const db = firebase.database();
 const auth = firebase.auth();
 const FIREBASE_AUTH_EMAIL_DOMAIN = 'mmd-login.invalid';
 
-const APP_VERSION = 'v6.8.5c';
+const APP_VERSION = 'v6.8.5d';
 const PRESENCE_HEARTBEAT_MS = 30 * 1000;
 const PRESENCE_STALE_MS = 3 * 60 * 1000;
 const INACTIVITY_LIMIT_MS = 30 * 60 * 1000;
@@ -334,7 +334,7 @@ const systemChangelogs = [
         id: "sys_v6_8_1", version: "v6.8.1", date: "17.09.2026", ts: 1789628400000,
         category: "Verbesserung", title: "Dienststatus & Browser-Aktualisierung verbessert",
         changes: [
-            "Nach 20 Minuten ohne Aktivität fragt die MMD Cloud nach, ob der Mitarbeiter noch im Dienst ist.",
+            "Bei längerer Inaktivität fragt die MMD Cloud nach, ob der Mitarbeiter noch im Dienst ist.",
             "Wird die Rückfrage innerhalb von 30 Sekunden nicht bestätigt, endet die Sitzung automatisch und der Mitarbeiter verschwindet aus „Im Dienst“.",
             "Master Admins können aktive Sitzungen gezielt aus dem Dienst entfernen.",
             "Neue Versionen können künftig an bereits geöffnete Browser gemeldet und automatisch neu geladen werden."
@@ -3217,7 +3217,7 @@ function updateInactivityWarningCountdown() {
         inactivityWarningActive = false;
         if (inactivityWarningIntervalId) clearInterval(inactivityWarningIntervalId);
         inactivityWarningIntervalId = null;
-        performManagedLogout('🛑 Deine MMD-Cloud-Sitzung wurde nach 20 Minuten Inaktivität und 30 Sekunden ohne Bestätigung automatisch beendet.');
+        performManagedLogout('🛑 Deine MMD-Cloud-Sitzung wurde nach 30 Minuten Inaktivität und 30 Sekunden ohne Bestätigung automatisch beendet.');
     }
 }
 
