@@ -1,8 +1,8 @@
 # MMD Cloud – PROJECT STATUS
 
 **Aktuell bestätigte stabile Live-Version:** v6.8.4  
-**Aktueller Entwicklungsstand:** v6.8.5  
-**Status v6.8.5:** 🟡 VORBEREITET / LIVE-TEST AUSSTEHEND  
+**Aktueller Entwicklungsstand:** v6.8.5a  
+**Status v6.8.5a:** 🟡 VORBEREITET / LIVE-TEST AUSSTEHEND  
 **Datum:** 18.09.2026
 
 ---
@@ -11,16 +11,19 @@
 
 **v6.8.4 = bestätigte stabile Live-Version**
 
-v6.8.4 bleibt bis zur erfolgreichen Live-Bestätigung von v6.8.5 die verbindliche Rollback-Basis.
+v6.8.4 bleibt bis zur erfolgreichen Live-Bestätigung von v6.8.5a die verbindliche Rollback-Basis.
 
 ---
 
-## 2. Entwicklung v6.8.5 – Profilbild-Übersicht
+## 2. Entwicklung v6.8.5a – Profilbild-Übersicht
 
 Im Bereich **Mitarbeiter** gibt es für den Master Admin einen neuen Button **„📋 Foto-Liste“** direkt neben dem Foto-Ordner.
 
 Die Liste:
 - ist ausschließlich für Master Admin sichtbar,
+- zeigt bei fehlendem Profilbild direkt den Button **„📨 Foto-Hinweis“**,
+- verschickt darüber einen automatisch personalisierten Hinweis mit dem Namen des Mitarbeiters,
+- der versendete Hinweis erscheint automatisch unter **„Mitarbeiterhinweise Übersicht“** und behält die normale Lesebestätigung,
 - enthält alle registrierten Mitarbeiter, auch neu registrierte noch nicht freigeschaltete Konten,
 - ist nach Dienstnummer sortiert,
 - zeigt Dienstnummer, Vorname und Nachname,
@@ -33,7 +36,7 @@ Es wird dafür **kein neuer Firebase-Datenpfad** angelegt. Der Status wird direk
 
 ---
 
-## 3. Entwicklung v6.8.5 – Mitarbeiterhinweis an mehrere Empfänger
+## 3. Entwicklung v6.8.5a – Mitarbeiterhinweis an mehrere Empfänger
 
 Der bestehende Mitarbeiterhinweis bleibt ein persönlicher Hinweis und kein Chat.
 
@@ -56,7 +59,7 @@ Mehrere Hinweise werden beim Senden gesammelt in einem Firebase-Update geschrieb
 
 ## 4. Sicherheit / Firebase
 
-Für v6.8.5 wurden **keine Firebase Rules geändert**.
+Für v6.8.5a wurden **keine Firebase Rules geändert**.
 
 Unverändert bleiben insbesondere:
 - Firebase Auth
@@ -72,7 +75,7 @@ Die Foto-Liste ist zusätzlich in der Oberfläche und in der JavaScript-Funktion
 
 ---
 
-## 5. Geänderte Dateien v6.8.5
+## 5. Geänderte Dateien v6.8.5a
 
 - `app.js`
 - `index.html`
@@ -85,7 +88,9 @@ Unverändert:
 
 ---
 
-## 6. Live-Test v6.8.5
+## 6. Live-Test v6.8.5a
+
+Die Überschrift **„Mitarbeiterhinweise – Übersicht“** wurde außerdem zu **„Mitarbeiterhinweise Übersicht“** geändert.
 
 Nach Veröffentlichung prüfen:
 
@@ -96,12 +101,15 @@ Nach Veröffentlichung prüfen:
 5. Über **„Foto einstellen“** ein Bild hinterlegen: Eintrag springt automatisch auf ✅.
 6. Foto auf Standardlogo zurücksetzen: Eintrag wird automatisch wieder offen.
 7. Neues Testkonto registrieren: Das Konto erscheint automatisch in der Foto-Liste des Master Admin.
-8. Mitarbeiterhinweis öffnen: Mehrere Empfänger können per Checkbox ausgewählt werden.
-9. Empfängeranzeige beginnt mit der Dienstnummer.
-10. Einen Hinweis gleichzeitig an mindestens zwei Mitarbeiter senden.
-11. Beide Empfänger erhalten jeweils ihren eigenen Hinweis.
-12. Beide Lesebestätigungen funktionieren weiterhin getrennt.
-13. Berechtigungen, normaler Newsfeed und bisherige Mitarbeiteransicht kurz gegenprüfen.
+8. Bei einem Mitarbeiter ohne Foto auf **„📨 Foto-Hinweis“** klicken und den Versand bestätigen.
+9. Der personalisierte Hinweis erscheint unter **„Mitarbeiterhinweise Übersicht“**.
+10. Empfänger bestätigt den Hinweis; Datum/Uhrzeit der Lesebestätigung erscheinen in der Übersicht.
+11. Mitarbeiterhinweis öffnen: Mehrere Empfänger können per Checkbox ausgewählt werden.
+12. Empfängeranzeige beginnt mit der Dienstnummer.
+13. Einen Hinweis gleichzeitig an mindestens zwei Mitarbeiter senden.
+14. Beide Empfänger erhalten jeweils ihren eigenen Hinweis.
+15. Beide Lesebestätigungen funktionieren weiterhin getrennt.
+16. Berechtigungen, normaler Newsfeed und bisherige Mitarbeiteransicht kurz gegenprüfen.
 
 ---
 
@@ -111,4 +119,4 @@ Bis zur erfolgreichen Live-Bestätigung:
 
 **v6.8.4 = stabile Rollback-Basis**
 
-Die Firebase Rules müssen bei einem Rollback nicht verändert werden, da v6.8.5 keine Rules-Änderung enthält.
+Die Firebase Rules müssen bei einem Rollback nicht verändert werden, da v6.8.5a keine Rules-Änderung enthält.
