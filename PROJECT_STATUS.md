@@ -1,8 +1,8 @@
 # MMD Cloud – PROJECT STATUS
 
 **Aktuell bestätigte stabile Live-Version:** v6.8.4  
-**Aktueller Entwicklungsstand:** v6.8.4  
-**Status v6.8.4:** ✅ LIVE / STABIL BESTÄTIGT  
+**Aktueller Entwicklungsstand:** v6.8.5  
+**Status v6.8.5:** 🟡 VORBEREITET / LIVE-TEST AUSSTEHEND  
 **Datum:** 18.09.2026
 
 ---
@@ -11,150 +11,104 @@
 
 **v6.8.4 = bestätigte stabile Live-Version**
 
-v6.8.3 bleibt die vorherige stabile Rollback-Basis.
+v6.8.4 bleibt bis zur erfolgreichen Live-Bestätigung von v6.8.5 die verbindliche Rollback-Basis.
 
 ---
 
-## 2. Neue Funktion v6.8.4 – Persönliche Mitarbeiterhinweise
+## 2. Entwicklung v6.8.5 – Profilbild-Übersicht
 
-Die Funktion ist bewusst **kein Chat und kein internes Nachrichtensystem**.
+Im Bereich **Mitarbeiter** gibt es für den Master Admin einen neuen Button **„📋 Foto-Liste“** direkt neben dem Foto-Ordner.
 
-Berechtigte Rollen können im bestehenden Newsfeed einen persönlichen Hinweis an genau einen Mitarbeiter senden.
+Die Liste:
+- ist ausschließlich für Master Admin sichtbar,
+- enthält alle registrierten Mitarbeiter, auch neu registrierte noch nicht freigeschaltete Konten,
+- ist nach Dienstnummer sortiert,
+- zeigt Dienstnummer, Vorname und Nachname,
+- markiert Mitarbeiter ohne eigenes Profilbild als offen,
+- markiert Mitarbeiter mit eigenem Profilbild automatisch mit ✅,
+- aktualisiert sich automatisch über den bestehenden Live-Listener von `data/users`,
+- setzt den Status wieder auf offen, wenn ein Profilbild auf das Standardlogo zurückgesetzt wird.
 
-Der Empfänger:
-- bekommt einen neuen offenen Hinweis beim Login als Pop-up,
-- bekommt ihn auch während einer bereits laufenden Sitzung live angezeigt,
-- muss ihn über **„Zur Kenntnis genommen“** bestätigen,
-- kann nicht antworten,
-- sieht seine Hinweise zusätzlich im Newsfeed.
-
-Mehrere offene Hinweise werden nacheinander angezeigt.
-
-Optional kann beim Erstellen ein Ablaufdatum gesetzt werden. Abgelaufene, nicht bestätigte Hinweise werden nicht mehr als Pop-up erzwungen, bleiben aber sichtbar, bis sie gelöscht werden.
-
----
-
-## 3. Rollenberechtigungen
-
-Neu in **Rollen & Rechte → News & Schwarzes Brett**:
-
-- **canSendEmployeeNotices** – Mitarbeiterhinweise senden
-- **canViewEmployeeNoticeRead** – Lesestatus kontrollieren
-- **delEmployeeNotices** – Mitarbeiterhinweise löschen
-
-Master Admin besitzt alle drei Rechte automatisch.
-
-Standardvorgabe:
-- Master Admin: senden / Lesestatus / löschen
-- Chief Ebene: senden / Lesestatus / löschen
-- Ausbildungsleitung: senden / Lesestatus
-- Personalabteilung: senden / Lesestatus
-- andere Rollen: standardmäßig keine Rechte
-
-Die Rechte können über die bestehende Rollenmatrix geändert werden. Beim Speichern einer Rolle werden die Server-Berechtigungen der Mitarbeiter wie bisher synchronisiert.
-
-Das Löschrecht ist nicht an eine alte sichtbare „Admin“-Rolle gekoppelt, sondern an die neue konfigurierbare Berechtigung.
+Es wird dafür **kein neuer Firebase-Datenpfad** angelegt. Der Status wird direkt aus dem bestehenden Feld `photoUrl` abgeleitet.
 
 ---
 
-## 4. Newsfeed
+## 3. Entwicklung v6.8.5 – Mitarbeiterhinweis an mehrere Empfänger
 
-Neu im bestehenden Newsfeed:
+Der bestehende Mitarbeiterhinweis bleibt ein persönlicher Hinweis und kein Chat.
 
-- Button **„📨 Mitarbeiterhinweis“** für berechtigte Rollen
-- Formular mit Mitarbeiter, Betreff, Text und optionalem Ablaufdatum
-- Bereich **„Meine Mitarbeiterhinweise“** für den Empfänger
-- Bereich **„Mitarbeiterhinweise – Übersicht“** für Rollen mit Lesestatus-/Löschrecht
-- Lesestatus mit Datum/Uhrzeit
-- Mülleimer-Symbol für Rollen mit Löschrecht
+Neu:
+- mehrere freigeschaltete Mitarbeiter können gleichzeitig ausgewählt werden,
+- Auswahl erfolgt über Checkboxen,
+- Dienstnummer steht in der Auswahl vorne, z. B. **DN 05 – Mike Gonzalo**,
+- Empfänger sind nach Dienstnummer sortiert,
+- jeder ausgewählte Mitarbeiter erhält einen eigenen Hinweis,
+- jeder Empfänger besitzt weiterhin seine eigene Lesebestätigung,
+- Lesestatus und Löschfunktion funktionieren weiterhin pro Mitarbeiter und Hinweis.
 
-Der normale Newsfeed, News-Vorschläge und die bisherigen News-Lesebestätigungen bleiben getrennt und unverändert.
-
----
-
-## 5. Firebase
-
-Neuer Datenpfad:
+Die vorhandene Datenstruktur bleibt unverändert:
 
 `data/employeeNotices/{recipientId}/{noticeId}`
 
-Firebase Rules wurden erweitert:
-- Mitarbeiter dürfen nur ihre eigenen persönlichen Hinweise lesen.
-- Nur Rollen mit `canSendEmployeeNotices` oder Master Admin dürfen neue Hinweise erstellen.
-- Nur der jeweilige Empfänger darf seinen Hinweis bestätigen.
-- Rollen mit `canViewEmployeeNoticeRead` dürfen Übersicht und Lesestatus sehen.
-- Rollen mit `delEmployeeNotices` oder Master Admin dürfen Hinweise löschen.
-- Wartungsmodus wird berücksichtigt.
-
-**Wichtig:** `database.rules.final.json` muss vor dem Live-Test in Firebase veröffentlicht werden.
-
-Keine bestehende Datenstruktur wird umgebaut. Es ist **keine Datenmigration** erforderlich.
+Mehrere Hinweise werden beim Senden gesammelt in einem Firebase-Update geschrieben.
 
 ---
 
-## 6. Zusätzlich korrigiert
+## 4. Sicherheit / Firebase
 
-Der alte sichtbare Prüfungshinweis **„Mehrfachauswahl möglich“** wurde aus dem Untertitel des laufenden Prüfungslaufs entfernt.
+Für v6.8.5 wurden **keine Firebase Rules geändert**.
+
+Unverändert bleiben insbesondere:
+- Firebase Auth
+- Registrierung und Login
+- `authIndex`
+- `loginDirectory`
+- stabile Account-IDs
+- Rollen und Berechtigungen
+- Benutzerverwaltung
+- bestehende Realtime-Database-Rules
+
+Die Foto-Liste ist zusätzlich in der Oberfläche und in der JavaScript-Funktion auf Master Admin begrenzt.
 
 ---
 
-## 7. Geänderte Dateien
+## 5. Geänderte Dateien v6.8.5
 
 - `app.js`
 - `index.html`
 - `style.css`
-- `database.rules.final.json`
 - `PROJECT_STATUS.md`
 
 Unverändert:
+- `database.rules.final.json`
 - `mdlogo.png`
-- `wuensche_und_bugs.md`
 
 ---
 
-## 8. Veröffentlichung / Reihenfolge
+## 6. Live-Test v6.8.5
 
-Vor Veröffentlichung:
-1. über die stabile v6.8.3-Seite ein aktuelles JSON-Backup herunterladen,
-2. v6.8.3 als Rollback beibehalten.
+Nach Veröffentlichung prüfen:
 
-Danach:
-1. **Firebase Rules aus `database.rules.final.json` veröffentlichen**
-2. `index.html`, `app.js`, `style.css` veröffentlichen
-3. Browser hart neu laden
-4. v6.8.4 live testen
-5. erst nach erfolgreichem Test v6.8.4 über „Sitzungen & Updates“ als Live-Version bekanntgeben
-
----
-
-## 9. Live-Test v6.8.4 – erfolgreich abgeschlossen
-
-Am 18.09.2026 wurden die vorgesehenen Live-Tests erfolgreich bestätigt:
-
-- drei neue Rollenrechte sichtbar
-- Mitarbeiterhinweis an eingeloggten Mitarbeiter live zugestellt
-- Bestätigung „Zur Kenntnis genommen“ funktioniert
-- Lesestatus mit Datum/Uhrzeit funktioniert
-- offener Hinweis erscheint nach erneutem Login
-- Löschen über Mülleimer funktioniert und synchronisiert beim Empfänger
-- unberechtigte Rollen sehen weder Senden-Button noch Lesestatus-Übersicht
-- normaler Newsfeed funktioniert weiterhin
-- normale News-Lesebestätigung funktioniert weiterhin
-- Prüfung zeigt keinen Hinweis „Mehrfachauswahl möglich“ mehr
+1. Master Admin: Im Bereich Mitarbeiter ist **„📋 Foto-Liste“** sichtbar.
+2. Nicht-Master: Der Button und die Foto-Liste sind nicht sichtbar.
+3. Foto-Liste: Dienstnummer, Vorname und Nachname werden korrekt und nach DN sortiert angezeigt.
+4. Mitarbeiter ohne eigenes Foto werden als offen angezeigt.
+5. Über **„Foto einstellen“** ein Bild hinterlegen: Eintrag springt automatisch auf ✅.
+6. Foto auf Standardlogo zurücksetzen: Eintrag wird automatisch wieder offen.
+7. Neues Testkonto registrieren: Das Konto erscheint automatisch in der Foto-Liste des Master Admin.
+8. Mitarbeiterhinweis öffnen: Mehrere Empfänger können per Checkbox ausgewählt werden.
+9. Empfängeranzeige beginnt mit der Dienstnummer.
+10. Einen Hinweis gleichzeitig an mindestens zwei Mitarbeiter senden.
+11. Beide Empfänger erhalten jeweils ihren eigenen Hinweis.
+12. Beide Lesebestätigungen funktionieren weiterhin getrennt.
+13. Berechtigungen, normaler Newsfeed und bisherige Mitarbeiteransicht kurz gegenprüfen.
 
 ---
 
-## 10. Rollback
+## 7. Rollback
 
-**v6.8.3 = vorherige stabile Rollback-Basis**
+Bis zur erfolgreichen Live-Bestätigung:
 
-Bei reinem Web-Rollback auf v6.8.3 kann der neue Firebase-Pfad `employeeNotices` bestehen bleiben. Für einen vollständigen Rückbau können zusätzlich die vorherigen Firebase Rules wiederhergestellt werden.
+**v6.8.4 = stabile Rollback-Basis**
 
-
----
-
-## 11. Stabil-Markierung
-
-**v6.8.4 – ✅ LIVE / STABIL BESTÄTIGT**
-
-Bestätigt am **18.09.2026** nach erfolgreichem Live-Test der Mitarbeiterhinweise, Lesebestätigung, Berechtigungen, Löschfunktion, Login-Pop-up, bestehendem Newsfeed und Prüfungsanzeige.
+Die Firebase Rules müssen bei einem Rollback nicht verändert werden, da v6.8.5 keine Rules-Änderung enthält.
