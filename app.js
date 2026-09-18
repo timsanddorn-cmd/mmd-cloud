@@ -1,5 +1,5 @@
 // ============================================================
-//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.8.5e
+//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.8.5f
 //  Firebase Realtime Database (Compat SDK v10)
 // ============================================================
 
@@ -182,7 +182,7 @@ const db = firebase.database();
 const auth = firebase.auth();
 const FIREBASE_AUTH_EMAIL_DOMAIN = 'mmd-login.invalid';
 
-const APP_VERSION = 'v6.8.5e';
+const APP_VERSION = 'v6.8.5f';
 const PRESENCE_HEARTBEAT_MS = 30 * 1000;
 const PRESENCE_STALE_MS = 31 * 60 * 1000;
 const INACTIVITY_LIMIT_MS = 30 * 60 * 1000;
@@ -3144,18 +3144,51 @@ function startPresenceWatcher() {
         const now = Date.now();
         const unique = new Map();
         Object.entries(raw).forEach(([presenceId, value]) => {
-            // Seit v6.8.1 gilt für "Im Dienst" dieselbe Grundlage wie für
-            // "Sitzungen & Updates": nur strukturierte, frische Presence-Einträge
-            // mit stabiler Account-ID. Alte reine Namens-/Legacy-Einträge werden
-            // nicht mehr als aktiver Medic-Dienst angezeigt.
-            if (!value || typeof value !== 'object' || !isPresenceFresh(value, now)) return;
-            const accountId = String(value.accountId || '').trim();
-            if (!accountId) return;
-            const name = String(value.name || '').trim() || 'Unbekannt';
+            // Aktuelle Clients besitzen Heartbeat-Felder und müssen frisch sein.
+            // Ältere, bereits geöffnete MMD-Cloud-Versionen besitzen diese Felder
+            // noch nicht. Deren bestehende Presence-Einträge bleiben für die
+            // "Im Dienst"-Anzeige kompatibel und werden über onDisconnect entfernt.
+            if (value && typeof value === 'object') {
+                const accountId = String(value.accountId || '').trim();
+                const name = String(value.name || '').trim() || 'Unbekannt';
+                const isCurrentPresence = Object.prototype.hasOwnProperty.call(value, 'lastSeen')
+                    || Object.prototype.hasOwnProperty.call(value, 'clientVersion')
+                    || Object.prototype.hasOwnProperty.call(value, 'authUid');
+
+                if (isCurrentPresence && !isPresenceFresh(value, now)) return;
+                if (!accountId) return;
+
+                const account = cachedUsers[accountId];
+                const effectiveStatus = account?.status || ((account?.isAdmin || account?.isMasterAdmin) ? 'approved' : 'pending');
+                if (account && effectiveStatus !== 'approved') return;
+
+                if (!unique.has(accountId)) unique.set(accountId, {
+                    accountId,
+                    name,
+                    dn: String(value.dn || '').trim(),
+                    legacy: !isCurrentPresence
+                });
+                return;
+            }
+
+            // Sehr alte Presence-Einträge bestanden nur aus dem Namen.
+            // Nur anzeigen, wenn der Name eindeutig einem freigeschalteten Konto
+            // zugeordnet werden kann.
+            const legacyName = String(value || '').trim();
+            if (!legacyName) return;
+            const normalizedLegacyName = legacyName.toLocaleLowerCase('de-DE');
+            const matchingUsers = Object.entries(cachedUsers || {}).filter(([, user]) => {
+                const fullName = `${user?.vorname || ''} ${user?.nachname || ''}`.trim().toLocaleLowerCase('de-DE');
+                const effectiveStatus = user?.status || ((user?.isAdmin || user?.isMasterAdmin) ? 'approved' : 'pending');
+                return fullName === normalizedLegacyName && effectiveStatus === 'approved';
+            });
+            if (matchingUsers.length !== 1) return;
+            const [accountId, user] = matchingUsers[0];
             if (!unique.has(accountId)) unique.set(accountId, {
                 accountId,
-                name,
-                dn: String(value.dn || '').trim()
+                name: legacyName,
+                dn: String(user?.dn || '').trim(),
+                legacy: true
             });
         });
 
