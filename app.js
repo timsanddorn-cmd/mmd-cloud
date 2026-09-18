@@ -182,7 +182,7 @@ const db = firebase.database();
 const auth = firebase.auth();
 const FIREBASE_AUTH_EMAIL_DOMAIN = 'mmd-login.invalid';
 
-const APP_VERSION = 'v6.8.2';
+const APP_VERSION = 'v6.8.3';
 const PRESENCE_HEARTBEAT_MS = 30 * 1000;
 const PRESENCE_STALE_MS = 3 * 60 * 1000;
 const INACTIVITY_LIMIT_MS = 30 * 60 * 1000;
@@ -295,6 +295,17 @@ let hierarchieDaten = JSON.parse(JSON.stringify(defaultHierarchieData));
 
 /* ── Vollständiger Gesamt-Changelog (Entwicklungsverlauf) ───── */
 const systemChangelogs = [
+    {
+        id: "sys_v6_8_3", version: "v6.8.3", date: "18.09.2026", ts: 1789711200000,
+        category: "Verbesserung", title: "Navigation & Verwaltung übersichtlicher",
+        changes: [
+            "Die Hauptnavigation wurde übersichtlicher gruppiert; der Kalender bleibt weiterhin direkt erreichbar.",
+            "Mitarbeiter-, Wissens- und Dokumentbereiche sind jetzt klarer zusammengefasst.",
+            "Die Admin-Zentralverwaltung wurde nach Alltag, System und Gefahrenbereichen übersichtlicher geordnet.",
+            "Rollenberechtigungen lassen sich in übersichtlichen Themenblöcken ein- und ausklappen.",
+            "Mehrere kleinere Beschriftungs- und Versionsangaben wurden vereinheitlicht."
+        ]
+    },
     {
         id: "sys_v6_8_2", version: "v6.8.2", date: "18.09.2026", ts: 1789704000000,
         category: "Verbesserung", title: "Prüfungen & Sitzungsablauf aufgeräumt",
@@ -2355,6 +2366,12 @@ function applyUserPermissions(user) {
         switchAdminTab('adminSubTabUsers', document.getElementById('btnAdminSubUsers'));
     }
 
+    const systemAdminTabBtn = document.getElementById('btnAdminSubSystem');
+    if (systemAdminTabBtn) systemAdminTabBtn.style.display = isMaster ? 'inline-flex' : 'none';
+    if (!isMaster && document.getElementById('adminSubTabSystem')?.classList.contains('active')) {
+        switchAdminTab('adminSubTabUsers', document.getElementById('btnAdminSubUsers'));
+    }
+
     const canManageFeedback = !!(eff.canManageFeedback || isMaster);
     const feedbackManageTabBtn = document.getElementById('feedbackManageTabBtn');
     if (feedbackManageTabBtn) feedbackManageTabBtn.style.display = canManageFeedback ? 'inline-flex' : 'none';
@@ -2388,7 +2405,7 @@ function applyUserPermissions(user) {
 
     const chiefBtn = document.getElementById('chiefTabNavBtn');
     const canViewChief = !!(eff.canViewChiefMaterials || eff.canEditChiefMaterials || isMaster);
-    if (chiefBtn) chiefBtn.style.display = canViewChief ? 'inline-block' : 'none';
+    if (chiefBtn) chiefBtn.style.display = canViewChief ? 'inline-flex' : 'none';
     if (!canViewChief && document.getElementById('chiefTab')?.classList.contains('active')) {
         switchTab('docTab', document.querySelector('.tab-nav .tab-btn'));
     }
@@ -7294,7 +7311,7 @@ async function verifyAdminKeyPassword() {
         closeAdminAuthModal();
         document.getElementById('adminManagementModal').style.display = 'flex';
         const onlyMaintenanceAccess = !eff.isAdmin && !eff.isMasterAdmin && eff.canManageMaintenance;
-        ['btnAdminSubUsers','btnAdminSubRoles','btnAdminSubAudit','btnAdminSubSessions'].forEach(id => {
+        ['btnAdminSubUsers','btnAdminSubRoles','btnAdminSubAudit','btnAdminSubSessions','btnAdminSubSystem'].forEach(id => {
             const el = document.getElementById(id);
             if (el) el.style.display = onlyMaintenanceAccess ? 'none' : '';
         });
@@ -7329,12 +7346,17 @@ async function verifyAdminKeyPassword() {
 function closeAdminManagementModal() { document.getElementById('adminManagementModal').style.display = 'none'; }
 
 function switchAdminTab(tabId, btnEl) {
+    const eff = getUserEffectivePermissions(sessionUser || {});
     if (tabId === 'adminSubTabMaintenance' && !canCurrentUserManageMaintenance()) {
         alert('Du hast dafür keine Berechtigung.');
         return;
     }
-    if (tabId === 'adminSubTabSessions' && !getUserEffectivePermissions(sessionUser || {}).isMasterAdmin) {
+    if (tabId === 'adminSubTabSessions' && !eff.isMasterAdmin) {
         alert('Dieser Bereich ist ausschließlich für Master Admins verfügbar.');
+        return;
+    }
+    if (tabId === 'adminSubTabSystem' && !eff.isMasterAdmin) {
+        alert('Backup, Wiederherstellung und Fachdaten-Reset sind ausschließlich für Master Admins verfügbar.');
         return;
     }
     document.querySelectorAll('#adminManagementModal .admin-subtab-content').forEach(e => e.classList.remove('active'));
@@ -8492,7 +8514,7 @@ function downloadSystemBackup() {
         const backup = {
             meta: {
                 app: 'MMD Cloud',
-                version: '6.8.1',
+                version: APP_VERSION,
                 createdAt: Date.now(),
                 note: 'Passwörter und alte Passwort-Hashes werden aus Sicherheitsgründen nicht exportiert.'
             },
@@ -9292,6 +9314,25 @@ async function deleteChiefMaterialEntry(entryId) {
 }
 
 /* ── Navigation & Global Helpers ───────────────────────────── */
+function closeMainNavGroups() {
+    document.querySelectorAll('.nav-group.open').forEach(group => group.classList.remove('open'));
+    document.querySelectorAll('.nav-group-toggle[aria-expanded="true"]').forEach(btn => btn.setAttribute('aria-expanded', 'false'));
+}
+
+function toggleMainNavGroup(menuId, btn, event) {
+    if (event) event.stopPropagation();
+    const menu = document.getElementById(menuId);
+    const group = menu?.closest('.nav-group');
+    if (!menu || !group || !btn) return;
+
+    const willOpen = !group.classList.contains('open');
+    closeMainNavGroups();
+    if (willOpen) {
+        group.classList.add('open');
+        btn.setAttribute('aria-expanded', 'true');
+    }
+}
+
 function switchTab(tabId, btn) {
     if (isMaintenanceRestrictedSession() && tabId !== 'docTab') {
         alert('🛠️ Dieser Bereich ist während der Wartungsarbeiten vorübergehend nicht verfügbar. Dokumentation & Einsatz bleibt nutzbar.');
@@ -9299,9 +9340,17 @@ function switchTab(tabId, btn) {
         btn = document.querySelector('.tab-nav .tab-btn');
     }
     document.querySelectorAll('.tab-content').forEach(e => e.classList.remove('active'));
-    document.querySelectorAll('.tab-btn').forEach(e => e.classList.remove('active'));
+    document.querySelectorAll('.tab-btn, .nav-sub-btn').forEach(e => e.classList.remove('active'));
     const t = document.getElementById(tabId); if (t) t.classList.add('active');
-    if (btn) btn.classList.add('active');
+
+    if (btn) {
+        btn.classList.add('active');
+        const group = btn.closest?.('.nav-group');
+        const groupToggle = group?.querySelector('.nav-group-toggle');
+        if (groupToggle && btn.classList.contains('nav-sub-btn')) groupToggle.classList.add('active');
+    }
+    closeMainNavGroups();
+
     if (tabId === 'calendarTab') renderCalendarMonth();
     if (tabId === 'staffTab') renderStaffDirectory();
     if (tabId === 'miscTab') renderGehaltTab(cachedGehaltData);
@@ -9315,6 +9364,39 @@ function switchTab(tabId, btn) {
     if (tabId === 'feedbackTab' && canCurrentUserManageFeedback()) renderFeedbackManagementTable();
 }
 function settingsTabClick() { switchTab('settingsTab', document.getElementById('adminMainTabHeader')); }
+
+function setupRolePermissionAccordions() {
+    const card = document.getElementById('adminRoleEditorCard');
+    if (!card) return;
+
+    const headings = Array.from(card.querySelectorAll('h5'));
+    headings.forEach((heading, idx) => {
+        const section = heading.parentElement;
+        const body = heading.nextElementSibling;
+        if (!section || !body || section.dataset.accordionReady === '1') return;
+
+        section.dataset.accordionReady = '1';
+        section.classList.add('role-perm-section');
+        heading.classList.add('role-perm-section-toggle');
+        heading.setAttribute('role', 'button');
+        heading.setAttribute('tabindex', '0');
+        heading.setAttribute('aria-expanded', idx === 0 ? 'true' : 'false');
+        if (idx !== 0) section.classList.add('collapsed');
+
+        const toggle = () => {
+            const collapsed = section.classList.toggle('collapsed');
+            heading.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+        };
+        heading.addEventListener('click', toggle);
+        heading.addEventListener('keydown', event => {
+            if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                toggle();
+            }
+        });
+    });
+}
+
 function switchInstructorTab(tabId, btnEl) {
     if (btnEl && btnEl.style.display === 'none') return;
     if (tabId === 'instrTabSolutions') renderInstructorExamSolutions();
@@ -9329,6 +9411,10 @@ function toggleGroupCollapse(gId) { const g = document.getElementById(gId); if (
 /* ── DOM Ready & Exports ────────────────────────────────     */
 document.addEventListener('DOMContentLoaded', async () => {
     updateLiveDate(); setInterval(updateLiveDate, 60000);
+    setupRolePermissionAccordions();
+    document.addEventListener('click', event => {
+        if (!event.target.closest('.nav-group')) closeMainNavGroups();
+    });
     renderGuideTab(); renderHierarchieBoard(hierarchieDaten); baueMaterialUIAuf();
     renderGehaltTab(cachedGehaltData);
     renderSanctionsCatalog();
