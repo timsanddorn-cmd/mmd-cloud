@@ -1,5 +1,5 @@
 // ============================================================
-//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.8.1
+//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.8.5
 //  Firebase Realtime Database (Compat SDK v10)
 // ============================================================
 
@@ -182,7 +182,7 @@ const db = firebase.database();
 const auth = firebase.auth();
 const FIREBASE_AUTH_EMAIL_DOMAIN = 'mmd-login.invalid';
 
-const APP_VERSION = 'v6.8.4';
+const APP_VERSION = 'v6.8.5';
 const PRESENCE_HEARTBEAT_MS = 30 * 1000;
 const PRESENCE_STALE_MS = 3 * 60 * 1000;
 const INACTIVITY_LIMIT_MS = 30 * 60 * 1000;
@@ -2458,6 +2458,12 @@ function applyUserPermissions(user) {
 
     const btnPhotoAdmin = document.getElementById('btnOpenPhotoAdminModal');
     if (btnPhotoAdmin) btnPhotoAdmin.style.display = canManagePhotos ? 'inline-block' : 'none';
+
+    const btnPhotoChecklist = document.getElementById('btnTogglePhotoChecklist');
+    const photoChecklistPanel = document.getElementById('staffPhotoChecklistPanel');
+    if (btnPhotoChecklist) btnPhotoChecklist.style.display = isMaster ? 'inline-flex' : 'none';
+    if (!isMaster && photoChecklistPanel) photoChecklistPanel.style.display = 'none';
+    if (isMaster) renderStaffPhotoChecklist();
 
     const instrView = document.getElementById('examInstructorView');
     if (instrView) instrView.style.display = canUserAccessInstructorArea() ? 'block' : 'none';
@@ -4845,10 +4851,23 @@ function parseDN(dnStr) {
     return digits ? parseInt(digits, 10) : 999999;
 }
 
+function formatStaffDn(dnValue) {
+    const raw = String(dnValue || '').trim();
+    if (!raw) return 'Keine DN';
+    const digits = raw.replace(/\D/g, '');
+    return digits ? `DN ${digits}` : `DN ${raw}`;
+}
+
+function hasCustomStaffPhoto(user) {
+    const rawPhoto = String(user?.photoUrl || '').trim();
+    return !!(rawPhoto && !rawPhoto.includes('mdlogo') && rawPhoto !== DEFAULT_MD_LOGO_FALLBACK);
+}
+
 function renderStaffDirectory() {
     const grid = document.getElementById('staffDirectoryGrid');
     const badge = document.getElementById('staffCountBadge');
     if (!grid) return;
+    renderStaffPhotoChecklist();
 
     const q = (document.getElementById('searchStaffInput')?.value || '').trim().toLowerCase();
     const canManagePhotos = canUserManageEmployeePhotos();
@@ -4885,10 +4904,10 @@ function renderStaffDirectory() {
 
     grid.innerHTML = filtered.map(([uId, u]) => {
         const rawPhoto = (u.photoUrl || '').trim();
-        const isCustomPhoto = rawPhoto && !rawPhoto.includes('mdlogo') && rawPhoto !== DEFAULT_MD_LOGO_FALLBACK;
+        const isCustomPhoto = hasCustomStaffPhoto(u);
         const photoSrc = isCustomPhoto ? rawPhoto : 'mdlogo.png';
         const isLogo = !isCustomPhoto;
-        const dnFormatted = u.dn ? `DN ${u.dn.toString().replace(/[^0-9]/g, '') || u.dn}` : 'Keine DN';
+        const dnFormatted = formatStaffDn(u.dn);
 
         return `
             <div class="staff-card">
@@ -4925,6 +4944,74 @@ function renderStaffDirectory() {
             </div>
         `;
     }).join('');
+}
+
+function renderStaffPhotoChecklist() {
+    const panel = document.getElementById('staffPhotoChecklistPanel');
+    const list = document.getElementById('staffPhotoChecklistList');
+    const summary = document.getElementById('staffPhotoChecklistSummary');
+    const toggleBtn = document.getElementById('btnTogglePhotoChecklist');
+    if (!panel || !list) return;
+
+    const eff = sessionUser ? getUserEffectivePermissions(sessionUser) : {};
+    const isMaster = !!eff.isMasterAdmin;
+
+    if (toggleBtn) toggleBtn.style.display = isMaster ? 'inline-flex' : 'none';
+    if (!isMaster) {
+        panel.style.display = 'none';
+        list.innerHTML = '';
+        if (summary) summary.textContent = '';
+        return;
+    }
+
+    const entries = Object.entries(cachedUsers || {})
+        .filter(([, user]) => !!user)
+        .sort((a, b) => {
+            const dnDiff = parseDN(a[1].dn) - parseDN(b[1].dn);
+            if (dnDiff !== 0) return dnDiff;
+            const aName = `${a[1].nachname || ''} ${a[1].vorname || ''}`.trim();
+            const bName = `${b[1].nachname || ''} ${b[1].vorname || ''}`.trim();
+            return aName.localeCompare(bName, 'de');
+        });
+
+    const completed = entries.filter(([, user]) => hasCustomStaffPhoto(user)).length;
+    if (summary) summary.textContent = `${completed} / ${entries.length} mit eigenem Profilbild`;
+
+    if (!entries.length) {
+        list.innerHTML = '<div class="staff-photo-checklist-empty">Noch keine Mitarbeiter registriert.</div>';
+        return;
+    }
+
+    list.innerHTML = entries.map(([uId, user]) => {
+        const complete = hasCustomStaffPhoto(user);
+        const name = `${user.vorname || ''} ${user.nachname || ''}`.trim() || uId;
+        const statusText = complete ? 'Profilbild vorhanden' : 'Profilbild fehlt';
+        return `
+            <div class="staff-photo-checklist-row ${complete ? 'done' : 'open'}">
+                <span class="staff-photo-checklist-icon" aria-hidden="true">${complete ? '✅' : '⬜'}</span>
+                <span class="staff-photo-checklist-dn">${escapeHtml(formatStaffDn(user.dn))}</span>
+                <span class="staff-photo-checklist-name">${escapeHtml(name)}</span>
+                <span class="staff-photo-checklist-state">${statusText}</span>
+            </div>
+        `;
+    }).join('');
+}
+
+function toggleStaffPhotoChecklist(forceOpen = null) {
+    const panel = document.getElementById('staffPhotoChecklistPanel');
+    const btn = document.getElementById('btnTogglePhotoChecklist');
+    if (!panel || !btn || !sessionUser) return;
+
+    const eff = getUserEffectivePermissions(sessionUser);
+    if (!eff.isMasterAdmin) {
+        panel.style.display = 'none';
+        return;
+    }
+
+    renderStaffPhotoChecklist();
+    const shouldOpen = forceOpen === null ? panel.style.display === 'none' || !panel.style.display : !!forceOpen;
+    panel.style.display = shouldOpen ? 'block' : 'none';
+    btn.setAttribute('aria-expanded', shouldOpen ? 'true' : 'false');
 }
 
 function filterStaffDirectory() {
@@ -6060,26 +6147,52 @@ function refreshEmployeeNoticeListeners() {
     renderEmployeeNoticeFeedPanels();
 }
 
+function getSelectedEmployeeNoticeRecipientIds() {
+    return Array.from(document.querySelectorAll('#employeeNoticeRecipientList input[type="checkbox"]:checked'))
+        .map(input => input.value)
+        .filter(Boolean);
+}
+
+function updateEmployeeNoticeRecipientCount() {
+    const countEl = document.getElementById('employeeNoticeRecipientCount');
+    if (!countEl) return;
+    const count = getSelectedEmployeeNoticeRecipientIds().length;
+    countEl.textContent = count === 1 ? '1 Mitarbeiter ausgewählt' : `${count} Mitarbeiter ausgewählt`;
+}
+
 function renderEmployeeNoticeRecipientOptions() {
-    const select = document.getElementById('employeeNoticeRecipient');
-    if (!select) return;
-    const currentValue = select.value;
+    const container = document.getElementById('employeeNoticeRecipientList');
+    if (!container) return;
+
+    const selectedIds = new Set(getSelectedEmployeeNoticeRecipientIds());
     const users = Object.entries(cachedUsers || {})
         .filter(([, user]) => user && (user.status || 'pending') === 'approved')
         .sort((a, b) => {
+            const dnDiff = parseDN(a[1].dn) - parseDN(b[1].dn);
+            if (dnDiff !== 0) return dnDiff;
             const an = `${a[1].nachname || ''} ${a[1].vorname || ''}`.trim();
             const bn = `${b[1].nachname || ''} ${b[1].vorname || ''}`.trim();
             return an.localeCompare(bn, 'de');
         });
 
-    select.innerHTML = '<option value="">-- Mitarbeiter auswählen --</option>' +
-        users.map(([uId, user]) => {
-            const name = `${user.vorname || ''} ${user.nachname || ''}`.trim() || uId;
-            const dn = user.dn ? ` · DN ${user.dn}` : '';
-            return `<option value="${escapeHtml(uId)}">${escapeHtml(name + dn)}</option>`;
-        }).join('');
+    if (!users.length) {
+        container.innerHTML = '<div class="employee-notice-recipient-empty">Keine freigeschalteten Mitarbeiter vorhanden.</div>';
+        updateEmployeeNoticeRecipientCount();
+        return;
+    }
 
-    if (currentValue && cachedUsers[currentValue]) select.value = currentValue;
+    container.innerHTML = users.map(([uId, user]) => {
+        const name = `${user.vorname || ''} ${user.nachname || ''}`.trim() || uId;
+        return `
+            <label class="employee-notice-recipient-option">
+                <input type="checkbox" value="${escapeHtml(uId)}" ${selectedIds.has(uId) ? 'checked' : ''} onchange="updateEmployeeNoticeRecipientCount()">
+                <span class="employee-notice-recipient-dn">${escapeHtml(formatStaffDn(user.dn))}</span>
+                <span class="employee-notice-recipient-name">${escapeHtml(name)}</span>
+            </label>
+        `;
+    }).join('');
+
+    updateEmployeeNoticeRecipientCount();
 }
 
 function toggleEmployeeNoticeComposer(forceOpen = null) {
@@ -6094,15 +6207,19 @@ function toggleEmployeeNoticeComposer(forceOpen = null) {
     box.style.display = shouldOpen ? 'block' : 'none';
     if (shouldOpen) {
         renderEmployeeNoticeRecipientOptions();
-        document.getElementById('employeeNoticeRecipient')?.focus();
+        document.querySelector('#employeeNoticeRecipientList input[type="checkbox"]')?.focus();
     }
 }
 
 function clearEmployeeNoticeComposer() {
-    ['employeeNoticeRecipient','employeeNoticeTitle','employeeNoticeMessage','employeeNoticeExpiresAt'].forEach(id => {
+    ['employeeNoticeTitle','employeeNoticeMessage','employeeNoticeExpiresAt'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.value = '';
     });
+    document.querySelectorAll('#employeeNoticeRecipientList input[type="checkbox"]').forEach(input => {
+        input.checked = false;
+    });
+    updateEmployeeNoticeRecipientCount();
 }
 
 async function sendEmployeeNotice() {
@@ -6113,14 +6230,16 @@ async function sendEmployeeNotice() {
         return;
     }
 
-    const recipientId = document.getElementById('employeeNoticeRecipient')?.value || '';
+    const recipientIds = getSelectedEmployeeNoticeRecipientIds();
     const title = document.getElementById('employeeNoticeTitle')?.value.trim() || '';
     const message = document.getElementById('employeeNoticeMessage')?.value.trim() || '';
     const expiresRaw = document.getElementById('employeeNoticeExpiresAt')?.value || '';
-    const recipient = cachedUsers[recipientId];
+    const recipients = recipientIds
+        .map(recipientId => [recipientId, cachedUsers[recipientId]])
+        .filter(([, recipient]) => recipient && (recipient.status || 'pending') === 'approved');
 
-    if (!recipientId || !recipient) {
-        alert('Bitte einen Mitarbeiter auswählen.');
+    if (!recipients.length || recipients.length !== recipientIds.length) {
+        alert('Bitte mindestens einen gültigen Mitarbeiter auswählen.');
         return;
     }
     if (!title || !message) {
@@ -6142,26 +6261,41 @@ async function sendEmployeeNotice() {
         expiresAt = expiry.getTime();
     }
 
-    const ref = db.ref(`data/employeeNotices/${recipientId}`).push();
-    const notice = {
-        id: ref.key,
-        recipientId,
-        recipientName: `${recipient.vorname || ''} ${recipient.nachname || ''}`.trim(),
-        recipientDn: recipient.dn || '',
-        title,
-        message,
-        senderId: getUserAccountId(sessionUser),
-        senderName: `${sessionUser.vorname || ''} ${sessionUser.nachname || ''}`.trim(),
-        createdAt: Date.now(),
-        expiresAt
-    };
+    const senderId = getUserAccountId(sessionUser);
+    const senderName = `${sessionUser.vorname || ''} ${sessionUser.nachname || ''}`.trim();
+    const createdAt = Date.now();
+    const updates = {};
+    const recipientNames = [];
+
+    recipients.forEach(([recipientId, recipient]) => {
+        const noticeId = db.ref(`data/employeeNotices/${recipientId}`).push().key;
+        const recipientName = `${recipient.vorname || ''} ${recipient.nachname || ''}`.trim();
+        recipientNames.push(`${formatStaffDn(recipient.dn)} – ${recipientName || recipientId}`);
+        updates[`${recipientId}/${noticeId}`] = {
+            id: noticeId,
+            recipientId,
+            recipientName,
+            recipientDn: recipient.dn || '',
+            title,
+            message,
+            senderId,
+            senderName,
+            createdAt,
+            expiresAt
+        };
+    });
 
     try {
-        await ref.set(notice);
+        await db.ref('data/employeeNotices').update(updates);
         clearEmployeeNoticeComposer();
         toggleEmployeeNoticeComposer(false);
-        logAdminAudit('Mitarbeiterhinweis gesendet', `${notice.senderName} → ${notice.recipientName}: ${title}`);
-        alert('✅ Mitarbeiterhinweis wurde gesendet.');
+        logAdminAudit(
+            'Mitarbeiterhinweis gesendet',
+            `${senderName} → ${recipients.length} Mitarbeiter: ${title} | ${recipientNames.join(', ')}`
+        );
+        alert(recipients.length === 1
+            ? '✅ Mitarbeiterhinweis wurde gesendet.'
+            : `✅ Mitarbeiterhinweis wurde an ${recipients.length} Mitarbeiter gesendet.`);
     } catch (err) {
         console.error('Mitarbeiterhinweis konnte nicht gesendet werden:', err);
         alert('Der Mitarbeiterhinweis konnte nicht gesendet werden. Bitte Berechtigung und Firebase Rules prüfen.');
@@ -6254,8 +6388,8 @@ function renderEmployeeNoticeFeedPanels() {
                         return `
                             <div class="employee-notice-manage-row">
                                 <div class="employee-notice-manage-main">
-                                    <b>${escapeHtml(notice.recipientName || recipientId)}</b>
-                                    <span>${notice.recipientDn ? 'DN ' + escapeHtml(notice.recipientDn) + ' · ' : ''}${escapeHtml(notice.title || 'Hinweis')}</span>
+                                    <b>${notice.recipientDn ? escapeHtml(formatStaffDn(notice.recipientDn)) + ' – ' : ''}${escapeHtml(notice.recipientName || recipientId)}</b>
+                                    <span>${escapeHtml(notice.title || 'Hinweis')}</span>
                                     <small>von ${escapeHtml(notice.senderName || 'Leitung')} · ${formatTimestampShort(notice.createdAt)}</small>
                                 </div>
                                 <div class="employee-notice-manage-actions">
