@@ -41,6 +41,8 @@ Die Zwischenänderungen aus v6.8.2 sind vollständig in v6.8.3 enthalten. v6.8.0
 
 ### Hauptnavigation
 
+- **Hover-Navigation:** Auf Desktop-Geräten mit Maus öffnen sich die Gruppen „Mitarbeiter“ und „Wissen & Dokumente“ bereits beim Darüberfahren. Auf Touch-Geräten bleibt die Klick-/Tap-Bedienung erhalten.
+
 Der Kalender bleibt ausdrücklich als eigener Hauptpunkt direkt sichtbar.
 
 Direkt erreichbar bleiben außerdem:
@@ -126,7 +128,7 @@ Unverändert:
 Nach Veröffentlichung prüfen:
 
 - Login / Dienstantritt
-- Hauptnavigation Desktop
+- Hauptnavigation Desktop inklusive Hover-Menüs
 - Hauptnavigation Mobil / schmales Fenster
 - Kalender weiterhin direkt erreichbar
 - beide neuen Navigationsgruppen
