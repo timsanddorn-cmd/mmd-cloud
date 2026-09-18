@@ -299,8 +299,7 @@ const systemChangelogs = [
         id: "sys_v6_8_2", version: "v6.8.2", date: "18.09.2026", ts: 1789704000000,
         category: "Verbesserung", title: "Prüfungen & Sitzungsablauf aufgeräumt",
         changes: [
-            "Bei Fragen mit genau einer richtigen Antwort ist jetzt nur noch eine Antwort auswählbar.",
-            "Mehrfachauswahl wird nur noch bei Fragen mit mehreren richtigen Antworten verwendet.",
+            "Die Auswahlsteuerung bei Prüfungsfragen wurde vereinheitlicht, ohne den Fragetyp optisch vorwegzunehmen.",
             "Die automatische Inaktivitätsprüfung startet jetzt erst nach 30 Minuten ohne Aktivität.",
             "Prüfungen werden ausschließlich zentral in der MMD Cloud verwaltet."
         ]
@@ -7152,10 +7151,10 @@ function startExam(eid) {
             const isMultipleChoice = Array.isArray(q.correctAnswers) && q.correctAnswers.length > 1;
             return `
                 <div class="exam-q-box">
-                    <p style="font-weight:800;margin:0 0 8px 0;">❓ Frage ${fachIndex}: ${escapeHtml(q.text)}${isMultipleChoice ? ' <span style="font-size:12px;color:var(--warning);font-weight:normal;float:right;">(Mehrfachauswahl möglich)</span>' : ''}</p>
+                    <p style="font-weight:800;margin:0 0 8px 0;">❓ Frage ${fachIndex}: ${escapeHtml(q.text)}</p>
                     ${(q.options || []).map((opt, oIdx) => `
                         <label class="exam-opt-label">
-                            <input type="${isMultipleChoice ? 'checkbox' : 'radio'}" name="q_${idx}" value="${oIdx}">
+                            <input type="checkbox" name="q_${idx}" value="${oIdx}" ${!isMultipleChoice ? `onchange="if(this.checked){document.querySelectorAll('input[name=\\'q_${idx}\\']').forEach(el=>{if(el!==this)el.checked=false;});}"` : ''}>
                             <span>${escapeHtml(opt)}</span>
                         </label>
                     `).join('')}
