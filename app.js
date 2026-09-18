@@ -1,5 +1,5 @@
 // ============================================================
-//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.8.5
+//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.8.5a
 //  Firebase Realtime Database (Compat SDK v10)
 // ============================================================
 
@@ -182,7 +182,7 @@ const db = firebase.database();
 const auth = firebase.auth();
 const FIREBASE_AUTH_EMAIL_DOMAIN = 'mmd-login.invalid';
 
-const APP_VERSION = 'v6.8.5';
+const APP_VERSION = 'v6.8.5a';
 const PRESENCE_HEARTBEAT_MS = 30 * 1000;
 const PRESENCE_STALE_MS = 3 * 60 * 1000;
 const INACTIVITY_LIMIT_MS = 30 * 60 * 1000;
@@ -4992,6 +4992,7 @@ function renderStaffPhotoChecklist() {
                 <span class="staff-photo-checklist-dn">${escapeHtml(formatStaffDn(user.dn))}</span>
                 <span class="staff-photo-checklist-name">${escapeHtml(name)}</span>
                 <span class="staff-photo-checklist-state">${statusText}</span>
+                ${!complete ? `<button type="button" class="btn staff-photo-notice-btn" onclick="sendMissingPhotoEmployeeNotice('${uId}')">📨 Foto-Hinweis</button>` : ''}
             </div>
         `;
     }).join('');
@@ -5012,6 +5013,62 @@ function toggleStaffPhotoChecklist(forceOpen = null) {
     const shouldOpen = forceOpen === null ? panel.style.display === 'none' || !panel.style.display : !!forceOpen;
     panel.style.display = shouldOpen ? 'block' : 'none';
     btn.setAttribute('aria-expanded', shouldOpen ? 'true' : 'false');
+}
+
+async function sendMissingPhotoEmployeeNotice(uId) {
+    if (!sessionUser) return;
+
+    const eff = getUserEffectivePermissions(sessionUser);
+    if (!eff.isMasterAdmin) {
+        alert('Diese Funktion ist nur für Master Admins verfügbar.');
+        return;
+    }
+
+    const recipient = cachedUsers[uId];
+    if (!recipient) {
+        alert('Der Mitarbeiter wurde nicht gefunden.');
+        return;
+    }
+
+    if (hasCustomStaffPhoto(recipient)) {
+        renderStaffPhotoChecklist();
+        alert('Für diesen Mitarbeiter ist bereits ein eigenes Profilbild hinterlegt.');
+        return;
+    }
+
+    const recipientName = `${recipient.vorname || ''} ${recipient.nachname || ''}`.trim() || uId;
+    const recipientLabel = `${formatStaffDn(recipient.dn)} – ${recipientName}`;
+    if (!confirm(`Foto-Hinweis jetzt an ${recipientLabel} senden?`)) return;
+
+    const title = 'Fehlendes Mitarbeiterfoto';
+    const message =
+        `Sehr geehrter Mitarbeiter ${recipientName},\n\n` +
+        'für Ihre Mitarbeiterkartei fehlt aktuell noch ein Mitarbeiterfoto. Bitte reichen Sie dieses unter Mitarbeiter → Mitarbeiterkartei → Foto einreichen nach.\n\n' +
+        'Alternativ können Sie das Foto per D-Funk an DN 07 Tim Sanddorn senden. Falls Sie Unterstützung beim Erstellen eines geeigneten Fotos benötigen, hilft Ihnen auch Fabio Leroux gerne weiter.\n\n' +
+        'Vielen Dank.';
+
+    const ref = db.ref(`data/employeeNotices/${uId}`).push();
+    const notice = {
+        id: ref.key,
+        recipientId: uId,
+        recipientName,
+        recipientDn: recipient.dn || '',
+        title,
+        message,
+        senderId: getUserAccountId(sessionUser),
+        senderName: `${sessionUser.vorname || ''} ${sessionUser.nachname || ''}`.trim(),
+        createdAt: Date.now(),
+        expiresAt: 0
+    };
+
+    try {
+        await ref.set(notice);
+        logAdminAudit('Foto-Hinweis gesendet', `${notice.senderName} → ${recipientLabel}: ${title}`);
+        alert(`✅ Foto-Hinweis wurde an ${recipientLabel} gesendet.`);
+    } catch (err) {
+        console.error('Foto-Hinweis konnte nicht gesendet werden:', err);
+        alert('Der Foto-Hinweis konnte nicht gesendet werden. Bitte versuche es erneut.');
+    }
 }
 
 function filterStaffDirectory() {
@@ -6373,7 +6430,7 @@ function renderEmployeeNoticeFeedPanels() {
             manageBox.innerHTML = `
                 <div class="employee-notice-section-head">
                     <div>
-                        <h3>📋 Mitarbeiterhinweise – Übersicht</h3>
+                        <h3>📋 Mitarbeiterhinweise Übersicht</h3>
                         <p>${perms.canViewRead ? 'Hier ist sichtbar, ob und wann ein persönlicher Hinweis bestätigt wurde.' : 'Hier können vorhandene Mitarbeiterhinweise verwaltet werden.'}</p>
                     </div>
                 </div>
