@@ -1,8 +1,8 @@
 # MMD Cloud – PROJECT STATUS
 
 **Aktuell bestätigte stabile Live-Version:** v6.8.5c  
-**Aktueller Entwicklungsstand:** v6.8.5e  
-**Status v6.8.5e:** 🟡 BUGFIX „IM DIENST“ / LIVE-GEGENCHECK AUSSTEHEND  
+**Aktueller Entwicklungsstand:** v6.8.5f  
+**Status v6.8.5f:** 🟡 KOMPATIBILITÄTSFIX „IM DIENST“ / LIVE-GEGENCHECK AUSSTEHEND  
 **Datum:** 18.09.2026
 
 ---
@@ -20,6 +20,22 @@ v6.8.5c enthält ausschließlich die Korrektur der Accessibility-Warnung bei der
 Der Live-Test von v6.8.5b wurde am 18.09.2026 erfolgreich und ohne funktionale Fehler abgeschlossen.
 
 **v6.8.5c ist damit die aktuelle stabile Rollback-Basis.**
+
+---
+
+## v6.8.5f – Rückwärtskompatible „Im Dienst“-Anzeige
+
+Die Live-Anzeige unterstützt jetzt zusätzlich ältere, bereits geöffnete MMD-Cloud-Sitzungen, die noch das frühere Presence-Format verwenden.
+
+Korrektur:
+- aktuelle Presence-Einträge mit Heartbeat werden weiterhin über die Frischeprüfung bewertet,
+- ältere strukturierte Presence-Einträge ohne Heartbeat-Felder werden wieder in „Im Dienst“ berücksichtigt,
+- sehr alte reine Namenseinträge werden nur angezeigt, wenn sie eindeutig einem freigeschalteten Mitarbeiterkonto zugeordnet werden können,
+- gesperrte bzw. nicht freigeschaltete Konten werden nicht als Legacy-Dienststatus übernommen,
+- bestehendes `onDisconnect()` kann Legacy-Einträge beim Verbindungsende weiterhin entfernen,
+- keine Firebase-Rules, Auth-, Rollen- oder Benutzerdaten geändert.
+
+Ziel ist, dass Mitarbeiter mit bereits länger geöffneten Browsern wieder sichtbar werden, ohne dass sie selbst einen Hard Refresh oder eine Neuanmeldung durchführen müssen.
 
 ---
 
