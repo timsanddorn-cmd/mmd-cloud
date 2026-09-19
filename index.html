@@ -11,7 +11,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
-    <link rel="stylesheet" href="style.css?v=6.8.5h">
+    <link rel="stylesheet" href="style.css?v=6.8.5i">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏥</text></svg>">
 </head>
 <body>
@@ -1559,25 +1559,42 @@
 
     <!-- ADMIN MANAGEMENT VERWALTUNGS-MODAL -->
     <div id="adminManagementModal" class="modal-overlay">
-        <div class="modal-card" style="max-width: 1550px; width: 98vw; max-height: 94vh; overflow-y: auto; padding: 26px 36px; border-radius: 20px;">
-            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:16px; margin-bottom:20px;">
+        <div class="modal-card admin-management-card">
+            <div class="admin-management-sticky">
+            <div class="admin-management-header">
                 <div style="display:flex; align-items:center; gap:12px;">
                     <div style="font-size:24px;">🔑</div>
                     <div>
-                        <h2 style="margin:0; color:var(--warning); font-size:22px;">Admin Zentralverwaltung</h2>
-                        <span style="font-size:12px; color:var(--text-muted);">Zentrale System und Mitarbeiterkonfiguration</span>
+                        <h2 style="margin:0; color:var(--warning); font-size:22px;">Admin-Bereich</h2>
+                        <span style="font-size:12px; color:var(--text-muted);">Mitarbeiter, Rollen und Systemfunktionen übersichtlich verwalten</span>
                     </div>
                 </div>
                 <button type="button" class="btn-close" onclick="closeAdminManagementModal()">✖</button>
             </div>
 
-            <div class="admin-subtabs admin-subtabs-priority">
-                <button type="button" class="admin-tab-btn active" id="btnAdminSubUsers" onclick="switchAdminTab('adminSubTabUsers', this)">👥 Mitarbeiter</button>
-                <button type="button" class="admin-tab-btn" id="btnAdminSubRoles" onclick="switchAdminTab('adminSubTabRoles', this)">🎭 Rollen & Rechte</button>
-                <button type="button" class="admin-tab-btn" id="btnAdminSubSessions" style="display:none;" onclick="switchAdminTab('adminSubTabSessions', this)">🖥️ Sitzungen & Updates</button>
-                <button type="button" class="admin-tab-btn" id="btnAdminSubAudit" onclick="switchAdminTab('adminSubTabAudit', this)">📋 Systemprotokoll</button>
-                <button type="button" class="admin-tab-btn" id="btnAdminSubMaintenance" onclick="switchAdminTab('adminSubTabMaintenance', this)">🛠️ Wartung</button>
-                <button type="button" class="admin-tab-btn admin-tab-danger" id="btnAdminSubSystem" onclick="switchAdminTab('adminSubTabSystem', this)">💾 Backup & Gefahrenzone</button>
+            <div class="admin-management-nav" aria-label="Admin-Bereiche">
+                <div class="admin-nav-section">
+                    <span class="admin-nav-section-label">Verwaltung</span>
+                    <div class="admin-subtabs admin-subtabs-priority">
+                        <button type="button" class="admin-tab-btn active" id="btnAdminSubUsers" onclick="switchAdminTab('adminSubTabUsers', this)">👥 Mitarbeiter</button>
+                        <button type="button" class="admin-tab-btn" id="btnAdminSubRoles" onclick="switchAdminTab('adminSubTabRoles', this)">🎭 Rollen & Rechte</button>
+                    </div>
+                </div>
+                <div class="admin-nav-section">
+                    <span class="admin-nav-section-label">System</span>
+                    <div class="admin-subtabs admin-subtabs-priority">
+                        <button type="button" class="admin-tab-btn" id="btnAdminSubSessions" style="display:none;" onclick="switchAdminTab('adminSubTabSessions', this)">🖥️ Sitzungen & Browser</button>
+                        <button type="button" class="admin-tab-btn" id="btnAdminSubAudit" onclick="switchAdminTab('adminSubTabAudit', this)">📋 Systemprotokoll</button>
+                        <button type="button" class="admin-tab-btn" id="btnAdminSubMaintenance" onclick="switchAdminTab('adminSubTabMaintenance', this)">🛠️ Wartung</button>
+                    </div>
+                </div>
+                <div class="admin-nav-section admin-nav-section-danger">
+                    <span class="admin-nav-section-label">Sicherheit</span>
+                    <div class="admin-subtabs admin-subtabs-priority">
+                        <button type="button" class="admin-tab-btn admin-tab-danger" id="btnAdminSubSystem" onclick="switchAdminTab('adminSubTabSystem', this)">💾 Backup & Gefahrenzone</button>
+                    </div>
+                </div>
+            </div>
             </div>
 
             <!-- SUB-TAB 1: MITARBEITER KARTEI -->
@@ -1827,24 +1844,26 @@
                 <div class="session-admin-card release-admin-card">
                     <div class="session-admin-head">
                         <div>
-                            <h3 style="margin:0;">🔄 Browser-Aktualisierung</h3>
+                            <h3 style="margin:0;">🔄 Browser aktualisieren</h3>
                             <p style="margin:5px 0 0;color:var(--text-muted);font-size:12px;line-height:1.5;">
-                                Nach dem Veröffentlichen neuer Webdateien kann hier die neue Live-Version bekanntgegeben werden. Bereits kompatible offene Browser zeigen 10 Sekunden lang einen Hinweis und laden anschließend automatisch neu.
+                                Nach einem neuen MMD-Cloud-Update reicht hier ein Klick. Die aktuelle Versionsnummer wird automatisch übernommen. Bereits geöffnete ältere Browser zeigen 10 Sekunden lang einen Hinweis und laden anschließend neu.
                             </p>
                         </div>
                     </div>
                     <div class="release-version-grid">
-                        <div class="release-version-box"><span>Dieser Browser</span><b id="currentClientVersionText">--</b></div>
-                        <div class="release-version-box"><span>Veröffentlichte Live-Version</span><b id="publishedClientVersionText">--</b></div>
+                        <div class="release-version-box"><span>Aktuelle Web-Version</span><b id="currentClientVersionText">--</b></div>
+                        <div class="release-version-box"><span>Zuletzt an Browser verteilt</span><b id="publishedClientVersionText">--</b></div>
                     </div>
-                    <label for="clientReleaseVersionInput">Neue Live-Version</label>
-                    <input type="text" id="clientReleaseVersionInput" placeholder="z. B. v6.8.3" autocomplete="off">
-                    <label for="clientReleaseMessageInput">Hinweis für geöffnete Browser (optional)</label>
-                    <input type="text" id="clientReleaseMessageInput" maxlength="180" placeholder="z. B. Neue Funktionen und Fehlerbehebungen wurden veröffentlicht.">
+                    <div id="clientReleaseStatusText" class="client-release-status">Versionsstatus wird geprüft …</div>
+                    <details class="release-advanced-options">
+                        <summary>Optionalen Hinweis für Mitarbeiter hinzufügen</summary>
+                        <label for="clientReleaseMessageInput">Hinweistext</label>
+                        <input type="text" id="clientReleaseMessageInput" maxlength="180" placeholder="z. B. Kleine Verbesserungen wurden veröffentlicht.">
+                    </details>
                     <div class="session-release-note">
-                        Wichtig: Erst die neue <b>index.html</b>, <b>app.js</b> und <b>style.css</b> veröffentlichen. Danach hier die neue Versionsnummer freigeben.
+                        Nach einer Änderung auf GitHub hier einmal auf <b>„Update an geöffnete Browser senden“</b> klicken. Mehr musst du nicht einstellen.
                     </div>
-                    <button type="button" class="btn release-publish-btn" onclick="publishClientRelease()">🚀 Version veröffentlichen & Browser aktualisieren</button>
+                    <button type="button" id="btnPublishClientRelease" class="btn release-publish-btn" onclick="publishClientRelease()">🔄 Update an geöffnete Browser senden</button>
                 </div>
             </div>
 
@@ -1973,6 +1992,6 @@
         </div>
     </div>
 
-    <script src="app.js?v=6.8.5h"></script>
+    <script src="app.js?v=6.8.5i"></script>
 </body>
 </html>

@@ -1,84 +1,52 @@
 # MMD Cloud – PROJECT STATUS
 
 **Aktuell bestätigte stabile Live-Version:** v6.8.5h  
-**Aktueller Entwicklungsstand:** v6.8.5h  
-**Status v6.8.5h:** 🟢 STABIL / LIVE BESTÄTIGT  
+**Aktueller Entwicklungsstand:** v6.8.5i  
+**Status v6.8.5i:** 🟡 LIVE-GEGENCHECK AUSSTEHEND  
 **Datum:** 19.09.2026
 
 ---
 
 ## 1. Verbindliche Basis
 
-**v6.8.5h = bestätigte stabile Live-Version und aktuelle Rollback-Basis**
+**v6.8.5h = bestätigte stabile Live-Version und Rollback-Basis**
 
-v6.8.5h wurde im Live-Betrieb bestätigt. Die Anwendung funktioniert nach der technischen Bereinigung stabil.
+v6.8.5i baut direkt auf dem bestätigten stabilen Stand v6.8.5h auf. Die Änderung betrifft die Bedienoberfläche des Admin-Bereichs, die bestehende Browser-Update-Bedienung und die Darstellung der Profilbild-Übersicht.
 
 Firebase Auth, Registrierung, Login, Rollen, Berechtigungen, stabile Account-IDs, Benutzerstruktur und Realtime-Database-Rules wurden nicht verändert.
 
 ---
 
-## 2. v6.8.5h – Technische Bereinigung
+## 2. v6.8.5i – Admin-Bereich übersichtlicher
 
-Die Codebasis wurde vorsichtig aufgeräumt, ohne funktionierende Systeme umzubauen.
+Der Admin-Bereich wurde vereinfacht, ohne die dahinterliegenden Verwaltungsfunktionen neu zu strukturieren.
 
-Entfernt bzw. bereinigt wurden:
-- drei nachweislich nicht mehr aufgerufene Hilfsfunktionen,
-- zwei alte doppelte Dateiüberschriften mit der Versionsangabe v6.8.1,
-- veraltete technische Bezeichnungen zur bereits entfernten Inaktivitätsautomatik,
-- eine alte Versionsbezeichnung im zugehörigen CSS-Abschnitt.
-
-Unverändert bleiben:
-- Firebase Auth und Registrierung,
-- Login und Benutzerzuordnung,
-- Rollen und Berechtigungen,
-- Presence-/Heartbeat-System,
-- Browser-Update-System,
-- Mitarbeiterfotos und Mitarbeiterhinweise,
-- Prüfungen und Navigation,
-- Realtime-Database-Rules.
-
-Für v6.8.5h ist keine Datenmigration erforderlich.
+Geändert:
+- Admin-Navigation ist sichtbar in **Verwaltung**, **System** und **Sicherheit** gruppiert,
+- Kopfbereich und Navigation bleiben beim Scrollen sichtbar,
+- auf kleineren Bildschirmen ist die Admin-Navigation kompakt horizontal erreichbar,
+- **„Sitzungen & Updates“** wurde verständlicher als **„Sitzungen & Browser“** bezeichnet,
+- die Browser-Aktualisierung benötigt keine manuelle Eingabe der Versionsnummer mehr,
+- die aktuelle `APP_VERSION` wird automatisch verwendet,
+- der optionale Hinweistext ist unter erweiterten Optionen eingeklappt,
+- der Status zeigt klar, ob die aktuelle Version bereits an geöffnete Browser verteilt wurde,
+- der bewusste Master-Admin-Klick zum Verteilen einer Version bleibt als Sicherheitsstufe erhalten.
 
 ---
 
-## 3. v6.8.5g – Inaktivitätsautomatik entfernt
+## 3. Profilbild-Übersicht verbessert
 
-Die bisherige automatische Inaktivitätsabmeldung wurde vollständig aus der Anwendung entfernt.
+In **Mitarbeiter → Mitarbeiterkartei → Foto-Liste** werden Dienstnummer sowie Vor- und Nachname jetzt als gemeinsamer Mitarbeiterblock dargestellt.
 
-Entfernt wurden:
-- Inaktivitäts-Timer,
-- Aktivitätsüberwachung über Maus, Tastatur, Scrollen und Fensterfokus,
-- Warnfenster „Bist du noch im Dienst?“,
-- Bestätigungs-Countdown,
-- automatische Abmeldung wegen Inaktivität.
+Dadurch bleibt der Mitarbeitername auch bei kleineren Fenstern und bei Mitarbeitern ohne eigenes Profilbild sichtbar.
 
-Unverändert bleiben:
-- der normale Button **„Dienst beenden“**,
-- der tägliche erzwungene Dienstwechsel,
-- die Master-Admin-Funktion **„Aus Dienst entfernen“**,
-- Firebase Auth und alle bestehenden Sicherheitsregeln.
+Der bestehende Foto-Hinweis, Foto-Workflow und die Ableitung des Fotostatus aus `photoUrl` wurden nicht verändert.
 
 ---
 
-## 4. v6.8.5g – „Im Dienst“-Anzeige bereinigt
+## 4. Sicherheit / Firebase
 
-Die Anzeige **„Im Dienst“** basiert ausschließlich auf aktuellen Presence-Einträgen mit regelmäßigem Heartbeat.
-
-Technischer Stand:
-- Heartbeat alle 30 Sekunden,
-- ein Presence-Eintrag gilt nach 3 Minuten ohne neues Lebenszeichen als nicht mehr aktiv,
-- aktuelle Einträge benötigen `lastSeen`, `clientVersion` und `authUid`,
-- alte Legacy-/Altdaten ohne diese Felder werden nicht mehr als aktiver Dienst angezeigt,
-- mehrere Browser desselben Mitarbeiters werden weiterhin nur einmal in der normalen „Im Dienst“-Anzeige dargestellt,
-- `onDisconnect()` und **„Dienst beenden“** entfernen aktuelle Presence-Einträge weiterhin direkt.
-
-Damit beeinflussen alte, stehengebliebene Presence-Daten die sichtbare Dienstanzeige nicht mehr.
-
----
-
-## 5. Sicherheit / Firebase
-
-Für v6.8.5h wurden **keine Firebase Rules geändert**.
+Für v6.8.5i wurden **keine Firebase Rules geändert**.
 
 Unverändert bleiben insbesondere:
 - Firebase Auth
@@ -88,26 +56,29 @@ Unverändert bleiben insbesondere:
 - stabile Account-IDs
 - Rollen und Berechtigungen
 - Benutzerverwaltung
+- Mitarbeiterfoto-Datenmodell
 - bestehende Realtime-Database-Rules
 
----
-
-## 6. Live-Bestätigung v6.8.5h
-
-Am 19.09.2026 wurde v6.8.5h im Live-Betrieb bestätigt.
-
-Bestätigt:
-1. aktuelle Mitarbeiter erscheinen zuverlässig unter **„Im Dienst“**,
-2. alte Legacy-/Altdaten erscheinen nicht mehr als aktiver Dienst,
-3. **„Dienst beenden“** funktioniert,
-4. Presence-/Heartbeat-Verhalten funktioniert stabil,
-5. es erscheint keine automatische Inaktivitätswarnung oder Inaktivitätsabmeldung mehr,
-6. die Anwendung funktioniert nach der technischen Bereinigung ohne festgestellte Fehler.
+Eine Datenmigration ist nicht erforderlich.
 
 ---
 
-## 7. Rollback
+## 5. Live-Gegencheck v6.8.5i
+
+Noch zu prüfen:
+1. Admin-Bereich öffnet und schließt wie bisher,
+2. Mitarbeiter, Rollen & Rechte, Systemprotokoll, Wartung und Backup/Gefahrenzone bleiben erreichbar,
+3. Kopfbereich und Admin-Navigation bleiben bei langen Seiten sichtbar,
+4. Browser-Update zeigt automatisch v6.8.5i und benötigt keine manuelle Versionseingabe,
+5. **„Update an geöffnete Browser senden“** verteilt die aktuelle Version weiterhin zuverlässig,
+6. andere geöffnete ältere Browser erhalten weiterhin den 10-Sekunden-Hinweis und laden neu,
+7. Foto-Liste zeigt bei Mitarbeitern ohne eigenes Foto Dienstnummer sowie Vor- und Nachname,
+8. Darstellung bleibt auf kleineren Bildschirmen bedienbar.
+
+---
+
+## 6. Rollback
 
 **v6.8.5h = aktuelle bestätigte stabile Rollback-Basis**
 
-Für einen Rollback auf diesen Stand müssen die Firebase Rules nicht verändert werden.
+Die Firebase Rules müssen bei einem Rollback nicht verändert werden.

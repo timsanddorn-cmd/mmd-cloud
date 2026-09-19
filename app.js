@@ -1,5 +1,5 @@
 // ============================================================
-//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.8.5h
+//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.8.5i
 //  Firebase Realtime Database (Compat SDK v10)
 // ============================================================
 
@@ -182,7 +182,7 @@ const db = firebase.database();
 const auth = firebase.auth();
 const FIREBASE_AUTH_EMAIL_DOMAIN = 'mmd-login.invalid';
 
-const APP_VERSION = 'v6.8.5h';
+const APP_VERSION = 'v6.8.5i';
 const PRESENCE_HEARTBEAT_MS = 30 * 1000;
 const PRESENCE_STALE_MS = 3 * 60 * 1000;
 
@@ -291,6 +291,17 @@ let hierarchieDaten = JSON.parse(JSON.stringify(defaultHierarchieData));
 
 /* ── Vollständiger Gesamt-Changelog (Entwicklungsverlauf) ───── */
 const systemChangelogs = [
+    {
+        id: "sys_v6_8_5i", version: "v6.8.5i", date: "19.09.2026", ts: 1789813860000,
+        category: "Verbesserung", title: "Admin-Bereich übersichtlicher",
+        changes: [
+            "Die Admin-Navigation wurde verständlicher in Verwaltung, System und Sicherheit gruppiert.",
+            "Kopfbereich und Admin-Navigation bleiben beim Scrollen sichtbar, damit lange Verwaltungsseiten leichter bedienbar sind.",
+            "Das Verteilen einer neuen Browser-Version verwendet automatisch die aktuelle MMD-Cloud-Version und benötigt keine manuelle Versionseingabe mehr.",
+            "Der optionale Browser-Hinweis ist platzsparend unter erweiterten Optionen untergebracht.",
+            "Die Profilbild-Übersicht zeigt Dienstnummer sowie Vor- und Nachname robust zusammen an, auch bei kleineren Fensterbreiten."
+        ]
+    },
     {
         id: "sys_v6_8_5h", version: "v6.8.5h", date: "19.09.2026", ts: 1789803000000,
         category: "Verbesserung", title: "Technische Bereinigung",
@@ -3226,10 +3237,40 @@ function normalizeClientRelease(raw) {
 function updateClientReleaseAdminPanel() {
     const current = document.getElementById('currentClientVersionText');
     const live = document.getElementById('publishedClientVersionText');
-    const input = document.getElementById('clientReleaseVersionInput');
+    const status = document.getElementById('clientReleaseStatusText');
+    const publishBtn = document.getElementById('btnPublishClientRelease');
+    const remoteVersion = String(cachedClientRelease?.version || '').trim();
+
     if (current) current.textContent = APP_VERSION;
-    if (live) live.textContent = cachedClientRelease?.version || 'Noch nicht gesetzt';
-    if (input && !input.value) input.value = APP_VERSION;
+    if (live) live.textContent = remoteVersion || 'Noch nicht verteilt';
+
+    let state = 'pending';
+    let statusText = `🟡 ${APP_VERSION} wurde noch nicht an geöffnete Browser verteilt.`;
+    let canPublish = true;
+
+    if (remoteVersion) {
+        const comparison = compareAppVersions(APP_VERSION, remoteVersion);
+        if (comparison === 0) {
+            state = 'success';
+            statusText = `✅ ${APP_VERSION} ist bereits an geöffnete Browser verteilt.`;
+            canPublish = false;
+        } else if (comparison < 0) {
+            state = 'info';
+            statusText = `ℹ️ Verteilt ist bereits ${remoteVersion}. Dieser Browser verwendet noch ${APP_VERSION} und wird automatisch aktualisiert.`;
+            canPublish = false;
+        }
+    }
+
+    if (status) {
+        status.className = `client-release-status ${state}`;
+        status.textContent = statusText;
+    }
+    if (publishBtn) {
+        publishBtn.disabled = !canPublish;
+        publishBtn.textContent = canPublish
+            ? '🔄 Update an geöffnete Browser senden'
+            : (state === 'success' ? '✅ Aktuelle Version bereits verteilt' : '🔄 Browser-Aktualisierung läuft');
+    }
 }
 
 function startClientReleaseListener() {
@@ -3284,24 +3325,21 @@ async function publishClientRelease() {
         alert('Diese Funktion ist ausschließlich für Master Admins verfügbar.');
         return;
     }
-    const version = String(document.getElementById('clientReleaseVersionInput')?.value || '').trim();
+
+    const version = APP_VERSION;
     const message = String(document.getElementById('clientReleaseMessageInput')?.value || '').trim();
-    if (!/^v?\d+\.\d+\.\d+[a-z]?$/i.test(version)) {
-        alert('Bitte gib eine gültige Version ein, z. B. v6.8.2.');
-        return;
-    }
-    const normalizedVersion = version.startsWith('v') ? version : `v${version}`;
-    if (!confirm(`Live-Version ${normalizedVersion} veröffentlichen?\n\nAlle bereits kompatiblen geöffneten MMD-Cloud-Browser erhalten anschließend einen 10-Sekunden-Hinweis und laden automatisch neu.`)) return;
+    if (!confirm(`Aktuelle MMD-Cloud-Version ${version} jetzt an geöffnete Browser senden?\n\nÄltere geöffnete Browser erhalten einen 10-Sekunden-Hinweis und laden anschließend automatisch neu.`)) return;
 
     try {
         await db.ref('data/systemStatus/clientRelease').set({
-            version: normalizedVersion,
+            version,
             publishedAt: firebase.database.ServerValue.TIMESTAMP,
             publishedBy: `${sessionUser.vorname || ''} ${sessionUser.nachname || ''}`.trim(),
             publishedById: getUserAccountId(sessionUser),
             message: message.slice(0, 180)
         });
-        logAdminAudit('Live-Version veröffentlicht', `${normalizedVersion} wurde für geöffnete Browser freigegeben.`);
+        logAdminAudit('Live-Version veröffentlicht', `${version} wurde für geöffnete Browser freigegeben.`);
+        alert(`✅ ${version} wurde an geöffnete Browser verteilt.`);
     } catch (err) {
         console.error('Live-Version konnte nicht veröffentlicht werden:', err);
         alert('Die Live-Version konnte nicht veröffentlicht werden.');
@@ -4879,8 +4917,10 @@ function renderStaffPhotoChecklist() {
         return `
             <div class="staff-photo-checklist-row ${complete ? 'done' : 'open'}">
                 <span class="staff-photo-checklist-icon" aria-hidden="true">${complete ? '✅' : '⬜'}</span>
-                <span class="staff-photo-checklist-dn">${escapeHtml(formatStaffDn(user.dn))}</span>
-                <span class="staff-photo-checklist-name">${escapeHtml(name)}</span>
+                <div class="staff-photo-checklist-person">
+                    <span class="staff-photo-checklist-name">${escapeHtml(name)}</span>
+                    <span class="staff-photo-checklist-dn">${escapeHtml(formatStaffDn(user.dn))}</span>
+                </div>
                 <span class="staff-photo-checklist-state">${statusText}</span>
                 ${!complete ? `<button type="button" class="btn staff-photo-notice-btn" onclick="sendMissingPhotoEmployeeNotice('${uId}')">📨 Foto-Hinweis</button>` : ''}
             </div>
