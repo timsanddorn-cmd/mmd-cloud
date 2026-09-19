@@ -1,5 +1,5 @@
 // ============================================================
-//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.8.5j
+//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.8.6
 //  Firebase Realtime Database (Compat SDK v10)
 // ============================================================
 
@@ -182,7 +182,7 @@ const db = firebase.database();
 const auth = firebase.auth();
 const FIREBASE_AUTH_EMAIL_DOMAIN = 'mmd-login.invalid';
 
-const APP_VERSION = 'v6.8.5j';
+const APP_VERSION = 'v6.8.6';
 const PRESENCE_HEARTBEAT_MS = 30 * 1000;
 const PRESENCE_STALE_MS = 3 * 60 * 1000;
 
@@ -233,6 +233,8 @@ let appUpdateCountdownIntervalId = null;
 let appUpdateReloadAt = 0;
 let cachedPresence = {};
 let cachedClientRelease = null;
+let pendingBackupRestore = null;
+const unsavedChangeScopes = new Set();
 let cachedUsers       = {};
 let cachedExams       = {};
 let cachedSubmissions = {};
@@ -257,6 +259,59 @@ let activeExamTimerInterval = null;
 let activeExamSecondsElapsed = 0;
 let midnightIntervalId = null;
 let dailyForcedLogoutIntervalId = null;
+
+/* ── Kleine UI-Helfer: Hinweise & ungespeicherte Änderungen ── */
+function showToast(message, type = 'info', duration = 3200) {
+    const container = document.getElementById('toastContainer');
+    if (!container) return;
+    const toast = document.createElement('div');
+    toast.className = `mmd-toast ${type}`;
+    toast.textContent = String(message || '');
+    container.appendChild(toast);
+    requestAnimationFrame(() => toast.classList.add('visible'));
+    window.setTimeout(() => {
+        toast.classList.remove('visible');
+        window.setTimeout(() => toast.remove(), 220);
+    }, Math.max(1200, Number(duration) || 3200));
+}
+
+function markUnsavedChanges(scope) {
+    if (scope) unsavedChangeScopes.add(scope);
+}
+
+function clearUnsavedChanges(scope) {
+    if (scope) unsavedChangeScopes.delete(scope);
+}
+
+function confirmDiscardUnsavedChanges(scope) {
+    if (!scope || !unsavedChangeScopes.has(scope)) return true;
+    const ok = confirm('Es gibt noch nicht gespeicherte Änderungen. Möchtest du sie wirklich verwerfen?');
+    if (ok) unsavedChangeScopes.delete(scope);
+    return ok;
+}
+
+function setupUnsavedChangeTracking() {
+    const resolveScope = target => {
+        if (!target || !(target instanceof Element)) return '';
+        if (target.closest('#adminRoleEditorCard')) return 'role';
+        if (target.closest('#userPermissionsForm') && target.id !== 'permPassword') return 'user';
+        if (target.closest('#calendarEventModal')) return 'calendar';
+        if (target.closest('#postNewsContainer')) return 'newsPost';
+        if (target.closest('#proposeNewsContainer')) return 'newsProposal';
+        return '';
+    };
+    const handler = event => {
+        const scope = resolveScope(event.target);
+        if (scope) markUnsavedChanges(scope);
+    };
+    document.addEventListener('input', handler, true);
+    document.addEventListener('change', handler, true);
+    window.addEventListener('beforeunload', event => {
+        if (!unsavedChangeScopes.size) return;
+        event.preventDefault();
+        event.returnValue = '';
+    });
+}
 
 /* ── Kalender State ────────────────────────────────────────── */
 let currentCalYear  = new Date().getFullYear();
@@ -291,6 +346,19 @@ let hierarchieDaten = JSON.parse(JSON.stringify(defaultHierarchieData));
 
 /* ── Vollständiger Gesamt-Changelog (Entwicklungsverlauf) ───── */
 const systemChangelogs = [
+    {
+        id: "sys_v6_8_6", version: "v6.8.6", date: "20.09.2026", ts: 1789865340000,
+        category: "Verbesserung", title: "Alltag & Verwaltung komfortabler",
+        changes: [
+            "Der Admin-Bereich besitzt jetzt ein Kontrollzentrum mit offenen Registrierungen, fehlenden Profilbildern, Passwortstatus, aktiven Browsern, Wartungsstatus und Versionsstand.",
+            "Bei wichtigen Bearbeitungen warnt die MMD Cloud vor dem Verwerfen nicht gespeicherter Änderungen.",
+            "Die Mitarbeiterkartei kann zusätzlich nach Status, Profilbild und Rolle gefiltert werden.",
+            "Der Kalender zeigt die nächsten sichtbaren Termine kompakt oberhalb der Monatsansicht.",
+            "Kalender und Mitarbeiterverwaltung zeigen kleine Zähler für offene Einladungen beziehungsweise Registrierungen; der bestehende News-Zähler bleibt erhalten.",
+            "Vor dem Einspielen eines Backups wird jetzt eine Inhalts- und Datumsübersicht mit finaler Bestätigung angezeigt.",
+            "Erfolgreiche Alltagsaktionen verwenden häufiger dezente MMD-Hinweise statt blockierender Browser-Popups."
+        ]
+    },
     {
         id: "sys_v6_8_5j", version: "v6.8.5j", date: "19.09.2026", ts: 1789849140000,
         category: "Bugfix", title: "Foto-Liste Layout korrigiert",
@@ -1596,6 +1664,7 @@ function startMaintenanceStatusListener() {
         const after = isMaintenanceRestrictedSession();
         maintenanceRestrictedLast = after;
         renderMaintenanceAdminPanel();
+        renderAdminOverview();
         applyMaintenanceAccessMode(!before && after);
         if (before !== after) {
             if (!after && sessionUser) applyUserPermissions(sessionUser);
@@ -1656,7 +1725,7 @@ async function setMaintenanceMode(enabled) {
     try {
         await db.ref('data/systemStatus/maintenance').set(payload);
         logAdminAudit(enabled ? 'Wartungsmodus aktiviert' : 'Wartungsmodus beendet', enabled ? 'Wartungsarbeiten wurden gestartet.' : 'Wartungsarbeiten wurden beendet.');
-        alert(enabled ? '✅ Wartungsmodus wurde aktiviert.' : '✅ Wartungsmodus wurde beendet.');
+        showToast(enabled ? '✅ Wartungsmodus wurde aktiviert.' : '✅ Wartungsmodus wurde beendet.', 'success');
     } catch (err) {
         console.error('Wartungsmodus konnte nicht geändert werden:', err);
         alert('Die Einstellung konnte nicht gespeichert werden. Bitte versuche es erneut.');
@@ -2877,6 +2946,8 @@ function startFirebaseListeners() {
         }
         renderCalendarMonth();
         renderStaffDirectory();
+        updateNavigationBadges();
+        renderAdminOverview();
         renderCommandsTab(cachedCommands);
         renderLinksTab(cachedLinks);
     });
@@ -2915,6 +2986,8 @@ function startFirebaseListeners() {
         renderStaffDirectory();
         renderEmployeeNoticeRecipientOptions();
         renderEmployeeNoticeFeedPanels();
+        updateNavigationBadges();
+        renderAdminOverview();
     });
     db.ref('data/exams').on('value', s => {
         const raw = s.val() || {};
@@ -2959,6 +3032,7 @@ function startFirebaseListeners() {
     db.ref('data/calendar').on('value', s => {
         cachedCalendar = s.val() || {};
         renderCalendarMonth();
+        updateNavigationBadges();
     });
     db.ref('data/changelogs').on('value', s => {
         cachedCustomChangelogs = s.val() || {};
@@ -3129,6 +3203,133 @@ function renderActiveSessionAdminPanel() {
     }).join('');
 }
 
+function getActivePresenceUserCount() {
+    const now = Date.now();
+    return Object.values(cachedPresence || {}).filter(value => {
+        if (!value || typeof value !== 'object' || !isPresenceFresh(value, now)) return false;
+        return !!String(value.accountId || '').trim();
+    }).length;
+}
+
+function setNavigationBadge(id, count) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const value = Math.max(0, Number(count) || 0);
+    el.textContent = String(value);
+    el.style.display = value > 0 ? 'inline-flex' : 'none';
+}
+
+function getCalendarEventDateTime(ev) {
+    if (!ev?.date) return null;
+    const time = /^\d{2}:\d{2}$/.test(String(ev.time || '')) ? ev.time : '23:59';
+    const dt = new Date(`${ev.date}T${time}:00`);
+    return Number.isNaN(dt.getTime()) ? null : dt;
+}
+
+function updateNavigationBadges() {
+    if (!sessionUser) return;
+    const eff = getUserEffectivePermissions(sessionUser);
+    const canManageMembers = !!(eff.isMasterAdmin || eff.canManageMemberAccess);
+    const pendingUsers = canManageMembers
+        ? Object.values(cachedUsers || {}).filter(u => {
+            const status = u?.status || ((u?.isAdmin || u?.isMasterAdmin) ? 'approved' : 'pending');
+            return status === 'pending';
+        }).length
+        : 0;
+
+    setNavigationBadge('adminPendingBadge', pendingUsers);
+    setNavigationBadge('staffPendingBadge', pendingUsers);
+
+    const myId = getUserAccountId(sessionUser);
+    const now = Date.now();
+    const pendingInvites = Object.values(cachedCalendar || {}).filter(ev => {
+        if (!ev || ev.deleted || !myId) return false;
+        if (!Array.isArray(ev.invitedUsers) || !ev.invitedUsers.includes(myId)) return false;
+        const status = ev.invitationStatus?.[myId] || 'pending';
+        if (status !== 'pending') return false;
+        const dt = getCalendarEventDateTime(ev);
+        return !dt || dt.getTime() >= now;
+    }).length;
+    setNavigationBadge('calendarPendingBadge', pendingInvites);
+}
+
+function renderAdminOverview() {
+    const root = document.getElementById('adminSubTabOverview');
+    if (!root || !sessionUser) return;
+    const eff = getUserEffectivePermissions(sessionUser);
+    const canManageMembers = !!(eff.isMasterAdmin || eff.canManageMemberAccess);
+    const canManageMaintenance = canCurrentUserManageMaintenance();
+
+    const pendingUsers = Object.values(cachedUsers || {}).filter(u => {
+        const status = u?.status || ((u?.isAdmin || u?.isMasterAdmin) ? 'approved' : 'pending');
+        return status === 'pending';
+    }).length;
+    const missingPhotos = Object.values(cachedUsers || {}).filter(u => {
+        const status = u?.status || ((u?.isAdmin || u?.isMasterAdmin) ? 'approved' : 'pending');
+        return status === 'approved' && !hasCustomStaffPhoto(u);
+    }).length;
+    const passwordOpen = eff.isMasterAdmin
+        ? getPasswordRolloutEntries().filter(entry => entry.pending || !entry.mapped).length
+        : 0;
+    const activeSessions = eff.isMasterAdmin ? getActivePresenceUserCount() : 0;
+    const remoteVersion = String(cachedClientRelease?.version || '').trim();
+
+    const setText = (id, value) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = String(value);
+    };
+    const setVisible = (id, visible) => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = visible ? '' : 'none';
+    };
+
+    setText('adminOverviewPendingUsersCount', pendingUsers);
+    setText('adminOverviewMissingPhotosCount', missingPhotos);
+    setText('adminOverviewPasswordsCount', passwordOpen);
+    setText('adminOverviewSessionsCount', activeSessions);
+    setText('adminOverviewMaintenanceState', cachedMaintenanceState.enabled ? 'AKTIV' : 'Normal');
+    setText('adminOverviewVersionState', APP_VERSION);
+
+    const versionHint = document.getElementById('adminOverviewVersionHint');
+    if (versionHint) {
+        versionHint.textContent = remoteVersion === APP_VERSION
+            ? 'Aktuelle Version ist verteilt'
+            : remoteVersion
+                ? `Verteilt: ${remoteVersion}`
+                : 'Noch keine Version verteilt';
+    }
+
+    setVisible('adminOverviewPendingUsersCard', !!(eff.isAdmin || eff.isMasterAdmin));
+    setVisible('adminOverviewMissingPhotosCard', !!eff.isMasterAdmin);
+    setVisible('adminOverviewPasswordsCard', !!eff.isMasterAdmin);
+    setVisible('adminOverviewSessionsCard', !!eff.isMasterAdmin);
+    setVisible('adminOverviewMaintenanceCard', canManageMaintenance);
+    setVisible('adminOverviewVersionCard', !!eff.isMasterAdmin);
+}
+
+function openAdminOverviewSection(tabId) {
+    const buttonMap = {
+        adminSubTabOverview: 'btnAdminSubOverview',
+        adminSubTabUsers: 'btnAdminSubUsers',
+        adminSubTabRoles: 'btnAdminSubRoles',
+        adminSubTabSessions: 'btnAdminSubSessions',
+        adminSubTabAudit: 'btnAdminSubAudit',
+        adminSubTabMaintenance: 'btnAdminSubMaintenance',
+        adminSubTabSystem: 'btnAdminSubSystem'
+    };
+    switchAdminTab(tabId, document.getElementById(buttonMap[tabId] || ''));
+}
+
+function openPhotoChecklistFromAdminOverview() {
+    if (!sessionUser || !getUserEffectivePermissions(sessionUser).isMasterAdmin) return;
+    closeAdminManagementModal(true);
+    switchTab('staffTab', document.getElementById('staffTabNavBtn'));
+    const photoFilter = document.getElementById('staffPhotoFilter');
+    if (photoFilter) photoFilter.value = 'missing';
+    renderStaffDirectory();
+    toggleStaffPhotoChecklist(true);
+}
+
 function startPresenceWatcher() {
     db.ref('data/presence').off();
     db.ref('data/presence').on('value', snap => {
@@ -3178,6 +3379,7 @@ function startPresenceWatcher() {
             `).join('');
         }
         renderActiveSessionAdminPanel();
+        renderAdminOverview();
     });
 }
 
@@ -3289,6 +3491,7 @@ function startClientReleaseListener() {
     clientReleaseRef.on('value', snap => {
         cachedClientRelease = normalizeClientRelease(snap.val());
         updateClientReleaseAdminPanel();
+        renderAdminOverview();
         const remoteVersion = cachedClientRelease.version;
         if (!remoteVersion) return;
         const comparison = compareAppVersions(remoteVersion, APP_VERSION);
@@ -3348,7 +3551,7 @@ async function publishClientRelease() {
             message: message.slice(0, 180)
         });
         logAdminAudit('Live-Version veröffentlicht', `${version} wurde für geöffnete Browser freigegeben.`);
-        alert(`✅ ${version} wurde an geöffnete Browser verteilt.`);
+        showToast(`✅ ${version} wurde an geöffnete Browser verteilt.`, 'success');
     } catch (err) {
         console.error('Live-Version konnte nicht veröffentlicht werden:', err);
         alert('Die Live-Version konnte nicht veröffentlicht werden.');
@@ -4104,6 +4307,58 @@ function resetCalendarToToday() {
     renderCalendarMonth();
 }
 
+function getVisibleCalendarEventsForCurrentUser() {
+    const myRoleIds = sessionUser ? getUserRolesList(sessionUser) : [];
+    const eff = sessionUser ? getUserEffectivePermissions(sessionUser) : {};
+    const isSpecialAdmin = eff.isAdmin || eff.isMasterAdmin;
+    const myId = sessionUser ? getUserAccountId(sessionUser) : '';
+
+    return Object.entries(cachedCalendar || {}).map(([id, ev]) => Object.assign({ id }, ev)).filter(ev => {
+        if (ev.deleted) return false;
+        const isInvited = Array.isArray(ev.invitedUsers) && ev.invitedUsers.includes(myId);
+        const inviteStatus = ev.invitationStatus?.[myId] || 'pending';
+        if (isInvited) return inviteStatus !== 'declined';
+        if (ev.isPrivate) return ev.creatorId === myId;
+        if (isSpecialAdmin) return true;
+        if (!ev.targetRoles || !ev.targetRoles.length || ev.targetRoles.includes('all')) return true;
+        return ev.targetRoles.some(roleId => myRoleIds.includes(roleId));
+    });
+}
+
+function renderUpcomingCalendarEvents() {
+    const box = document.getElementById('upcomingCalendarList');
+    const summary = document.getElementById('upcomingCalendarSummary');
+    if (!box) return;
+
+    const now = Date.now();
+    const future = getVisibleCalendarEventsForCurrentUser()
+        .map(ev => ({ ev, dateTime: getCalendarEventDateTime(ev) }))
+        .filter(item => item.dateTime && item.dateTime.getTime() >= now)
+        .sort((a, b) => a.dateTime - b.dateTime);
+
+    if (summary) summary.textContent = future.length
+        ? `${future.length} anstehend`
+        : 'Keine anstehenden Termine';
+
+    if (!future.length) {
+        box.innerHTML = '<div class="upcoming-calendar-empty">Aktuell stehen keine weiteren sichtbaren Termine an.</div>';
+        return;
+    }
+
+    box.innerHTML = future.slice(0, 5).map(({ ev, dateTime }) => {
+        const dateLabel = dateTime.toLocaleDateString('de-DE', { weekday:'short', day:'2-digit', month:'2-digit' });
+        const inviteStatus = ev.invitationStatus?.[getUserAccountId(sessionUser)] || '';
+        const inviteBadge = inviteStatus === 'pending' ? '<span class="upcoming-calendar-badge">Antwort offen</span>' : '';
+        return `
+            <button type="button" class="upcoming-calendar-item" onclick="openCalendarEventDetailsModal('${ev.id}')">
+                <span class="upcoming-calendar-when">${escapeHtml(dateLabel)} · ${escapeHtml(ev.time || '--:--')}</span>
+                <span class="upcoming-calendar-title">${escapeHtml(ev.title || 'Termin')}</span>
+                ${inviteBadge}
+            </button>
+        `;
+    }).join('');
+}
+
 function renderCalendarMonth() {
     const lbl = document.getElementById('calendarCurrentMonthYear');
     const grid = document.getElementById('calendarMonthGrid');
@@ -4202,6 +4457,8 @@ function renderCalendarMonth() {
     }
 
     grid.innerHTML = html;
+    renderUpcomingCalendarEvents();
+    updateNavigationBadges();
 }
 
 function onCalendarCellClick(dateKey) {
@@ -4232,6 +4489,7 @@ function handleCalendarCreatorSelectionChange() {
 
 function openCreateEventModal(prefillDate = null) {
     if (!sessionUser) return;
+    clearUnsavedChanges('calendar');
     const eff = getUserEffectivePermissions(sessionUser);
     if (!eff.canCreateCalendar) {
         alert('Keine Berechtigung zum Erstellen von Kalenderterminen!');
@@ -4344,7 +4602,9 @@ function toggleAllCalendarRoles(checkAll) {
     });
 }
 
-function closeCalendarEventModal() {
+function closeCalendarEventModal(force = false) {
+    if (!force && !confirmDiscardUnsavedChanges('calendar')) return;
+    clearUnsavedChanges('calendar');
     const modal = document.getElementById('calendarEventModal');
     if (modal) modal.style.display = 'none';
     activeDetailEventId = null;
@@ -4439,9 +4699,10 @@ function saveCalendarEvent() {
         };
 
         db.ref('data/calendar/' + editId).update(updateData).then(() => {
-            closeCalendarEventModal();
+            clearUnsavedChanges('calendar');
+            closeCalendarEventModal(true);
             logAdminAudit('Kalendertermin bearbeitet', `${creatorDisplay}: ${title} (${startDateStr})`);
-            alert('✅ Kalendertermin erfolgreich aktualisiert!');
+            showToast('✅ Kalendertermin erfolgreich aktualisiert.', 'success');
         });
         return;
     }
@@ -4491,9 +4752,10 @@ function saveCalendarEvent() {
     }
 
     Promise.all(promises).then(() => {
-        closeCalendarEventModal();
+        clearUnsavedChanges('calendar');
+        closeCalendarEventModal(true);
         logAdminAudit('Kalendertermin(e) angelegt', `${creatorDisplay}: ${title} (${count}x Serie ab ${startDateStr})`);
-        alert(`✅ ${count > 1 ? count + ' Termine der Serie' : 'Termin'} erfolgreich gespeichert!`);
+        showToast(`✅ ${count > 1 ? count + ' Termine der Serie' : 'Termin'} erfolgreich gespeichert.`, 'success');
     });
 }
 
@@ -4600,7 +4862,7 @@ function respondToCalendarInvite(eventId, status) {
     }
     db.ref(`data/calendar/${eventId}/invitationStatus/${myId}`).set(status).then(() => {
         closeCalendarEventDetailsModal();
-        alert(status === 'accepted' ? '✅ Du hast den Termin verbindlich angenommen!' : '❌ Du hast die Einladung abgelehnt.');
+        showToast(status === 'accepted' ? '✅ Termin verbindlich angenommen.' : '❌ Einladung abgelehnt.', status === 'accepted' ? 'success' : 'info');
     });
 }
 
@@ -4612,7 +4874,9 @@ function closeCalendarEventDetailsModal() {
 
 function editCalendarEventAction() {
     if (!sessionUser || !activeDetailEventId) return;
-    const ev = cachedCalendar[activeDetailEventId];
+    clearUnsavedChanges('calendar');
+    const eventId = activeDetailEventId;
+    const ev = cachedCalendar[eventId];
     if (!ev) return;
     const myId = getUserAccountId(sessionUser);
     const eff = getUserEffectivePermissions(sessionUser);
@@ -4628,7 +4892,7 @@ function editCalendarEventAction() {
 
     closeCalendarEventDetailsModal();
 
-    document.getElementById('editingCalendarEventId').value = activeDetailEventId;
+    document.getElementById('editingCalendarEventId').value = eventId;
     document.getElementById('calendarEventModalHeading').textContent = '✏️ Kalender Termin bearbeiten';
 
     const dateInp = document.getElementById('calEventDate');
@@ -4800,13 +5064,41 @@ function hasCustomStaffPhoto(user) {
     return !!(rawPhoto && !rawPhoto.includes('mdlogo') && rawPhoto !== DEFAULT_MD_LOGO_FALLBACK);
 }
 
+function updateStaffRoleFilterOptions() {
+    const select = document.getElementById('staffRoleFilter');
+    if (!select) return;
+    const selected = select.value || 'all';
+    const roles = sortRolesForDisplay(Object.values(cachedRoles || {}));
+    select.innerHTML = '<option value="all">Alle Rollen</option>' + roles.map(role =>
+        `<option value="${escapeHtml(role.id)}">${escapeHtml((role.icon ? role.icon + ' ' : '') + role.name)}</option>`
+    ).join('');
+    select.value = roles.some(role => role.id === selected) ? selected : 'all';
+}
+
+function resetStaffDirectoryFilters() {
+    const search = document.getElementById('searchStaffInput');
+    const status = document.getElementById('staffStatusFilter');
+    const photo = document.getElementById('staffPhotoFilter');
+    const role = document.getElementById('staffRoleFilter');
+    if (search) search.value = '';
+    if (status) status.value = 'all';
+    if (photo) photo.value = 'all';
+    if (role) role.value = 'all';
+    renderStaffDirectory();
+}
+
 function renderStaffDirectory() {
     const grid = document.getElementById('staffDirectoryGrid');
     const badge = document.getElementById('staffCountBadge');
+    const totalBadge = document.getElementById('staffTotalBadge');
     if (!grid) return;
     renderStaffPhotoChecklist();
+    updateStaffRoleFilterOptions();
 
     const q = (document.getElementById('searchStaffInput')?.value || '').trim().toLowerCase();
+    const statusFilter = document.getElementById('staffStatusFilter')?.value || 'all';
+    const photoFilter = document.getElementById('staffPhotoFilter')?.value || 'all';
+    const roleFilter = document.getElementById('staffRoleFilter')?.value || 'all';
     const canManagePhotos = canUserManageEmployeePhotos();
     const eff = sessionUser ? getUserEffectivePermissions(sessionUser) : {};
     const canManageRegistrations = !!(eff.canManageMemberAccess || eff.isMasterAdmin);
@@ -4816,7 +5108,7 @@ function renderStaffDirectory() {
         return u.status === 'approved' || u.isAdmin || u.isMasterAdmin;
     });
 
-    if (badge) badge.textContent = staffList.length;
+    if (totalBadge) totalBadge.textContent = staffList.length;
 
     staffList.sort((a, b) => {
         const dnA = parseDN(a[1].dn);
@@ -4826,6 +5118,11 @@ function renderStaffDirectory() {
     });
 
     const filtered = staffList.filter(([uId, u]) => {
+        const effectiveStatus = u.status || ((u.isAdmin || u.isMasterAdmin) ? 'approved' : 'pending');
+        if (statusFilter !== 'all' && effectiveStatus !== statusFilter) return false;
+        if (photoFilter === 'missing' && hasCustomStaffPhoto(u)) return false;
+        if (photoFilter === 'ready' && !hasCustomStaffPhoto(u)) return false;
+        if (roleFilter !== 'all' && !getUserRolesList(u).includes(roleFilter)) return false;
         if (!q) return true;
         const dnClean = (u.dn || '').toString().toLowerCase();
         const vClean = (u.vorname || '').toLowerCase();
@@ -4833,6 +5130,8 @@ function renderStaffDirectory() {
         const fullText = `${dnClean} ${vClean} ${nClean} ${vClean} ${nClean}`;
         return fullText.includes(q);
     });
+
+    if (badge) badge.textContent = filtered.length;
 
     if (!filtered.length) {
         grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--text-muted);">Keine Mitarbeiter gefunden.</div>';
@@ -5003,7 +5302,7 @@ async function sendMissingPhotoEmployeeNotice(uId) {
     try {
         await ref.set(notice);
         logAdminAudit('Foto-Hinweis gesendet', `${notice.senderName} → ${recipientLabel}: ${title}`);
-        alert(`✅ Foto-Hinweis wurde an ${recipientLabel} gesendet.`);
+        showToast(`✅ Foto-Hinweis wurde an ${recipientLabel} gesendet.`, 'success');
     } catch (err) {
         console.error('Foto-Hinweis konnte nicht gesendet werden:', err);
         alert('Der Foto-Hinweis konnte nicht gesendet werden. Bitte versuche es erneut.');
@@ -5104,7 +5403,7 @@ function submitStaffPhotoUpload() {
     db.ref('data/employeePhotos/' + uId).set(photoEntry).then(() => {
         closeStaffPhotoUploadModal();
         logAdminAudit('Foto zur Bearbeitung eingereicht', `${sessionUser.vorname} ${sessionUser.nachname} (DN: ${sessionUser.dn}) hat ein Foto eingereicht.`);
-        alert('✅ Foto erfolgreich eingereicht!\n\nDein Bild liegt nun im internen Fotoordner der Leitung/Personalabteilung.');
+        showToast('✅ Foto erfolgreich eingereicht. Es liegt jetzt im internen Fotoordner.', 'success', 4200);
     });
 }
 
@@ -5176,7 +5475,7 @@ function uploadProcessedStaffPhoto(event, uId) {
     scaleImageProportionally(file, 360, 430, (scaledBase64) => {
         db.ref('data/users/' + uId + '/photoUrl').set(scaledBase64).then(() => {
             logAdminAudit('Finales Dienstfoto hinterlegt', `Freigestelltes Bild für ${uId} von ${sessionUser.vorname} ${sessionUser.nachname} gespeichert.`);
-            alert('✅ Finales Foto erfolgreich in die Mitarbeiterkartei eingesetzt!');
+            showToast('✅ Finales Foto wurde in die Mitarbeiterkartei eingesetzt.', 'success');
             renderStaffDirectory();
         });
     });
@@ -6619,7 +6918,7 @@ function openNewsReadersModal(newsId) {
 }
 function closeNewsReadersModal() { document.getElementById('newsReadersModal').style.display = 'none'; }
 
-function togglePostNewsForm() {
+function togglePostNewsForm(forceClose = false) {
     if (!sessionUser) return;
     const e = document.getElementById('postNewsContainer');
     if (!e) return;
@@ -6632,6 +6931,7 @@ function togglePostNewsForm() {
         }
     }
     if (isHidden) {
+        clearUnsavedChanges('newsPost');
         document.getElementById('editingNewsId').value = '';
         document.getElementById('newNewsTitle').value = '';
         document.getElementById('newNewsContent').value = '';
@@ -6639,17 +6939,30 @@ function togglePostNewsForm() {
         document.getElementById('btnSaveNewsSubmit').textContent = '📢 Veröffentlichen';
         e.style.display = 'block';
     } else {
+        if (!forceClose && !confirmDiscardUnsavedChanges('newsPost')) return;
+        clearUnsavedChanges('newsPost');
         e.style.display = 'none';
     }
 }
 
-function toggleProposeNewsForm() {
+function toggleProposeNewsForm(forceClose = false) {
     const e = document.getElementById('proposeNewsContainer');
-    if (e) e.style.display = e.style.display === 'none' ? 'block' : 'none';
+    if (!e) return;
+    const isHidden = e.style.display === 'none' || !e.style.display;
+    if (isHidden) {
+        clearUnsavedChanges('newsProposal');
+        e.style.display = 'block';
+    } else {
+        if (!forceClose && !confirmDiscardUnsavedChanges('newsProposal')) return;
+        clearUnsavedChanges('newsProposal');
+        e.style.display = 'none';
+    }
 }
 
 function openEditNewsModal(newsId) {
     if (!sessionUser) return;
+    if (!confirmDiscardUnsavedChanges('newsPost')) return;
+    clearUnsavedChanges('newsPost');
     const n = cachedNews[newsId];
     if (!n) return;
     const eff = getUserEffectivePermissions(sessionUser);
@@ -6705,9 +7018,10 @@ function speichereNeueNews() {
             editedTs: Date.now(),
             lastEditedBy: `${sessionUser.vorname} ${sessionUser.nachname}`
         }).then(() => {
-            togglePostNewsForm();
+            clearUnsavedChanges('newsPost');
+            togglePostNewsForm(true);
             logAdminAudit(`News angepasst (${auditRoleDesc})`, `${sessionUser.vorname} ${sessionUser.nachname}: ${t}`);
-            alert('✅ News-Beitrag erfolgreich aktualisiert!');
+            showToast('✅ News-Beitrag erfolgreich aktualisiert.', 'success');
         });
         return;
     }
@@ -6723,7 +7037,8 @@ function speichereNeueNews() {
         authorId: myId,
         ts: Date.now()
     }).then(() => {
-        togglePostNewsForm();
+        clearUnsavedChanges('newsPost');
+        togglePostNewsForm(true);
         logAdminAudit('News veröffentlicht', `${sessionUser.vorname} ${sessionUser.nachname}: ${t}`);
     });
 }
@@ -6743,8 +7058,9 @@ function submitNewsProposal() {
     }).then(() => {
         document.getElementById('propNewsTitle').value = '';
         document.getElementById('propNewsContent').value = '';
-        toggleProposeNewsForm();
-        alert('✅ Dein Vorschlag wurde eingereicht und wird von der Leitung geprüft!');
+        clearUnsavedChanges('newsProposal');
+        toggleProposeNewsForm(true);
+        showToast('✅ Dein Vorschlag wurde eingereicht und wird von der Leitung geprüft.', 'success');
     });
 }
 
@@ -6798,7 +7114,7 @@ async function passwortAendern() {
         await auth.currentUser.updatePassword(np);
         if (inp) inp.value = '';
         logAdminAudit('Eigenes Passwort geändert', `${sessionUser.vorname} ${sessionUser.nachname} hat das Login-Passwort aktualisiert.`);
-        alert('✅ Passwort erfolgreich geändert!');
+        showToast('✅ Passwort erfolgreich geändert.', 'success');
     } catch (err) {
         console.error('Passwortänderung fehlgeschlagen:', err);
         if (err?.code === 'auth/requires-recent-login') {
@@ -7844,7 +8160,7 @@ async function verifyAdminKeyPassword() {
         closeAdminAuthModal();
         document.getElementById('adminManagementModal').style.display = 'flex';
         const onlyMaintenanceAccess = !eff.isAdmin && !eff.isMasterAdmin && eff.canManageMaintenance;
-        ['btnAdminSubUsers','btnAdminSubRoles','btnAdminSubAudit','btnAdminSubSessions','btnAdminSubSystem'].forEach(id => {
+        ['btnAdminSubOverview','btnAdminSubUsers','btnAdminSubRoles','btnAdminSubAudit','btnAdminSubSessions','btnAdminSubSystem'].forEach(id => {
             const el = document.getElementById(id);
             if (el) el.style.display = onlyMaintenanceAccess ? 'none' : '';
         });
@@ -7859,6 +8175,7 @@ async function verifyAdminKeyPassword() {
         } catch (_) {
             alert('Die Mitarbeiterliste konnte gerade nicht aktualisiert werden. Es wird der zuletzt geladene Stand angezeigt.');
         }
+        switchAdminTab('adminSubTabOverview', document.getElementById('btnAdminSubOverview'));
         renderAdminUserTable(cachedUsers);
         renderAdminRolesList();
         refreshFirebaseAuthMigrationPanel();
@@ -7866,6 +8183,7 @@ async function verifyAdminKeyPassword() {
         renderMaintenanceAdminPanel();
         renderActiveSessionAdminPanel();
         updateClientReleaseAdminPanel();
+        renderAdminOverview();
     } catch (err) {
         console.error('Admin-Verifizierung fehlgeschlagen:', err);
         if (['auth/wrong-password', 'auth/invalid-credential', 'auth/invalid-login-credentials'].includes(err?.code)) {
@@ -7876,10 +8194,15 @@ async function verifyAdminKeyPassword() {
     }
 }
 
-function closeAdminManagementModal() { document.getElementById('adminManagementModal').style.display = 'none'; }
+function closeAdminManagementModal(force = false) {
+    if (!force && !confirmDiscardUnsavedChanges('role')) return;
+    document.getElementById('adminManagementModal').style.display = 'none';
+}
 
 function switchAdminTab(tabId, btnEl) {
     const eff = getUserEffectivePermissions(sessionUser || {});
+    const activeTab = document.querySelector('#adminManagementModal .admin-subtab-content.active')?.id || '';
+    if (activeTab === 'adminSubTabRoles' && tabId !== 'adminSubTabRoles' && !confirmDiscardUnsavedChanges('role')) return;
     if (tabId === 'adminSubTabMaintenance' && !canCurrentUserManageMaintenance()) {
         alert('Du hast dafür keine Berechtigung.');
         return;
@@ -7896,6 +8219,7 @@ function switchAdminTab(tabId, btnEl) {
     document.querySelectorAll('#adminManagementModal .admin-tab-btn').forEach(e => e.classList.remove('active'));
     const t = document.getElementById(tabId); if (t) t.classList.add('active');
     if (btnEl) btnEl.classList.add('active');
+    if (tabId === 'adminSubTabOverview') renderAdminOverview();
     if (tabId === 'adminSubTabMaintenance') renderMaintenanceAdminPanel();
     if (tabId === 'adminSubTabSessions') {
         renderActiveSessionAdminPanel();
@@ -8418,7 +8742,7 @@ async function approveUser(uId) {
         await db.ref('data/users/'+uId+'/status').set('approved');
         await refreshUsersFromFirebase();
         logAdminAudit('Mitarbeiter freigeschaltet', `Account ${uId} aktiviert von ${sessionUser.vorname} ${sessionUser.nachname}`);
-        alert('✅ Mitarbeiter wurde erfolgreich freigeschaltet.');
+        showToast('✅ Mitarbeiter wurde erfolgreich freigeschaltet.', 'success');
     } catch (err) {
         console.error('Freischaltung fehlgeschlagen:', err);
         alert('Die Freischaltung konnte nicht gespeichert werden. Bitte versuche es erneut.');
@@ -8437,7 +8761,7 @@ async function revokeUser(uId) {
         await db.ref('data/users/'+uId+'/status').set('revoked');
         await refreshUsersFromFirebase();
         logAdminAudit('Mitarbeiter gesperrt', `Account ${uId} gesperrt von ${sessionUser.vorname} ${sessionUser.nachname}`);
-        alert('✅ Mitarbeiter wurde gesperrt.');
+        showToast('✅ Mitarbeiter wurde gesperrt.', 'success');
     } catch (err) {
         console.error('Sperren fehlgeschlagen:', err);
         alert('Die Sperrung konnte nicht gespeichert werden. Bitte versuche es erneut.');
@@ -8471,6 +8795,7 @@ function deleteUserAccount(uId) {
 
 function openUserPermissionsModal(uId) {
     if (!requireAdminAccess()) return;
+    clearUnsavedChanges('user');
     if (!requireTargetUserManagement(uId)) return;
     const u = cachedUsers[uId]; if (!u) return;
     document.getElementById('permUserId').value = uId;
@@ -8492,7 +8817,11 @@ function openUserPermissionsModal(uId) {
     }
     document.getElementById('userPermissionsModal').style.display = 'flex';
 }
-function closeUserPermissionsModal() { document.getElementById('userPermissionsModal').style.display = 'none'; }
+function closeUserPermissionsModal(force = false) {
+    if (!force && !confirmDiscardUnsavedChanges('user')) return;
+    clearUnsavedChanges('user');
+    document.getElementById('userPermissionsModal').style.display = 'none';
+}
 
 async function resetSelectedUserPassword() {
     if (!requireMasterAdminAccess('Nur der Master Admin darf Passwörter anderer Mitarbeiter zurücksetzen.')) return;
@@ -8520,7 +8849,7 @@ async function resetSelectedUserPassword() {
         const ok = await resetFirebaseAuthForUser(uId, newPassword);
         if (!ok) return;
         if (input) input.value = '';
-        alert('✅ Das neue Passwort wurde gesetzt. Der Mitarbeiter muss es beim nächsten Login ändern.');
+        showToast('✅ Neues Passwort gesetzt. Der Mitarbeiter muss es beim nächsten Login ändern.', 'success', 4200);
     } catch (err) {
         console.error('Passwort-Zurücksetzung fehlgeschlagen:', err);
         alert('Das Passwort konnte nicht geändert werden. Bitte versuche es erneut.');
@@ -8617,7 +8946,8 @@ async function saveUserPermissions() {
         if ((original.dn || '') !== dn && original.dn) {
             await migrateLegacyNewsReadKeyForUser(uId, original.dn, { vorname, nachname, dn });
         }
-        closeUserPermissionsModal();
+        clearUnsavedChanges('user');
+        closeUserPermissionsModal(true);
 
         const changes = [];
         if ((original.vorname || '') !== vorname) changes.push(`Vorname: ${original.vorname || '--'} → ${vorname}`);
@@ -8625,7 +8955,7 @@ async function saveUserPermissions() {
         if ((original.dn || '') !== dn) changes.push(`Dienstnummer: ${original.dn || '--'} → ${dn}`);
         if ((original.status || 'approved') !== status) changes.push(`Status: ${original.status || 'approved'} → ${status}`);
         logAdminAudit('Mitarbeiterdaten bearbeitet', `${vorname} ${nachname} (${uId}) angepasst von ${sessionUser.vorname} ${sessionUser.nachname}${changes.length ? ': ' + changes.join(' | ') : ''}`);
-        alert('✅ Mitarbeiterdaten wurden erfolgreich gespeichert!');
+        showToast('✅ Mitarbeiterdaten wurden erfolgreich gespeichert.', 'success');
     } catch (err) {
         alert('Die Änderung konnte nicht gespeichert werden. Bitte versuche es erneut.');
     }
@@ -8817,6 +9147,8 @@ function refreshOpenRoleCategoryCheckboxes() {
 
 function selectRole(roleId) {
     if (!requireAdminAccess()) return;
+    if (!confirmDiscardUnsavedChanges('role')) return;
+    clearUnsavedChanges('role');
     const r = cachedRoles[roleId] || defaultRoles[roleId]; 
     if (!r) return;
     const operatorEff = getUserEffectivePermissions(sessionUser);
@@ -8888,6 +9220,8 @@ function updateRoleBadgePreview() {
 
 function neueRolleErstellen() {
     if (!requireAdminAccess()) return;
+    if (!confirmDiscardUnsavedChanges('role')) return;
+    clearUnsavedChanges('role');
     const newId = 'role_' + Date.now();
     document.getElementById('editingRoleId').value = newId;
     document.getElementById('roleEditName').value = '';
@@ -8974,10 +9308,11 @@ function speichereRolle() {
 
     db.ref('data/roles/' + id).set(r).then(async () => {
         cachedRoles[id] = r;
+        clearUnsavedChanges('role');
         await syncServerPermissionsForAllUsers();
         renderAdminRolesList();
         logAdminAudit('Rolle gespeichert', `${sessionUser.vorname} ${sessionUser.nachname} hat Rolle "${r.name}" gespeichert.`);
-        alert(`✅ Rolle "${r.name}" erfolgreich gespeichert!`);
+        showToast(`✅ Rolle "${r.name}" erfolgreich gespeichert.`, 'success');
     }).catch(err => {
         alert('Die Rolle konnte nicht gespeichert werden. Bitte versuche es erneut.');
     });
@@ -9022,9 +9357,10 @@ async function loescheRolle() {
         if (Object.keys(updates).length) await db.ref().update(updates);
 
         renderAdminRolesList();
+        clearUnsavedChanges('role');
         neueRolleErstellen();
         logAdminAudit('Rolle gelöscht', `${sessionUser.vorname} ${sessionUser.nachname} hat die Rolle "${role?.name || id}" gelöscht.`);
-        alert('✅ Rolle erfolgreich gelöscht!');
+        showToast('✅ Rolle erfolgreich gelöscht.', 'success');
     } catch (err) {
         alert('Die Rolle konnte nicht gelöscht werden. Bitte versuche es erneut.');
     }
@@ -9061,7 +9397,68 @@ function downloadSystemBackup() {
         el.download = 'MMD_Backup_' + new Date().toLocaleDateString('sv-SE') + '.json';
         el.click();
         URL.revokeObjectURL(url);
+        showToast('✅ Backup wurde heruntergeladen.', 'success');
     });
+}
+
+function countBackupEntries(value) {
+    if (!value) return 0;
+    if (Array.isArray(value)) return value.filter(Boolean).length;
+    if (typeof value === 'object') return Object.keys(value).length;
+    return 0;
+}
+
+function closeBackupPreviewModal() {
+    pendingBackupRestore = null;
+    const modal = document.getElementById('backupPreviewModal');
+    if (modal) modal.style.display = 'none';
+}
+
+function openBackupPreviewModal(parsed, restoreDataRaw, fileName) {
+    pendingBackupRestore = {
+        parsed,
+        restoreDataRaw: JSON.parse(JSON.stringify(restoreDataRaw)),
+        fileName: String(fileName || 'Backup.json')
+    };
+
+    const meta = parsed?.meta || {};
+    const metaEl = document.getElementById('backupPreviewMeta');
+    const countsEl = document.getElementById('backupPreviewCounts');
+    const modal = document.getElementById('backupPreviewModal');
+    if (!modal || !countsEl) return;
+
+    let createdLabel = 'Unbekannt';
+    if (meta.createdAt) {
+        const created = new Date(Number(meta.createdAt) || meta.createdAt);
+        if (!Number.isNaN(created.getTime())) createdLabel = created.toLocaleString('de-DE');
+    }
+    if (metaEl) {
+        metaEl.innerHTML = `
+            <div><span>Datei</span><b>${escapeHtml(pendingBackupRestore.fileName)}</b></div>
+            <div><span>Erstellt</span><b>${escapeHtml(createdLabel)}</b></div>
+            <div><span>Version</span><b>${escapeHtml(meta.version || 'nicht angegeben')}</b></div>
+        `;
+    }
+
+    const sections = [
+        ['👥 Mitarbeiter', 'users'],
+        ['📝 Patientenprotokoll', 'protokoll'],
+        ['🗄️ Archiv', 'archiv'],
+        ['📅 Termine', 'calendar'],
+        ['🎓 Prüfungen', 'exams'],
+        ['✅ Prüfungsergebnisse', 'examSubmissions'],
+        ['📰 News', 'news'],
+        ['💡 Wünsche & Bugs', 'feedback'],
+        ['📨 Mitarbeiterhinweise', 'employeeNotices']
+    ];
+    countsEl.innerHTML = sections.map(([label, key]) => `
+        <div class="backup-preview-count">
+            <span>${label}</span>
+            <b>${countBackupEntries(restoreDataRaw[key])}</b>
+        </div>
+    `).join('');
+
+    modal.style.display = 'flex';
 }
 
 function restoreSystemBackupFromFile(event) {
@@ -9069,74 +9466,90 @@ function restoreSystemBackupFromFile(event) {
         if (event?.target) event.target.value = '';
         return;
     }
-    const file = event.target.files && event.target.files[0]; if (!file) return;
+    const file = event.target.files && event.target.files[0];
+    if (!file) return;
     const reader = new FileReader();
 
-    reader.onload = async e => {
+    reader.onload = e => {
         try {
             const parsed = JSON.parse(e.target.result);
             const restoreDataRaw = parsed.data ? parsed.data : parsed;
             if (!restoreDataRaw || typeof restoreDataRaw !== 'object' || Array.isArray(restoreDataRaw)) {
                 throw new Error('Ungültiges Backup-Format.');
             }
-            if (!confirm('Die Sicherung ersetzt die Fachdaten. Aktuelle Anmeldungen und Zugriffsrechte bleiben erhalten. Wirklich fortfahren?')) return;
-
-            const currentSnap = await db.ref('data').once('value');
-            const current = currentSnap.val() || {};
-            const restoreData = JSON.parse(JSON.stringify(restoreDataRaw));
-
-            // Authentifizierungs-Zuordnungen niemals aus einem alten Backup zurückrollen.
-            restoreData.authIndex = current.authIndex || {};
-            restoreData.loginDirectory = current.loginDirectory || {};
-
-            const currentSystem = current.system || {};
-            restoreData.system = Object.assign({}, restoreData.system || {}, {
-                authMigrationComplete: currentSystem.authMigrationComplete === true,
-                authMigrationCompletedAt: currentSystem.authMigrationCompletedAt || null,
-                authMigrationCompletedBy: currentSystem.authMigrationCompletedBy || null
-            });
-
-            const currentUsers = current.users || {};
-            const incomingUsers = restoreData.users || {};
-            const mergedUsers = {};
-
-            Object.entries(incomingUsers).forEach(([uId, incomingUser]) => {
-                const cleaned = stripCredentialsFromBackupUser(incomingUser);
-                const currentUser = currentUsers[uId];
-                if (currentUser?.authUid) {
-                    cleaned.authUid = currentUser.authUid;
-                    cleaned.authVersion = currentUser.authVersion || 1;
-                } else {
-                    delete cleaned.authUid;
-                    delete cleaned.authVersion;
-                    cleaned.status = 'pending';
-                }
-                mergedUsers[uId] = cleaned;
-            });
-
-            // Aktuell vorhandene Auth-Konten werden nicht durch ein älteres Backup gelöscht.
-            Object.entries(currentUsers).forEach(([uId, currentUser]) => {
-                if (!mergedUsers[uId]) mergedUsers[uId] = stripCredentialsFromBackupUser(currentUser);
-            });
-
-            const previousRoles = cachedRoles;
-            cachedRoles = normalizeSystemRoleDisplayData(Object.assign({}, defaultRoles, restoreData.roles || {}));
-            Object.entries(mergedUsers).forEach(([uId, user]) => {
-                user.serverPermissions = buildServerPermissions(user);
-            });
-            cachedRoles = previousRoles;
-
-            restoreData.users = mergedUsers;
-            await db.ref('data').set(restoreData);
-            alert('✅ Die Sicherung wurde erfolgreich wiederhergestellt. Anmeldungen und Zugriffsrechte wurden beibehalten.');
-            location.reload();
-        } catch(err) {
-            alert('Die Wiederherstellung konnte nicht abgeschlossen werden. Bitte versuche es erneut.');
+            openBackupPreviewModal(parsed, restoreDataRaw, file.name);
+        } catch (err) {
+            console.error('Backup konnte nicht gelesen werden:', err);
+            alert('Das Backup konnte nicht gelesen werden oder besitzt ein ungültiges Format.');
         } finally {
             if (event?.target) event.target.value = '';
         }
     };
     reader.readAsText(file);
+}
+
+async function confirmBackupRestore() {
+    if (!requireMasterAdminAccess('Backups dürfen nur von Master Admins eingespielt werden!')) return;
+    if (!pendingBackupRestore?.restoreDataRaw) return;
+
+    const restoreDataRaw = JSON.parse(JSON.stringify(pendingBackupRestore.restoreDataRaw));
+    try {
+        const currentSnap = await db.ref('data').once('value');
+        const current = currentSnap.val() || {};
+        const restoreData = JSON.parse(JSON.stringify(restoreDataRaw));
+
+        // Authentifizierungs-Zuordnungen niemals aus einem alten Backup zurückrollen.
+        restoreData.authIndex = current.authIndex || {};
+        restoreData.loginDirectory = current.loginDirectory || {};
+
+        const currentSystem = current.system || {};
+        restoreData.system = Object.assign({}, restoreData.system || {}, {
+            authMigrationComplete: currentSystem.authMigrationComplete === true,
+            authMigrationCompletedAt: currentSystem.authMigrationCompletedAt || null,
+            authMigrationCompletedBy: currentSystem.authMigrationCompletedBy || null
+        });
+
+        const currentUsers = current.users || {};
+        const incomingUsers = restoreData.users || {};
+        const mergedUsers = {};
+
+        Object.entries(incomingUsers).forEach(([uId, incomingUser]) => {
+            const cleaned = stripCredentialsFromBackupUser(incomingUser);
+            const currentUser = currentUsers[uId];
+            if (currentUser?.authUid) {
+                cleaned.authUid = currentUser.authUid;
+                cleaned.authVersion = currentUser.authVersion || 1;
+            } else {
+                delete cleaned.authUid;
+                delete cleaned.authVersion;
+                cleaned.status = 'pending';
+            }
+            mergedUsers[uId] = cleaned;
+        });
+
+        // Aktuell vorhandene Auth-Konten werden nicht durch ein älteres Backup gelöscht.
+        Object.entries(currentUsers).forEach(([uId, currentUser]) => {
+            if (!mergedUsers[uId]) mergedUsers[uId] = stripCredentialsFromBackupUser(currentUser);
+        });
+
+        const previousRoles = cachedRoles;
+        cachedRoles = normalizeSystemRoleDisplayData(Object.assign({}, defaultRoles, restoreData.roles || {}));
+        Object.entries(mergedUsers).forEach(([uId, user]) => {
+            user.serverPermissions = buildServerPermissions(user);
+        });
+        cachedRoles = previousRoles;
+
+        restoreData.users = mergedUsers;
+        await db.ref('data').set(restoreData);
+        pendingBackupRestore = null;
+        const modal = document.getElementById('backupPreviewModal');
+        if (modal) modal.style.display = 'none';
+        showToast('✅ Backup wurde erfolgreich wiederhergestellt. Die MMD Cloud wird neu geladen.', 'success', 1400);
+        window.setTimeout(() => location.reload(), 1000);
+    } catch(err) {
+        console.error('Backup-Wiederherstellung fehlgeschlagen:', err);
+        alert('Die Wiederherstellung konnte nicht abgeschlossen werden. Bitte versuche es erneut.');
+    }
 }
 
 async function vollstaendigerReset() {
@@ -9945,6 +10358,7 @@ function toggleGroupCollapse(gId) { const g = document.getElementById(gId); if (
 document.addEventListener('DOMContentLoaded', async () => {
     updateLiveDate(); setInterval(updateLiveDate, 60000);
     setupRolePermissionAccordions();
+    setupUnsavedChangeTracking();
     document.addEventListener('click', event => {
         if (!event.target.closest('.nav-group')) closeMainNavGroups();
     });
@@ -9990,6 +10404,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 const _w = window;
 _w.switchTab = switchTab; _w.settingsTabClick = settingsTabClick; _w.switchAdminTab = switchAdminTab; _w.switchInstructorTab = switchInstructorTab;
+_w.renderAdminOverview = renderAdminOverview; _w.openAdminOverviewSection = openAdminOverviewSection; _w.openPhotoChecklistFromAdminOverview = openPhotoChecklistFromAdminOverview;
 _w.handleAuthAction = handleAuthAction; _w.toggleAuthTab = toggleAuthTab;
 _w.openAdminKeyModal = openAdminKeyModal; _w.closeAdminAuthModal = closeAdminAuthModal; _w.verifyAdminKeyPassword = verifyAdminKeyPassword; _w.closeAdminManagementModal = closeAdminManagementModal;
 _w.handleDienstEndeLogout = handleDienstEndeLogout; _w.forceUserOutOfService = forceUserOutOfService; _w.publishClientRelease = publishClientRelease; _w.reloadForAppUpdate = reloadForAppUpdate; _w.berechneDienstTage = berechneDienstTage; _w.passwortAendern = passwortAendern;
@@ -10016,7 +10431,7 @@ _w.addExamQuestionRow = addExamQuestionRow; _w.resetExamBuilderForm = resetExamB
 _w.openExamBuilderModal = openExamBuilderModal; _w.closeExamBuilderModal = closeExamBuilderModal;
 _w.openExamSubmissionDetailsModal = openExamSubmissionDetailsModal; _w.closeExamSubmissionDetailsModal = closeExamSubmissionDetailsModal; _w.repeatFailedExam = repeatFailedExam;
 _w.filterUnlocksTable = filterUnlocksTable; _w.filterSubmissionsTable = filterSubmissionsTable; _w.toggleExamUnlockForUser = toggleExamUnlockForUser; _w.toggleExamPassedForUser = toggleExamPassedForUser;
-_w.downloadSystemBackup = downloadSystemBackup; _w.restoreSystemBackupFromFile = restoreSystemBackupFromFile;
+_w.downloadSystemBackup = downloadSystemBackup; _w.restoreSystemBackupFromFile = restoreSystemBackupFromFile; _w.closeBackupPreviewModal = closeBackupPreviewModal; _w.confirmBackupRestore = confirmBackupRestore;
 _w.speichereHierarchieDaten = saveHierarchieInline;
 _w.approveUser = approveUser; _w.revokeUser = revokeUser; _w.deleteUserAccount = deleteUserAccount; _w.filterAdminUserTable = filterAdminUserTable;
 _w.openAssignRolesModal = openAssignRolesModal; _w.closeAssignRolesModal = closeAssignRolesModal; _w.saveAssignedRoles = saveAssignedRoles;
@@ -10045,7 +10460,7 @@ _w.togglePrivateEventOption = togglePrivateEventOption;
 _w.toggleAllCalendarRoles = toggleAllCalendarRoles;
 _w.handleCalendarCreatorSelectionChange = handleCalendarCreatorSelectionChange;
 _w.respondToCalendarInvite = respondToCalendarInvite;
-_w.renderStaffDirectory = renderStaffDirectory;
+_w.renderStaffDirectory = renderStaffDirectory; _w.resetStaffDirectoryFilters = resetStaffDirectoryFilters;
 _w.filterStaffDirectory = filterStaffDirectory;
 _w.openStaffPhotoUploadModal = openStaffPhotoUploadModal;
 _w.closeStaffPhotoUploadModal = closeStaffPhotoUploadModal;
