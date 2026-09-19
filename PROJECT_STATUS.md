@@ -1,17 +1,19 @@
 # MMD Cloud – PROJECT STATUS
 
-**Aktuell bestätigte stabile Live-Version:** v6.8.5c  
+**Aktuell bestätigte stabile Live-Version:** v6.8.5h  
 **Aktueller Entwicklungsstand:** v6.8.5h  
-**Status v6.8.5h:** 🟡 LIVE-GEGENCHECK AUSSTEHEND  
+**Status v6.8.5h:** 🟢 STABIL / LIVE BESTÄTIGT  
 **Datum:** 19.09.2026
 
 ---
 
 ## 1. Verbindliche Basis
 
-**v6.8.5c = bestätigte stabile Live-Version und Rollback-Basis**
+**v6.8.5h = bestätigte stabile Live-Version und aktuelle Rollback-Basis**
 
-Der aktuelle Entwicklungsstand v6.8.5h baut direkt auf v6.8.5g auf. Die Bereinigung verändert keine produktive Funktion. Firebase Auth, Registrierung, Login, Rollen, Berechtigungen, stabile Account-IDs, Benutzerstruktur und Realtime-Database-Rules wurden nicht verändert.
+v6.8.5h wurde im Live-Betrieb bestätigt. Die Anwendung funktioniert nach der technischen Bereinigung stabil.
+
+Firebase Auth, Registrierung, Login, Rollen, Berechtigungen, stabile Account-IDs, Benutzerstruktur und Realtime-Database-Rules wurden nicht verändert.
 
 ---
 
@@ -90,20 +92,22 @@ Unverändert bleiben insbesondere:
 
 ---
 
-## 6. Live-Gegencheck v6.8.5h
+## 6. Live-Bestätigung v6.8.5h
 
-Da v6.8.5h keine funktionale Änderung gegenüber der Dienstlogik von v6.8.5g enthält, bleiben dieselben Live-Punkte zu beobachten:
+Am 19.09.2026 wurde v6.8.5h im Live-Betrieb bestätigt.
 
-1. aktuelle Mitarbeiter mit neuer Version erscheinen zuverlässig unter **„Im Dienst“**,
-2. alte Legacy-/Altdaten erscheinen nicht mehr,
-3. **„Dienst beenden“** entfernt den Mitarbeiter direkt,
-4. Browser-/Verbindungsende entfernt bzw. verwirft den Presence-Status,
-5. keine automatische Inaktivitätswarnung oder Inaktivitätsabmeldung erscheint mehr.
+Bestätigt:
+1. aktuelle Mitarbeiter erscheinen zuverlässig unter **„Im Dienst“**,
+2. alte Legacy-/Altdaten erscheinen nicht mehr als aktiver Dienst,
+3. **„Dienst beenden“** funktioniert,
+4. Presence-/Heartbeat-Verhalten funktioniert stabil,
+5. es erscheint keine automatische Inaktivitätswarnung oder Inaktivitätsabmeldung mehr,
+6. die Anwendung funktioniert nach der technischen Bereinigung ohne festgestellte Fehler.
 
 ---
 
 ## 7. Rollback
 
-**v6.8.5c = aktuelle bestätigte stabile Rollback-Basis**
+**v6.8.5h = aktuelle bestätigte stabile Rollback-Basis**
 
-Die Firebase Rules müssen bei einem Rollback nicht verändert werden.
+Für einen Rollback auf diesen Stand müssen die Firebase Rules nicht verändert werden.
