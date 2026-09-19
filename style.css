@@ -1982,7 +1982,7 @@ html, body { max-width: 100%; overflow-x: hidden; }
 
 
 /* ══════════════════════════════════════════════════════════════
-   v6.8.1 – Sitzungen, Inaktivität & Browser-Updates
+   Sitzungen, Presence & Browser-Updates
 ══════════════════════════════════════════════════════════════ */
 .session-admin-card{
     background:rgba(15,23,42,.72);

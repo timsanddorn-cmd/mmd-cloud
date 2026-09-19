@@ -1,5 +1,5 @@
 // ============================================================
-//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.8.5g
+//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.8.5h
 //  Firebase Realtime Database (Compat SDK v10)
 // ============================================================
 
@@ -182,7 +182,7 @@ const db = firebase.database();
 const auth = firebase.auth();
 const FIREBASE_AUTH_EMAIL_DOMAIN = 'mmd-login.invalid';
 
-const APP_VERSION = 'v6.8.5g';
+const APP_VERSION = 'v6.8.5h';
 const PRESENCE_HEARTBEAT_MS = 30 * 1000;
 const PRESENCE_STALE_MS = 3 * 60 * 1000;
 
@@ -291,6 +291,16 @@ let hierarchieDaten = JSON.parse(JSON.stringify(defaultHierarchieData));
 
 /* ── Vollständiger Gesamt-Changelog (Entwicklungsverlauf) ───── */
 const systemChangelogs = [
+    {
+        id: "sys_v6_8_5h", version: "v6.8.5h", date: "19.09.2026", ts: 1789803000000,
+        category: "Verbesserung", title: "Technische Bereinigung",
+        changes: [
+            "Nicht mehr verwendete Hilfsfunktionen wurden aus der Codebasis entfernt.",
+            "Veraltete Versions- und Abschnittskommentare wurden bereinigt.",
+            "Alte Inaktivitätsbezeichnungen wurden aus technischen Überschriften entfernt; Presence- und Browser-Update-Funktionen bleiben unverändert.",
+            "Firebase Auth, Registrierung, Rollen, Berechtigungen und Datenbankregeln wurden nicht verändert."
+        ]
+    },
     {
         id: "sys_v6_8_5g", version: "v6.8.5g", date: "19.09.2026", ts: 1789772400000,
         category: "Verbesserung", title: "Dienststatus vereinfacht",
@@ -1643,11 +1653,6 @@ function logAdminAudit(action, details) {
     });
 };
 
-// ============================================================
-//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.8.1
-//  Firebase Realtime Database (Compat SDK v10)
-// ============================================================
-
 /* ── Rollen & Berechtigungen (Single Source of Truth) ──────── */
 function getUserRolesList(user) {
     if (!user) return [];
@@ -1719,13 +1724,6 @@ function buildServerPermissions(user) {
     return out;
 }
 
-async function syncServerPermissionsForUser(uId, userOverride = null) {
-    if (!uId) return;
-    const user = userOverride || cachedUsers[uId];
-    if (!user) return;
-    await db.ref(`data/users/${uId}/serverPermissions`).set(buildServerPermissions(user));
-}
-
 async function syncServerPermissionsForAllUsers() {
     if (!sessionUser) return;
     const eff = getUserEffectivePermissions(sessionUser);
@@ -1770,12 +1768,6 @@ function isPrivilegedUser(user) {
         return !!(role?.isAdmin || role?.isMasterAdmin || rId === 'admin' || rId === 'masteradmin');
     });
     return !!(user.isAdmin || user.isMasterAdmin || hasPrivilegedRole);
-}
-
-function canCurrentUserManageMemberAccess() {
-    if (!sessionUser) return false;
-    const eff = getUserEffectivePermissions(sessionUser);
-    return !!(eff.isMasterAdmin || eff.canManageMemberAccess);
 }
 
 function canCurrentUserManageTargetUser(uId) {
@@ -1918,11 +1910,6 @@ async function readLoginDirectory(loginKey) {
         }
         throw err;
     }
-}
-
-async function readLoginVersion(loginKey) {
-    const directory = await readLoginDirectory(loginKey);
-    return directory.version;
 }
 
 async function loadAuthenticatedProfile(firebaseUser) {
@@ -2960,7 +2947,7 @@ function startFirebaseListeners() {
     refreshSensitiveFirebaseListeners();
 }
 
-/* ── Sitzungs-, Inaktivitäts- & Presence-Steuerung ─────────── */
+/* ── Sitzungs- & Presence-Steuerung ─────────── */
 function getPresenceTimestamp(value) {
     if (!value || typeof value !== 'object') return 0;
     return Number(value.lastSeen || value.ts) || 0;
@@ -3661,11 +3648,6 @@ function saveAllSzenarienWorkflows() {
         alert('✅ Medizinische Szenarien & Abläufe erfolgreich gespeichert!');
     });
 }
-
-// ============================================================
-//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.8.1
-//  Firebase Realtime Database (Compat SDK v10)
-// ============================================================
 
 /* ── REITER 2: STATISTIK & ARCHIV ─────────────────────────── */
 function renderProtokoll(obj) {
