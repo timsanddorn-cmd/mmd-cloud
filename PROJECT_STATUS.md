@@ -1,17 +1,19 @@
 # MMD Cloud – PROJECT STATUS
 
-**Aktuell bestätigte stabile Live-Version:** v6.8.5j  
+**Aktuell bestätigte stabile Live-Version:** v6.8.6a  
 **Aktueller Entwicklungsstand:** v6.8.6a  
-**Status v6.8.6a:** 🟡 KURZER LIVE-GEGENCHECK AUSSTEHEND  
+**Status v6.8.6a:** 🟢 STABIL / LIVE BESTÄTIGT  
 **Datum:** 20.09.2026
 
 ---
 
 ## 1. Verbindliche Basis
 
-**v6.8.5j = bestätigte stabile Live-Version und aktuelle Rollback-Basis**
+**v6.8.6a = bestätigte stabile Live-Version und aktuelle Rollback-Basis**
 
-Das Komfortpaket v6.8.6 wurde vom Nutzer anhand der vollständigen Testliste 1–14 geprüft. Anschließend wurde als kleine UX-Korrektur v6.8.6a erstellt.
+Das Komfortpaket v6.8.6 wurde anhand der vollständigen Testliste 1–14 geprüft. Anschließend wurde in v6.8.6a der Mitarbeiter-Statusfilter gezielt auf Personen mit Mitarbeiterverwaltung beziehungsweise Master Admins beschränkt.
+
+Der anschließende Live-Gegencheck wurde erfolgreich bestätigt.
 
 Firebase Auth, Registrierung, Login, stabile Account-IDs, Rollenmodell, Berechtigungen, Datenpfade und Realtime-Database-Rules wurden nicht verändert.
 
@@ -19,19 +21,22 @@ Firebase Auth, Registrierung, Login, stabile Account-IDs, Rollenmodell, Berechti
 
 ## 2. v6.8.6a – Status-Filter gezielt sichtbar
 
-In der Mitarbeiterkartei gilt jetzt:
+In der Mitarbeiterkartei gilt:
 - **Status** ist nur für Personen mit der Berechtigung zur Mitarbeiterverwaltung oder für Master Admins sichtbar,
 - **Profilbild** bleibt für alle freigeschalteten Mitarbeiter sichtbar,
 - **Rolle** bleibt für alle freigeschalteten Mitarbeiter sichtbar,
-- normale Mitarbeiter erhalten technisch immer den neutralen Statusfilter „Alle“, auch wenn im Browser zuvor ein anderer Wert gesetzt war.
+- normale Mitarbeiter erhalten technisch immer den neutralen Statusfilter „Alle“.
 
-Die bereits bestehende Datenfilterung bleibt unverändert: Mitarbeiter ohne Verwaltungsrecht sehen weiterhin ausschließlich die für sie vorgesehenen freigegebenen Mitarbeiter.
+Bestätigt wurde:
+- normale Mitarbeiter sehen keinen Statusfilter,
+- Verwaltungsberechtigte und Master Admins sehen den Statusfilter,
+- Profilbild- und Rollenfilter funktionieren weiterhin.
 
 ---
 
 ## 3. v6.8.6 – Komfortpaket 1–7
 
-Der Nutzer hat die vollständige Testliste 1–14 geprüft. Enthalten sind:
+Bestätigt funktionsfähig:
 - Admin-Kontrollzentrum,
 - Schutz vor ungespeicherten Änderungen,
 - Mitarbeiterfilter,
@@ -39,8 +44,6 @@ Der Nutzer hat die vollständige Testliste 1–14 geprüft. Enthalten sind:
 - Benachrichtigungszähler,
 - Backup-Vorschau,
 - dezente MMD-Hinweise.
-
-Der anschließend gewünschte Sichtbarkeits-Fix des Statusfilters ist Bestandteil von v6.8.6a.
 
 ---
 
@@ -60,21 +63,16 @@ Unverändert bleiben insbesondere:
 
 ---
 
-## 5. Kurzer Live-Gegencheck v6.8.6a
+## 5. Live-Bestätigung v6.8.6a
 
-Noch zu prüfen:
-1. normaler Mitarbeiter sieht in der Mitarbeiterkartei nur **Profilbild**, **Rolle** und „Filter zurücksetzen“,
-2. normaler Mitarbeiter sieht **keinen Statusfilter**,
-3. Person mit „Mitarbeiter freigeben & Rollen verteilen“ sieht den Statusfilter,
-4. Master Admin sieht den Statusfilter,
-5. Profilbild- und Rollenfilter funktionieren weiterhin.
+Am 20.09.2026 wurde v6.8.6a im Live-Betrieb bestätigt.
+
+Der Stand gilt damit als stabil.
 
 ---
 
 ## 6. Rollback
 
-**v6.8.5j = aktuelle bestätigte stabile Rollback-Basis**
+**v6.8.6a = aktuelle bestätigte stabile Rollback-Basis**
 
-Nach erfolgreichem Gegencheck von v6.8.6a kann dieser Stand als neue stabile Live- und Rollback-Basis bestätigt werden.
-
-Die Firebase Rules müssen bei einem Rollback nicht verändert werden.
+Die Firebase Rules müssen bei einem Rollback auf diesen Stand nicht verändert werden.
