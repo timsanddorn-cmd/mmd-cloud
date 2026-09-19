@@ -1,5 +1,5 @@
 // ============================================================
-//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.8.5i
+//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.8.5j
 //  Firebase Realtime Database (Compat SDK v10)
 // ============================================================
 
@@ -182,7 +182,7 @@ const db = firebase.database();
 const auth = firebase.auth();
 const FIREBASE_AUTH_EMAIL_DOMAIN = 'mmd-login.invalid';
 
-const APP_VERSION = 'v6.8.5i';
+const APP_VERSION = 'v6.8.5j';
 const PRESENCE_HEARTBEAT_MS = 30 * 1000;
 const PRESENCE_STALE_MS = 3 * 60 * 1000;
 
@@ -291,6 +291,15 @@ let hierarchieDaten = JSON.parse(JSON.stringify(defaultHierarchieData));
 
 /* ── Vollständiger Gesamt-Changelog (Entwicklungsverlauf) ───── */
 const systemChangelogs = [
+    {
+        id: "sys_v6_8_5j", version: "v6.8.5j", date: "19.09.2026", ts: 1789849140000,
+        category: "Bugfix", title: "Foto-Liste Layout korrigiert",
+        changes: [
+            "Der Foto-Hinweis bleibt jetzt vollständig innerhalb der jeweiligen Mitarbeiterkarte.",
+            "Status und Foto-Hinweis sind kompakt auf der rechten Seite angeordnet und überdecken keine benachbarten Karten mehr.",
+            "Vor- und Nachname sowie Dienstnummer bleiben weiterhin vollständig sichtbar."
+        ]
+    },
     {
         id: "sys_v6_8_5i", version: "v6.8.5i", date: "19.09.2026", ts: 1789813860000,
         category: "Verbesserung", title: "Admin-Bereich übersichtlicher",

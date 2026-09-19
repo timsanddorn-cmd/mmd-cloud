@@ -1,8 +1,8 @@
 # MMD Cloud – PROJECT STATUS
 
 **Aktuell bestätigte stabile Live-Version:** v6.8.5h  
-**Aktueller Entwicklungsstand:** v6.8.5i  
-**Status v6.8.5i:** 🟡 LIVE-GEGENCHECK AUSSTEHEND  
+**Aktueller Entwicklungsstand:** v6.8.5j  
+**Status v6.8.5j:** 🟡 LIVE-GEGENCHECK AUSSTEHEND  
 **Datum:** 19.09.2026
 
 ---
@@ -11,69 +11,46 @@
 
 **v6.8.5h = bestätigte stabile Live-Version und Rollback-Basis**
 
-v6.8.5i baut direkt auf dem bestätigten stabilen Stand v6.8.5h auf. Die Änderung betrifft die Bedienoberfläche des Admin-Bereichs, die bestehende Browser-Update-Bedienung und die Darstellung der Profilbild-Übersicht.
+v6.8.5j baut auf v6.8.5i auf und korrigiert ausschließlich einen Darstellungsfehler in der Profilbild-Übersicht.
 
-Firebase Auth, Registrierung, Login, Rollen, Berechtigungen, stabile Account-IDs, Benutzerstruktur und Realtime-Database-Rules wurden nicht verändert.
-
----
-
-## 2. v6.8.5i – Admin-Bereich übersichtlicher
-
-Der Admin-Bereich wurde vereinfacht, ohne die dahinterliegenden Verwaltungsfunktionen neu zu strukturieren.
-
-Geändert:
-- Admin-Navigation ist sichtbar in **Verwaltung**, **System** und **Sicherheit** gruppiert,
-- Kopfbereich und Navigation bleiben beim Scrollen sichtbar,
-- auf kleineren Bildschirmen ist die Admin-Navigation kompakt horizontal erreichbar,
-- **„Sitzungen & Updates“** wurde verständlicher als **„Sitzungen & Browser“** bezeichnet,
-- die Browser-Aktualisierung benötigt keine manuelle Eingabe der Versionsnummer mehr,
-- die aktuelle `APP_VERSION` wird automatisch verwendet,
-- der optionale Hinweistext ist unter erweiterten Optionen eingeklappt,
-- der Status zeigt klar, ob die aktuelle Version bereits an geöffnete Browser verteilt wurde,
-- der bewusste Master-Admin-Klick zum Verteilen einer Version bleibt als Sicherheitsstufe erhalten.
+Firebase Auth, Registrierung, Login, Rollen, Berechtigungen, Benutzerstruktur, Foto-Datenmodell und Realtime-Database-Rules wurden nicht verändert.
 
 ---
 
-## 3. Profilbild-Übersicht verbessert
+## 2. v6.8.5j – Foto-Liste Layout korrigiert
 
-In **Mitarbeiter → Mitarbeiterkartei → Foto-Liste** werden Dienstnummer sowie Vor- und Nachname jetzt als gemeinsamer Mitarbeiterblock dargestellt.
+Beim Live-Gegencheck von v6.8.5i wurde festgestellt, dass der Button **„Foto-Hinweis“** bei Mitarbeitern ohne Profilbild aus der jeweiligen Karte herausragen und benachbarte Karten überdecken konnte.
 
-Dadurch bleibt der Mitarbeitername auch bei kleineren Fenstern und bei Mitarbeitern ohne eigenes Profilbild sichtbar.
+Korrigiert:
+- jede Mitarbeiterkarte behält ihren Foto-Hinweis vollständig innerhalb der eigenen Begrenzung,
+- Profilbildstatus und Foto-Hinweis stehen kompakt auf der rechten Seite,
+- Vor- und Nachname sowie Dienstnummer bleiben sichtbar,
+- auf kleineren Bildschirmen werden Status und Foto-Hinweis sauber unter dem Mitarbeiterblock angeordnet.
 
-Der bestehende Foto-Hinweis, Foto-Workflow und die Ableitung des Fotostatus aus `photoUrl` wurden nicht verändert.
+Der Foto-Hinweis selbst, seine Empfängerlogik und der bestehende Mitarbeiterhinweis-Workflow wurden nicht verändert.
+
+---
+
+## 3. v6.8.5i – Admin-Bereich
+
+Die mit v6.8.5i eingeführte übersichtlichere Admin-Navigation und die vereinfachte Browser-Aktualisierung bleiben unverändert bestehen.
 
 ---
 
 ## 4. Sicherheit / Firebase
 
-Für v6.8.5i wurden **keine Firebase Rules geändert**.
-
-Unverändert bleiben insbesondere:
-- Firebase Auth
-- Registrierung und Login
-- `authIndex`
-- `loginDirectory`
-- stabile Account-IDs
-- Rollen und Berechtigungen
-- Benutzerverwaltung
-- Mitarbeiterfoto-Datenmodell
-- bestehende Realtime-Database-Rules
-
-Eine Datenmigration ist nicht erforderlich.
+Für v6.8.5j wurden **keine Firebase Rules geändert** und es ist keine Datenmigration erforderlich.
 
 ---
 
-## 5. Live-Gegencheck v6.8.5i
+## 5. Live-Gegencheck v6.8.5j
 
 Noch zu prüfen:
-1. Admin-Bereich öffnet und schließt wie bisher,
-2. Mitarbeiter, Rollen & Rechte, Systemprotokoll, Wartung und Backup/Gefahrenzone bleiben erreichbar,
-3. Kopfbereich und Admin-Navigation bleiben bei langen Seiten sichtbar,
-4. Browser-Update zeigt automatisch v6.8.5i und benötigt keine manuelle Versionseingabe,
-5. **„Update an geöffnete Browser senden“** verteilt die aktuelle Version weiterhin zuverlässig,
-6. andere geöffnete ältere Browser erhalten weiterhin den 10-Sekunden-Hinweis und laden neu,
-7. Foto-Liste zeigt bei Mitarbeitern ohne eigenes Foto Dienstnummer sowie Vor- und Nachname,
-8. Darstellung bleibt auf kleineren Bildschirmen bedienbar.
+1. Foto-Hinweis ragt bei keinem Mitarbeiter mehr aus der Karte,
+2. benachbarte Mitarbeiterkarten werden nicht überdeckt,
+3. Vor- und Nachname sowie Dienstnummer sind weiterhin sichtbar,
+4. Foto-Hinweis lässt sich weiterhin normal versenden,
+5. Admin-Bereich und Browser-Aktualisierung aus v6.8.5i funktionieren weiterhin.
 
 ---
 
