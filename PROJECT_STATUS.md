@@ -1,8 +1,8 @@
 # MMD Cloud – PROJECT STATUS
 
 **Aktuell bestätigte stabile Live-Version:** v6.8.5j  
-**Aktueller Entwicklungsstand:** v6.8.6  
-**Status v6.8.6:** 🟡 LIVE-GEGENCHECK AUSSTEHEND  
+**Aktueller Entwicklungsstand:** v6.8.6a  
+**Status v6.8.6a:** 🟡 KURZER LIVE-GEGENCHECK AUSSTEHEND  
 **Datum:** 20.09.2026
 
 ---
@@ -11,66 +11,42 @@
 
 **v6.8.5j = bestätigte stabile Live-Version und aktuelle Rollback-Basis**
 
-v6.8.6 baut direkt auf dem bestätigten Stand v6.8.5j auf und erweitert ausschließlich Bedienkomfort, Übersicht und Schutz vor versehentlich verlorenen Eingaben.
+Das Komfortpaket v6.8.6 wurde vom Nutzer anhand der vollständigen Testliste 1–14 geprüft. Anschließend wurde als kleine UX-Korrektur v6.8.6a erstellt.
 
 Firebase Auth, Registrierung, Login, stabile Account-IDs, Rollenmodell, Berechtigungen, Datenpfade und Realtime-Database-Rules wurden nicht verändert.
 
 ---
 
-## 2. v6.8.6 – Komfortpaket 1–7
+## 2. v6.8.6a – Status-Filter gezielt sichtbar
 
-### Admin-Kontrollzentrum
-Der Admin-Bereich startet mit einer Übersicht der wichtigsten offenen Punkte:
-- offene Registrierungen,
-- fehlende Profilbilder,
-- offene Passwortumstellungen,
-- aktive Browser,
-- Wartungsstatus,
-- aktuelle und verteilte Browser-Version.
+In der Mitarbeiterkartei gilt jetzt:
+- **Status** ist nur für Personen mit der Berechtigung zur Mitarbeiterverwaltung oder für Master Admins sichtbar,
+- **Profilbild** bleibt für alle freigeschalteten Mitarbeiter sichtbar,
+- **Rolle** bleibt für alle freigeschalteten Mitarbeiter sichtbar,
+- normale Mitarbeiter erhalten technisch immer den neutralen Statusfilter „Alle“, auch wenn im Browser zuvor ein anderer Wert gesetzt war.
 
-Die Kacheln führen direkt zum jeweils passenden Verwaltungsbereich.
-
-### Schutz vor ungespeicherten Änderungen
-Bei wichtigen Bearbeitungen wird vor dem Verwerfen nicht gespeicherter Eingaben gewarnt. Der Schutz gilt insbesondere für:
-- Rollen & Rechte,
-- Mitarbeiter bearbeiten,
-- Kalendertermine,
-- News-Beiträge und News-Vorschläge,
-- Verlassen der Seite bei noch offenen Änderungen.
-
-### Mitarbeiterfilter
-Die Mitarbeiterkartei besitzt zusätzliche Filter für:
-- Status,
-- Profilbild vorhanden / fehlt,
-- Rolle.
-
-Die bestehende Suche nach DN oder Name bleibt erhalten.
-
-### Nächste Termine
-Oberhalb des Monatskalenders werden bis zu fünf der nächsten für den angemeldeten Mitarbeiter sichtbaren Termine angezeigt. Termine können direkt aus dieser Übersicht geöffnet werden.
-
-### Benachrichtigungszähler
-Zusätzlich zum bereits vorhandenen News-Zähler werden kleine Zähler angezeigt für:
-- offene Kalendereinladungen,
-- offene Mitarbeiterregistrierungen im Admin-/Mitarbeiterbereich.
-
-### Backup-Vorschau
-Vor einer Wiederherstellung wird das ausgewählte Backup zuerst geprüft und übersichtlich angezeigt:
-- Dateiname,
-- Erstellungszeit,
-- gespeicherte MMD-Cloud-Version,
-- Anzahl wichtiger Datensätze wie Mitarbeiter, Termine, Prüfungen, News und weitere Bereiche.
-
-Erst nach dieser Vorschau kann die Wiederherstellung endgültig bestätigt werden. Die bestehende Schutzlogik für Auth-Zuordnungen und aktuelle Zugänge bleibt unverändert.
-
-### MMD-Hinweise statt unnötiger Browser-Popups
-Mehrere erfolgreiche Alltagsaktionen zeigen jetzt dezente Hinweise unten rechts, ohne den Arbeitsfluss mit einem Browser-Popup zu blockieren. Fehlermeldungen und sicherheitsrelevante Bestätigungen bleiben weiterhin deutlich sichtbar.
+Die bereits bestehende Datenfilterung bleibt unverändert: Mitarbeiter ohne Verwaltungsrecht sehen weiterhin ausschließlich die für sie vorgesehenen freigegebenen Mitarbeiter.
 
 ---
 
-## 3. Sicherheit / Firebase
+## 3. v6.8.6 – Komfortpaket 1–7
 
-Für v6.8.6 wurden **keine Firebase Rules geändert**.
+Der Nutzer hat die vollständige Testliste 1–14 geprüft. Enthalten sind:
+- Admin-Kontrollzentrum,
+- Schutz vor ungespeicherten Änderungen,
+- Mitarbeiterfilter,
+- nächste Termine,
+- Benachrichtigungszähler,
+- Backup-Vorschau,
+- dezente MMD-Hinweise.
+
+Der anschließend gewünschte Sichtbarkeits-Fix des Statusfilters ist Bestandteil von v6.8.6a.
+
+---
+
+## 4. Sicherheit / Firebase
+
+Für v6.8.6a wurden **keine Firebase Rules geändert** und es ist **keine Datenmigration** erforderlich.
 
 Unverändert bleiben insbesondere:
 - Firebase Auth,
@@ -80,32 +56,25 @@ Unverändert bleiben insbesondere:
 - stabile Account-IDs,
 - Benutzer- und Rollenstruktur,
 - bestehende Rechteprüfung,
-- bestehende Datenpfade,
-- bestehende Backup-Schutzlogik für aktuelle Auth-Konten.
-
-Eine Datenmigration ist nicht erforderlich.
+- bestehende Datenpfade.
 
 ---
 
-## 4. Live-Gegencheck v6.8.6
+## 5. Kurzer Live-Gegencheck v6.8.6a
 
 Noch zu prüfen:
-1. Admin öffnet standardmäßig im Kontrollzentrum und alle sichtbaren Kacheln führen korrekt zum Ziel,
-2. Admin-Rechte und Master-Admin-only Bereiche bleiben unverändert geschützt,
-3. Warnung bei ungespeicherten Rollen-, Mitarbeiter-, Kalender- und News-Änderungen funktioniert,
-4. Mitarbeiterfilter lassen sich kombinieren und zurücksetzen,
-5. Mitarbeiter ohne Verwaltungsrecht sehen weiterhin nur die für sie vorgesehenen Mitarbeiter,
-6. nächste Termine entsprechen der bisherigen Kalender-Sichtbarkeit,
-7. offene Kalendereinladungen und Registrierungen werden korrekt gezählt,
-8. Backup-Datei wird vor einer Wiederherstellung nur angezeigt und noch nicht geschrieben,
-9. endgültige Backup-Wiederherstellung behält aktuelle Auth-Zuordnungen wie bisher,
-10. neue MMD-Hinweise erscheinen ohne die jeweilige Aktion zu blockieren,
-11. bestehende News-, Foto-, Kalender-, Rollen- und Browser-Update-Funktionen arbeiten weiterhin.
+1. normaler Mitarbeiter sieht in der Mitarbeiterkartei nur **Profilbild**, **Rolle** und „Filter zurücksetzen“,
+2. normaler Mitarbeiter sieht **keinen Statusfilter**,
+3. Person mit „Mitarbeiter freigeben & Rollen verteilen“ sieht den Statusfilter,
+4. Master Admin sieht den Statusfilter,
+5. Profilbild- und Rollenfilter funktionieren weiterhin.
 
 ---
 
-## 5. Rollback
+## 6. Rollback
 
 **v6.8.5j = aktuelle bestätigte stabile Rollback-Basis**
 
-Die Firebase Rules müssen bei einem Rollback auf v6.8.5j nicht verändert werden.
+Nach erfolgreichem Gegencheck von v6.8.6a kann dieser Stand als neue stabile Live- und Rollback-Basis bestätigt werden.
+
+Die Firebase Rules müssen bei einem Rollback nicht verändert werden.

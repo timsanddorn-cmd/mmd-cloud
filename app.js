@@ -1,5 +1,5 @@
 // ============================================================
-//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.8.6
+//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.8.6a
 //  Firebase Realtime Database (Compat SDK v10)
 // ============================================================
 
@@ -182,7 +182,7 @@ const db = firebase.database();
 const auth = firebase.auth();
 const FIREBASE_AUTH_EMAIL_DOMAIN = 'mmd-login.invalid';
 
-const APP_VERSION = 'v6.8.6';
+const APP_VERSION = 'v6.8.6a';
 const PRESENCE_HEARTBEAT_MS = 30 * 1000;
 const PRESENCE_STALE_MS = 3 * 60 * 1000;
 
@@ -346,6 +346,15 @@ let hierarchieDaten = JSON.parse(JSON.stringify(defaultHierarchieData));
 
 /* ── Vollständiger Gesamt-Changelog (Entwicklungsverlauf) ───── */
 const systemChangelogs = [
+    {
+        id: "sys_v6_8_6a", version: "v6.8.6a", date: "20.09.2026", ts: 1789869000000,
+        category: "Verbesserung", title: "Status-Filter auf Verwaltung beschränkt",
+        changes: [
+            "Der Mitarbeiter-Statusfilter ist nur noch für Personen mit Mitarbeiterverwaltung oder für Master Admins sichtbar.",
+            "Profilbild- und Rollenfilter bleiben für alle freigeschalteten Mitarbeiter verfügbar.",
+            "Datenzugriff, Rollen, Berechtigungen und Firebase Rules wurden nicht verändert."
+        ]
+    },
     {
         id: "sys_v6_8_6", version: "v6.8.6", date: "20.09.2026", ts: 1789865340000,
         category: "Verbesserung", title: "Alltag & Verwaltung komfortabler",
@@ -5096,12 +5105,16 @@ function renderStaffDirectory() {
     updateStaffRoleFilterOptions();
 
     const q = (document.getElementById('searchStaffInput')?.value || '').trim().toLowerCase();
-    const statusFilter = document.getElementById('staffStatusFilter')?.value || 'all';
     const photoFilter = document.getElementById('staffPhotoFilter')?.value || 'all';
     const roleFilter = document.getElementById('staffRoleFilter')?.value || 'all';
     const canManagePhotos = canUserManageEmployeePhotos();
     const eff = sessionUser ? getUserEffectivePermissions(sessionUser) : {};
     const canManageRegistrations = !!(eff.canManageMemberAccess || eff.isMasterAdmin);
+    const statusFilterEl = document.getElementById('staffStatusFilter');
+    const statusFilterField = statusFilterEl?.closest('.staff-filter-field');
+    if (statusFilterField) statusFilterField.style.display = canManageRegistrations ? '' : 'none';
+    if (!canManageRegistrations && statusFilterEl) statusFilterEl.value = 'all';
+    const statusFilter = canManageRegistrations ? (statusFilterEl?.value || 'all') : 'all';
 
     const staffList = Object.entries(cachedUsers || {}).filter(([, u]) => {
         if (canManageRegistrations) return true;
