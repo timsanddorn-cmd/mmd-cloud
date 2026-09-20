@@ -11,7 +11,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
-    <link rel="stylesheet" href="style.css?v=6.8.7d">
+    <link rel="stylesheet" href="style.css?v=6.8.7e">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏥</text></svg>">
 </head>
 <body>
@@ -381,7 +381,7 @@
                     <div style="display:flex; align-items:center; gap:8px;">
                         <button type="button" class="btn" style="width:auto; margin:0; padding:8px 16px; background:var(--primary); color:#080c14; font-weight:800;" onclick="openStaffPhotoUploadModal()">📷 Foto einreichen</button>
                         <button type="button" id="btnOpenPhotoAdminModal" class="btn" style="width:auto; margin:0; padding:8px 16px; background:rgba(245,158,11,0.15); color:var(--warning); border:1px solid var(--warning); font-weight:800; display:none;" onclick="openStaffPhotoAdminModal()">📁 Foto Ordner (Bearbeitung)</button>
-                        <button type="button" id="btnTogglePhotoChecklist" class="btn photo-checklist-toggle-btn" style="display:none;" aria-expanded="false" onclick="toggleStaffPhotoChecklist()">📋 Foto-Liste</button>
+                        <button type="button" id="btnTogglePhotoChecklist" class="btn photo-checklist-toggle-btn" style="display:none;" aria-expanded="false" onclick="toggleStaffPhotoChecklist()">📋 Foto liste</button>
                     </div>
                 </div>
             </div>
@@ -1761,7 +1761,7 @@
                             <span class="admin-overview-icon">📷</span>
                             <span class="admin-overview-value" id="adminOverviewMissingPhotosCount">0</span>
                             <span class="admin-overview-label">Profilbilder fehlen</span>
-                            <small>Foto-Liste öffnen</small>
+                            <small>Foto liste öffnen</small>
                         </button>
                         <button type="button" id="adminOverviewPasswordsCard" class="admin-overview-tile" onclick="openAdminOverviewSection('adminSubTabSystem')">
                             <span class="admin-overview-icon">🔐</span>
@@ -2214,6 +2214,6 @@
         </div>
     </div>
 
-    <script src="app.js?v=6.8.7d"></script>
+    <script src="app.js?v=6.8.7e"></script>
 </body>
 </html>

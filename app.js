@@ -1,5 +1,5 @@
 // ============================================================
-//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.8.7d
+//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.8.7e
 //  Firebase Realtime Database (Compat SDK v10)
 // ============================================================
 
@@ -182,7 +182,7 @@ const db = firebase.database();
 const auth = firebase.auth();
 const FIREBASE_AUTH_EMAIL_DOMAIN = 'mmd-login.invalid';
 
-const APP_VERSION = 'v6.8.7d';
+const APP_VERSION = 'v6.8.7e';
 const PRESENCE_HEARTBEAT_MS = 30 * 1000;
 const PRESENCE_STALE_MS = 3 * 60 * 1000;
 
@@ -529,6 +529,15 @@ let hierarchieDaten = JSON.parse(JSON.stringify(defaultHierarchieData));
 
 /* ── Vollständiger Gesamt-Changelog (Entwicklungsverlauf) ───── */
 const systemChangelogs = [
+    {
+        id: "sys_v6_8_7e", version: "v6.8.7e", date: "20.09.2026", ts: 1789930500000,
+        category: "Fehlerbehebung", title: "Fenster öffnen wieder im sichtbaren Bereich",
+        changes: [
+            "Modalfenster werden beim Laden an den Seiten-Body verschoben und sind dadurch nicht mehr an die Höhe des Hauptcontainers gebunden.",
+            "Fenster wie Mitarbeiterdetails, Foto-Ordner, Kalender, Bearbeitungsdialoge und Adminfenster öffnen dadurch im aktuell sichtbaren Bildschirmbereich.",
+            "Die Bezeichnung „Foto-Liste“ wurde auf „Foto liste“ geändert."
+        ]
+    },
     {
         id: "sys_v6_8_7d", version: "v6.8.7d", date: "20.09.2026", ts: 1789929000000,
         category: "Design", title: "Schriftgrößen global angehoben",
@@ -10920,8 +10929,19 @@ function switchInstructorTab(tabId, btnEl) {
 
 function toggleGroupCollapse(gId) { const g = document.getElementById(gId); if (g) g.classList.toggle('collapsed'); }
 
+/* ── Modalfenster immer am sichtbaren Viewport verankern ── */
+function mountModalOverlaysToViewport() {
+    if (!document.body) return;
+    document.querySelectorAll('.modal-overlay').forEach(modal => {
+        if (modal.parentElement !== document.body) {
+            document.body.appendChild(modal);
+        }
+    });
+}
+
 /* ── DOM Ready & Exports ────────────────────────────────     */
 document.addEventListener('DOMContentLoaded', async () => {
+    mountModalOverlaysToViewport();
     updateLiveDate(); setInterval(updateLiveDate, 60000);
     setupRolePermissionAccordions();
     setupUnsavedChangeTracking();
