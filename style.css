@@ -4134,14 +4134,14 @@ html, body { max-width: 100%; overflow-x: hidden; }
    v6.8.7c – Einheitliches Schriftsystem für die gesamte Cloud
    ============================================================ */
 :root {
-    --mmd-font-xs: 10px;
-    --mmd-font-sm: 11px;
-    --mmd-font-md: 12px;
-    --mmd-font-base: 13px;
-    --mmd-font-h4: 13px;
-    --mmd-font-h3: 15px;
-    --mmd-font-h2: 19px;
-    --mmd-font-h1: 26px;
+    --mmd-font-xs: 12px;
+    --mmd-font-sm: 13px;
+    --mmd-font-md: 14px;
+    --mmd-font-base: 15px;
+    --mmd-font-h4: 15px;
+    --mmd-font-h3: 17px;
+    --mmd-font-h2: 21px;
+    --mmd-font-h1: 28px;
 }
 
 html,
@@ -4292,7 +4292,7 @@ td,
 
 /* Heute-Bereich */
 .today-overview-head h2 {
-    font-size: 16px !important;
+    font-size: 18px !important;
 }
 .today-card-label {
     font-size: var(--mmd-font-xs) !important;
@@ -4309,16 +4309,16 @@ td,
     font-size: var(--mmd-font-md) !important;
 }
 .admin-overview-value {
-    font-size: 24px !important;
+    font-size: 26px !important;
 }
 .admin-overview-value-text {
-    font-size: 16px !important;
+    font-size: 18px !important;
 }
 
 /* Kalender */
 .upcoming-calendar-head h3,
 .calendar-list-head h3 {
-    font-size: 14px !important;
+    font-size: 16px !important;
 }
 .upcoming-calendar-title,
 .calendar-list-main b {
@@ -4337,19 +4337,19 @@ td,
 }
 .mmd-modal-kicker,
 .today-overview-kicker {
-    font-size: 9px !important;
+    font-size: 11px !important;
 }
 
 /* Mobile: leicht kompakter, aber lesbar */
 @media (max-width: 760px) {
     :root {
-        --mmd-font-xs: 9px;
-        --mmd-font-sm: 10px;
-        --mmd-font-md: 11px;
-        --mmd-font-base: 12px;
-        --mmd-font-h4: 12px;
-        --mmd-font-h3: 14px;
-        --mmd-font-h2: 18px;
-        --mmd-font-h1: 23px;
+        --mmd-font-xs: 11px;
+        --mmd-font-sm: 12px;
+        --mmd-font-md: 13px;
+        --mmd-font-base: 14px;
+        --mmd-font-h4: 14px;
+        --mmd-font-h3: 16px;
+        --mmd-font-h2: 20px;
+        --mmd-font-h1: 25px;
     }
 }

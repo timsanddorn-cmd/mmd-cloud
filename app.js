@@ -1,5 +1,5 @@
 // ============================================================
-//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.8.7c
+//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.8.7d
 //  Firebase Realtime Database (Compat SDK v10)
 // ============================================================
 
@@ -182,7 +182,7 @@ const db = firebase.database();
 const auth = firebase.auth();
 const FIREBASE_AUTH_EMAIL_DOMAIN = 'mmd-login.invalid';
 
-const APP_VERSION = 'v6.8.7c';
+const APP_VERSION = 'v6.8.7d';
 const PRESENCE_HEARTBEAT_MS = 30 * 1000;
 const PRESENCE_STALE_MS = 3 * 60 * 1000;
 
@@ -529,6 +529,15 @@ let hierarchieDaten = JSON.parse(JSON.stringify(defaultHierarchieData));
 
 /* ── Vollständiger Gesamt-Changelog (Entwicklungsverlauf) ───── */
 const systemChangelogs = [
+    {
+        id: "sys_v6_8_7d", version: "v6.8.7d", date: "20.09.2026", ts: 1789929000000,
+        category: "Design", title: "Schriftgrößen global angehoben",
+        changes: [
+            "Das gesamte Schriftsystem wurde im Schnitt um etwa 2 Pixel vergrößert.",
+            "Fließtexte, Buttons, Formulare, Labels, Tabellen, Hinweise und Überschriften sind dadurch besser lesbar.",
+            "Auch die mobile Schriftstaffel wurde entsprechend angehoben; Funktionen und Layoutlogik bleiben unverändert."
+        ]
+    },
     {
         id: "sys_v6_8_7c", version: "v6.8.7c", date: "20.09.2026", ts: 1789927200000,
         category: "Design", title: "Schriftgrößen auf der gesamten Cloud vereinheitlicht",
