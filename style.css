@@ -4128,3 +4128,228 @@ html, body { max-width: 100%; overflow-x: hidden; }
         grid-template-columns: 20px minmax(0, 1fr);
     }
 }
+
+
+/* ============================================================
+   v6.8.7c – Einheitliches Schriftsystem für die gesamte Cloud
+   ============================================================ */
+:root {
+    --mmd-font-xs: 10px;
+    --mmd-font-sm: 11px;
+    --mmd-font-md: 12px;
+    --mmd-font-base: 13px;
+    --mmd-font-h4: 13px;
+    --mmd-font-h3: 15px;
+    --mmd-font-h2: 19px;
+    --mmd-font-h1: 26px;
+}
+
+html,
+body {
+    font-size: var(--mmd-font-base);
+}
+
+body {
+    line-height: 1.45;
+}
+
+/* Grundtexte */
+p,
+li,
+dd,
+dt,
+legend,
+.form-help,
+.help-text,
+.description,
+.subtitle {
+    font-size: var(--mmd-font-md) !important;
+    line-height: 1.45;
+}
+
+small,
+.content-freshness,
+.global-search-hint,
+.today-card small,
+.admin-overview-tile small,
+.calendar-list-main small,
+.calendar-list-date small,
+.my-open-item small {
+    font-size: var(--mmd-font-xs) !important;
+    line-height: 1.4;
+}
+
+/* Überschriften */
+h1 {
+    font-size: var(--mmd-font-h1) !important;
+    line-height: 1.18;
+}
+h2 {
+    font-size: var(--mmd-font-h2) !important;
+    line-height: 1.22;
+}
+h3 {
+    font-size: var(--mmd-font-h3) !important;
+    line-height: 1.28;
+}
+h4,
+h5,
+h6 {
+    font-size: var(--mmd-font-h4) !important;
+    line-height: 1.3;
+}
+
+/* Formulare */
+input,
+select,
+textarea,
+.form-input,
+.form-select,
+.form-textarea {
+    font-size: var(--mmd-font-md) !important;
+    line-height: 1.35;
+}
+label,
+.form-label,
+.staff-filter-field label {
+    font-size: var(--mmd-font-sm) !important;
+    line-height: 1.3;
+}
+
+/* Buttons und Navigation */
+button,
+.btn,
+.tab-btn,
+.nav-sub-btn,
+.nav-group-toggle,
+.btn-inline-edit,
+.btn-admin-key,
+.btn-feedback-trigger,
+.btn-logout,
+.btn-quick-search,
+.btn-open-items,
+.photo-checklist-toggle-btn,
+.staff-photo-collapse-btn {
+    font-size: var(--mmd-font-md) !important;
+    line-height: 1.25;
+}
+
+.nav-count-badge,
+.quick-search-shortcut,
+.calendar-list-badge,
+.upcoming-calendar-badge {
+    font-size: var(--mmd-font-xs) !important;
+}
+
+/* Tabellen */
+table,
+.table-responsive,
+.data-table,
+.sanctions-table {
+    font-size: var(--mmd-font-sm);
+}
+th,
+.data-table th,
+.sanctions-table th {
+    font-size: var(--mmd-font-xs) !important;
+    line-height: 1.3;
+}
+td,
+.data-table td,
+.sanctions-table td {
+    font-size: var(--mmd-font-sm) !important;
+    line-height: 1.4;
+}
+
+/* Karten und Verwaltungsbereiche */
+.staff-card,
+.admin-overview-card,
+.admin-management-card,
+.calendar-wrapper,
+.calendar-list-view,
+.news-card,
+.exam-card,
+.settings-card,
+.modal-card {
+    font-size: var(--mmd-font-md);
+}
+
+.staff-photo-checklist-name,
+.employee-notice-recipient-name,
+.calendar-list-main b,
+.global-search-result-main b,
+.my-open-item b {
+    font-size: var(--mmd-font-sm) !important;
+}
+.staff-photo-checklist-dn,
+.staff-photo-checklist-state,
+.staff-photo-notice-btn,
+.staff-photo-checklist-summary,
+.employee-notice-recipient-dn,
+.employee-notice-recipient-count {
+    font-size: var(--mmd-font-xs) !important;
+}
+
+/* Heute-Bereich */
+.today-overview-head h2 {
+    font-size: 16px !important;
+}
+.today-card-label {
+    font-size: var(--mmd-font-xs) !important;
+}
+.today-card b {
+    font-size: var(--mmd-font-md) !important;
+}
+
+/* Admin-Kontrollzentrum */
+.admin-overview-head h3 {
+    font-size: var(--mmd-font-h3) !important;
+}
+.admin-overview-label {
+    font-size: var(--mmd-font-md) !important;
+}
+.admin-overview-value {
+    font-size: 24px !important;
+}
+.admin-overview-value-text {
+    font-size: 16px !important;
+}
+
+/* Kalender */
+.upcoming-calendar-head h3,
+.calendar-list-head h3 {
+    font-size: 14px !important;
+}
+.upcoming-calendar-title,
+.calendar-list-main b {
+    font-size: var(--mmd-font-sm) !important;
+}
+.upcoming-calendar-when,
+.calendar-list-date b,
+.calendar-list-summary {
+    font-size: var(--mmd-font-xs) !important;
+}
+
+/* Modals */
+.mmd-modal-head h3,
+.backup-preview-head h3 {
+    font-size: var(--mmd-font-h3) !important;
+}
+.mmd-modal-kicker,
+.today-overview-kicker {
+    font-size: 9px !important;
+}
+
+/* Mobile: leicht kompakter, aber lesbar */
+@media (max-width: 760px) {
+    :root {
+        --mmd-font-xs: 9px;
+        --mmd-font-sm: 10px;
+        --mmd-font-md: 11px;
+        --mmd-font-base: 12px;
+        --mmd-font-h4: 12px;
+        --mmd-font-h3: 14px;
+        --mmd-font-h2: 18px;
+        --mmd-font-h1: 23px;
+    }
+}

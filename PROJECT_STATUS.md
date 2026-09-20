@@ -1,8 +1,8 @@
 # MMD Cloud – PROJECT STATUS
 
 **Aktuell bestätigte stabile Live-Version:** v6.8.6a  
-**Aktueller Entwicklungsstand:** v6.8.7b  
-**Status v6.8.7b:** 🟡 DN-SYNCHRONISIERUNG BESTÄTIGT / GESAMTER LIVE-GEGENCHECK NOCH AUSSTEHEND  
+**Aktueller Entwicklungsstand:** v6.8.7c  
+**Status v6.8.7c:** 🟡 DN-SYNCHRONISIERUNG BESTÄTIGT / GESAMTER LIVE-GEGENCHECK NOCH AUSSTEHEND  
 **Datum:** 20.09.2026
 
 ---
@@ -11,7 +11,7 @@
 
 **v6.8.6a = bestätigte stabile Code-Rollback-Basis**
 
-v6.8.7b baut auf v6.8.7a auf. Zusätzlich wurde die Profilbild-Übersicht kompakter gestaltet und innerhalb des geöffneten Bereichs einklappbar gemacht.
+v6.8.7c baut auf v6.8.7b auf. Zusätzlich wurde die Typografie der gesamten MMD Cloud vereinheitlicht und kompakter abgestimmt.
 
 Firebase Auth, Passwörter, Rollen, Berechtigungen, `authIndex`, `loginDirectory` und Realtime-Database-Rules wurden nicht verändert.
 
@@ -71,7 +71,20 @@ Geändert:
 
 ---
 
-## 5. Bestätigung der DN-Synchronisierung
+## 5. Schriftgrößen v6.8.7c
+
+Die Schriftgrößen wurden auf der gesamten MMD Cloud in ein einheitliches System überführt:
+- normale Texte: überwiegend 12–13 px,
+- Buttons und Formulare: 12 px,
+- Labels und Tabelleninhalte: 10–11 px,
+- Überschriften: klar abgestuft,
+- mobile Darstellung: leicht kompakter.
+
+Dadurch sollen sehr kleine Einzeltexte und unnötig große Ausreißer reduziert werden. Funktionen und Inhalte wurden nicht verändert.
+
+---
+
+## 6. Bestätigung der DN-Synchronisierung
 
 Am 20.09.2026 wurde die DN-Aktualisierung im Live-System vom Nutzer bestätigt.
 
@@ -86,7 +99,7 @@ Der vollständige Live-Gegencheck der zusätzlichen Funktionen aus v6.8.7 steht 
 
 ---
 
-## 6. Auswirkungen auf Login und Konten
+## 7. Auswirkungen auf Login und Konten
 
 Die DN ist **nicht** Bestandteil der technischen Login-Zuordnung.
 
@@ -107,7 +120,7 @@ Historische Datensätze wie frühere Prüfungsabgaben oder alte Protokolle behal
 
 ---
 
-## 7. Rollback / Nachvollziehbarkeit
+## 8. Rollback / Nachvollziehbarkeit
 
 **v6.8.6a bleibt vorerst die bestätigte stabile Code-Rollback-Basis.**
 
@@ -122,9 +135,9 @@ Firebase Rules müssen weder für die Synchronisierung noch für einen Code-Roll
 
 ---
 
-## 8. Noch offener Live-Gegencheck
+## 9. Noch offener Live-Gegencheck
 
-Für v6.8.7/v6.8.7b müssen bei Gelegenheit noch die Komfortfunktionen geprüft werden, insbesondere:
+Für v6.8.7/v6.8.7c müssen bei Gelegenheit noch die Komfortfunktionen geprüft werden, insbesondere:
 - Heute-Bereich,
 - „Meine offenen Dinge“,
 - Kalender Monat/Liste,
@@ -135,4 +148,4 @@ Für v6.8.7/v6.8.7b müssen bei Gelegenheit noch die Komfortfunktionen geprüft 
 - mobile Darstellung,
 - bestehende Kernfunktionen.
 
-Nach erfolgreichem Gesamtcheck kann v6.8.7b als neue stabile Live- und Rollback-Version bestätigt werden.
+Nach erfolgreichem Gesamtcheck kann v6.8.7c als neue stabile Live- und Rollback-Version bestätigt werden.

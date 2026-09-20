@@ -1,5 +1,5 @@
 // ============================================================
-//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.8.7b
+//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.8.7c
 //  Firebase Realtime Database (Compat SDK v10)
 // ============================================================
 
@@ -182,7 +182,7 @@ const db = firebase.database();
 const auth = firebase.auth();
 const FIREBASE_AUTH_EMAIL_DOMAIN = 'mmd-login.invalid';
 
-const APP_VERSION = 'v6.8.7b';
+const APP_VERSION = 'v6.8.7c';
 const PRESENCE_HEARTBEAT_MS = 30 * 1000;
 const PRESENCE_STALE_MS = 3 * 60 * 1000;
 
@@ -529,6 +529,15 @@ let hierarchieDaten = JSON.parse(JSON.stringify(defaultHierarchieData));
 
 /* ── Vollständiger Gesamt-Changelog (Entwicklungsverlauf) ───── */
 const systemChangelogs = [
+    {
+        id: "sys_v6_8_7c", version: "v6.8.7c", date: "20.09.2026", ts: 1789927200000,
+        category: "Design", title: "Schriftgrößen auf der gesamten Cloud vereinheitlicht",
+        changes: [
+            "Die gesamte MMD Cloud verwendet jetzt ein einheitlicheres und kompakteres Schriftsystem.",
+            "Normale Texte, Tabellen, Formulare, Buttons, Navigation, Hinweise und Überschriften wurden auf feste Größenstufen abgestimmt.",
+            "Die Änderung betrifft ausschließlich Darstellung und Lesbarkeit; Funktionen, Daten und Berechtigungen bleiben unverändert."
+        ]
+    },
     {
         id: "sys_v6_8_7b", version: "v6.8.7b", date: "20.09.2026", ts: 1789925700000,
         category: "Verbesserung", title: "Profilbild-Übersicht kompakter",
