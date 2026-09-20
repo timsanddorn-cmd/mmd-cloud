@@ -1,5 +1,5 @@
 // ============================================================
-//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.8.7a
+//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.8.7b
 //  Firebase Realtime Database (Compat SDK v10)
 // ============================================================
 
@@ -182,7 +182,7 @@ const db = firebase.database();
 const auth = firebase.auth();
 const FIREBASE_AUTH_EMAIL_DOMAIN = 'mmd-login.invalid';
 
-const APP_VERSION = 'v6.8.7a';
+const APP_VERSION = 'v6.8.7b';
 const PRESENCE_HEARTBEAT_MS = 30 * 1000;
 const PRESENCE_STALE_MS = 3 * 60 * 1000;
 
@@ -529,6 +529,15 @@ let hierarchieDaten = JSON.parse(JSON.stringify(defaultHierarchieData));
 
 /* ── Vollständiger Gesamt-Changelog (Entwicklungsverlauf) ───── */
 const systemChangelogs = [
+    {
+        id: "sys_v6_8_7b", version: "v6.8.7b", date: "20.09.2026", ts: 1789925700000,
+        category: "Verbesserung", title: "Profilbild-Übersicht kompakter",
+        changes: [
+            "Die Profilbild-Übersicht kann innerhalb des geöffneten Bereichs ein- und ausgeklappt werden.",
+            "Schriftgrößen und Abstände der Profilbild-Liste wurden kompakter abgestimmt.",
+            "Foto-Hinweise, Profilbildstatus und bestehende Foto-Funktionen bleiben unverändert."
+        ]
+    },
     {
         id: "sys_v6_8_7a", version: "v6.8.7a", date: "20.09.2026", ts: 1789924200000,
         category: "Änderung", title: "Offizielle Dienstnummern synchronisiert",
@@ -5737,6 +5746,21 @@ function renderStaffPhotoChecklist() {
     }).join('');
 }
 
+function toggleStaffPhotoChecklistBody(forceExpanded = null) {
+    const body = document.getElementById('staffPhotoChecklistBody');
+    const btn = document.getElementById('btnCollapsePhotoChecklist');
+    if (!body || !btn || !sessionUser) return;
+
+    const eff = getUserEffectivePermissions(sessionUser);
+    if (!eff.isMasterAdmin) return;
+
+    const isExpanded = body.style.display !== 'none';
+    const shouldExpand = forceExpanded === null ? !isExpanded : !!forceExpanded;
+    body.style.display = shouldExpand ? '' : 'none';
+    btn.setAttribute('aria-expanded', shouldExpand ? 'true' : 'false');
+    btn.textContent = shouldExpand ? '▴ Einklappen' : '▾ Ausklappen';
+}
+
 function toggleStaffPhotoChecklist(forceOpen = null) {
     const panel = document.getElementById('staffPhotoChecklistPanel');
     const btn = document.getElementById('btnTogglePhotoChecklist');
@@ -5752,6 +5776,7 @@ function toggleStaffPhotoChecklist(forceOpen = null) {
     const shouldOpen = forceOpen === null ? panel.style.display === 'none' || !panel.style.display : !!forceOpen;
     panel.style.display = shouldOpen ? 'block' : 'none';
     btn.setAttribute('aria-expanded', shouldOpen ? 'true' : 'false');
+    if (shouldOpen) toggleStaffPhotoChecklistBody(true);
 }
 
 async function sendMissingPhotoEmployeeNotice(uId) {
@@ -10988,7 +11013,7 @@ _w.togglePrivateEventOption = togglePrivateEventOption;
 _w.toggleAllCalendarRoles = toggleAllCalendarRoles;
 _w.handleCalendarCreatorSelectionChange = handleCalendarCreatorSelectionChange;
 _w.respondToCalendarInvite = respondToCalendarInvite;
-_w.renderStaffDirectory = renderStaffDirectory; _w.resetStaffDirectoryFilters = resetStaffDirectoryFilters; _w.openStaffDetailModal = openStaffDetailModal; _w.closeStaffDetailModal = closeStaffDetailModal;
+_w.renderStaffDirectory = renderStaffDirectory; _w.resetStaffDirectoryFilters = resetStaffDirectoryFilters; _w.openStaffDetailModal = openStaffDetailModal; _w.closeStaffDetailModal = closeStaffDetailModal; _w.toggleStaffPhotoChecklistBody = toggleStaffPhotoChecklistBody;
 _w.syncOfficialServiceNumbersFromRoster = syncOfficialServiceNumbersFromRoster;
 _w.filterStaffDirectory = filterStaffDirectory;
 _w.openStaffPhotoUploadModal = openStaffPhotoUploadModal;

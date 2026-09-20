@@ -11,7 +11,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
-    <link rel="stylesheet" href="style.css?v=6.8.7a">
+    <link rel="stylesheet" href="style.css?v=6.8.7b">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏥</text></svg>">
 </head>
 <body>
@@ -415,13 +415,18 @@
 
             <div id="staffPhotoChecklistPanel" class="staff-photo-checklist-panel" style="display:none;">
                 <div class="staff-photo-checklist-head">
-                    <div>
+                    <div class="staff-photo-checklist-title">
                         <h3>📋 Profilbild-Übersicht</h3>
                         <p>Nur für Master Admin. Neue Registrierungen erscheinen automatisch in dieser Liste.</p>
                     </div>
-                    <span id="staffPhotoChecklistSummary" class="staff-photo-checklist-summary">0 / 0 mit eigenem Profilbild</span>
+                    <div class="staff-photo-checklist-head-actions">
+                        <span id="staffPhotoChecklistSummary" class="staff-photo-checklist-summary">0 / 0 mit eigenem Profilbild</span>
+                        <button type="button" id="btnCollapsePhotoChecklist" class="staff-photo-collapse-btn" aria-expanded="true" onclick="toggleStaffPhotoChecklistBody()">▴ Einklappen</button>
+                    </div>
                 </div>
-                <div id="staffPhotoChecklistList" class="staff-photo-checklist-list"></div>
+                <div id="staffPhotoChecklistBody" class="staff-photo-checklist-body">
+                    <div id="staffPhotoChecklistList" class="staff-photo-checklist-list"></div>
+                </div>
             </div>
 
             <div style="margin-bottom:14px; font-size:12px; color:var(--text-muted); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
@@ -2209,6 +2214,6 @@
         </div>
     </div>
 
-    <script src="app.js?v=6.8.7a"></script>
+    <script src="app.js?v=6.8.7b"></script>
 </body>
 </html>
