@@ -2,7 +2,7 @@
 
 **Aktuell bestätigte stabile Live-Version:** v6.8.6a  
 **Aktueller Entwicklungsstand:** v6.8.7a  
-**Status v6.8.7a:** 🟡 LIVE-GEGENCHECK / DN-SYNCHRONISIERUNG AUSSTEHEND  
+**Status v6.8.7a:** 🟡 DN-SYNCHRONISIERUNG BESTÄTIGT / GESAMTER LIVE-GEGENCHECK NOCH AUSSTEHEND  
 **Datum:** 20.09.2026
 
 ---
@@ -61,7 +61,22 @@ Die Logik ist idempotent: Nach erfolgreicher Aktualisierung entstehen bei späte
 
 ---
 
-## 4. Auswirkungen auf Login und Konten
+## 4. Bestätigung der DN-Synchronisierung
+
+Am 20.09.2026 wurde die DN-Aktualisierung im Live-System vom Nutzer bestätigt.
+
+Bestätigt:
+- die Dienstnummern wurden aktualisiert,
+- die Änderungen sind in der Mitarbeiterkartei sichtbar,
+- es war keine manuelle Bearbeitung einzelner Mitarbeiter nötig.
+
+Damit gilt die **DN-Synchronisierung als erfolgreich abgeschlossen**.
+
+Der vollständige Live-Gegencheck der zusätzlichen Funktionen aus v6.8.7 steht weiterhin aus.
+
+---
+
+## 5. Auswirkungen auf Login und Konten
 
 Die DN ist **nicht** Bestandteil der technischen Login-Zuordnung.
 
@@ -82,11 +97,11 @@ Historische Datensätze wie frühere Prüfungsabgaben oder alte Protokolle behal
 
 ---
 
-## 5. Rollback / Nachvollziehbarkeit
+## 6. Rollback / Nachvollziehbarkeit
 
-**v6.8.6a bleibt bis zur Bestätigung die stabile Code-Rollback-Basis.**
+**v6.8.6a bleibt vorerst die bestätigte stabile Code-Rollback-Basis.**
 
-Wichtig: Ein reiner Code-Rollback setzt bereits synchronisierte Dienstnummern nicht automatisch zurück.
+Ein reiner Code-Rollback setzt bereits synchronisierte Dienstnummern nicht automatisch zurück.
 
 Darum wird bei der Synchronisierung im Systemprotokoll für jede Änderung festgehalten:
 `Name: alte DN → neue DN`.
@@ -97,12 +112,17 @@ Firebase Rules müssen weder für die Synchronisierung noch für einen Code-Roll
 
 ---
 
-## 6. Live-Gegencheck
+## 7. Noch offener Live-Gegencheck
 
-Nach Laden von v6.8.7a mit einem Master-Admin-Konto prüfen:
-1. Erfolgs-Hinweis nennt Anzahl geänderter und gefundener registrierter Personen,
-2. Mitarbeiterkartei zeigt bei den registrierten Personen die neue DN,
-3. nicht registrierte Namen wurden nicht als neue Benutzer angelegt,
-4. Login der bestehenden Mitarbeiter funktioniert unverändert,
-5. bei einer Doppelbelegung erscheint stattdessen eine Warnung und es werden keine DNs geändert,
-6. die Funktionen aus v6.8.7 bleiben weiterhin intakt.
+Für v6.8.7/v6.8.7a müssen bei Gelegenheit noch die Komfortfunktionen geprüft werden, insbesondere:
+- Heute-Bereich,
+- „Meine offenen Dinge“,
+- Kalender Monat/Liste,
+- Mitarbeiter-Detailansicht,
+- Admin-Aufgabenliste,
+- globale Schnellsuche,
+- Aktualitätshinweise,
+- mobile Darstellung,
+- bestehende Kernfunktionen.
+
+Nach erfolgreichem Gesamtcheck kann v6.8.7a als neue stabile Live- und Rollback-Version bestätigt werden.
