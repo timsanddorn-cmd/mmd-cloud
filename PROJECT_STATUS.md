@@ -1,150 +1,108 @@
 # MMD Cloud – PROJECT STATUS
 
 **Aktuell bestätigte stabile Live-Version:** v6.8.6a  
-**Aktueller Entwicklungsstand:** v6.8.7  
-**Status v6.8.7:** 🟡 LIVE-GEGENCHECK AUSSTEHEND  
+**Aktueller Entwicklungsstand:** v6.8.7a  
+**Status v6.8.7a:** 🟡 LIVE-GEGENCHECK / DN-SYNCHRONISIERUNG AUSSTEHEND  
 **Datum:** 20.09.2026
 
 ---
 
 ## 1. Verbindliche Basis
 
-**v6.8.6a = bestätigte stabile Live-Version und aktuelle Rollback-Basis**
+**v6.8.6a = bestätigte stabile Code-Rollback-Basis**
 
-v6.8.7 baut direkt auf dem bestätigten Stand v6.8.6a auf. Ziel ist ausschließlich mehr Übersicht, schnellere Navigation und einheitlichere Bedienung.
+v6.8.7a baut auf v6.8.7 auf und ergänzt die vom Nutzer gelieferte offizielle Dienstnummernliste.
 
-Firebase Auth, Registrierung, Login, stabile Account-IDs, Rollenmodell, Berechtigungslogik und Realtime-Database-Rules wurden nicht verändert.
-
-Es wurden keine neuen Top-Level-Datenpfade eingeführt. Für „Zuletzt geändert“ werden bei zukünftigen Bearbeitungen lediglich optionale Zeit-/Bearbeiterfelder in bereits bestehenden Inhaltsdatensätzen gespeichert. Eine Datenmigration ist nicht erforderlich.
+Firebase Auth, Passwörter, Rollen, Berechtigungen, `authIndex`, `loginDirectory` und Realtime-Database-Rules wurden nicht verändert.
 
 ---
 
-## 2. v6.8.7 – Komfortpaket
+## 2. Offizielle DN-Liste 20.09.2026
 
-### Heute im Dienst
-Direkt unter der Kopfleiste befindet sich eine kompakte persönliche Übersicht:
-- nächster sichtbarer Termin,
-- Anzahl persönlicher offener Dinge,
-- aktive Mitarbeiter im Dienst,
-- ungelesene News.
-
-### Kalender – Monat und Liste
-Der vorhandene Monatskalender bleibt bestehen. Zusätzlich gibt es eine Listenansicht für die nächsten 30 Tage. Beide Ansichten verwenden dieselbe bestehende Sichtbarkeits- und Einladungslogik.
-
-### Sanktionskatalog
-Die vorhandene Suche wurde klarer als Sofortsuche gekennzeichnet. Sie durchsucht weiterhin:
-- Paragraph,
-- Verstoß,
-- 1. Sanktion,
-- 2. Sanktion,
-- 3. Sanktion.
-
-### Mitarbeiter-Detailansicht
-Ein Klick auf eine Mitarbeiterkarte öffnet eine kompakte Detailansicht mit:
-- Profilbild,
-- Dienstnummer,
-- Name,
-- Rollen,
-- Diensttagen,
-- Profilbildstatus.
-
-Der Mitarbeiterstatus wird nur Personen mit Mitarbeiterverwaltung beziehungsweise Master Admins angezeigt. Verwaltungsaktionen erscheinen nur mit den bereits bestehenden Berechtigungen.
-
-### Admin – nur offene Dinge
-Unter dem bestehenden Admin-Kontrollzentrum erscheint eine zusätzliche Aufgabenliste. Sie zeigt ausschließlich aktuell offene Punkte, z. B. Registrierungen, fehlende Profilbilder, Passwortumstellungen, aktive Wartung oder eine noch nicht verteilte Browser-Version.
-
-Ist nichts offen, wird „Aktuell nichts zu erledigen“ angezeigt.
-
-### Einheitlichere Bearbeitungsfenster
-Bestehende Bearbeitungsfenster wurden optisch vereinheitlicht. Die zugrunde liegenden Speicher-, Lösch- und Rechtefunktionen wurden nicht neu strukturiert.
-
-### Zuletzt geändert
-Zentrale Inhalte zeigen soweit verfügbar einen kleinen Aktualitätshinweis:
-- medizinische Abläufe,
-- Funk & Codes,
-- Hierarchie,
-- Gehaltstabelle,
-- Commands,
-- Links & Dokumente,
-- Sanktionskatalog.
-
-Für bestehende Inhalte ohne historischen Zeitstempel wird neutral „Aktueller Cloud-Stand“ angezeigt. Es wird kein erfundenes Änderungsdatum dargestellt.
-
-### Mobile Feinarbeit
-Navigation, Kopfleiste, Heute-Bereich, Kalenderliste, Mitarbeiterdetail, Bearbeitungsfenster und Tabellen wurden für kleinere Displays gezielt nachgeschärft.
-
-### Globale Schnellsuche
-Die MMD Cloud besitzt eine Schnellsuche über die Kopfleiste und per **Strg + K**.
-
-Die Suche kann zu sichtbaren Bereichen springen und passende Inhalte aus bereits zulässigen Daten anzeigen, insbesondere:
-- Mitarbeiter,
-- Kalendertermine,
-- Sanktionskatalog,
-- Hauptbereiche der Cloud.
-
-Die Suche erzeugt keine zusätzlichen Rechte und verwendet die bereits bestehende Sichtbarkeit der Inhalte.
-
-### Meine offenen Dinge
-Ungelesene News, persönliche Mitarbeiterhinweise und offene Kalendereinladungen werden zusätzlich in einer gemeinsamen persönlichen Übersicht gebündelt.
+Hinterlegte Zuordnung:
+- DN 11 – Dr. Hiroto Takahashi
+- DN 12 – Rene Stoned
+- DN 13 – Mark Akuma
+- DN 14 – Sam Franzika
+- DN 15 – Rico Malz
+- DN 27 – Ray Harper
+- DN 30 – Maximilian Miami
+- DN 40 – Fabio Leroux
+- DN 41 – Conny Grey
+- DN 42 – Domek Redfield
+- DN 43 – Chiko Muerto
+- DN 44 – Brian Akuma
+- DN 45 – Alesya Leroux
+- DN 46 – Luna Hunter
+- DN 47 – John Fernandez Smith
+- DN 48 – Nilo Leroux
+- DN 49 – Neo Castilla
+- DN 50 – Raven Marchetti
+- DN 51 – Rico Reimer
+- DN 52 – Andy Laken
+- DN 53 – Lars Petersen
 
 ---
 
-## 3. Bewusst nicht umgesetzt
+## 3. Synchronisierungslogik
 
-Auf Wunsch nicht Bestandteil von v6.8.7:
-- **Punkt 5:** zusätzliche Filter im Systemprotokoll,
-- **Punkt 7:** persönliche Favoriten.
+Die Synchronisierung:
+- läuft ausschließlich in einer angemeldeten Master-Admin-Sitzung,
+- gleicht nur bereits vorhandene/registrierte Benutzerkonten anhand von Vor- und Nachname ab,
+- ignoriert Namen aus der Liste, die noch kein Benutzerkonto besitzen,
+- lässt bereits korrekte Dienstnummern unverändert,
+- prüft vor dem Schreiben auf doppelte Ziel-Dienstnummern,
+- bricht bei einer Doppelbelegung vollständig ab, bevor DNs geändert werden,
+- schreibt ausschließlich das vorhandene Feld `data/users/{accountId}/dn`,
+- migriert bei einer geänderten DN vorhandene alte News-Lesebestätigungen von der früheren DN auf die stabile Account-ID,
+- protokolliert jede tatsächlich geänderte alte und neue DN im bestehenden Systemprotokoll.
 
-Die bestehenden Funktionen in diesen Bereichen bleiben unverändert.
+Die Logik ist idempotent: Nach erfolgreicher Aktualisierung entstehen bei späteren Aufrufen keine weiteren DN-Änderungen.
 
 ---
 
-## 4. Sicherheit / Firebase
+## 4. Auswirkungen auf Login und Konten
 
-Für v6.8.7 wurden **keine Firebase Rules geändert**.
+Die DN ist **nicht** Bestandteil der technischen Login-Zuordnung.
 
-Unverändert bleiben insbesondere:
-- Firebase Auth,
-- Registrierung und Login,
+Unverändert bleiben:
+- Vor- und Nachname,
+- feste Account-ID,
+- Firebase Auth UID,
+- Passwort,
+- Login-Key,
 - `authIndex`,
 - `loginDirectory`,
-- stabile Account-IDs,
-- Benutzer- und Rollenstruktur,
-- bestehende Rechteprüfungen,
-- bestehende Haupt-Datenpfade,
-- Presence und Sitzungssteuerung.
+- Rollen und Rechte,
+- Kontostatus.
 
-Eine Datenmigration ist nicht erforderlich.
+Daher ist durch die reine DN-Aktualisierung kein Login-Wechsel vorgesehen.
 
----
-
-## 5. Live-Gegencheck v6.8.7
-
-Noch zu prüfen:
-1. Heute-Bereich erscheint kompakt und zeigt plausible Werte,
-2. „Meine offenen Dinge“ bündelt News, Hinweise und Kalendereinladungen korrekt,
-3. Kalender kann zwischen Monat und Liste wechseln,
-4. Listenansicht zeigt nur sichtbare Termine der nächsten 30 Tage,
-5. Kalendereinträge lassen sich aus der Liste normal öffnen,
-6. Sanktionssuche findet Paragraph, Verstoß und Sanktionstexte,
-7. Klick auf Mitarbeiterkarte öffnet die Detailansicht,
-8. normaler Mitarbeiter sieht dort keinen internen Mitarbeiterstatus,
-9. Verwaltungsberechtigte sehen Status und ihre zulässigen Aktionen,
-10. Foto-/Freischalt-/Logo-Aktionen auf Mitarbeiterkarten öffnen nicht versehentlich die Detailkarte,
-11. Admin-Kontrollzentrum zeigt die Liste „Nur offene Dinge“ korrekt,
-12. Strg + K beziehungsweise „Suchen“ öffnet die Schnellsuche,
-13. Schnellsuche findet Bereiche, Mitarbeiter, Termine und Sanktionen ohne Berechtigungen zu umgehen,
-14. Aktualitätshinweise zeigen entweder echte Metadaten oder neutral „Aktueller Cloud-Stand“,
-15. Bearbeitungsfenster funktionieren weiterhin wie zuvor,
-16. Desktop- und mobile Darstellung bleiben ohne überlappende Bedienelemente,
-17. bestehende News-, Foto-, Kalender-, Rollen-, Prüfungs- und Browser-Update-Funktionen arbeiten weiterhin.
+Historische Datensätze wie frühere Prüfungsabgaben oder alte Protokolle behalten ihre damals gespeicherte DN als Historie.
 
 ---
 
-## 6. Rollback
+## 5. Rollback / Nachvollziehbarkeit
 
-**v6.8.6a = aktuelle bestätigte stabile Rollback-Basis**
+**v6.8.6a bleibt bis zur Bestätigung die stabile Code-Rollback-Basis.**
 
-Bis zum erfolgreichen Live-Gegencheck von v6.8.7 bleibt v6.8.6a die verbindliche Rückfallversion.
+Wichtig: Ein reiner Code-Rollback setzt bereits synchronisierte Dienstnummern nicht automatisch zurück.
 
-Die Firebase Rules müssen bei einem Rollback nicht verändert werden.
+Darum wird bei der Synchronisierung im Systemprotokoll für jede Änderung festgehalten:
+`Name: alte DN → neue DN`.
+
+Damit stehen die bisherigen Werte für eine gezielte Rücksetzung weiterhin zur Verfügung.
+
+Firebase Rules müssen weder für die Synchronisierung noch für einen Code-Rollback verändert werden.
+
+---
+
+## 6. Live-Gegencheck
+
+Nach Laden von v6.8.7a mit einem Master-Admin-Konto prüfen:
+1. Erfolgs-Hinweis nennt Anzahl geänderter und gefundener registrierter Personen,
+2. Mitarbeiterkartei zeigt bei den registrierten Personen die neue DN,
+3. nicht registrierte Namen wurden nicht als neue Benutzer angelegt,
+4. Login der bestehenden Mitarbeiter funktioniert unverändert,
+5. bei einer Doppelbelegung erscheint stattdessen eine Warnung und es werden keine DNs geändert,
+6. die Funktionen aus v6.8.7 bleiben weiterhin intakt.

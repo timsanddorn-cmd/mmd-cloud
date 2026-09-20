@@ -1,5 +1,5 @@
 // ============================================================
-//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.8.7
+//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.8.7a
 //  Firebase Realtime Database (Compat SDK v10)
 // ============================================================
 
@@ -182,7 +182,7 @@ const db = firebase.database();
 const auth = firebase.auth();
 const FIREBASE_AUTH_EMAIL_DOMAIN = 'mmd-login.invalid';
 
-const APP_VERSION = 'v6.8.7';
+const APP_VERSION = 'v6.8.7a';
 const PRESENCE_HEARTBEAT_MS = 30 * 1000;
 const PRESENCE_STALE_MS = 3 * 60 * 1000;
 
@@ -238,6 +238,8 @@ const unsavedChangeScopes = new Set();
 let activeCalendarView = 'month';
 let cachedSzenarioConfigMeta = { updatedAt: 0, updatedBy: '' };
 let globalSearchResultsCache = [];
+let officialDnSyncInProgress = false;
+let officialDnSyncCompletedForPage = false;
 let cachedUsers       = {};
 let cachedExams       = {};
 let cachedSubmissions = {};
@@ -527,6 +529,17 @@ let hierarchieDaten = JSON.parse(JSON.stringify(defaultHierarchieData));
 
 /* ── Vollständiger Gesamt-Changelog (Entwicklungsverlauf) ───── */
 const systemChangelogs = [
+    {
+        id: "sys_v6_8_7a", version: "v6.8.7a", date: "20.09.2026", ts: 1789924200000,
+        category: "Änderung", title: "Offizielle Dienstnummern synchronisiert",
+        changes: [
+            "Die neue offizielle DN-Liste wird einmalig und ausschließlich durch einen Master Admin mit den bereits registrierten Mitarbeiterkonten abgeglichen.",
+            "Nicht registrierte Namen aus der Liste werden automatisch übersprungen; bereits korrekte Dienstnummern bleiben unverändert.",
+            "Vor der Aktualisierung prüft die Cloud auf doppelte Ziel-Dienstnummern und bricht bei einem Konflikt ohne Datenänderung ab.",
+            "Login, Account-IDs, Rollen, Passwörter, authIndex und loginDirectory werden durch die DN-Synchronisierung nicht verändert.",
+            "Geänderte alte und neue Dienstnummern werden zur Nachvollziehbarkeit im Systemprotokoll festgehalten."
+        ]
+    },
     {
         id: "sys_v6_8_7", version: "v6.8.7", date: "20.09.2026", ts: 1789891200000,
         category: "Verbesserung", title: "Schneller finden, sehen und erledigen",
@@ -3062,6 +3075,160 @@ function refreshSensitiveFirebaseListeners() {
     }
 }
 
+/* ── Offizielle DN-Liste 20.09.2026 ─────────────────────────── */
+const OFFICIAL_DN_ROSTER_2026_09_20 = Object.freeze([
+    { name: 'Dr. Hiroto Takahashi', dn: '11' },
+    { name: 'Rene Stoned', dn: '12' },
+    { name: 'Mark Akuma', dn: '13' },
+    { name: 'Sam Franzika', dn: '14' },
+    { name: 'Rico Malz', dn: '15' },
+    { name: 'Ray Harper', dn: '27' },
+    { name: 'Maximilian Miami', dn: '30' },
+    { name: 'Fabio Leroux', dn: '40' },
+    { name: 'Conny Grey', dn: '41' },
+    { name: 'Domek Redfield', dn: '42' },
+    { name: 'Chiko Muerto', dn: '43' },
+    { name: 'Brian Akuma', dn: '44' },
+    { name: 'Alesya Leroux', dn: '45' },
+    { name: 'Luna Hunter', dn: '46' },
+    { name: 'John Fernandez Smith', dn: '47' },
+    { name: 'Nilo Leroux', dn: '48' },
+    { name: 'Neo Castilla', dn: '49' },
+    { name: 'Raven Marchetti', dn: '50' },
+    { name: 'Rico Reimer', dn: '51' },
+    { name: 'Andy Laken', dn: '52' },
+    { name: 'Lars Petersen', dn: '53' }
+]);
+
+function normalizeOfficialRosterName(value) {
+    return normalizeUiSearchText(value)
+        .replace(/^dr\s+/, '')
+        .replace(/^doctor\s+/, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+}
+
+function normalizeOfficialDnValue(value) {
+    const raw = String(value || '').trim();
+    const match = raw.match(/\d+/);
+    if (!match) return raw.toLowerCase();
+    return String(Number(match[0]));
+}
+
+async function syncOfficialServiceNumbersFromRoster() {
+    if (officialDnSyncInProgress || officialDnSyncCompletedForPage || !sessionUser) return;
+    const eff = getUserEffectivePermissions(sessionUser);
+    if (!eff.isMasterAdmin) return;
+
+    officialDnSyncInProgress = true;
+    try {
+        const rosterByName = new Map(
+            OFFICIAL_DN_ROSTER_2026_09_20.map(item => [normalizeOfficialRosterName(item.name), item])
+        );
+        const matchesByName = new Map();
+        const assignments = [];
+
+        Object.entries(cachedUsers || {}).forEach(([uId, user]) => {
+            if (!user) return;
+            const fullName = `${user.vorname || ''} ${user.nachname || ''}`.trim();
+            const nameKey = normalizeOfficialRosterName(fullName);
+            const rosterItem = rosterByName.get(nameKey);
+            if (!rosterItem) return;
+
+            const existingMatch = matchesByName.get(nameKey);
+            if (existingMatch && existingMatch.uId !== uId) {
+                throw new Error(`Mehrere registrierte Konten passen zu „${rosterItem.name}“.`);
+            }
+
+            const assignment = {
+                uId,
+                user,
+                rosterName: rosterItem.name,
+                targetDn: String(rosterItem.dn),
+                oldDn: String(user.dn || '').trim()
+            };
+            matchesByName.set(nameKey, assignment);
+            assignments.push(assignment);
+        });
+
+        const assignmentById = new Map(assignments.map(item => [item.uId, item]));
+        const conflicts = [];
+
+        assignments.forEach(item => {
+            const targetNorm = normalizeOfficialDnValue(item.targetDn);
+            Object.entries(cachedUsers || {}).forEach(([otherId, otherUser]) => {
+                if (otherId === item.uId || !otherUser) return;
+                if (normalizeOfficialDnValue(otherUser.dn) !== targetNorm) return;
+
+                const otherAssignment = assignmentById.get(otherId);
+                const otherMovesAway = !!otherAssignment &&
+                    normalizeOfficialDnValue(otherAssignment.targetDn) !== targetNorm;
+
+                if (!otherMovesAway) {
+                    const otherName = `${otherUser.vorname || ''} ${otherUser.nachname || ''}`.trim() || otherId;
+                    conflicts.push(`DN ${item.targetDn}: ${item.rosterName} ↔ ${otherName}`);
+                }
+            });
+        });
+
+        if (conflicts.length) {
+            officialDnSyncCompletedForPage = true;
+            const uniqueConflicts = [...new Set(conflicts)];
+            console.error('DN-Synchronisierung abgebrochen – Doppelbelegung:', uniqueConflicts);
+            logAdminAudit('DN-Synchronisierung blockiert', `Offizielle DN-Liste 20.09.2026 wegen Doppelbelegung nicht angewendet: ${uniqueConflicts.join(' | ')}`);
+            showToast('⚠️ DN-Liste nicht übernommen: Es gibt eine Doppelbelegung. Es wurden keine Dienstnummern geändert.', 'error', 6500);
+            return;
+        }
+
+        const changes = assignments.filter(item =>
+            normalizeOfficialDnValue(item.oldDn) !== normalizeOfficialDnValue(item.targetDn)
+        );
+
+        officialDnSyncCompletedForPage = true;
+        if (!changes.length) {
+            if (assignments.length) {
+                showToast(`✅ DN-Liste geprüft: ${assignments.length} registrierte Personen sind bereits aktuell.`, 'success', 4200);
+            }
+            return;
+        }
+
+        const updates = {};
+        changes.forEach(item => {
+            updates[`data/users/${item.uId}/dn`] = item.targetDn;
+        });
+
+        await db.ref().update(updates);
+
+        for (const item of changes) {
+            if (!item.oldDn) continue;
+            await migrateLegacyNewsReadKeyForUser(item.uId, item.oldDn, {
+                vorname: item.user.vorname || '',
+                nachname: item.user.nachname || '',
+                dn: item.targetDn
+            });
+        }
+
+        const detail = changes
+            .map(item => `${item.rosterName}: ${item.oldDn || '--'} → ${item.targetDn}`)
+            .join(' | ');
+        logAdminAudit(
+            'Dienstnummern synchronisiert',
+            `Offizielle DN-Liste 20.09.2026 angewendet. ${changes.length} Änderung(en), ${assignments.length} registrierte Treffer. Rückfallwerte: ${detail}`
+        );
+        showToast(
+            `✅ Dienstnummern übernommen: ${changes.length} geändert, ${assignments.length} registrierte Personen geprüft.`,
+            'success',
+            6000
+        );
+    } catch (err) {
+        officialDnSyncCompletedForPage = false;
+        console.error('Offizielle DN-Synchronisierung fehlgeschlagen:', err);
+        showToast('⚠️ Dienstnummern konnten nicht automatisch übernommen werden. Es wurde kein unsicherer Folgeversuch ausgeführt.', 'error', 6500);
+    } finally {
+        officialDnSyncInProgress = false;
+    }
+}
+
 /* ── Firebase Listeners ────────────────────────────────────── */
 function startFirebaseListeners() {
     const endpoints = [
@@ -3195,6 +3362,7 @@ function startFirebaseListeners() {
             updateOnlineStatus();
             applyUserPermissions(sessionUser);
             refreshSensitiveFirebaseListeners();
+            syncOfficialServiceNumbersFromRoster();
         }
         renderExamTab();
         renderAdminUserTable(cachedUsers);
@@ -10821,6 +10989,7 @@ _w.toggleAllCalendarRoles = toggleAllCalendarRoles;
 _w.handleCalendarCreatorSelectionChange = handleCalendarCreatorSelectionChange;
 _w.respondToCalendarInvite = respondToCalendarInvite;
 _w.renderStaffDirectory = renderStaffDirectory; _w.resetStaffDirectoryFilters = resetStaffDirectoryFilters; _w.openStaffDetailModal = openStaffDetailModal; _w.closeStaffDetailModal = closeStaffDetailModal;
+_w.syncOfficialServiceNumbersFromRoster = syncOfficialServiceNumbersFromRoster;
 _w.filterStaffDirectory = filterStaffDirectory;
 _w.openStaffPhotoUploadModal = openStaffPhotoUploadModal;
 _w.closeStaffPhotoUploadModal = closeStaffPhotoUploadModal;
