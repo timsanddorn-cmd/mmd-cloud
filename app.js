@@ -1,5 +1,5 @@
 // ============================================================
-//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.8.6a
+//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.8.7
 //  Firebase Realtime Database (Compat SDK v10)
 // ============================================================
 
@@ -182,7 +182,7 @@ const db = firebase.database();
 const auth = firebase.auth();
 const FIREBASE_AUTH_EMAIL_DOMAIN = 'mmd-login.invalid';
 
-const APP_VERSION = 'v6.8.6a';
+const APP_VERSION = 'v6.8.7';
 const PRESENCE_HEARTBEAT_MS = 30 * 1000;
 const PRESENCE_STALE_MS = 3 * 60 * 1000;
 
@@ -235,6 +235,9 @@ let cachedPresence = {};
 let cachedClientRelease = null;
 let pendingBackupRestore = null;
 const unsavedChangeScopes = new Set();
+let activeCalendarView = 'month';
+let cachedSzenarioConfigMeta = { updatedAt: 0, updatedBy: '' };
+let globalSearchResultsCache = [];
 let cachedUsers       = {};
 let cachedExams       = {};
 let cachedSubmissions = {};
@@ -313,6 +316,184 @@ function setupUnsavedChangeTracking() {
     });
 }
 
+/* ── v6.8.7 – persönliche Übersicht, Suche & Aktualität ───── */
+function normalizeUiSearchText(value) {
+    return String(value || '').toLowerCase()
+        .replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue').replace(/ß/g, 'ss')
+        .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        .replace(/[§]/g, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+}
+
+function getUnreadNewsCount() {
+    if (!sessionUser) return 0;
+    const myId = getUserAccountId(sessionUser);
+    const legacyKey = sessionUser.dn ? ('dn_' + sessionUser.dn) : '';
+    return Object.values(cachedNews || {}).filter(item => {
+        if (!item || item.deleted || item.status === 'pending_approval') return false;
+        const readBy = item.readBy || {};
+        return !readBy[myId] && !(legacyKey && readBy[legacyKey]);
+    }).length;
+}
+
+function getPendingCalendarInvitations() {
+    if (!sessionUser) return [];
+    const myId = getUserAccountId(sessionUser);
+    const now = Date.now();
+    return Object.entries(cachedCalendar || {}).map(([id, ev]) => Object.assign({ id }, ev || {})).filter(ev => {
+        if (!ev || ev.deleted || !Array.isArray(ev.invitedUsers) || !ev.invitedUsers.includes(myId)) return false;
+        if ((ev.invitationStatus?.[myId] || 'pending') !== 'pending') return false;
+        const dt = getCalendarEventDateTime(ev);
+        return !dt || dt.getTime() >= now;
+    }).sort((a,b) => (getCalendarEventDateTime(a)?.getTime() || 0) - (getCalendarEventDateTime(b)?.getTime() || 0));
+}
+
+function getMyOpenItemsStats() {
+    return { news: getUnreadNewsCount(), notices: getPendingEmployeeNoticeEntries().length, invites: getPendingCalendarInvitations().length };
+}
+
+function getOnlineMedicCount() {
+    const now = Date.now();
+    const unique = new Set();
+    Object.values(cachedPresence || {}).forEach(value => {
+        if (!value || typeof value !== 'object' || !isPresenceFresh(value, now)) return;
+        const accountId = String(value.accountId || '').trim();
+        if (!accountId) return;
+        const account = cachedUsers[accountId];
+        const status = account?.status || ((account?.isAdmin || account?.isMasterAdmin) ? 'approved' : 'pending');
+        if (account && status !== 'approved') return;
+        unique.add(accountId);
+    });
+    return unique.size;
+}
+
+function renderTodayOverview() {
+    if (!sessionUser) return;
+    const greeting = document.getElementById('todayOverviewGreeting');
+    if (greeting) greeting.textContent = sessionUser.vorname ? `Heute für ${sessionUser.vorname}` : 'Deine Übersicht';
+    const now = Date.now();
+    const next = getVisibleCalendarEventsForCurrentUser()
+        .map(ev => ({ ev, dt: getCalendarEventDateTime(ev) }))
+        .filter(item => item.dt && item.dt.getTime() >= now)
+        .sort((a,b) => a.dt - b.dt)[0];
+    const nextTitle = document.getElementById('todayNextAppointment');
+    const nextMeta = document.getElementById('todayNextAppointmentMeta');
+    if (next) {
+        if (nextTitle) nextTitle.textContent = next.ev.title || 'Termin';
+        if (nextMeta) nextMeta.textContent = `${next.dt.toLocaleDateString('de-DE',{weekday:'short',day:'2-digit',month:'2-digit'})} · ${next.ev.time || '--:--'} Uhr`;
+    } else {
+        if (nextTitle) nextTitle.textContent = 'Kein Termin';
+        if (nextMeta) nextMeta.textContent = 'Aktuell nichts geplant';
+    }
+    const stats = getMyOpenItemsStats();
+    const totalOpen = stats.news + stats.notices + stats.invites;
+    const openCount = document.getElementById('todayOpenItemsCount');
+    const openMeta = document.getElementById('todayOpenItemsMeta');
+    if (openCount) openCount.textContent = String(totalOpen);
+    if (openMeta) openMeta.textContent = totalOpen ? 'braucht deine Aufmerksamkeit' : 'Alles erledigt';
+    const onlineCount = document.getElementById('todayOnlineMedicsCount');
+    if (onlineCount) onlineCount.textContent = String(getOnlineMedicCount());
+    const newsCount = document.getElementById('todayUnreadNewsCount');
+    const newsMeta = document.getElementById('todayUnreadNewsMeta');
+    if (newsCount) newsCount.textContent = String(stats.news);
+    if (newsMeta) newsMeta.textContent = stats.news ? 'noch nicht gelesen' : 'Alles gelesen';
+}
+
+function renderMyOpenItemsButton() {
+    const btn = document.getElementById('myOpenItemsBtn');
+    const badge = document.getElementById('myOpenItemsBadge');
+    if (!btn || !badge) return;
+    const stats = getMyOpenItemsStats();
+    const total = stats.news + stats.notices + stats.invites;
+    badge.textContent = String(total);
+    badge.style.display = total > 0 ? 'inline-flex' : 'none';
+    btn.classList.toggle('has-open-items', total > 0);
+}
+
+function renderMyOpenItemsModal() {
+    const box = document.getElementById('myOpenItemsContent');
+    if (!box || !sessionUser) return;
+    const stats = getMyOpenItemsStats();
+    const rows = [];
+    if (stats.news) rows.push(`<button type="button" class="my-open-item" onclick="navigateMyOpenItem('news')"><span>📰</span><div><b>${stats.news} ungelesene News</b><small>Schwarzes Brett öffnen und Beiträge lesen</small></div><em>${stats.news}</em></button>`);
+    if (stats.notices) rows.push(`<button type="button" class="my-open-item" onclick="navigateMyOpenItem('notices')"><span>📨</span><div><b>${stats.notices} persönliche Mitarbeiterhinweise</b><small>Hinweise öffnen und bestätigen</small></div><em>${stats.notices}</em></button>`);
+    getPendingCalendarInvitations().forEach(ev => {
+        const dt = getCalendarEventDateTime(ev);
+        const when = dt ? dt.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'}) + ' · ' + (ev.time || '--:--') : (ev.date || '');
+        rows.push(`<button type="button" class="my-open-item" onclick="navigateMyOpenItem('calendar', ${escapeJsArg(ev.id)})"><span>📅</span><div><b>${escapeHtml(ev.title || 'Kalendereinladung')}</b><small>${escapeHtml(when)} · Antwort steht noch aus</small></div><em>1</em></button>`);
+    });
+    box.innerHTML = rows.length ? rows.join('') : '<div class="my-open-empty"><span>✅</span><b>Alles erledigt</b><small>Aktuell gibt es keine ungelesenen News, persönlichen Hinweise oder offenen Kalendereinladungen.</small></div>';
+}
+function openMyOpenItemsModal() { renderMyOpenItemsModal(); const modal=document.getElementById('myOpenItemsModal'); if(modal)modal.style.display='flex'; }
+function closeMyOpenItemsModal() { const modal=document.getElementById('myOpenItemsModal'); if(modal)modal.style.display='none'; }
+function navigateMyOpenItem(type, id='') {
+    closeMyOpenItemsModal();
+    if(type==='calendar'){switchTab('calendarTab',document.getElementById('calendarTabNavBtn'));if(id)openCalendarEventDetailsModal(id);return;}
+    if(type==='news'||type==='notices'){switchTab('newsTab',document.getElementById('newsTabBtn'));document.getElementById('myEmployeeNoticesContainer')?.scrollIntoView({behavior:'smooth',block:'start'});}
+}
+function updatePersonalOverview(){renderTodayOverview();renderMyOpenItemsButton();if(document.getElementById('myOpenItemsModal')?.style.display==='flex')renderMyOpenItemsModal();}
+
+function getLatestContentMeta(collection) {
+    const items = Array.isArray(collection) ? collection : Object.values(collection || {});
+    let best={updatedAt:0,updatedBy:''};
+    items.forEach(item=>{if(!item||typeof item!=='object')return;const ts=Number(item.updatedAt)||0;if(ts>best.updatedAt)best={updatedAt:ts,updatedBy:String(item.updatedBy||'')};});
+    return best;
+}
+function formatContentFreshness(updatedAt,updatedBy){
+    const ts=Number(updatedAt)||0;if(!ts)return '☁️ Aktueller Cloud-Stand';
+    const when=new Date(ts).toLocaleString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+    return `🕒 Zuletzt geändert: ${when}${updatedBy?' · '+updatedBy:''}`;
+}
+function renderContentFreshnessHints(){
+    const set=(id,meta)=>{const el=document.getElementById(id);if(el)el.textContent=formatContentFreshness(meta?.updatedAt,meta?.updatedBy);};
+    set('guideLastUpdated',{updatedAt:cachedGuideData?._updatedAt,updatedBy:cachedGuideData?._updatedBy});
+    set('medicalWorkflowLastUpdated',cachedSzenarioConfigMeta);
+    set('hierarchyLastUpdated',{updatedAt:hierarchieDaten?._updatedAt,updatedBy:hierarchieDaten?._updatedBy});
+    set('salaryLastUpdated',getLatestContentMeta(cachedGehaltData));
+    set('commandsLastUpdated',getLatestContentMeta(cachedCommands));
+    set('linksLastUpdated',getLatestContentMeta(cachedLinks));
+}
+
+function setupUnifiedEditorModals(){
+    ['szenarienInlineModal','gehaltInlineModal','sanctionsCatalogEditorModal','editModal','archivEditModal','pricesInlineModal','guideInlineModal','commandsInlineModal','linksInlineModal','calendarEventModal','staffPhotoUploadModal','userPermissionsModal','assignRolesModal','examBuilderModal','changelogWriterModal','hierarchieInlineModal'].forEach(id=>document.getElementById(id)?.querySelector('.modal-card')?.classList.add('mmd-editor-card'));
+}
+function findMainTabButton(tabId){return Array.from(document.querySelectorAll('.tab-btn,.nav-sub-btn')).find(btn=>(btn.getAttribute('onclick')||'').includes(`switchTab('${tabId}'`))||null;}
+function canSearchSection(tabId){if(isMaintenanceRestrictedSession())return tabId==='docTab';if(tabId==='chiefTab')return canCurrentUserViewChiefMaterials();return !!document.getElementById(tabId);}
+function buildGlobalSearchResults(query){
+    const q=normalizeUiSearchText(query);
+    const sections=[
+        ['docTab','📝','Dokumentation & Einsatz','patient behandlung einsatz material medizin'],['statsTab','📊','Statistik & Archiv','statistik archiv schicht patienten protokoll'],['calendarTab','📅','Kalender','kalender termine dienstbesprechung'],['examTab','🎓','Ausbildung','ausbildung pruefung prüfung'],['staffTab','👥','Mitarbeiter Kartei','mitarbeiter personal kartei dn'],['hierarchieTab','🌳','Hierarchie','hierarchie leitung abteilung'],['miscTab','💰','Gehaltstabelle','gehalt sold rang'],['guideTab','📋','Funk & Codes','funk codes status ten code streife'],['commandTab','💻','Commands','command befehl commands'],['linksTab','🔗','Links & Dokumente','links dokumente leitfaden'],['sanctionsTab','⚖️','Sanktionskatalog','sanktion paragraf paragraph verstoß verstoss'],['newsTab','📰','News','news schwarzes brett ankuendigung ankündigung'],['settingsTab','⚙️','Einstellungen','einstellungen passwort diensttage'],['chiefTab','⭐','Chief Ebene','chief material bestand']
+    ].filter(([tabId])=>canSearchSection(tabId));
+    const results=[];
+    sections.forEach(([tabId,icon,title,keywords])=>{if(!q||normalizeUiSearchText(title+' '+keywords).includes(q))results.push({kind:'section',tabId,icon,title,subtitle:'Bereich öffnen'});});
+    if(q){
+        getVisibleStaffEntries().forEach(([uId,user])=>{const name=`${user.vorname||''} ${user.nachname||''}`.trim();if(normalizeUiSearchText(`${name} ${user.dn||''}`).includes(q))results.push({kind:'staff',tabId:'staffTab',id:uId,icon:'👤',title:name||uId,subtitle:formatStaffDn(user.dn)});});
+        getSanctionsEntries().forEach(item=>{if(matchesSanctionsSearch(item,query))results.push({kind:'sanction',tabId:'sanctionsTab',icon:'⚖️',title:`${item.paragraph||'—'} · ${item.offense||'Verstoß'}`,subtitle:[item.sanction1,item.sanction2,item.sanction3].filter(Boolean).join(' · '),searchValue:item.paragraph||item.offense||query});});
+        getVisibleCalendarEventsForCurrentUser().forEach(ev=>{if(normalizeUiSearchText(`${ev.title||''} ${ev.desc||''} ${ev.date||''} ${ev.creatorDisplay||''}`).includes(q))results.push({kind:'calendar',tabId:'calendarTab',id:ev.id,icon:'📅',title:ev.title||'Termin',subtitle:`${ev.date||''} · ${ev.time||'--:--'}`});});
+    }
+    const seen=new Set();return results.filter(item=>{const key=[item.kind,item.tabId,item.id||item.title].join('|');if(seen.has(key))return false;seen.add(key);return true;}).slice(0,24);
+}
+function renderGlobalSearchResults(){
+    const input=document.getElementById('globalSearchInput'),box=document.getElementById('globalSearchResults');if(!box)return;
+    globalSearchResultsCache=buildGlobalSearchResults(input?.value||'');
+    box.innerHTML=globalSearchResultsCache.length?globalSearchResultsCache.map((item,idx)=>`<button type="button" class="global-search-result" onclick="navigateGlobalSearchResult(${idx})"><span class="global-search-result-icon">${item.icon}</span><span class="global-search-result-main"><b>${escapeHtml(item.title)}</b><small>${escapeHtml(item.subtitle||'')}</small></span><span class="global-search-result-arrow">›</span></button>`).join(''):'<div class="global-search-empty">Keine passenden Treffer gefunden.</div>';
+}
+function openGlobalSearch(){if(!sessionUser)return;const modal=document.getElementById('globalSearchModal'),input=document.getElementById('globalSearchInput');if(!modal||!input)return;modal.style.display='flex';input.value='';renderGlobalSearchResults();window.setTimeout(()=>input.focus(),0);}
+function closeGlobalSearch(){const modal=document.getElementById('globalSearchModal');if(modal)modal.style.display='none';}
+function navigateGlobalSearchResult(index){
+    const item=globalSearchResultsCache[Number(index)];if(!item)return;closeGlobalSearch();switchTab(item.tabId,findMainTabButton(item.tabId));
+    if(item.kind==='staff'&&item.id)openStaffDetailModal(item.id);
+    else if(item.kind==='sanction'){const input=document.getElementById('sanctionsSearchInput');if(input)input.value=item.searchValue||'';renderSanctionsCatalog();input?.focus();}
+    else if(item.kind==='calendar'&&item.id)openCalendarEventDetailsModal(item.id);
+}
+function setupGlobalSearchShortcut(){
+    document.addEventListener('keydown',event=>{
+        if((event.ctrlKey||event.metaKey)&&event.key.toLowerCase()==='k'){event.preventDefault();openGlobalSearch();return;}
+        if(event.key==='Escape'){if(document.getElementById('globalSearchModal')?.style.display==='flex')closeGlobalSearch();else if(document.getElementById('myOpenItemsModal')?.style.display==='flex')closeMyOpenItemsModal();else if(document.getElementById('staffDetailModal')?.style.display==='flex')closeStaffDetailModal();}
+    });
+}
+
 /* ── Kalender State ────────────────────────────────────────── */
 let currentCalYear  = new Date().getFullYear();
 let currentCalMonth = new Date().getMonth();
@@ -346,6 +527,22 @@ let hierarchieDaten = JSON.parse(JSON.stringify(defaultHierarchieData));
 
 /* ── Vollständiger Gesamt-Changelog (Entwicklungsverlauf) ───── */
 const systemChangelogs = [
+    {
+        id: "sys_v6_8_7", version: "v6.8.7", date: "20.09.2026", ts: 1789891200000,
+        category: "Verbesserung", title: "Schneller finden, sehen und erledigen",
+        changes: [
+            "Ein kompakter Heute-Bereich zeigt den nächsten Termin, offene persönliche Punkte, ungelesene News und aktive Mitarbeiter.",
+            "Der Kalender besitzt zusätzlich zur Monatsansicht eine chronologische 30-Tage-Listenansicht.",
+            "Die Sanktionssuche ist deutlicher als Sofortsuche über Paragraph, Verstoß und alle Sanktionsstufen gekennzeichnet.",
+            "Mitarbeiterkarten öffnen eine Detailansicht mit Foto, DN, Rollen und Dienstzeit; Verwaltungsaktionen bleiben berechtigungsabhängig.",
+            "Das Admin-Kontrollzentrum zeigt unter den Kennzahlen ausschließlich aktuell offene Aufgaben.",
+            "Bearbeitungsfenster erhalten ein einheitlicheres Erscheinungsbild und gezielte mobile Optimierungen.",
+            "Zentrale Inhalte zeigen soweit verfügbar den letzten Änderungszeitpunkt und Bearbeiter.",
+            "Eine globale Schnellsuche per Strg + K durchsucht Navigation und nur sichtbare Inhalte.",
+            "Persönliche offene News, Hinweise und Kalendereinladungen werden in einer gemeinsamen Übersicht gebündelt.",
+            "Systemprotokoll-Filter und Favoriten wurden bewusst nicht Bestandteil dieses Pakets."
+        ]
+    },
     {
         id: "sys_v6_8_6a", version: "v6.8.6a", date: "20.09.2026", ts: 1789869000000,
         category: "Verbesserung", title: "Status-Filter auf Verwaltung beschränkt",
@@ -1637,7 +1834,10 @@ function applyMaintenanceAccessMode(showNotice = false) {
     const restrictedControls = [
         document.getElementById('btnEditPricesInline'),
         document.getElementById('btnEditSzenarienInline'),
-        document.getElementById('btnManualProtArchive')
+        document.getElementById('btnManualProtArchive'),
+        document.getElementById('globalSearchBtn'),
+        document.getElementById('myOpenItemsBtn'),
+        document.getElementById('todayOverview')
     ].filter(Boolean);
     if (restricted) {
         if (adminBtn) adminBtn.style.display = 'none';
@@ -2667,6 +2867,7 @@ function initDienstEintritt(user) {
     setupMidnightScheduler();
     setupDailyForcedLogoutScheduler();
     cleanOldCalendarEvents();
+    updatePersonalOverview();
 
     const eDatumEl = document.getElementById('einstellungsDatum');
     if (eDatumEl) {
@@ -2881,9 +3082,11 @@ function startFirebaseListeners() {
         db.ref('data/szenarienConfig').on('value', s => {
             const cfg = s.val();
             if (cfg) {
+                cachedSzenarioConfigMeta = { updatedAt: Number(cfg.updatedAt) || 0, updatedBy: String(cfg.updatedBy || '') };
                 if (cfg.templates) szenarioTemplates = Object.assign({}, szenarioTemplates, cfg.templates);
                 if (cfg.steps) medicDatenbank = Object.assign({}, medicDatenbank, cfg.steps);
                 updateSzenarioDropdownOptions();
+                renderContentFreshnessHints();
             }
         });
         db.ref('data/szenarioTemplates').on('value', s => {
@@ -2893,7 +3096,10 @@ function startFirebaseListeners() {
     }
 
     db.ref('data/protokoll').on('value', s => renderProtokoll(s.val() || {}));
-    db.ref('data/hierarchie').on('value', s => renderHierarchieBoard(s.val() || hierarchieDaten));
+    db.ref('data/hierarchie').on('value', s => {
+        renderHierarchieBoard(s.val() || hierarchieDaten);
+        renderContentFreshnessHints();
+    });
     db.ref('data/gehaltstabelle').on('value', s => {
         const serverData = s.val();
         const serverList = serverData 
@@ -2925,9 +3131,11 @@ function startFirebaseListeners() {
     db.ref('data/szenarienConfig').on('value', s => {
         const cfg = s.val();
         if (cfg) {
+            cachedSzenarioConfigMeta = { updatedAt: Number(cfg.updatedAt) || 0, updatedBy: String(cfg.updatedBy || '') };
             if (cfg.templates) szenarioTemplates = Object.assign({}, szenarioTemplates, cfg.templates);
             if (cfg.steps) medicDatenbank = Object.assign({}, medicDatenbank, cfg.steps);
             updateSzenarioDropdownOptions();
+            renderContentFreshnessHints();
         }
     });
     db.ref('data/szenarioTemplates').on('value', s => {
@@ -2997,6 +3205,8 @@ function startFirebaseListeners() {
         renderEmployeeNoticeFeedPanels();
         updateNavigationBadges();
         renderAdminOverview();
+        renderContentFreshnessHints();
+        updatePersonalOverview();
     });
     db.ref('data/exams').on('value', s => {
         const raw = s.val() || {};
@@ -3037,11 +3247,13 @@ function startFirebaseListeners() {
     db.ref('data/news').on('value', s => {
         cachedNews = s.val() || {};
         renderNewsFeedData(cachedNews);
+        updatePersonalOverview();
     });
     db.ref('data/calendar').on('value', s => {
         cachedCalendar = s.val() || {};
         renderCalendarMonth();
         updateNavigationBadges();
+        updatePersonalOverview();
     });
     db.ref('data/changelogs').on('value', s => {
         cachedCustomChangelogs = s.val() || {};
@@ -3314,6 +3526,19 @@ function renderAdminOverview() {
     setVisible('adminOverviewSessionsCard', !!eff.isMasterAdmin);
     setVisible('adminOverviewMaintenanceCard', canManageMaintenance);
     setVisible('adminOverviewVersionCard', !!eff.isMasterAdmin);
+
+    const taskList = document.getElementById('adminOverviewTaskList');
+    if (taskList) {
+        const tasks = [];
+        if (canManageMembers && pendingUsers > 0) tasks.push({ icon:'👤', text:`${pendingUsers} offene Registrierung${pendingUsers === 1 ? '' : 'en'}`, action:"openAdminOverviewSection('adminSubTabUsers')" });
+        if (eff.isMasterAdmin && missingPhotos > 0) tasks.push({ icon:'📷', text:missingPhotos === 1 ? '1 fehlendes Profilbild' : `${missingPhotos} fehlende Profilbilder`, action:'openPhotoChecklistFromAdminOverview()' });
+        if (eff.isMasterAdmin && passwordOpen > 0) tasks.push({ icon:'🔐', text:`${passwordOpen} offene Passwortumstellung${passwordOpen === 1 ? '' : 'en'}`, action:"openAdminOverviewSection('adminSubTabSystem')" });
+        if (eff.isMasterAdmin && remoteVersion !== APP_VERSION) tasks.push({ icon:'🔄', text:`Browser-Version noch nicht vollständig auf ${APP_VERSION} verteilt`, action:"openAdminOverviewSection('adminSubTabSessions')" });
+        if (canManageMaintenance && cachedMaintenanceState.enabled) tasks.push({ icon:'🛠️', text:'Wartungsmodus ist aktuell aktiv', action:"openAdminOverviewSection('adminSubTabMaintenance')" });
+        taskList.innerHTML = tasks.length
+            ? tasks.map(task => `<button type="button" class="admin-open-task-row" onclick="${task.action}"><span>${task.icon}</span><b>${escapeHtml(task.text)}</b><em>›</em></button>`).join('')
+            : '<div class="admin-open-task-empty">✅ Aktuell nichts zu erledigen.</div>';
+    }
 }
 
 function openAdminOverviewSection(tabId) {
@@ -3389,6 +3614,7 @@ function startPresenceWatcher() {
         }
         renderActiveSessionAdminPanel();
         renderAdminOverview();
+        updatePersonalOverview();
     });
 }
 
@@ -3895,16 +4121,21 @@ function saveAllSzenarienWorkflows() {
         updatedTpls[szName] = tplObj;
     });
 
+    const updatedAt = Date.now();
+    const updatedBy = `${sessionUser.vorname || ''} ${sessionUser.nachname || ''}`.trim();
     db.ref('data/szenarienConfig').set({
         steps: updatedSteps,
-        templates: updatedTpls
+        templates: updatedTpls,
+        updatedAt,
+        updatedBy
     }).then(() => {
+        cachedSzenarioConfigMeta = { updatedAt, updatedBy };
         medicDatenbank = updatedSteps;
         szenarioTemplates = updatedTpls;
         updateSzenarioDropdownOptions();
         closeSzenarienInlineModal();
         logAdminAudit('Szenarien & Abläufe angepasst', `${sessionUser.vorname} ${sessionUser.nachname} hat medizinische Szenarien vor Ort aktualisiert.`);
-        alert('✅ Medizinische Szenarien & Abläufe erfolgreich gespeichert!');
+        showToast('✅ Medizinische Szenarien & Abläufe erfolgreich gespeichert.', 'success');
     });
 }
 
@@ -4368,6 +4599,23 @@ function renderUpcomingCalendarEvents() {
     }).join('');
 }
 
+function setCalendarView(view = 'month') {
+    activeCalendarView = view === 'list' ? 'list' : 'month';
+    const monthBtn=document.getElementById('calendarViewMonthBtn'),listBtn=document.getElementById('calendarViewListBtn'),monthNav=document.getElementById('calendarMonthNavControls'),monthView=document.getElementById('calendarMonthView'),listView=document.getElementById('calendarListView');
+    monthBtn?.classList.toggle('active',activeCalendarView==='month');listBtn?.classList.toggle('active',activeCalendarView==='list');
+    if(monthNav)monthNav.style.display=activeCalendarView==='month'?'flex':'none';if(monthView)monthView.style.display=activeCalendarView==='month'?'':'none';if(listView)listView.style.display=activeCalendarView==='list'?'block':'none';
+    if(activeCalendarView==='list')renderCalendarListView();
+}
+function renderCalendarListView() {
+    const box=document.getElementById('calendarListContainer'),summary=document.getElementById('calendarListSummary');if(!box)return;
+    const start=new Date();start.setHours(0,0,0,0);const end=new Date(start);end.setDate(end.getDate()+30);
+    const events=getVisibleCalendarEventsForCurrentUser().map(ev=>({ev,dt:getCalendarEventDateTime(ev)})).filter(item=>item.dt&&item.dt>=start&&item.dt<end).sort((a,b)=>a.dt-b.dt);
+    if(summary)summary.textContent=`${events.length} ${events.length===1?'Termin':'Termine'}`;
+    if(!events.length){box.innerHTML='<div class="calendar-list-empty">In den nächsten 30 Tagen stehen keine sichtbaren Termine an.</div>';return;}
+    const myId=getUserAccountId(sessionUser);
+    box.innerHTML=events.map(({ev,dt})=>{const inviteStatus=ev.invitationStatus?.[myId]||'';const badge=inviteStatus==='pending'?'<span class="calendar-list-badge pending">Antwort offen</span>':inviteStatus==='accepted'?'<span class="calendar-list-badge accepted">Zugesagt</span>':'';return `<button type="button" class="calendar-list-row" onclick="openCalendarEventDetailsModal('${ev.id}')"><span class="calendar-list-date"><b>${escapeHtml(dt.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'}))}</b><small>${escapeHtml(dt.toLocaleDateString('de-DE',{weekday:'short'}))}</small></span><span class="calendar-list-main"><b>${escapeHtml(ev.title||'Termin')}</b><small>${escapeHtml(ev.time||'--:--')} Uhr${ev.creatorDisplay?' · '+escapeHtml(ev.creatorDisplay):''}</small></span>${badge}<span class="calendar-list-arrow">›</span></button>`;}).join('');
+}
+
 function renderCalendarMonth() {
     const lbl = document.getElementById('calendarCurrentMonthYear');
     const grid = document.getElementById('calendarMonthGrid');
@@ -4467,7 +4715,9 @@ function renderCalendarMonth() {
 
     grid.innerHTML = html;
     renderUpcomingCalendarEvents();
+    renderCalendarListView();
     updateNavigationBadges();
+    updatePersonalOverview();
 }
 
 function onCalendarCellClick(dateKey) {
@@ -5096,6 +5346,16 @@ function resetStaffDirectoryFilters() {
     renderStaffDirectory();
 }
 
+function getVisibleStaffEntries() {
+    const eff = sessionUser ? getUserEffectivePermissions(sessionUser) : {};
+    const canManageRegistrations = !!(eff.canManageMemberAccess || eff.isMasterAdmin);
+    return Object.entries(cachedUsers || {}).filter(([, user]) => {
+        if (!user) return false;
+        if (canManageRegistrations) return true;
+        return user.status === 'approved' || user.isAdmin || user.isMasterAdmin;
+    });
+}
+
 function renderStaffDirectory() {
     const grid = document.getElementById('staffDirectoryGrid');
     const badge = document.getElementById('staffCountBadge');
@@ -5116,10 +5376,7 @@ function renderStaffDirectory() {
     if (!canManageRegistrations && statusFilterEl) statusFilterEl.value = 'all';
     const statusFilter = canManageRegistrations ? (statusFilterEl?.value || 'all') : 'all';
 
-    const staffList = Object.entries(cachedUsers || {}).filter(([, u]) => {
-        if (canManageRegistrations) return true;
-        return u.status === 'approved' || u.isAdmin || u.isMasterAdmin;
-    });
+    const staffList = getVisibleStaffEntries();
 
     if (totalBadge) totalBadge.textContent = staffList.length;
 
@@ -5159,7 +5416,7 @@ function renderStaffDirectory() {
         const dnFormatted = formatStaffDn(u.dn);
 
         return `
-            <div class="staff-card">
+            <div class="staff-card staff-card-clickable" role="button" tabindex="0" onclick="openStaffDetailModal('${uId}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openStaffDetailModal('${uId}');}">
                 <div class="staff-photo-wrapper">
                     <img src="${photoSrc}" 
                          alt="${escapeHtml(u.vorname)} ${escapeHtml(u.nachname)}" 
@@ -5174,18 +5431,18 @@ function renderStaffDirectory() {
                         <div style="margin-top:8px;font-size:12px;font-weight:800;color:${getUserStatusDisplay(u.status).color};">${getUserStatusDisplay(u.status).text}</div>
                         ${u.status !== 'approved' ? `
                             <div class="staff-card-admin-actions">
-                                <button type="button" class="btn-staff-quick-action" onclick="approveUser('${uId}')" title="Diesen Mitarbeiter freischalten">✅ Freischalten</button>
+                                <button type="button" class="btn-staff-quick-action" onclick="event.stopPropagation(); approveUser('${uId}')" title="Diesen Mitarbeiter freischalten">✅ Freischalten</button>
                             </div>
                         ` : ''}
                     ` : ''}
                     ${(canManagePhotos && u.status === 'approved') ? `
                         <div class="staff-card-admin-actions">
-                            <label class="btn-staff-quick-action btn-upload" title="Neues bearbeitetes Foto mit Logo für diesen Mitarbeiter einstellen">
+                            <label class="btn-staff-quick-action btn-upload" onclick="event.stopPropagation()" title="Neues bearbeitetes Foto mit Logo für diesen Mitarbeiter einstellen">
                                 🎨 Foto einstellen
-                                <input type="file" accept="image/*" style="display:none;" onchange="uploadProcessedStaffPhoto(event, '${uId}')">
+                                <input type="file" accept="image/*" style="display:none;" onclick="event.stopPropagation()" onchange="uploadProcessedStaffPhoto(event, '${uId}')">
                             </label>
                             ${isCustomPhoto ? `
-                                <button type="button" class="btn-staff-quick-action btn-reset" onclick="resetStaffPhotoToDefault('${uId}')" title="Auf Standardlogo zurücksetzen">🔄 Logo</button>
+                                <button type="button" class="btn-staff-quick-action btn-reset" onclick="event.stopPropagation(); resetStaffPhotoToDefault('${uId}')"  title="Auf Standardlogo zurücksetzen">🔄 Logo</button>
                             ` : ''}
                         </div>
                     ` : ''}
@@ -5193,6 +5450,69 @@ function renderStaffDirectory() {
             </div>
         `;
     }).join('');
+}
+
+function getServiceDaysForUser(user) {
+    const raw = String(user?.einstellungsDatum || '').trim();
+    if (!raw) return null;
+    const start = new Date(raw + 'T00:00:00');
+    if (Number.isNaN(start.getTime())) return null;
+    const today = new Date(); today.setHours(0,0,0,0);
+    return Math.max(0, Math.floor((today - start) / 86400000) + 1);
+}
+
+function openStaffDetailModal(uId) {
+    const entry = getVisibleStaffEntries().find(([id]) => id === uId);
+    if (!entry) return;
+    const [, user] = entry;
+    const modal = document.getElementById('staffDetailModal');
+    const box = document.getElementById('staffDetailContent');
+    const title = document.getElementById('staffDetailName');
+    if (!modal || !box) return;
+
+    const eff = sessionUser ? getUserEffectivePermissions(sessionUser) : {};
+    const canManageMembers = !!(eff.canManageMemberAccess || eff.isMasterAdmin);
+    const canAdminEdit = !!(eff.isAdmin || eff.isMasterAdmin);
+    const customPhoto = hasCustomStaffPhoto(user);
+    const photoSrc = customPhoto ? String(user.photoUrl || '') : 'mdlogo.png';
+    const days = getServiceDaysForUser(user);
+    const status = getUserStatusDisplay(user.status || ((user.isAdmin || user.isMasterAdmin) ? 'approved' : 'pending'));
+    const statusMeta = canManageMembers
+        ? `<div><span>Status</span><b style="color:${status.color};">${escapeHtml(status.text)}</b></div>`
+        : '';
+    const displayName = `${user.vorname || ''} ${user.nachname || ''}`.trim() || uId;
+    if (title) title.textContent = displayName;
+
+    let actions = '';
+    if (canManageMembers) {
+        actions += (user.status || 'pending') !== 'approved'
+            ? `<button type="button" class="btn staff-detail-action success" onclick="closeStaffDetailModal(); approveUser('${uId}')">✅ Freischalten</button>`
+            : `<button type="button" class="btn staff-detail-action danger" onclick="closeStaffDetailModal(); revokeUser('${uId}')">⛔ Sperren</button>`;
+        actions += `<button type="button" class="btn staff-detail-action" onclick="closeStaffDetailModal(); openAssignRolesModal('${uId}', null, false)">🎭 Rollen</button>`;
+    }
+    if (canAdminEdit) actions += `<button type="button" class="btn staff-detail-action" onclick="closeStaffDetailModal(); openUserPermissionsModal('${uId}')">✏️ Bearbeiten</button>`;
+
+    box.innerHTML = `
+        <div class="staff-detail-layout">
+            <div class="staff-detail-photo-wrap"><img src="${photoSrc}" alt="${escapeHtml(displayName)}" onerror="this.onerror=null;this.src='${DEFAULT_MD_LOGO_FALLBACK}'"></div>
+            <div class="staff-detail-info">
+                <span class="staff-detail-dn">${escapeHtml(formatStaffDn(user.dn))}</span>
+                <h2>${escapeHtml(displayName)}</h2>
+                <div class="staff-detail-roles">${renderUserRoleBadges(user)}</div>
+                <div class="staff-detail-meta-grid">
+                    ${statusMeta}
+                    <div><span>Diensttage</span><b>${days === null ? 'Nicht hinterlegt' : days}</b></div>
+                    <div><span>Profilbild</span><b>${customPhoto ? '✅ Vorhanden' : '📷 Standardlogo'}</b></div>
+                </div>
+            </div>
+        </div>
+        ${actions ? `<div class="staff-detail-actions">${actions}</div>` : ''}
+    `;
+    modal.style.display = 'flex';
+}
+function closeStaffDetailModal() {
+    const modal = document.getElementById('staffDetailModal');
+    if (modal) modal.style.display = 'none';
 }
 
 function renderStaffPhotoChecklist() {
@@ -5459,7 +5779,7 @@ function renderStaffPhotoAdminList() {
                 <button type="button" class="btn" style="padding:6px;font-size:12px;background:var(--primary);color:#080c14;font-weight:800;margin:0;" onclick="downloadStaffOriginalPhoto('${uId}')">📥 Original herunterladen</button>
                 <label class="btn" style="padding:6px;font-size:12px;background:var(--success);color:#080c14;font-weight:800;text-align:center;cursor:pointer;margin:0;">
                     🎨 Bearbeitetes Bild einsetzen
-                    <input type="file" accept="image/*" style="display:none;" onchange="uploadProcessedStaffPhoto(event, '${uId}')">
+                    <input type="file" accept="image/*" style="display:none;" onclick="event.stopPropagation()" onchange="uploadProcessedStaffPhoto(event, '${uId}')">
                 </label>
                 <button type="button" class="btn-delete-row" style="font-size:12px;padding:5px;" onclick="deleteSubmittedRawPhoto('${uId}')">🗑️ Aus Ordner löschen</button>
             </div>
@@ -5527,6 +5847,7 @@ function renderHierarchieBoard(hData) {
         const i = document.getElementById('inp_h_' + key);
         if (i && document.activeElement !== i) i.value = (val !== 'Aktuell nicht belegt' && val !== '#REF!') ? val : '';
     });
+    renderContentFreshnessHints();
 }
 
 function openHierarchieInlineModal() {
@@ -5614,15 +5935,18 @@ function saveHierarchieInline() {
         }
     });
 
+    hierarchieDaten._updatedAt = Date.now();
+    hierarchieDaten._updatedBy = `${sessionUser.vorname || ''} ${sessionUser.nachname || ''}`.trim();
     db.ref('data/hierarchie').set(hierarchieDaten).then(() => {
         logAdminAudit('Hierarchie vor Ort aktualisiert', `${sessionUser.vorname} ${sessionUser.nachname} hat das Hierarchie-Board gespeichert.`);
         closeHierarchieInlineModal();
-        alert('✅ Hierarchie erfolgreich aktualisiert!');
+        showToast('✅ Hierarchie erfolgreich aktualisiert.', 'success');
     });
 }
 
 /* ── REITER: GEHALTSTABELLE ────────────────────────────────── */
 function renderGehaltTab(data) {
+    renderContentFreshnessHints();
     const tbody = document.getElementById('gehaltTableBody');
     if (!tbody) return;
 
@@ -5696,6 +6020,8 @@ function removeGehaltRowInline(idx) {
 function saveGehaltInline() {
     if (!requireAdminAccess('Keine Berechtigung zum Speichern der Gehaltstabelle!')) return;
     const updated = [];
+    const updatedAt = Date.now();
+    const updatedBy = `${sessionUser.vorname || ''} ${sessionUser.nachname || ''}`.trim();
     cachedGehaltData.forEach((item, idx) => {
         const rangEl = document.getElementById(`gehalt_rang_${idx}`);
         const nameEl = document.getElementById(`gehalt_name_${idx}`);
@@ -5711,7 +6037,9 @@ function saveGehaltInline() {
                 command: cmdEl ? cmdEl.value.trim() : item.command,
                 q15: q15El ? q15El.value.trim() : item.q15,
                 h1: h1El ? h1El.value.trim() : item.h1,
-                styleVar: item.styleVar || 'var(--rank-mid)'
+                styleVar: item.styleVar || 'var(--rank-mid)',
+                updatedAt,
+                updatedBy
             });
         }
     });
@@ -5721,7 +6049,7 @@ function saveGehaltInline() {
         renderGehaltTab(cachedGehaltData);
         closeGehaltInlineModal();
         logAdminAudit('Gehaltstabelle angepasst', `${sessionUser.vorname} ${sessionUser.nachname} hat die Gehaltstabelle aktualisiert.`);
-        alert('✅ Gehaltstabelle erfolgreich gespeichert!');
+        showToast('✅ Gehaltstabelle erfolgreich gespeichert.', 'success');
     });
 }
 
@@ -5823,7 +6151,7 @@ function renderSanctionsCatalog() {
     tbody.innerHTML=entries.map(i=>`<tr><td data-label="Paragraf" class="sanctions-paragraph-cell">${escapeHtml(i.paragraph||'—')}</td><td data-label="Verstoß" class="sanctions-offense-cell">${escapeHtml(i.offense||'—')}</td><td data-label="1. Sanktion">${escapeHtml(i.sanction1||'—')}</td><td data-label="2. Sanktion">${escapeHtml(i.sanction2||'—')}</td><td data-label="3. Sanktion">${escapeHtml(i.sanction3||'—')}</td></tr>`).join('');
     const count=document.getElementById('sanctionsResultCount'); if(count) count.textContent=entries.length===all.length?`${all.length} Einträge`:`${entries.length} von ${all.length} Einträgen`;
     const none=document.getElementById('sanctionsNoResults'), wrap=document.querySelector('.sanctions-table-wrap'); if(none) none.style.display=entries.length?'none':'block'; if(wrap) wrap.style.display=entries.length?'block':'none';
-    const upd=document.getElementById('sanctionsLastUpdated'); if(upd){const ts=Number(cachedSanctionsCatalog?.updatedAt)||0;upd.textContent=ts?`Zuletzt aktualisiert: ${new Date(ts).toLocaleString('de-DE')}`:'Grundlage: Sanktionskatalog 3.0';}
+    const upd=document.getElementById('sanctionsLastUpdated'); if(upd){const ts=Number(cachedSanctionsCatalog?.updatedAt)||0;const by=String(cachedSanctionsCatalog?.updatedBy||'');upd.textContent=ts?`🕒 Zuletzt geändert: ${new Date(ts).toLocaleString('de-DE')}${by?' · '+by:''}`:'☁️ Grundlage: Sanktionskatalog 3.0';}
     renderSanctionsRules();
 }
 function setSanctionsFilter(filter,btn){activeSanctionsFilter=filter||'all';document.querySelectorAll('.sanctions-filter-chip').forEach(e=>e.classList.remove('active'));if(btn)btn.classList.add('active');renderSanctionsCatalog();}
@@ -5838,10 +6166,11 @@ function addSanctionsRuleEditorRow(){if(!requirePermission(['canEditSanctionsCat
 function removeSanctionsRuleEditorRow(i){if(!requirePermission(['canEditSanctionsCatalog','isMasterAdmin']))return;readSanctionsEditorState();if(!confirm('Diese allgemeine Regel wirklich entfernen?'))return;sanctionsEditorRules.splice(i,1);renderSanctionsCatalogEditor();}
 function addSanctionsEntryEditorRow(){if(!requirePermission(['canEditSanctionsCatalog','isMasterAdmin']))return;readSanctionsEditorState();sanctionsEditorEntries.push({id:'san_'+Date.now(),order:sanctionsEditorEntries.length+1,paragraph:'',offense:'',sanction1:'',sanction2:'',sanction3:''});renderSanctionsCatalogEditor();document.getElementById(`san_para_${sanctionsEditorEntries.length-1}`)?.focus();}
 function removeSanctionsEntryEditorRow(i){if(!requirePermission(['canEditSanctionsCatalog','isMasterAdmin']))return;readSanctionsEditorState();const it=sanctionsEditorEntries[i];if(!confirm(`Eintrag ${it?.paragraph||''} wirklich entfernen?`))return;sanctionsEditorEntries.splice(i,1);renderSanctionsCatalogEditor();}
-async function saveSanctionsCatalogEditor(){if(!requirePermission(['canEditSanctionsCatalog','isMasterAdmin'],'Keine Berechtigung zum Speichern des Sanktionskatalogs!'))return;readSanctionsEditorState();const entries=sanctionsEditorEntries.map((i,x)=>Object.assign({},i,{order:x+1})).filter(i=>i.paragraph||i.offense||i.sanction1||i.sanction2||i.sanction3);const rules=sanctionsEditorRules.map((i,x)=>Object.assign({},i,{order:x+1})).filter(i=>i.text);if(entries.find(i=>!i.paragraph||!i.offense)){alert('Bitte gib bei jedem Eintrag mindestens Paragraf und Verstoß an.');return;}if(!entries.length){alert('Der Sanktionskatalog muss mindestens einen Tabelleneintrag enthalten.');return;}if(!rules.length){alert('Bitte hinterlege mindestens eine allgemeine Sanktionsregel.');return;}const actor=`${sessionUser?.vorname||''} ${sessionUser?.nachname||''}`.trim();const payload={version:'3.0',entries:sanctionsCatalogToObject(entries),rules:sanctionsRulesToObject(rules),updatedAt:Date.now(),updatedBy:actor};try{await db.ref('data/sanctionsCatalog').set(payload);cachedSanctionsCatalog=sanitizeSanctionsCatalog(payload);renderSanctionsCatalog();closeSanctionsCatalogEditor();logAdminAudit('Sanktionskatalog aktualisiert',`${actor||'Berechtigte Person'} hat den Sanktionskatalog gespeichert (${entries.length} Einträge).`);alert('✅ Sanktionskatalog erfolgreich gespeichert!');}catch(err){console.error('Sanktionskatalog speichern fehlgeschlagen:',err);alert('Der Sanktionskatalog konnte nicht gespeichert werden. Bitte versuche es erneut.');}}
+async function saveSanctionsCatalogEditor(){if(!requirePermission(['canEditSanctionsCatalog','isMasterAdmin'],'Keine Berechtigung zum Speichern des Sanktionskatalogs!'))return;readSanctionsEditorState();const entries=sanctionsEditorEntries.map((i,x)=>Object.assign({},i,{order:x+1})).filter(i=>i.paragraph||i.offense||i.sanction1||i.sanction2||i.sanction3);const rules=sanctionsEditorRules.map((i,x)=>Object.assign({},i,{order:x+1})).filter(i=>i.text);if(entries.find(i=>!i.paragraph||!i.offense)){alert('Bitte gib bei jedem Eintrag mindestens Paragraf und Verstoß an.');return;}if(!entries.length){alert('Der Sanktionskatalog muss mindestens einen Tabelleneintrag enthalten.');return;}if(!rules.length){alert('Bitte hinterlege mindestens eine allgemeine Sanktionsregel.');return;}const actor=`${sessionUser?.vorname||''} ${sessionUser?.nachname||''}`.trim();const payload={version:'3.0',entries:sanctionsCatalogToObject(entries),rules:sanctionsRulesToObject(rules),updatedAt:Date.now(),updatedBy:actor};try{await db.ref('data/sanctionsCatalog').set(payload);cachedSanctionsCatalog=sanitizeSanctionsCatalog(payload);renderSanctionsCatalog();closeSanctionsCatalogEditor();logAdminAudit('Sanktionskatalog aktualisiert',`${actor||'Berechtigte Person'} hat den Sanktionskatalog gespeichert (${entries.length} Einträge).`);showToast('✅ Sanktionskatalog erfolgreich gespeichert.', 'success');}catch(err){console.error('Sanktionskatalog speichern fehlgeschlagen:',err);alert('Der Sanktionskatalog konnte nicht gespeichert werden. Bitte versuche es erneut.');}}
 
 /* ── REITER 3: FUNK & CODES (INLINE EDIT) ───────────────────── */
 function renderGuideTab() {
+    renderContentFreshnessHints();
     _renderGuideSection('guideTenCodesBody',    cachedGuideData.tenCodes);
     _renderGuideSection('guideStatusCodesBody', cachedGuideData.statusCodes);
     _renderGuideSection('guideStreifenBody',     cachedGuideData.streifen);
@@ -5991,16 +6320,19 @@ function saveGuideInline() {
         if (dInp) item.desc = dInp.value.trim();
     });
 
+    cachedGuideData._updatedAt = Date.now();
+    cachedGuideData._updatedBy = `${sessionUser.vorname || ''} ${sessionUser.nachname || ''}`.trim();
     db.ref('data/guide').set(cachedGuideData).then(() => {
         renderGuideTab();
         closeGuideInlineModal();
         logAdminAudit('Funk & Codes aktualisiert', `${sessionUser.vorname} ${sessionUser.nachname} hat Codes vor Ort geändert.`);
-        alert('✅ Funk & Codes gespeichert!');
+        showToast('✅ Funk & Codes gespeichert.', 'success');
     });
 }
 
 /* ── REITER: COMMANDS (ALPHABETISCH SORTIERT & LINKBAR) ────── */
 function renderCommandsTab(obj) {
+    renderContentFreshnessHints();
     const cont = document.getElementById('commandsAccordionContainer'); if (!cont) return;
     const all = Object.assign({}, defaultCommands, obj || {});
     
@@ -6097,8 +6429,10 @@ function addCommandInline() {
     const desc = document.getElementById('inlineNewCmdDesc')?.value.trim();
     const kat = document.getElementById('inlineNewCmdKat')?.value.trim() || 'Allgemein';
     if (!name || !desc) { alert('Bitte Name und Beschreibung angeben!'); return; }
-    db.ref('data/dienstCommands').push({ name, desc, kat }).then(() => {
-        alert('✅ Command angelegt!');
+    const updatedAt = Date.now();
+    const updatedBy = `${sessionUser.vorname || ''} ${sessionUser.nachname || ''}`.trim();
+    db.ref('data/dienstCommands').push({ name, desc, kat, updatedAt, updatedBy }).then(() => {
+        showToast('✅ Command angelegt.', 'success');
         closeCommandsInlineModal();
         refreshOpenRoleCategoryCheckboxes();
     });
@@ -6112,16 +6446,18 @@ function editCommandInline(k) {
 
     if (!name || !desc) { alert('Name und Beschreibung dürfen nicht leer sein!'); return; }
 
-    db.ref('data/dienstCommands/' + k).set({ name, desc, kat }).then(() => {
+    const updatedAt = Date.now();
+    const updatedBy = `${sessionUser.vorname || ''} ${sessionUser.nachname || ''}`.trim();
+    db.ref('data/dienstCommands/' + k).set({ name, desc, kat, updatedAt, updatedBy }).then(() => {
         logAdminAudit('Command bearbeitet', `${sessionUser.vorname} ${sessionUser.nachname} hat Command "${name}" geändert.`);
-        alert('✅ Command erfolgreich gespeichert!');
+        showToast('✅ Command erfolgreich gespeichert.', 'success');
     });
 }
 
 function deleteDienstCommand(k) {
     if (!sessionUser || !getUserEffectivePermissions(sessionUser).delCommands) return;
     if (confirm('Command löschen?')) {
-        db.ref('data/dienstCommands/' + k).set({ deleted: true }).then(() => {
+        db.ref('data/dienstCommands/' + k).set({ deleted: true, updatedAt: Date.now(), updatedBy: `${sessionUser.vorname || ''} ${sessionUser.nachname || ''}`.trim() }).then(() => {
             logAdminAudit('Command gelöscht', `Command ${k} gelöscht durch ${sessionUser.vorname} ${sessionUser.nachname}`);
         });
     }
@@ -6129,6 +6465,7 @@ function deleteDienstCommand(k) {
 
 /* ── REITER 4: LINKS & DOKUMENTE (AUTOMATISCHES HTTPS) ──────── */
 function renderLinksTab(obj) {
+    renderContentFreshnessHints();
     const cont = document.getElementById('linksAccordionContainer'); if (!cont) return;
     
     let rawLinks = Object.assign({}, defaultLinks, obj || {});
@@ -6254,7 +6591,9 @@ function addLinkInline() {
     if (!name || !url) { alert('Bitte Name und URL angeben!'); return; }
     if (!url.startsWith('http://') && !url.startsWith('https://')) url = 'https://' + url;
 
-    db.ref('data/dienstLinks').push({ name, url, desc, kat }).then(() => {
+    const updatedAt = Date.now();
+    const updatedBy = `${sessionUser.vorname || ''} ${sessionUser.nachname || ''}`.trim();
+    db.ref('data/dienstLinks').push({ name, url, desc, kat, updatedAt, updatedBy }).then(() => {
         alert('✅ Link gespeichert!');
         closeLinksInlineModal();
         refreshOpenRoleCategoryCheckboxes();
@@ -6271,7 +6610,9 @@ function editLinkInline(k) {
     if (!name || !url) { alert('Name und URL dürfen nicht leer sein!'); return; }
     if (!url.startsWith('http://') && !url.startsWith('https://')) url = 'https://' + url;
 
-    db.ref('data/dienstLinks/' + k).set({ name, url, desc, kat }).then(() => {
+    const updatedAt = Date.now();
+    const updatedBy = `${sessionUser.vorname || ''} ${sessionUser.nachname || ''}`.trim();
+    db.ref('data/dienstLinks/' + k).set({ name, url, desc, kat, updatedAt, updatedBy }).then(() => {
         logAdminAudit('Link bearbeitet', `${sessionUser.vorname} ${sessionUser.nachname} hat Link "${name}" geändert.`);
         alert('✅ Link erfolgreich gespeichert!');
     });
@@ -6280,7 +6621,7 @@ function editLinkInline(k) {
 function deleteDienstLink(k) {
     if (!sessionUser || !getUserEffectivePermissions(sessionUser).delLinks) return;
     if (confirm('Link wirklich löschen?')) {
-        db.ref('data/dienstLinks/' + k).set({ deleted: true }).then(() => {
+        db.ref('data/dienstLinks/' + k).set({ deleted: true, updatedAt: Date.now(), updatedBy: `${sessionUser.vorname || ''} ${sessionUser.nachname || ''}`.trim() }).then(() => {
             const rowEl = document.getElementById('link_row_' + k);
             if (rowEl) rowEl.remove();
             alert('✅ Link erfolgreich gelöscht!');
@@ -6439,6 +6780,7 @@ function refreshEmployeeNoticeListeners() {
         cachedMyEmployeeNotices = snap.val() || {};
         renderEmployeeNoticeFeedPanels();
         renderNewsFeedData(cachedNews);
+        updatePersonalOverview();
         showNextEmployeeNoticePopup();
     }, err => console.error('Mitarbeiterhinweise konnten nicht geladen werden:', err));
 
@@ -7981,7 +8323,7 @@ function renderInstructorAllowedExams() {
             <td style="text-align:right;padding:10px;">
                 <div style="display:flex;gap:6px;justify-content:flex-end;">
                     ${u.status !== 'approved'
-                        ? `<button type="button" class="btn" style="width:auto;margin:0;padding:5px 12px;font-size:12px;background:var(--success);color:#080c14;font-weight:800;" onclick="approveUser('${uId}')">✅ Freischalten</button>`
+                        ? `<button type="button" class="btn" style="width:auto;margin:0;padding:5px 12px;font-size:12px;background:var(--success);color:#080c14;font-weight:800;" onclick="event.stopPropagation(); approveUser('${uId}')">✅ Freischalten</button>`
                         : `<button type="button" class="btn" style="width:auto;margin:0;padding:5px 12px;font-size:12px;background:rgba(244,63,94,0.15);color:var(--danger);border:1px solid var(--danger);" onclick="revokeUser('${uId}')">⛔ Sperren</button>`
                     }
                     <button type="button" class="btn" style="width:auto;margin:0;padding:5px 12px;font-size:12px;" onclick="openAssignRolesModal('${uId}', null, true)">🎭 Rollen</button>
@@ -8273,7 +8615,7 @@ function renderAdminUserTable(obj) {
             <td style="text-align:right;">
                 <div style="display:flex;gap:6px;justify-content:flex-end;">
                     ${canManageMemberAccess ? (u.status !== 'approved'
-                        ? `<button type="button" class="btn" style="width:auto;margin:0;padding:4px 10px;font-size:12px;background:var(--success);color:#080c14;font-weight:800;" onclick="approveUser('${uId}')">✅ Freischalten</button>`
+                        ? `<button type="button" class="btn" style="width:auto;margin:0;padding:4px 10px;font-size:12px;background:var(--success);color:#080c14;font-weight:800;" onclick="event.stopPropagation(); approveUser('${uId}')">✅ Freischalten</button>`
                         : `<button type="button" class="btn" style="width:auto;margin:0;padding:4px 10px;font-size:12px;background:rgba(244,63,94,0.15);color:var(--danger);border:1px solid var(--danger);" onclick="revokeUser('${uId}')">⛔ Sperren</button>`
                     ) : ''}
                     ${canManageMemberAccess ? `<button type="button" class="btn" style="width:auto;margin:0;padding:4px 10px;font-size:12px;" onclick="openAssignRolesModal('${uId}', null, false)">🎭 Rollen</button>` : ''}
@@ -10310,7 +10652,7 @@ function switchTab(tabId, btn) {
     }
     closeMainNavGroups();
 
-    if (tabId === 'calendarTab') renderCalendarMonth();
+    if (tabId === 'calendarTab') { renderCalendarMonth(); setCalendarView(activeCalendarView); }
     if (tabId === 'staffTab') renderStaffDirectory();
     if (tabId === 'miscTab') renderGehaltTab(cachedGehaltData);
     if (tabId === 'sanctionsTab') renderSanctionsCatalog();
@@ -10372,12 +10714,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     updateLiveDate(); setInterval(updateLiveDate, 60000);
     setupRolePermissionAccordions();
     setupUnsavedChangeTracking();
+    setupUnifiedEditorModals();
+    setupGlobalSearchShortcut();
     document.addEventListener('click', event => {
         if (!event.target.closest('.nav-group')) closeMainNavGroups();
     });
     renderGuideTab(); renderHierarchieBoard(hierarchieDaten); baueMaterialUIAuf();
     renderGehaltTab(cachedGehaltData);
     renderSanctionsCatalog();
+    renderContentFreshnessHints();
 
     const authView = document.getElementById('authView');
     const mainView = document.getElementById('mainAppView');
@@ -10418,6 +10763,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 const _w = window;
 _w.switchTab = switchTab; _w.settingsTabClick = settingsTabClick; _w.switchAdminTab = switchAdminTab; _w.switchInstructorTab = switchInstructorTab;
 _w.renderAdminOverview = renderAdminOverview; _w.openAdminOverviewSection = openAdminOverviewSection; _w.openPhotoChecklistFromAdminOverview = openPhotoChecklistFromAdminOverview;
+_w.openGlobalSearch = openGlobalSearch; _w.closeGlobalSearch = closeGlobalSearch; _w.renderGlobalSearchResults = renderGlobalSearchResults; _w.navigateGlobalSearchResult = navigateGlobalSearchResult;
+_w.openMyOpenItemsModal = openMyOpenItemsModal; _w.closeMyOpenItemsModal = closeMyOpenItemsModal; _w.navigateMyOpenItem = navigateMyOpenItem;
 _w.handleAuthAction = handleAuthAction; _w.toggleAuthTab = toggleAuthTab;
 _w.openAdminKeyModal = openAdminKeyModal; _w.closeAdminAuthModal = closeAdminAuthModal; _w.verifyAdminKeyPassword = verifyAdminKeyPassword; _w.closeAdminManagementModal = closeAdminManagementModal;
 _w.handleDienstEndeLogout = handleDienstEndeLogout; _w.forceUserOutOfService = forceUserOutOfService; _w.publishClientRelease = publishClientRelease; _w.reloadForAppUpdate = reloadForAppUpdate; _w.berechneDienstTage = berechneDienstTage; _w.passwortAendern = passwortAendern;
@@ -10460,7 +10807,7 @@ _w.closeHierarchieInlineModal = closeHierarchieInlineModal;
 _w.saveHierarchieInline = saveHierarchieInline;
 _w.changeCalendarMonth = changeCalendarMonth;
 _w.resetCalendarToToday = resetCalendarToToday;
-_w.renderCalendarMonth = renderCalendarMonth;
+_w.renderCalendarMonth = renderCalendarMonth; _w.setCalendarView = setCalendarView;
 _w.onCalendarCellClick = onCalendarCellClick;
 _w.openCreateEventModal = openCreateEventModal;
 _w.closeCalendarEventModal = closeCalendarEventModal;
@@ -10473,7 +10820,7 @@ _w.togglePrivateEventOption = togglePrivateEventOption;
 _w.toggleAllCalendarRoles = toggleAllCalendarRoles;
 _w.handleCalendarCreatorSelectionChange = handleCalendarCreatorSelectionChange;
 _w.respondToCalendarInvite = respondToCalendarInvite;
-_w.renderStaffDirectory = renderStaffDirectory; _w.resetStaffDirectoryFilters = resetStaffDirectoryFilters;
+_w.renderStaffDirectory = renderStaffDirectory; _w.resetStaffDirectoryFilters = resetStaffDirectoryFilters; _w.openStaffDetailModal = openStaffDetailModal; _w.closeStaffDetailModal = closeStaffDetailModal;
 _w.filterStaffDirectory = filterStaffDirectory;
 _w.openStaffPhotoUploadModal = openStaffPhotoUploadModal;
 _w.closeStaffPhotoUploadModal = closeStaffPhotoUploadModal;
