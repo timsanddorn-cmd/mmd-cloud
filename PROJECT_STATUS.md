@@ -1,8 +1,8 @@
 # MMD Cloud – PROJECT STATUS
 
 **Aktuell bestätigte stabile Live-Version:** v6.8.6a  
-**Aktueller Entwicklungsstand:** v6.8.7e  
-**Status v6.8.7e:** 🟡 DN-SYNCHRONISIERUNG BESTÄTIGT / GESAMTER LIVE-GEGENCHECK NOCH AUSSTEHEND  
+**Aktueller Entwicklungsstand:** v6.8.7f  
+**Status v6.8.7f:** 🟡 DN-SYNCHRONISIERUNG BESTÄTIGT / GESAMTER LIVE-GEGENCHECK NOCH AUSSTEHEND  
 **Datum:** 20.09.2026
 
 ---
@@ -11,7 +11,7 @@
 
 **v6.8.6a = bestätigte stabile Code-Rollback-Basis**
 
-v6.8.7e baut auf v6.8.7d auf. Zusätzlich wurde die Positionierung aller Modalfenster zentral korrigiert und „Foto-Liste“ in „Foto liste“ umbenannt.
+v6.8.7f baut auf v6.8.7e auf. Zusätzlich wurde die horizontale Bedienung der Bestands Historie nach oben verlegt.
 
 Firebase Auth, Passwörter, Rollen, Berechtigungen, `authIndex`, `loginDirectory` und Realtime-Database-Rules wurden nicht verändert.
 
@@ -108,7 +108,17 @@ Behoben:
 
 ---
 
-## 8. Bestätigung der DN-Synchronisierung
+## 8. Bestands Historie v6.8.7f
+
+Geändert:
+- der horizontale Scrollbalken steht jetzt oberhalb der Historientabelle direkt unter der Beschreibung,
+- die obere Scrollleiste steuert die Tabelle synchron,
+- der bisherige untere horizontale Scrollbalken wird ausgeblendet,
+- Tabelleninhalt, Löschfunktion und Berechtigungen wurden nicht verändert.
+
+---
+
+## 9. Bestätigung der DN-Synchronisierung
 
 Am 20.09.2026 wurde die DN-Aktualisierung im Live-System vom Nutzer bestätigt.
 
@@ -123,7 +133,7 @@ Der vollständige Live-Gegencheck der zusätzlichen Funktionen aus v6.8.7 steht 
 
 ---
 
-## 9. Auswirkungen auf Login und Konten
+## 10. Auswirkungen auf Login und Konten
 
 Die DN ist **nicht** Bestandteil der technischen Login-Zuordnung.
 
@@ -144,7 +154,7 @@ Historische Datensätze wie frühere Prüfungsabgaben oder alte Protokolle behal
 
 ---
 
-## 10. Rollback / Nachvollziehbarkeit
+## 11. Rollback / Nachvollziehbarkeit
 
 **v6.8.6a bleibt vorerst die bestätigte stabile Code-Rollback-Basis.**
 
@@ -159,9 +169,9 @@ Firebase Rules müssen weder für die Synchronisierung noch für einen Code-Roll
 
 ---
 
-## 11. Noch offener Live-Gegencheck
+## 12. Noch offener Live-Gegencheck
 
-Für v6.8.7/v6.8.7e müssen bei Gelegenheit noch die Komfortfunktionen geprüft werden, insbesondere:
+Für v6.8.7/v6.8.7f müssen bei Gelegenheit noch die Komfortfunktionen geprüft werden, insbesondere:
 - Heute-Bereich,
 - „Meine offenen Dinge“,
 - Kalender Monat/Liste,
@@ -172,4 +182,4 @@ Für v6.8.7/v6.8.7e müssen bei Gelegenheit noch die Komfortfunktionen geprüft 
 - mobile Darstellung,
 - bestehende Kernfunktionen.
 
-Nach erfolgreichem Gesamtcheck kann v6.8.7e als neue stabile Live- und Rollback-Version bestätigt werden.
+Nach erfolgreichem Gesamtcheck kann v6.8.7f als neue stabile Live- und Rollback-Version bestätigt werden.

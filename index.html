@@ -11,7 +11,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
-    <link rel="stylesheet" href="style.css?v=6.8.7e">
+    <link rel="stylesheet" href="style.css?v=6.8.7f">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏥</text></svg>">
 </head>
 <body>
@@ -1072,8 +1072,11 @@
                         </div>
                         <button type="button" class="btn" style="width:auto;padding:8px 12px;font-size:12px;" onclick="renderChiefMaterialsTab()">🔄 Aktualisieren</button>
                     </div>
-                    <div class="table-responsive chief-history-wrap">
-                        <table class="chief-history-table">
+                    <div id="chiefHistoryTopScroll" class="chief-history-top-scroll" onscroll="syncChiefHistoryScroll('top')" aria-label="Bestands Historie horizontal scrollen">
+                        <div id="chiefHistoryTopScrollInner" class="chief-history-top-scroll-inner"></div>
+                    </div>
+                    <div id="chiefHistoryTableWrap" class="table-responsive chief-history-wrap" onscroll="syncChiefHistoryScroll('table')">
+                        <table id="chiefHistoryTable" class="chief-history-table">
                             <thead id="chiefMaterialHistoryHead"></thead>
                             <tbody id="chiefMaterialHistoryBody"></tbody>
                         </table>
@@ -2214,6 +2217,6 @@
         </div>
     </div>
 
-    <script src="app.js?v=6.8.7e"></script>
+    <script src="app.js?v=6.8.7f"></script>
 </body>
 </html>

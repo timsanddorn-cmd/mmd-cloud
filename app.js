@@ -1,5 +1,5 @@
 // ============================================================
-//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.8.7e
+//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.8.7f
 //  Firebase Realtime Database (Compat SDK v10)
 // ============================================================
 
@@ -182,7 +182,7 @@ const db = firebase.database();
 const auth = firebase.auth();
 const FIREBASE_AUTH_EMAIL_DOMAIN = 'mmd-login.invalid';
 
-const APP_VERSION = 'v6.8.7e';
+const APP_VERSION = 'v6.8.7f';
 const PRESENCE_HEARTBEAT_MS = 30 * 1000;
 const PRESENCE_STALE_MS = 3 * 60 * 1000;
 
@@ -529,6 +529,15 @@ let hierarchieDaten = JSON.parse(JSON.stringify(defaultHierarchieData));
 
 /* ── Vollständiger Gesamt-Changelog (Entwicklungsverlauf) ───── */
 const systemChangelogs = [
+    {
+        id: "sys_v6_8_7f", version: "v6.8.7f", date: "20.09.2026", ts: 1789932000000,
+        category: "Verbesserung", title: "Bestands Historie besser bedienbar",
+        changes: [
+            "Der horizontale Scrollbalken der Bestands Historie befindet sich jetzt oberhalb der Tabelle direkt unter dem Beschreibungstext.",
+            "Die obere Scrollleiste und die Historientabelle laufen synchron.",
+            "Der bisherige Scrollbalken am unteren Tabellenende wird ausgeblendet; Inhalte und Berechtigungen bleiben unverändert."
+        ]
+    },
     {
         id: "sys_v6_8_7e", version: "v6.8.7e", date: "20.09.2026", ts: 1789930500000,
         category: "Fehlerbehebung", title: "Fenster öffnen wieder im sichtbaren Bereich",
@@ -10718,6 +10727,38 @@ function handleChiefRefilledToggle() {
     if (!cb.checked) date.value = '';
 }
 
+let chiefHistoryScrollSyncing = false;
+
+function updateChiefHistoryTopScrollbar() {
+    const top = document.getElementById('chiefHistoryTopScroll');
+    const inner = document.getElementById('chiefHistoryTopScrollInner');
+    const wrap = document.getElementById('chiefHistoryTableWrap');
+    const table = document.getElementById('chiefHistoryTable');
+    if (!top || !inner || !wrap || !table) return;
+
+    requestAnimationFrame(() => {
+        const tableWidth = Math.max(table.scrollWidth, table.offsetWidth || 0);
+        inner.style.width = `${tableWidth}px`;
+        top.style.display = tableWidth > wrap.clientWidth + 1 ? 'block' : 'none';
+        top.scrollLeft = wrap.scrollLeft;
+    });
+}
+
+function syncChiefHistoryScroll(source) {
+    if (chiefHistoryScrollSyncing) return;
+    const top = document.getElementById('chiefHistoryTopScroll');
+    const wrap = document.getElementById('chiefHistoryTableWrap');
+    if (!top || !wrap) return;
+
+    chiefHistoryScrollSyncing = true;
+    if (source === 'top') {
+        wrap.scrollLeft = top.scrollLeft;
+    } else {
+        top.scrollLeft = wrap.scrollLeft;
+    }
+    requestAnimationFrame(() => { chiefHistoryScrollSyncing = false; });
+}
+
 function renderChiefMaterialHistory() {
     const head = document.getElementById('chiefMaterialHistoryHead');
     const body = document.getElementById('chiefMaterialHistoryBody');
@@ -10732,6 +10773,7 @@ function renderChiefMaterialHistory() {
     });
     if (!entries.length) {
         body.innerHTML = `<tr><td colspan="${CHIEF_MATERIAL_DEFS.length + (editable ? 4 : 3)}" style="text-align:center;color:var(--text-muted);padding:24px;">Noch keine Bestandsaufnahmen gespeichert.</td></tr>`;
+        updateChiefHistoryTopScrollbar();
         return;
     }
     body.innerHTML = entries.map(([entryId, e]) => {
@@ -10749,6 +10791,7 @@ function renderChiefMaterialHistory() {
         const refill = e.refilled ? `✅ Ja${e.refilledAt ? `<br><small>${formatChiefDate(e.refilledAt)}</small>` : ''}` : '—';
         return `<tr><td><b>${formatChiefDate(e.date)}</b></td>${matCells}<td>${refill}</td><td>${escapeHtml(e.enteredBy || '--')}</td>${editable ? `<td class="chief-history-action-col"><button type="button" class="btn-delete-row chief-history-delete-btn" onclick="deleteChiefMaterialEntry('${entryId}')" title="Bestandsaufnahme löschen" aria-label="Bestandsaufnahme löschen">🗑️</button></td>` : ''}</tr>`;
     }).join('');
+    updateChiefHistoryTopScrollbar();
 }
 
 function renderChiefMaterialsTab() {
@@ -10947,6 +10990,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     setupUnsavedChangeTracking();
     setupUnifiedEditorModals();
     setupGlobalSearchShortcut();
+    window.addEventListener('resize', updateChiefHistoryTopScrollbar);
     document.addEventListener('click', event => {
         if (!event.target.closest('.nav-group')) closeMainNavGroups();
     });
@@ -11016,7 +11060,7 @@ _w.openChangelogWriterModal = openChangelogWriterModal; _w.closeChangelogWriterM
 _w.openGehaltInlineModal = openGehaltInlineModal; _w.closeGehaltInlineModal = closeGehaltInlineModal; _w.saveGehaltInline = saveGehaltInline; _w.addGehaltRowInline = addGehaltRowInline; _w.removeGehaltRowInline = removeGehaltRowInline;
 _w.renderSanctionsCatalog = renderSanctionsCatalog; _w.setSanctionsFilter = setSanctionsFilter; _w.resetSanctionsFilters = resetSanctionsFilters; _w.toggleSanctionsRules = toggleSanctionsRules;
 _w.openSanctionsCatalogEditor = openSanctionsCatalogEditor; _w.closeSanctionsCatalogEditor = closeSanctionsCatalogEditor; _w.addSanctionsRuleEditorRow = addSanctionsRuleEditorRow; _w.removeSanctionsRuleEditorRow = removeSanctionsRuleEditorRow; _w.addSanctionsEntryEditorRow = addSanctionsEntryEditorRow; _w.removeSanctionsEntryEditorRow = removeSanctionsEntryEditorRow; _w.saveSanctionsCatalogEditor = saveSanctionsCatalogEditor;
-_w.renderChiefMaterialsTab = renderChiefMaterialsTab; _w.updateChiefMaterialPreview = updateChiefMaterialPreview; _w.handleChiefRefilledToggle = handleChiefRefilledToggle; _w.saveChiefMaterialEntry = saveChiefMaterialEntry; _w.saveChiefMaterialConfig = saveChiefMaterialConfig; _w.deleteChiefMaterialEntry = deleteChiefMaterialEntry;
+_w.renderChiefMaterialsTab = renderChiefMaterialsTab; _w.updateChiefMaterialPreview = updateChiefMaterialPreview; _w.handleChiefRefilledToggle = handleChiefRefilledToggle; _w.saveChiefMaterialEntry = saveChiefMaterialEntry; _w.saveChiefMaterialConfig = saveChiefMaterialConfig; _w.deleteChiefMaterialEntry = deleteChiefMaterialEntry; _w.syncChiefHistoryScroll = syncChiefHistoryScroll;
 _w.startExam = startExam; _w.cancelActiveExam = cancelActiveExam; _w.submitActiveExam = submitActiveExam;
 _w.addExamQuestionRow = addExamQuestionRow; _w.resetExamBuilderForm = resetExamBuilderForm; _w.neuePruefungSpeichern = neuePruefungSpeichern; _w.editExam = editExam; _w.deleteExam = deleteExam; _w.deleteExamSubmission = deleteExamSubmission;
 _w.openExamBuilderModal = openExamBuilderModal; _w.closeExamBuilderModal = closeExamBuilderModal;
