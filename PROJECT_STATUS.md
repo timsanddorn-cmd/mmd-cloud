@@ -3,7 +3,7 @@
 **Aktuell bestätigte stabile Live-Version:** v6.8.7j  
 **Aktueller Entwicklungsstand:** v6.8.8  
 **Status v6.8.8:** 🟡 PERSONALVERWALTUNG IMPLEMENTIERT / LIVE-TEST AUSSTEHEND  
-**Datum:** 21.09.2026
+**Datum:** 22.09.2026
 
 ---
 
