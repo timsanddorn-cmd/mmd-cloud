@@ -11404,7 +11404,7 @@ function canCurrentUserAccessPersonnelArea(){return getPersonnelPermissions().ca
 function normalizePersonnelRankKey(v){const k=String(v||'').trim();return PERSONNEL_RANKS[k]?k:'';}
 function personnelUserName(uId){const u=cachedUsers?.[uId]||{};return `${u.vorname||''} ${u.nachname||''}`.trim()||uId;}
 function getEmployeeRankData(uId){const x=cachedEmployeeRanks?.[uId]||{};return {common:normalizePersonnelRankKey(x.common),doctor:normalizePersonnelRankKey(x.doctor),paramedic:normalizePersonnelRankKey(x.paramedic)};}
-function getEmployeeRankKeys(uId){const r=getEmployeeRankData(uId),career=getEmployeeCareerPathKey(uId);if(r.common&&PERSONNEL_RANKS[r.common]?.track==='common-high')return[r.common];const b=[];if((career==='doctor'||career==='both')&&r.doctor)b.push(r.doctor);if((career==='paramedic'||career==='both')&&r.paramedic)b.push(r.paramedic);return b.length?b:(r.common?[r.common]:[]);}
+function getEmployeeRankKeys(uId){const r=getEmployeeRankData(uId),career=getEmployeeCareerPathKey(uId);if(r.common&&PERSONNEL_RANKS[r.common]?.track==='common-high')return[r.common];const b=[];if((career==='doctor'||career==='both'||career==='none')&&r.doctor)b.push(r.doctor);if((career==='paramedic'||career==='both'||career==='none')&&r.paramedic)b.push(r.paramedic);return b.length?b:(r.common?[r.common]:[]);}
 function getEmployeeRankLabels(uId){const k=getEmployeeRankKeys(uId);return k.length?k.map(x=>PERSONNEL_RANKS[x]?.label||x):['Noch nicht festgelegt'];}
 function getEmployeeRankBadges(uId){const k=getEmployeeRankKeys(uId);if(!k.length)return '<span class="staff-rank-badge rank-none">🎖️ Rang: Noch nicht festgelegt</span>';return k.map(x=>`<span class="staff-rank-badge rank-${escapeHtml(PERSONNEL_RANKS[x]?.track||'common')}">🎖️ ${escapeHtml(PERSONNEL_RANKS[x]?.label||x)}</span>`).join('');}
 function getEmployeePublicAbsence(uId){const x=cachedEmployeeAbsenceStatus?.[uId];if(!x||x.active!==true||!PERSONNEL_ABSENCE_TYPES[x.type])return null;const m=PERSONNEL_ABSENCE_TYPES[x.type];return {type:x.type,label:m.label,icon:m.icon};}
@@ -11425,7 +11425,7 @@ function getPersonnelMasterlistSeedForUser(user){if(!user)return null;const dn=n
 function buildMasterlistRankState(rankKey){const rank=PERSONNEL_RANKS[rankKey];if(!rank)return {common:'',doctor:'',paramedic:''};return {common:rank.track?.startsWith('common')?rankKey:'',doctor:rank.track==='doctor'?rankKey:'',paramedic:rank.track==='paramedic'?rankKey:''};}
 async function importPersonnelMasterlistDefaults(){
     if(personnelMasterlistImportRunning||personnelMasterlistImportDone||!sessionUser)return;
-    const p=getPersonnelPermissions(),eff=getUserEffectivePermissions(sessionUser),canUpdateUsers=!!(eff.isMasterAdmin||eff.isAdmin||eff.canManageMemberAccess||eff.canManageInstructors);
+    const p=getPersonnelPermissions(),eff=getUserEffectivePermissions(sessionUser),canUpdateUsers=!!(eff.isMasterAdmin||eff.isAdmin||eff.canManageMemberAccess||eff.canManageInstructors),canUpdateEmploymentDate=!!(eff.isMasterAdmin||eff.isAdmin||eff.canManageInstructors);
     if(!p.canManageRecords&&!p.canManageRanks&&!p.canManageCareer&&!canUpdateUsers)return;
     personnelMasterlistImportRunning=true;
     try{
@@ -11437,7 +11437,7 @@ async function importPersonnelMasterlistDefaults(){
         for(const seed of PERSONNEL_MASTERLIST_SEED){
             const hit=byDn.get(normalizePersonnelDn(seed.dn));if(!hit)continue;matched++;const [uId,user]=hit;
             if(canUpdateUsers){
-                if(seed.employmentDate&&!String(user.einstellungsDatum||'').trim())set(`data/users/${uId}/einstellungsDatum`,seed.employmentDate);
+                if(canUpdateEmploymentDate&&seed.employmentDate&&!String(user.einstellungsDatum||'').trim())set(`data/users/${uId}/einstellungsDatum`,seed.employmentDate);
                 if(user.diensttageKorrektur===undefined||user.diensttageKorrektur===null||user.diensttageKorrektur==='')set(`data/users/${uId}/diensttageKorrektur`,Number(seed.serviceDaysCorrection)||0);
             }
             if(p.canManageRecords){
