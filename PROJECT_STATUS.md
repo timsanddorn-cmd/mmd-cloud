@@ -1,8 +1,8 @@
 # MMD Cloud – PROJECT STATUS
 
 **Aktuell bestätigte stabile Live-Version:** v6.8.6a  
-**Aktueller Entwicklungsstand:** v6.8.7g  
-**Status v6.8.7g:** 🟡 DN-SYNCHRONISIERUNG BESTÄTIGT / GESAMTER LIVE-GEGENCHECK NOCH AUSSTEHEND  
+**Aktueller Entwicklungsstand:** v6.8.7h  
+**Status v6.8.7h:** 🟡 DN-SYNCHRONISIERUNG BESTÄTIGT / GESAMTER LIVE-GEGENCHECK NOCH AUSSTEHEND  
 **Datum:** 21.09.2026
 
 ---
@@ -11,7 +11,7 @@
 
 **v6.8.6a = bestätigte stabile Code-Rollback-Basis**
 
-v6.8.7g baut auf v6.8.7f auf. Zusätzlich wurden Mitarbeiterlaufbahnen für die Personalabteilung und eine größere Mitarbeiter-Einzelansicht ergänzt.
+v6.8.7h baut auf v6.8.7g auf. Der Personalabteilung wurde ein eigener Hauptbereich gegeben; die Laufbahnverwaltung wurde aus der Mitarbeiterkartei dorthin verschoben.
 
 Firebase Auth, Passwörter, `authIndex`, `loginDirectory` und bestehende Account-IDs wurden nicht verändert. Die Rollenverwaltung erhielt ausschließlich die neue Berechtigung `canManageCareerPaths`; die Realtime-Database-Rules wurden nur für den neuen getrennten Pfad `data/employeeCareerPaths` ergänzt.
 
@@ -204,3 +204,22 @@ Sicherheit:
 - bestehende Benutzerobjekte werden für Laufbahnen nicht erweitert,
 - Lesen der Laufbahn ist für freigeschaltete Mitarbeiter erlaubt,
 - Schreiben ist ausschließlich mit `canManageCareerPaths` oder als Master Admin erlaubt.
+
+
+---
+
+## 14. Eigener Personalabteilungs-Bereich v6.8.7h
+
+Geändert:
+- neuer direkter Hauptreiter „Personalabteilung“,
+- Laufbahnverwaltung aus der Mitarbeiterkartei in den neuen Personalbereich verschoben,
+- Zugriff auf den Personalbereich nur mit `canManageCareerPaths` oder als Master Admin,
+- direkter Aufruf des Bereichs wird zusätzlich in der Navigation geprüft,
+- Laufbahnanzeige in der Mehrfachansicht und Einzelansicht der Mitarbeiterkartei bleibt für alle berechtigten Cloud-Nutzer sichtbar,
+- der neue Personalbereich ist bewusst als Grundlage für spätere Personal-Funktionen angelegt.
+
+Nicht verändert:
+- Laufbahndaten und deren Firebase Rules,
+- Login, Registrierung, Passwörter, Account-IDs, `authIndex`, `loginDirectory`,
+- Mitarbeiterfoto-Workflow,
+- bestehende Rollen-IDs.

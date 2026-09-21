@@ -1,5 +1,5 @@
 // ============================================================
-//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.8.7g
+//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.8.7h
 //  Firebase Realtime Database (Compat SDK v10)
 // ============================================================
 
@@ -182,7 +182,7 @@ const db = firebase.database();
 const auth = firebase.auth();
 const FIREBASE_AUTH_EMAIL_DOMAIN = 'mmd-login.invalid';
 
-const APP_VERSION = 'v6.8.7g';
+const APP_VERSION = 'v6.8.7h';
 const PRESENCE_HEARTBEAT_MS = 30 * 1000;
 const PRESENCE_STALE_MS = 3 * 60 * 1000;
 
@@ -530,6 +530,16 @@ let hierarchieDaten = JSON.parse(JSON.stringify(defaultHierarchieData));
 
 /* ── Vollständiger Gesamt-Changelog (Entwicklungsverlauf) ───── */
 const systemChangelogs = [
+    {
+        id: "sys_v6_8_7h", version: "v6.8.7h", date: "21.09.2026", ts: 1790007300000,
+        category: "Verbesserung", title: "Eigener Hauptbereich für die Personalabteilung",
+        changes: [
+            "Die Personalabteilung besitzt jetzt einen eigenen Hauptreiter in der MMD Cloud.",
+            "Die Mitarbeiterlaufbahn-Verwaltung wurde aus der Mitarbeiterkartei in diesen eigenen Bereich verschoben.",
+            "Der Bereich ist nur mit der Berechtigung „Mitarbeiterlaufbahn verwalten“ oder als Master Admin sichtbar und aufrufbar.",
+            "Die Laufbahnanzeige auf den normalen Mitarbeiterkarten und in der Einzelansicht bleibt unverändert für alle sichtbar."
+        ]
+    },
     {
         id: "sys_v6_8_7g", version: "v6.8.7g", date: "21.09.2026", ts: 1790006400000,
         category: "Funktion", title: "Mitarbeiterlaufbahnen für die Personalabteilung",
@@ -2731,7 +2741,14 @@ function applyUserPermissions(user) {
     const isMaster = !!eff.isMasterAdmin;
     const isAdminOrMaster = (eff.isAdmin || isMaster);
     const canPostDirect = !!(eff.canPostNews || isMaster);
+    const canAccessPersonnel = !!(eff.canManageCareerPaths || isMaster);
     renderCareerManagementPanel();
+
+    const personnelTabBtn = document.getElementById('personnelTabNavBtn');
+    if (personnelTabBtn) personnelTabBtn.style.display = canAccessPersonnel ? 'inline-flex' : 'none';
+    if (!canAccessPersonnel && document.getElementById('personnelTab')?.classList.contains('active')) {
+        switchTab('docTab', document.querySelector('.tab-nav .tab-btn'));
+    }
     
     const akBtn = document.getElementById('adminKeyBtn');
     if (akBtn) akBtn.style.display = (isAdminOrMaster || eff.canManageMaintenance) ? 'inline-block' : 'none';
@@ -11038,6 +11055,10 @@ function toggleMainNavGroup(menuId, btn, event) {
 }
 
 function switchTab(tabId, btn) {
+    if (tabId === 'personnelTab' && !canCurrentUserManageCareerPaths()) {
+        alert('Keine Berechtigung für den Bereich Personalabteilung.');
+        return;
+    }
     if (isMaintenanceRestrictedSession() && tabId !== 'docTab') {
         alert('🛠️ Dieser Bereich ist während der Wartungsarbeiten vorübergehend nicht verfügbar. Dokumentation & Einsatz bleibt nutzbar.');
         tabId = 'docTab';
@@ -11057,6 +11078,7 @@ function switchTab(tabId, btn) {
 
     if (tabId === 'calendarTab') { renderCalendarMonth(); setCalendarView(activeCalendarView); }
     if (tabId === 'staffTab') renderStaffDirectory();
+    if (tabId === 'personnelTab') renderCareerManagementPanel();
     if (tabId === 'miscTab') renderGehaltTab(cachedGehaltData);
     if (tabId === 'sanctionsTab') renderSanctionsCatalog();
     if (tabId === 'chiefTab') renderChiefMaterialsTab();
