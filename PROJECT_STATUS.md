@@ -1,8 +1,8 @@
 # MMD Cloud – PROJECT STATUS
 
 **Aktuell bestätigte stabile Live-Version:** v6.8.6a  
-**Aktueller Entwicklungsstand:** v6.8.7i  
-**Status v6.8.7i:** 🟡 DN-SYNCHRONISIERUNG BESTÄTIGT / GESAMTER LIVE-GEGENCHECK NOCH AUSSTEHEND  
+**Aktueller Entwicklungsstand:** v6.8.7j  
+**Status v6.8.7j:** 🟡 DN-SYNCHRONISIERUNG BESTÄTIGT / GESAMTER LIVE-GEGENCHECK NOCH AUSSTEHEND  
 **Datum:** 21.09.2026
 
 ---
@@ -11,7 +11,7 @@
 
 **v6.8.6a = bestätigte stabile Code-Rollback-Basis**
 
-v6.8.7i baut auf v6.8.7h auf. Die Checkbox-Darstellung im Bereich Rollen & Rechte wurde vollständig vereinheitlicht.
+v6.8.7j baut auf v6.8.7i auf. Das Speichern im Bereich Rollen & Rechte wurde stabilisiert und die Laufbahn-Berechtigung in den ServerPermissions-Rules ausdrücklich ergänzt.
 
 Firebase Auth, Passwörter, `authIndex`, `loginDirectory` und bestehende Account-IDs wurden nicht verändert. Die Rollenverwaltung erhielt ausschließlich die neue Berechtigung `canManageCareerPaths`; die Realtime-Database-Rules wurden nur für den neuen getrennten Pfad `data/employeeCareerPaths` ergänzt.
 
@@ -240,3 +240,19 @@ Nicht verändert:
 - Berechtigungswerte und Rollenlogik,
 - Firebase Rules,
 - Benutzerkonten, Login, Passwörter und Rollen-IDs.
+
+
+---
+
+## 16. Rollenspeichern v6.8.7j
+
+Behoben:
+- „Rolle speichern“ besitzt einen eigenen stabilen Button-Zustand,
+- während des Speicherns wird „Speichert …“ angezeigt,
+- der eigentliche Rollenschreibvorgang und die anschließende Synchronisierung der Benutzerrechte werden getrennt behandelt,
+- ein Fehler bei der nachgelagerten Synchronisierung macht einen bereits erfolgreichen Rollenspeichervorgang nicht mehr rückwirkend zu einem Fehler,
+- `canManageCareerPaths` ist als eigene boolesche Server-Berechtigung in den Firebase Rules definiert.
+
+Wichtig:
+- Wegen der ergänzten ServerPermissions-Regel muss die aktuelle `database.rules.final.json` in Firebase veröffentlicht werden, falls diese Rules noch nicht live sind.
+- Login, Passwörter, Account-IDs, Rollen-IDs und Auth-Zuordnungen wurden nicht verändert.
