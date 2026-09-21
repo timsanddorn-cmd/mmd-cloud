@@ -2792,7 +2792,7 @@ function applyUserPermissions(user) {
     const isMaster = !!eff.isMasterAdmin;
     const isAdminOrMaster = (eff.isAdmin || isMaster);
     const canPostDirect = !!(eff.canPostNews || isMaster);
-    const canAccessPersonnel = !!(eff.canManageCareerPaths || eff.canViewPersonnelRecords || eff.canManagePersonnelRecords || eff.canManagePersonnelAbsences || eff.canManagePersonnelRanks || eff.canCreateEmployees || isMaster);
+    const canAccessPersonnel = !!(eff.canManageCareerPaths || eff.canViewPersonnelRecords || eff.canManagePersonnelRecords || eff.canManagePersonnelAbsences || eff.canManagePersonnelRanks || eff.canManagePersonnelDepartures || eff.canCreateEmployees || isMaster);
     renderCareerManagementPanel();
     if (typeof refreshPersonnelModule === 'function') refreshPersonnelModule();
 
