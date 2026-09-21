@@ -1,5 +1,5 @@
 // ============================================================
-//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.8.7i
+//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.8.7j
 //  Firebase Realtime Database (Compat SDK v10)
 // ============================================================
 
@@ -182,7 +182,7 @@ const db = firebase.database();
 const auth = firebase.auth();
 const FIREBASE_AUTH_EMAIL_DOMAIN = 'mmd-login.invalid';
 
-const APP_VERSION = 'v6.8.7i';
+const APP_VERSION = 'v6.8.7j';
 const PRESENCE_HEARTBEAT_MS = 30 * 1000;
 const PRESENCE_STALE_MS = 3 * 60 * 1000;
 
@@ -530,6 +530,16 @@ let hierarchieDaten = JSON.parse(JSON.stringify(defaultHierarchieData));
 
 /* ── Vollständiger Gesamt-Changelog (Entwicklungsverlauf) ───── */
 const systemChangelogs = [
+    {
+        id: "sys_v6_8_7j", version: "v6.8.7j", date: "21.09.2026", ts: 1790009100000,
+        category: "Fehlerbehebung", title: "Rollenspeichern stabilisiert",
+        changes: [
+            "Der Button „Rolle speichern“ besitzt jetzt einen eigenen stabilen Klickbereich und sichtbaren Speicherstatus.",
+            "Eine Rolle gilt nach erfolgreichem Firebase-Rollenschreibvorgang sofort als gespeichert, auch wenn die anschließende Benutzerrechte-Synchronisierung separat fehlschlägt.",
+            "Fehler beim eigentlichen Rollenspeichern und bei der nachgelagerten Rechte-Synchronisierung werden getrennt behandelt.",
+            "Die neue Berechtigung canManageCareerPaths wurde ausdrücklich in den ServerPermissions-Regeln ergänzt."
+        ]
+    },
     {
         id: "sys_v6_8_7i", version: "v6.8.7i", date: "21.09.2026", ts: 1790008200000,
         category: "Fehlerbehebung", title: "Checkboxen in Rollen & Rechte vereinheitlicht",
@@ -10012,13 +10022,17 @@ function neueRolleErstellen() {
     updateRoleBadgePreview();
 }
 
-function speichereRolle() {
+async function speichereRolle() {
     if (!requireAdminAccess()) return;
-    const id = document.getElementById('editingRoleId')?.value; 
+    const saveBtn = document.getElementById('btnSaveRole');
+    const originalLabel = saveBtn?.textContent || '💾 Rolle speichern';
+
+    const id = document.getElementById('editingRoleId')?.value;
     if (!id) {
         alert('Bitte wähle zuerst eine Rolle aus oder erstelle eine neue Rolle!');
         return;
     }
+
     const operatorEff = getUserEffectivePermissions(sessionUser);
     const existingRole = cachedRoles[id] || defaultRoles[id];
     if ((id === 'masteradmin' || id === 'admin' || existingRole?.isAdmin || existingRole?.isMasterAdmin) && !operatorEff.isMasterAdmin) {
@@ -10027,10 +10041,8 @@ function speichereRolle() {
     }
 
     const isMaster = (id === 'masteradmin');
-
     const allowedCmds = [];
     document.querySelectorAll('.roleCommandsCategoriesContainer_check:checked').forEach(c => allowedCmds.push(c.value));
-
     const allowedLnks = [];
     document.querySelectorAll('.roleLinksCategoriesContainer_check:checked').forEach(c => allowedLnks.push(c.value));
 
@@ -10057,16 +10069,36 @@ function speichereRolle() {
         r.delUsers = false;
     }
 
-    db.ref('data/roles/' + id).set(r).then(async () => {
+    if (saveBtn) {
+        saveBtn.disabled = true;
+        saveBtn.textContent = '⏳ Speichert …';
+        saveBtn.setAttribute('aria-busy', 'true');
+    }
+
+    try {
+        await db.ref('data/roles/' + id).set(r);
         cachedRoles[id] = r;
         clearUnsavedChanges('role');
-        await syncServerPermissionsForAllUsers();
         renderAdminRolesList();
         logAdminAudit('Rolle gespeichert', `${sessionUser.vorname} ${sessionUser.nachname} hat Rolle "${r.name}" gespeichert.`);
         showToast(`✅ Rolle "${r.name}" erfolgreich gespeichert.`, 'success');
-    }).catch(err => {
-        alert('Die Rolle konnte nicht gespeichert werden. Bitte versuche es erneut.');
-    });
+
+        try {
+            await syncServerPermissionsForAllUsers();
+        } catch (syncErr) {
+            console.error('Rolle gespeichert, aber Benutzerrechte konnten nicht vollständig synchronisiert werden:', syncErr);
+            showToast('⚠️ Rolle gespeichert. Die Rechte-Synchronisierung konnte nicht vollständig abgeschlossen werden.', 'warning', 6000);
+        }
+    } catch (err) {
+        console.error('Rolle konnte nicht gespeichert werden:', err);
+        alert('Die Rolle konnte nicht gespeichert werden. Bitte prüfe die Firebase Rules und versuche es erneut.');
+    } finally {
+        if (saveBtn) {
+            saveBtn.disabled = false;
+            saveBtn.textContent = originalLabel;
+            saveBtn.removeAttribute('aria-busy');
+        }
+    }
 }
 
 async function loescheRolle() {
