@@ -1,8 +1,8 @@
 # MMD Cloud – PROJECT STATUS
 
 **Aktuell bestätigte stabile Live-Version:** v6.8.7j  
-**Aktueller Entwicklungsstand:** v6.8.8  
-**Status v6.8.8:** 🟡 PERSONALVERWALTUNG IMPLEMENTIERT / LIVE-TEST AUSSTEHEND  
+**Aktueller Entwicklungsstand:** v6.8.9  
+**Status v6.8.9:** 🟡 PERSONALVERWALTUNG ERWEITERT / LIVE-TEST AUSSTEHEND  
 **Datum:** 22.09.2026
 
 ---
@@ -295,3 +295,54 @@ Sicherheit / Daten:
 
 Firebase:
 - vor dem vollständigen Live-Test muss die zu v6.8.8 gehörende `database.rules.final.json` veröffentlicht werden.
+
+
+---
+
+## 18. Personalverwaltung v6.8.9 – Masterlisten-Erweiterung
+
+Aus der bereitgestellten SAMD-Masterliste wurden ausschließlich sinnvolle Personalverwaltungs-Funktionen als Vorlage übernommen. Es erfolgt **kein automatischer Import** der Tabellenzeilen.
+
+Neu:
+- zusätzliche interne Personalstammdaten:
+  - Telefonnummer,
+  - Zweitjob,
+  - interne Funktionen / Zusatzaufgaben,
+  - eingewiesen durch,
+  - eingestellt durch,
+  - Vereidigung,
+  - Erste-Hilfe-Kurs,
+  - Behandlungseinweisung,
+- interne Personalstatus:
+  - Perso-Ticket offen,
+  - Inaktivität prüfen,
+  - Kündigung prüfen,
+- offene Personalstatus werden in der Personalübersicht gezählt und als direkte Arbeitsliste angezeigt,
+- eigener Bereich **Kündigungsarchiv**,
+- Kündigungen/Austritte speichern:
+  - Kündigungsdatum,
+  - letzter Rang,
+  - Laufbahn,
+  - Kündigungsgrund,
+  - Bearbeiter,
+  - Diensttage,
+- der Mitarbeiteraccount wird bei einer Kündigung nicht gelöscht, sondern gesperrt,
+- Wiedereinstellungen reaktivieren denselben stabilen Account,
+- bestehende Personalakte, Ranghistorie, Notizen und Sanktionen bleiben bei einer Wiedereinstellung erhalten,
+- Personalereignisse wie Einstellung, Rangänderung, Abwesenheit, Rückkehr, Kündigung und Wiedereinstellung werden chronologisch in der Personalhistorie ergänzt,
+- neues Rollenrecht `canManagePersonnelDepartures` für Kündigungen und Wiedereinstellungen.
+
+Nicht übernommen / nicht gespeichert:
+- E-Mail-Adressen,
+- Discord-IDs,
+- Foto-Verweise aus der Excel-Tabelle.
+
+Sicherheit:
+- `loginDirectory`, `authIndex`, bestehende Account-IDs und bestehende Passwörter werden nicht umgebaut,
+- Kündigungen verwenden den vorhandenen Account-Status `revoked`; Wiedereinstellungen setzen denselben Account wieder auf `approved`,
+- interne Stammdaten liegen getrennt unter `personnelProfiles`,
+- Kündigungsdaten liegen getrennt unter `personnelDepartures`,
+- v6.8.7j bleibt bis zum bestätigten Live-Test die stabile Rollback-Basis.
+
+Firebase:
+- vor dem Live-Test von v6.8.9 muss die aktuelle `database.rules.final.json` veröffentlicht werden.
