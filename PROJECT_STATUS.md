@@ -1,8 +1,8 @@
 # MMD Cloud – PROJECT STATUS
 
 **Aktuell bestätigte stabile Live-Version:** v6.8.7j  
-**Aktueller Entwicklungsstand:** v6.8.9  
-**Status v6.8.9:** 🟡 PERSONALVERWALTUNG ERWEITERT / LIVE-TEST AUSSTEHEND  
+**Aktueller Entwicklungsstand:** v6.8.10  
+**Status v6.8.10:** 🟡 PERSONAL-MASTERLISTE ABGEGLICHEN / LIVE-TEST AUSSTEHEND  
 **Datum:** 22.09.2026
 
 ---
@@ -346,3 +346,52 @@ Sicherheit:
 
 Firebase:
 - vor dem Live-Test von v6.8.9 muss die aktuelle `database.rules.final.json` veröffentlicht werden.
+
+
+---
+
+## 19. Personalverwaltung v6.8.10 – Masterlisten-Abgleich & UI-Finish
+
+Quelle:
+- `Kopie von Storytime _ SAMD MASTERLISTE 3.0.xlsx`
+- Zuordnung bestehender Mitarbeiter ausschließlich über die Dienstnummer (DN).
+
+Übernommen / ergänzt:
+- Telefonnummer,
+- Zweitjob,
+- interne Funktionen / Zusatzaufgaben,
+- eingewiesen durch,
+- eingestellt durch,
+- Vereidigung,
+- Erste-Hilfe-Kurs,
+- Behandlungseinweisung,
+- Laufbahn,
+- aktueller Rang,
+- Einstellungsdatum, sofern berechtigt und bisher nicht hinterlegt,
+- Diensttage-Korrektur aus der Masterliste.
+
+Nicht übernommen:
+- E-Mail-Adressen,
+- Discord-IDs,
+- Foto-Verweise.
+
+Verhalten:
+- vorhandene manuell gepflegte Werte werden nicht überschrieben,
+- der Abgleich ergänzt nur fehlende Werte,
+- Mitarbeiter werden über DN statt über Account-ID oder Namen zugeordnet,
+- bestehende Auth-/Login-Struktur bleibt unverändert,
+- Diensttage berücksichtigen die Masterlisten-Korrektur,
+- spezialisierte Doctor-/Paramedic-Ränge bleiben sichtbar, auch wenn die Laufbahn in der Masterliste noch nicht gesetzt war.
+
+UI:
+- Stammdatenkarte mit Stift-Symbol und eigenem Bearbeiten-Modus,
+- Eingabe-, Auswahl- und Textfelder im Personalbereich an das dunkle MMD-Cloud-Design angepasst.
+
+Sicherheit:
+- keine Änderung an Firebase Auth, `authIndex`, `loginDirectory`, Account-IDs oder Passwörtern,
+- keine neue User-Migration,
+- v6.8.7j bleibt bis zum bestätigten Live-Test stabile Rollback-Basis.
+
+Firebase:
+- `database.rules.final.json` wurde in v6.8.10 nicht verändert,
+- vor dem Live-Test muss weiterhin die bereits aktuelle Rules-Datei aus dem Repository veröffentlicht sein.
