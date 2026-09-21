@@ -1,8 +1,8 @@
 # MMD Cloud – PROJECT STATUS
 
 **Aktuell bestätigte stabile Live-Version:** v6.8.7j  
-**Aktueller Entwicklungsstand:** v6.8.10  
-**Status v6.8.10:** 🟡 PERSONAL-MASTERLISTE ABGEGLICHEN / LIVE-TEST AUSSTEHEND  
+**Aktueller Entwicklungsstand:** v6.8.11  
+**Status v6.8.11:** 🟡 PERSONALAKTEN-DROPDOWNS & RÄNGE KORRIGIERT / LIVE-TEST AUSSTEHEND  
 **Datum:** 22.09.2026
 
 ---
@@ -395,3 +395,29 @@ Sicherheit:
 Firebase:
 - `database.rules.final.json` wurde in v6.8.10 nicht verändert,
 - vor dem Live-Test muss weiterhin die bereits aktuelle Rules-Datei aus dem Repository veröffentlicht sein.
+
+
+---
+
+## 20. Personalverwaltung v6.8.11 – Dropdowns & Rangdarstellung
+
+Behoben:
+- Vereidigung, Erste-Hilfe-Kurs, Behandlungseinweisung und interner Personalstatus sind für berechtigte Personalmitarbeiter direkt bedienbar.
+- Stammdaten können weiterhin über das Stift-Symbol hervorgehoben/bearbeitet werden, die Auswahlfelder sind aber nicht mehr unnötig gesperrt.
+- Laufbahn und Rangverwaltung sind visuell getrennt und zeigen den aktuellen Stand oben kompakt an.
+- Doctor- und Paramedic-Ränge bleiben parallel möglich.
+
+Masterlisten-Abgleich:
+- die aktuellen Ränge aus der SAMD-Masterliste werden für die bekannten DNs einmalig verbindlich übernommen,
+- bestehende alte Rangwerte ohne Herkunftsmarker werden dabei auf den Masterlisten-Stand korrigiert,
+- spätere manuelle Änderungen erhalten den Marker `manual` und werden nicht erneut überschrieben,
+- Laufbahnen aus der Masterliste werden entsprechend übernommen,
+- falls der Datenbankabgleich noch nicht gelaufen ist, zeigt die Oberfläche Rang/Laufbahn bereits aus der Masterliste als Fallback.
+
+Sicherheit:
+- keine Änderung an Firebase Auth,
+- keine Änderung an `authIndex`,
+- keine Änderung an `loginDirectory`,
+- keine Änderung an Account-IDs oder Passwörtern,
+- `database.rules.final.json` bleibt unverändert,
+- stabile Rollback-Basis bleibt v6.8.7j.
