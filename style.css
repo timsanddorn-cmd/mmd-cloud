@@ -4608,3 +4608,26 @@ td,
 .personnel-edit-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
 .personnel-edit-actions .btn{margin-top:0}
 .personnel-secondary-btn{background:rgba(148,163,184,.1);color:var(--text-main);border:1px solid rgba(148,163,184,.2)}
+
+
+/* ============================================================
+   v6.8.11 – Personalakte Dropdowns & Ränge
+   ============================================================ */
+.personnel-profile-card.is-editing{border-color:rgba(244,114,182,.38);box-shadow:0 0 0 1px rgba(236,72,153,.08) inset}
+.personnel-edit-icon.active{background:rgba(52,211,153,.12);border-color:rgba(52,211,153,.38);color:#34d399}
+.personnel-qualification-grid select,#personnelProfileInternalStatus{cursor:pointer}
+.personnel-rank-card{grid-column:span 1}
+.personnel-rank-source{display:inline-flex;align-items:center;padding:5px 9px;border-radius:999px;background:rgba(56,189,248,.08);border:1px solid rgba(56,189,248,.22);color:#7dd3fc;font-size:10px;font-weight:800}
+.personnel-current-rank-summary{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:10px}
+.personnel-current-rank-summary>div{padding:11px 12px;border-radius:10px;background:rgba(8,12,20,.45);border:1px solid rgba(148,163,184,.12);display:flex;flex-direction:column;gap:3px}
+.personnel-current-rank-summary span{font-size:10px;color:var(--text-muted);font-weight:800;text-transform:uppercase;letter-spacing:.04em}
+.personnel-current-rank-summary strong{font-size:13px;color:var(--text-main)}
+.personnel-rank-help{margin:0 0 12px;color:var(--text-muted);font-size:11px;line-height:1.45}
+.personnel-rank-section{padding:12px;border-radius:11px;border:1px solid rgba(148,163,184,.12);background:rgba(8,12,20,.28);margin-top:10px}
+.personnel-rank-section-head{display:flex;flex-direction:column;gap:2px;margin-bottom:8px}
+.personnel-rank-section-head b{color:var(--text-main);font-size:12px}.personnel-rank-section-head small{color:var(--text-muted);font-size:10px}
+.personnel-rank-fields{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+.personnel-rank-fields label small{display:block;color:var(--text-muted);font-weight:500;margin-top:2px}
+.personnel-rank-change-meta{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:8px}
+@media(max-width:900px){.personnel-rank-fields{grid-template-columns:1fr 1fr}}
+@media(max-width:650px){.personnel-current-rank-summary,.personnel-rank-fields,.personnel-rank-change-meta{grid-template-columns:1fr}}
