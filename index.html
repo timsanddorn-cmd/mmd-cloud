@@ -11,7 +11,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
-    <link rel="stylesheet" href="style.css?v=6.8.7j">
+    <link rel="stylesheet" href="style.css?v=6.8.8">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏥</text></svg>">
 </head>
 <body>
@@ -373,20 +373,94 @@
 
         <!-- REITER: PERSONALABTEILUNG -->
         <div id="personnelTab" class="tab-content">
-            <div class="content-header-bar" style="margin-bottom:18px;">
-                <h2 style="margin:0 0 4px 0;color:#f472b6;">💼 Personalabteilung</h2>
-                <p style="margin:0;color:var(--text-muted);font-size:13px;">Zentraler Bereich für Personalthemen. Weitere Funktionen können hier künftig ergänzt werden.</p>
+            <div class="content-header-bar personnel-header">
+                <div>
+                    <h2>💼 Personalabteilung</h2>
+                    <p>Mitarbeiter verwalten, Personalakten pflegen und Abwesenheiten im Blick behalten.</p>
+                </div>
+                <div class="personnel-header-note">Interner Personalbereich</div>
             </div>
 
-            <div id="staffCareerManagementPanel" class="staff-career-management-panel" style="display:none;">
-                <div class="career-management-head">
-                    <div>
-                        <h3>🩺 Mitarbeiterlaufbahnen</h3>
-                        <p>Hier kann die Laufbahn aktiver Mitarbeiter festgelegt werden. Ohne Entscheidung bleibt „Noch nicht festgelegt“ bestehen.</p>
-                    </div>
-                    <span class="career-management-permission-note">Berechtigung: Mitarbeiterlaufbahn verwalten</span>
+            <div class="personnel-nav">
+                <button type="button" id="personnelNav_overview" class="personnel-nav-btn active" onclick="switchPersonnelView('overview')">📊 Übersicht</button>
+                <button type="button" id="personnelNav_files" class="personnel-nav-btn" onclick="switchPersonnelView('files')">🗂️ Personalakten</button>
+                <button type="button" id="personnelNav_calendar" class="personnel-nav-btn" onclick="switchPersonnelView('calendar')">📅 Mitarbeiterkalender</button>
+                <button type="button" id="personnelNav_create" class="personnel-nav-btn" onclick="switchPersonnelView('create')">➕ Neuer Mitarbeiter</button>
+            </div>
+
+            <div id="personnelPane_overview" class="personnel-pane active">
+                <div class="personnel-stat-grid">
+                    <div class="personnel-stat-card"><span>👥 Mitarbeiter</span><b id="personnelStatEmployees">0</b></div>
+                    <div class="personnel-stat-card"><span>🏖️ Urlaub</span><b id="personnelStatVacation">0</b></div>
+                    <div class="personnel-stat-card"><span>📝 Entschuldigt abwesend</span><b id="personnelStatExcused">0</b></div>
+                    <div class="personnel-stat-card alert"><span>🔴 Rückkehr prüfen</span><b id="personnelStatDue">0</b></div>
                 </div>
-                <div id="staffCareerManagementList" class="career-management-list"></div>
+                <section class="personnel-section-card">
+                    <div class="personnel-section-title">
+                        <h3>🔔 Rückkehrprüfungen</h3>
+                        <span>Bleibt offen, bis die Personalabteilung die Rückkehr bestätigt.</span>
+                    </div>
+                    <div id="personnelReturnAlerts"></div>
+                </section>
+            </div>
+
+            <div id="personnelPane_files" class="personnel-pane">
+                <div class="personnel-files-layout">
+                    <aside class="personnel-employee-sidebar">
+                        <input type="text" id="personnelEmployeeSearch" placeholder="🔍 Mitarbeiter suchen …" oninput="renderPersonnelEmployeeList()">
+                        <div id="personnelEmployeeList" class="personnel-employee-list"></div>
+                    </aside>
+                    <main id="personnelEmployeeDetail" class="personnel-employee-detail">
+                        <div class="personnel-empty-state">Wähle links einen Mitarbeiter aus.</div>
+                    </main>
+                </div>
+            </div>
+
+            <div id="personnelPane_calendar" class="personnel-pane">
+                <section id="personnelAbsenceCreateCard" class="personnel-section-card">
+                    <div class="personnel-section-title">
+                        <h3>➕ Abwesenheit eintragen</h3>
+                        <span>Der Zeitraum bleibt intern; in der Mitarbeiterkartei erscheint nur der Status.</span>
+                    </div>
+                    <div class="personnel-absence-form">
+                        <div><label for="personnelAbsenceEmployee">Mitarbeiter</label><select id="personnelAbsenceEmployee"></select></div>
+                        <div><label for="personnelAbsenceType">Art</label><select id="personnelAbsenceType"><option value="vacation">Urlaub</option><option value="excused">Entschuldigt abwesend</option></select></div>
+                        <div><label for="personnelAbsenceStart">Von</label><input type="date" id="personnelAbsenceStart"></div>
+                        <div><label for="personnelAbsenceEnd">Bis</label><input type="date" id="personnelAbsenceEnd"></div>
+                        <div class="personnel-absence-note"><label for="personnelAbsenceNote">Interne Notiz</label><input type="text" id="personnelAbsenceNote" maxlength="240" placeholder="Optional"></div>
+                        <button type="button" class="btn personnel-primary-btn" onclick="addPersonnelAbsence()">💾 Speichern</button>
+                    </div>
+                </section>
+                <section class="personnel-section-card">
+                    <div class="personnel-section-title">
+                        <h3>📅 Mitarbeiterkalender</h3>
+                        <span>Abgelaufene Abwesenheiten werden rot markiert.</span>
+                    </div>
+                    <div class="personnel-calendar-filters">
+                        <select id="personnelCalendarEmployeeFilter" onchange="renderPersonnelCalendar()"><option value="all">Alle Mitarbeiter</option></select>
+                        <select id="personnelCalendarRankFilter" onchange="renderPersonnelCalendar()"><option value="all">Alle Ränge</option></select>
+                    </div>
+                    <div id="personnelCalendarList" class="personnel-calendar-list"></div>
+                </section>
+            </div>
+
+            <div id="personnelPane_create" class="personnel-pane">
+                <section class="personnel-section-card personnel-create-card">
+                    <div class="personnel-section-title">
+                        <h3>➕ Neuen Mitarbeiter anlegen</h3>
+                        <span>Der bestehende sichere Registrierungsweg wird verwendet.</span>
+                    </div>
+                    <div class="personnel-create-grid">
+                        <div><label for="personnelCreateFirstName">Vorname</label><input type="text" id="personnelCreateFirstName" autocomplete="off"></div>
+                        <div><label for="personnelCreateLastName">Nachname</label><input type="text" id="personnelCreateLastName" autocomplete="off"></div>
+                        <div><label for="personnelCreateDn">Dienstnummer</label><input type="text" id="personnelCreateDn" autocomplete="off"></div>
+                        <div><label for="personnelCreatePassword">Vorläufiges Passwort</label><input type="password" id="personnelCreatePassword" minlength="6" autocomplete="new-password"></div>
+                        <div><label for="personnelCreateCareer">Laufbahn</label><select id="personnelCreateCareer" onchange="renderPersonnelCreateForm()"><option value="none">Noch nicht festgelegt</option><option value="doctor">Doctor</option><option value="paramedic">Paramedic</option><option value="both">Doctor &amp; Paramedic</option></select></div>
+                        <div><label for="personnelCreateRank">Start-Rang</label><select id="personnelCreateRank"></select></div>
+                    </div>
+                    <div class="personnel-create-hint">Der neue Zugang wird mit der Rolle „Mitarbeiter“ angelegt. Das vorläufige Passwort muss der Person anschließend mitgeteilt werden.</div>
+                    <button type="button" class="btn personnel-primary-btn personnel-create-submit" onclick="createPersonnelEmployee()">✅ Mitarbeiter anlegen</button>
+                </section>
             </div>
         </div>
 
@@ -1885,7 +1959,12 @@
                                         <div class="role-perm-box"><label for="roleFlagManageFeedback" class="perm-check"><input type="checkbox" id="roleFlagManageFeedback"> <b>💡 Wünsche & Bugs bearbeiten</b></label><span class="perm-desc">Sieht im Wünsche & Bugs Bereich den zusätzlichen Reiter zum Prüfen und Bearbeiten aller Meldungen.</span></div>
                                         <div class="role-perm-box"><label for="delFlagFeedback" class="perm-check"><input type="checkbox" id="delFlagFeedback"> <b>🗑️ Meldungen löschen</b></label><span class="perm-desc">Darf Wünsche und Fehlerberichte dauerhaft aus dem System löschen.</span></div>
                                         <div class="role-perm-box"><label for="roleFlagManageMemberAccess" class="perm-check"><input type="checkbox" id="roleFlagManageMemberAccess"> <b>👥 Mitarbeiter freigeben & Rollen verteilen</b></label><span class="perm-desc">Darf Mitarbeiter freigeben oder sperren und Rollen im dafür vorgesehenen Umfang vergeben.</span></div>
-                                        <div class="role-perm-box"><label for="roleFlagManageCareerPaths" class="perm-check"><input type="checkbox" id="roleFlagManageCareerPaths"> <b>🩺 Mitarbeiterlaufbahn verwalten</b></label><span class="perm-desc">Darf für Mitarbeiter die Laufbahn Arzt, Paramedic, beide Laufbahnen oder „Noch nicht festgelegt“ verwalten.</span></div>
+                                        <div class="role-perm-box"><label for="roleFlagManageCareerPaths" class="perm-check"><input type="checkbox" id="roleFlagManageCareerPaths"> <b>🩺 Mitarbeiterlaufbahn verwalten</b></label><span class="perm-desc">Darf Doctor, Paramedic, beide Laufbahnen oder „Noch nicht festgelegt“ verwalten.</span></div>
+                                        <div class="role-perm-box"><label for="roleFlagViewPersonnelRecords" class="perm-check"><input type="checkbox" id="roleFlagViewPersonnelRecords"> <b>🗂️ Personalakten sehen</b></label><span class="perm-desc">Darf interne Personalakten, Historie und Abwesenheitszeiträume einsehen.</span></div>
+                                        <div class="role-perm-box"><label for="roleFlagManagePersonnelRecords" class="perm-check"><input type="checkbox" id="roleFlagManagePersonnelRecords"> <b>📝 Personalakten bearbeiten</b></label><span class="perm-desc">Darf Sanktionen mit Bericht und allgemeine Personalnotizen eintragen.</span></div>
+                                        <div class="role-perm-box"><label for="roleFlagManagePersonnelRanks" class="perm-check"><input type="checkbox" id="roleFlagManagePersonnelRanks"> <b>🎖️ Ränge verwalten</b></label><span class="perm-desc">Darf aktuelle Ränge ändern und Rankups mit Grund in der Historie dokumentieren.</span></div>
+                                        <div class="role-perm-box"><label for="roleFlagManagePersonnelAbsences" class="perm-check"><input type="checkbox" id="roleFlagManagePersonnelAbsences"> <b>📅 Urlaub &amp; Abwesenheit verwalten</b></label><span class="perm-desc">Darf Abwesenheiten eintragen und die Rückkehr eines Mitarbeiters bestätigen.</span></div>
+                                        <div class="role-perm-box"><label for="roleFlagCreateEmployees" class="perm-check"><input type="checkbox" id="roleFlagCreateEmployees"> <b>➕ Neue Mitarbeiter anlegen</b></label><span class="perm-desc">Darf neue Mitarbeiterkonten über den Personalbereich anlegen.</span></div>
                                         <div class="role-perm-box"><label for="roleFlagManageMaintenance" class="perm-check"><input type="checkbox" id="roleFlagManageMaintenance"> <b>🛠️ Wartungsmodus verwalten</b></label><span class="perm-desc">Darf den Wartungsmodus ein- und ausschalten und behält währenddessen den nötigen Verwaltungszugriff.</span></div>
                                         <div class="role-perm-box"><label for="roleFlagEditSanctionsCatalog" class="perm-check"><input type="checkbox" id="roleFlagEditSanctionsCatalog"> <b>⚖️ Sanktionskatalog bearbeiten</b></label><span class="perm-desc">Darf den vollständigen Sanktionskatalog und die allgemeinen Sanktionsregeln über das Stiftsymbol live bearbeiten.</span></div>
                                         <div class="role-perm-box"><label for="roleFlagViewChiefMaterials" class="perm-check"><input type="checkbox" id="roleFlagViewChiefMaterials"> <b>⭐ Chief Materialliste sehen</b></label><span class="perm-desc">Blendet den Hauptreiter „Chief Ebene“ mit Materialbestand und Historie ein.</span></div>
@@ -2239,6 +2318,6 @@
         </div>
     </div>
 
-    <script src="app.js?v=6.8.7j"></script>
+    <script src="app.js?v=6.8.8"></script>
 </body>
 </html>
