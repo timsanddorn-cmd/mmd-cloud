@@ -11367,7 +11367,7 @@ let cachedEmployeeRanks={},cachedEmployeeAbsenceStatus={},cachedPersonnelRecords
 function getPersonnelPermissions(){
     const eff=sessionUser?getUserEffectivePermissions(sessionUser):{},master=!!eff.isMasterAdmin;
     return {canAccess:!!(master||eff.canManageCareerPaths||eff.canViewPersonnelRecords||eff.canManagePersonnelRecords||eff.canManagePersonnelAbsences||eff.canManagePersonnelRanks||eff.canCreateEmployees),
-        canViewRecords:!!(master||eff.canViewPersonnelRecords||eff.canManagePersonnelRecords||eff.canManagePersonnelRanks||eff.canManagePersonnelAbsences),canManageRecords:!!(master||eff.canManagePersonnelRecords),
+        canViewRecords:!!(master||eff.canViewPersonnelRecords||eff.canManagePersonnelRecords||eff.canManagePersonnelRanks),canManageRecords:!!(master||eff.canManagePersonnelRecords),
         canManageAbsences:!!(master||eff.canManagePersonnelAbsences),canManageRanks:!!(master||eff.canManagePersonnelRanks),canManageCareer:!!(master||eff.canManageCareerPaths),canCreateEmployees:!!(master||eff.canCreateEmployees)};
 }
 function canCurrentUserAccessPersonnelArea(){return getPersonnelPermissions().canAccess;}
