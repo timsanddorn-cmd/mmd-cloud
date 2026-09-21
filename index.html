@@ -11,7 +11,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
-    <link rel="stylesheet" href="style.css?v=6.8.8">
+    <link rel="stylesheet" href="style.css?v=6.8.9">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏥</text></svg>">
 </head>
 <body>
@@ -386,6 +386,7 @@
                 <button type="button" id="personnelNav_files" class="personnel-nav-btn" onclick="switchPersonnelView('files')">🗂️ Personalakten</button>
                 <button type="button" id="personnelNav_calendar" class="personnel-nav-btn" onclick="switchPersonnelView('calendar')">📅 Mitarbeiterkalender</button>
                 <button type="button" id="personnelNav_create" class="personnel-nav-btn" onclick="switchPersonnelView('create')">➕ Neuer Mitarbeiter</button>
+                <button type="button" id="personnelNav_archive" class="personnel-nav-btn" onclick="switchPersonnelView('archive')">📦 Kündigungsarchiv</button>
             </div>
 
             <div id="personnelPane_overview" class="personnel-pane active">
@@ -394,7 +395,17 @@
                     <div class="personnel-stat-card"><span>🏖️ Urlaub</span><b id="personnelStatVacation">0</b></div>
                     <div class="personnel-stat-card"><span>📝 Entschuldigt abwesend</span><b id="personnelStatExcused">0</b></div>
                     <div class="personnel-stat-card alert"><span>🔴 Rückkehr prüfen</span><b id="personnelStatDue">0</b></div>
+                    <div class="personnel-stat-card"><span>🟡 Perso-Ticket offen</span><b id="personnelStatTickets">0</b></div>
+                    <div class="personnel-stat-card"><span>🟠 Inaktivität prüfen</span><b id="personnelStatInactive">0</b></div>
+                    <div class="personnel-stat-card alert"><span>🔴 Kündigung prüfen</span><b id="personnelStatTermination">0</b></div>
                 </div>
+                <section class="personnel-section-card">
+                    <div class="personnel-section-title">
+                        <h3>🧭 Offene Personalthemen</h3>
+                        <span>Interne Hinweise – nur für die Personalverwaltung.</span>
+                    </div>
+                    <div id="personnelStatusAlerts"></div>
+                </section>
                 <section class="personnel-section-card">
                     <div class="personnel-section-title">
                         <h3>🔔 Rückkehrprüfungen</h3>
@@ -458,8 +469,32 @@
                         <div><label for="personnelCreateCareer">Laufbahn</label><select id="personnelCreateCareer" onchange="renderPersonnelCreateForm()"><option value="none">Noch nicht festgelegt</option><option value="doctor">Doctor</option><option value="paramedic">Paramedic</option><option value="both">Doctor &amp; Paramedic</option></select></div>
                         <div><label for="personnelCreateRank">Start-Rang</label><select id="personnelCreateRank"></select></div>
                     </div>
-                    <div class="personnel-create-hint">Der neue Zugang wird mit der Rolle „Mitarbeiter“ angelegt. Das vorläufige Passwort muss der Person anschließend mitgeteilt werden.</div>
+                    <div class="personnel-create-subtitle">Zusätzliche Personalangaben <span>optional</span></div>
+                    <div class="personnel-create-grid personnel-create-extra-grid">
+                        <div><label for="personnelCreatePhone">Telefonnummer</label><input type="text" id="personnelCreatePhone" autocomplete="off"></div>
+                        <div><label for="personnelCreateSecondJob">Zweitjob</label><input type="text" id="personnelCreateSecondJob" autocomplete="off"></div>
+                        <div class="personnel-create-wide"><label for="personnelCreateFunctions">Interne Funktionen / Zusatzaufgaben</label><input type="text" id="personnelCreateFunctions" autocomplete="off" placeholder="z. B. Personalabteilung, Luftrettung"></div>
+                        <div><label for="personnelCreateInstructedBy">Eingewiesen durch</label><input type="text" id="personnelCreateInstructedBy" autocomplete="off"></div>
+                        <div><label for="personnelCreateHiredBy">Eingestellt durch</label><input type="text" id="personnelCreateHiredBy" autocomplete="off"></div>
+                        <div><label for="personnelCreateSworn">Vereidigung</label><select id="personnelCreateSworn"><option value="unknown">Nicht festgelegt</option><option value="yes">Ja</option><option value="no">Nein</option></select></div>
+                        <div><label for="personnelCreateFirstAid">Erste-Hilfe-Kurs</label><select id="personnelCreateFirstAid"><option value="unknown">Nicht festgelegt</option><option value="yes">Ja</option><option value="no">Nein</option></select></div>
+                        <div><label for="personnelCreateTreatment">Behandlungseinweisung</label><select id="personnelCreateTreatment"><option value="unknown">Nicht festgelegt</option><option value="yes">Ja</option><option value="no">Nein</option></select></div>
+                    </div>
+                    <div class="personnel-create-hint">Der neue Zugang wird mit der Rolle „Mitarbeiter“ angelegt. Das vorläufige Passwort muss der Person anschließend mitgeteilt werden. E-Mail-Adresse und Discord-ID werden nicht benötigt.</div>
                     <button type="button" class="btn personnel-primary-btn personnel-create-submit" onclick="createPersonnelEmployee()">✅ Mitarbeiter anlegen</button>
+                </section>
+            </div>
+
+            <div id="personnelPane_archive" class="personnel-pane">
+                <section class="personnel-section-card">
+                    <div class="personnel-section-title">
+                        <h3>📦 Kündigungsarchiv</h3>
+                        <span>Historie bleibt bei einer Wiedereinstellung vollständig erhalten.</span>
+                    </div>
+                    <div class="personnel-archive-toolbar">
+                        <input type="text" id="personnelArchiveSearch" placeholder="🔍 Name, DN, Rang oder Grund suchen …" oninput="renderPersonnelArchive()">
+                    </div>
+                    <div id="personnelArchiveList" class="personnel-archive-list"></div>
                 </section>
             </div>
         </div>
@@ -1963,6 +1998,7 @@
                                         <div class="role-perm-box"><label for="roleFlagViewPersonnelRecords" class="perm-check"><input type="checkbox" id="roleFlagViewPersonnelRecords"> <b>🗂️ Personalakten sehen</b></label><span class="perm-desc">Darf interne Personalakten, Historie und Abwesenheitszeiträume einsehen.</span></div>
                                         <div class="role-perm-box"><label for="roleFlagManagePersonnelRecords" class="perm-check"><input type="checkbox" id="roleFlagManagePersonnelRecords"> <b>📝 Personalakten bearbeiten</b></label><span class="perm-desc">Darf Sanktionen mit Bericht und allgemeine Personalnotizen eintragen.</span></div>
                                         <div class="role-perm-box"><label for="roleFlagManagePersonnelRanks" class="perm-check"><input type="checkbox" id="roleFlagManagePersonnelRanks"> <b>🎖️ Ränge verwalten</b></label><span class="perm-desc">Darf aktuelle Ränge ändern und Rankups mit Grund in der Historie dokumentieren.</span></div>
+                                        <div class="role-perm-box"><label for="roleFlagManagePersonnelDepartures" class="perm-check"><input type="checkbox" id="roleFlagManagePersonnelDepartures"> <b>📦 Kündigungen &amp; Wiedereinstellungen</b></label><span class="perm-desc">Darf Mitarbeiter in das Kündigungsarchiv übernehmen und bestehende Konten später wieder aktivieren. Benötigt zusätzlich die Mitarbeiterzugriffs-Berechtigung.</span></div>
                                         <div class="role-perm-box"><label for="roleFlagManagePersonnelAbsences" class="perm-check"><input type="checkbox" id="roleFlagManagePersonnelAbsences"> <b>📅 Urlaub &amp; Abwesenheit verwalten</b></label><span class="perm-desc">Darf Abwesenheiten eintragen und die Rückkehr eines Mitarbeiters bestätigen.</span></div>
                                         <div class="role-perm-box"><label for="roleFlagCreateEmployees" class="perm-check"><input type="checkbox" id="roleFlagCreateEmployees"> <b>➕ Neue Mitarbeiter anlegen</b></label><span class="perm-desc">Darf neue Mitarbeiterkonten über den Personalbereich anlegen.</span></div>
                                         <div class="role-perm-box"><label for="roleFlagManageMaintenance" class="perm-check"><input type="checkbox" id="roleFlagManageMaintenance"> <b>🛠️ Wartungsmodus verwalten</b></label><span class="perm-desc">Darf den Wartungsmodus ein- und ausschalten und behält währenddessen den nötigen Verwaltungszugriff.</span></div>
@@ -2318,6 +2354,6 @@
         </div>
     </div>
 
-    <script src="app.js?v=6.8.8"></script>
+    <script src="app.js?v=6.8.9"></script>
 </body>
 </html>
