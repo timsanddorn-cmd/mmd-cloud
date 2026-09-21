@@ -4585,3 +4585,26 @@ td,
 .personnel-archive-meta{display:flex;flex-direction:column;gap:3px}.personnel-archive-meta b{color:var(--text-main)}
 @media(max-width:1000px){.personnel-archive-row{grid-template-columns:1fr 1fr}.personnel-archive-row>.btn{grid-column:1/-1}.personnel-three-col{grid-template-columns:1fr}}
 @media(max-width:650px){.personnel-two-col,.personnel-three-col{grid-template-columns:1fr}.personnel-archive-row{grid-template-columns:1fr}.personnel-archive-row>.btn{grid-column:auto}.personnel-topic-row{grid-template-columns:auto 1fr}.personnel-topic-row>strong{grid-column:1/-1}}
+
+
+/* ============================================================
+   v6.8.10 – Personalakte: Bearbeiten-Modus & dunkle Felder
+   ============================================================ */
+.personnel-card-title-row{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+.personnel-card-title-row h4{margin:0}
+.personnel-edit-icon{width:34px;height:34px;display:inline-flex;align-items:center;justify-content:center;border-radius:9px;border:1px solid rgba(244,114,182,.3);background:rgba(236,72,153,.08);color:var(--primary);cursor:pointer;font-size:15px;transition:.16s ease}
+.personnel-edit-icon:hover{background:rgba(236,72,153,.16);border-color:rgba(244,114,182,.5);transform:translateY(-1px)}
+.personnel-card input,.personnel-card select,.personnel-card textarea,.personnel-create-card input,.personnel-create-card select,.personnel-create-card textarea{
+  background:rgba(8,12,20,.78)!important;color:var(--text-main)!important;border:1px solid rgba(148,163,184,.2)!important;
+  box-shadow:none!important
+}
+.personnel-card input:focus,.personnel-card select:focus,.personnel-card textarea:focus,.personnel-create-card input:focus,.personnel-create-card select:focus,.personnel-create-card textarea:focus{
+  border-color:rgba(244,114,182,.55)!important;outline:none;box-shadow:0 0 0 2px rgba(236,72,153,.08)!important
+}
+.personnel-card input:disabled,.personnel-card select:disabled,.personnel-card textarea:disabled{
+  opacity:1!important;background:rgba(15,23,42,.46)!important;color:var(--text-muted)!important;cursor:default
+}
+.personnel-card select option,.personnel-create-card select option{background:#0f172a;color:#e5e7eb}
+.personnel-edit-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.personnel-edit-actions .btn{margin-top:0}
+.personnel-secondary-btn{background:rgba(148,163,184,.1);color:var(--text-main);border:1px solid rgba(148,163,184,.2)}
