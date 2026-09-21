@@ -1,5 +1,5 @@
 // ============================================================
-//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.8.7f
+//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.8.7g
 //  Firebase Realtime Database (Compat SDK v10)
 // ============================================================
 
@@ -182,7 +182,7 @@ const db = firebase.database();
 const auth = firebase.auth();
 const FIREBASE_AUTH_EMAIL_DOMAIN = 'mmd-login.invalid';
 
-const APP_VERSION = 'v6.8.7f';
+const APP_VERSION = 'v6.8.7g';
 const PRESENCE_HEARTBEAT_MS = 30 * 1000;
 const PRESENCE_STALE_MS = 3 * 60 * 1000;
 
@@ -241,6 +241,7 @@ let globalSearchResultsCache = [];
 let officialDnSyncInProgress = false;
 let officialDnSyncCompletedForPage = false;
 let cachedUsers       = {};
+let cachedEmployeeCareerPaths = {};
 let cachedExams       = {};
 let cachedSubmissions = {};
 let cachedNews        = {};
@@ -529,6 +530,16 @@ let hierarchieDaten = JSON.parse(JSON.stringify(defaultHierarchieData));
 
 /* ── Vollständiger Gesamt-Changelog (Entwicklungsverlauf) ───── */
 const systemChangelogs = [
+    {
+        id: "sys_v6_8_7g", version: "v6.8.7g", date: "21.09.2026", ts: 1790006400000,
+        category: "Funktion", title: "Mitarbeiterlaufbahnen für die Personalabteilung",
+        changes: [
+            "Mitarbeiter können die Laufbahn Arzt, Paramedic oder Arzt & Paramedic erhalten; ohne Entscheidung bleibt der Status „Noch nicht festgelegt“.",
+            "Die Laufbahn ist in der Mitarbeiter-Mehrfachansicht und in der vergrößerten Einzelansicht sichtbar.",
+            "Rollen mit der neuen Berechtigung „Mitarbeiterlaufbahn verwalten“ können Laufbahnen in einem eigenen Personalbereich festlegen.",
+            "Laufbahndaten liegen getrennt von Login- und Benutzerdaten unter data/employeeCareerPaths."
+        ]
+    },
     {
         id: "sys_v6_8_7f", version: "v6.8.7f", date: "20.09.2026", ts: 1789932000000,
         category: "Verbesserung", title: "Bestands Historie besser bedienbar",
@@ -1580,7 +1591,7 @@ const defaultRoles = {
         canSendEmployeeNotices:true, canViewEmployeeNoticeRead:true, delEmployeeNotices:false,
         canEditPrices:false, canEditGuide:false, canEditCommands:false, canEditLinks:false,
         canViewChiefMaterials:false, canEditChiefMaterials:false,
-        canManageMemberAccess:true, canManageMaintenance:false,
+        canManageMemberAccess:true, canManageCareerPaths:true, canManageMaintenance:false,
         canEditSanctionsCatalog:true,
         canViewExamSolutions:false,
         delPatient:false, delArchiv:false, delGuide:false, delCommands:false, delLinks:false, delNews:true, delExams:false, delUsers:false, canManageFeedback:false, delFeedback:false,
@@ -1681,6 +1692,7 @@ const ROLE_PROPERTY_MAP = {
     roleFlagManagePhotos: 'canManagePhotos',
     delFlagPhotos: 'delPhotos',
     roleFlagManageMemberAccess: 'canManageMemberAccess',
+    roleFlagManageCareerPaths: 'canManageCareerPaths',
     roleFlagManageMaintenance: 'canManageMaintenance',
     roleFlagEditSanctionsCatalog: 'canEditSanctionsCatalog',
     delFlagCalendar: 'delCalendar',
@@ -2719,6 +2731,7 @@ function applyUserPermissions(user) {
     const isMaster = !!eff.isMasterAdmin;
     const isAdminOrMaster = (eff.isAdmin || isMaster);
     const canPostDirect = !!(eff.canPostNews || isMaster);
+    renderCareerManagementPanel();
     
     const akBtn = document.getElementById('adminKeyBtn');
     if (akBtn) akBtn.style.display = (isAdminOrMaster || eff.canManageMaintenance) ? 'inline-block' : 'none';
@@ -3280,7 +3293,7 @@ function startFirebaseListeners() {
         'data/protokoll', 'data/archiv', 'data/hierarchie', 'data/gehaltstabelle',
         'data/guide', 'data/materialPreise', 'data/szenarioTemplates', 'data/szenarienConfig', 'data/dienstLinks',
         'data/dienstCommands', 'data/roles', 'data/users', 'data/exams', 'data/examSubmissions',
-        'data/news', 'data/calendar', 'data/employeePhotos', 'data/changelogs', 'data/auditLogs', 'data/sanctionsCatalog'
+        'data/news', 'data/calendar', 'data/employeeCareerPaths', 'data/employeePhotos', 'data/changelogs', 'data/auditLogs', 'data/sanctionsCatalog'
     ];
     endpoints.forEach(ep => db.ref(ep).off());
 
@@ -3414,12 +3427,18 @@ function startFirebaseListeners() {
         renderPasswordChangeStatusPanel();
         renderCalendarMonth();
         renderStaffDirectory();
+        renderCareerManagementPanel();
         renderEmployeeNoticeRecipientOptions();
         renderEmployeeNoticeFeedPanels();
         updateNavigationBadges();
         renderAdminOverview();
         renderContentFreshnessHints();
         updatePersonalOverview();
+    });
+    db.ref('data/employeeCareerPaths').on('value', s => {
+        cachedEmployeeCareerPaths = s.val() || {};
+        renderStaffDirectory();
+        renderCareerManagementPanel();
     });
     db.ref('data/exams').on('value', s => {
         const raw = s.val() || {};
@@ -5569,6 +5588,125 @@ function getVisibleStaffEntries() {
     });
 }
 
+
+const EMPLOYEE_CAREER_PATHS = Object.freeze({
+    none: { label: 'Noch nicht festgelegt', icon: '➖' },
+    doctor: { label: 'Arzt', icon: '🩺' },
+    paramedic: { label: 'Paramedic', icon: '🚑' },
+    both: { label: 'Arzt & Paramedic', icon: '⚕️' }
+});
+
+function normalizeEmployeeCareerPath(value) {
+    const raw = String(value || '').trim().toLowerCase();
+    return Object.prototype.hasOwnProperty.call(EMPLOYEE_CAREER_PATHS, raw) ? raw : 'none';
+}
+
+function getEmployeeCareerPathKey(uId) {
+    return normalizeEmployeeCareerPath(cachedEmployeeCareerPaths?.[uId]?.path);
+}
+
+function getEmployeeCareerPathLabel(uId) {
+    const key = getEmployeeCareerPathKey(uId);
+    return EMPLOYEE_CAREER_PATHS[key]?.label || EMPLOYEE_CAREER_PATHS.none.label;
+}
+
+function getEmployeeCareerPathBadge(uId) {
+    const key = getEmployeeCareerPathKey(uId);
+    const meta = EMPLOYEE_CAREER_PATHS[key] || EMPLOYEE_CAREER_PATHS.none;
+    return `<span class="staff-career-badge career-${key}">${meta.icon} Laufbahn: ${escapeHtml(meta.label)}</span>`;
+}
+
+function canCurrentUserManageCareerPaths() {
+    if (!sessionUser) return false;
+    const eff = getUserEffectivePermissions(sessionUser);
+    return !!(eff.canManageCareerPaths || eff.isMasterAdmin);
+}
+
+function renderCareerManagementPanel() {
+    const panel = document.getElementById('staffCareerManagementPanel');
+    const list = document.getElementById('staffCareerManagementList');
+    if (!panel || !list) return;
+
+    const canManage = canCurrentUserManageCareerPaths();
+    panel.style.display = canManage ? 'block' : 'none';
+    if (!canManage) {
+        list.innerHTML = '';
+        return;
+    }
+
+    const entries = Object.entries(cachedUsers || {})
+        .filter(([, user]) => {
+            const status = user?.status || ((user?.isAdmin || user?.isMasterAdmin) ? 'approved' : 'pending');
+            return !!user && status === 'approved';
+        })
+        .sort((a, b) => {
+            const dnDiff = parseDN(a[1]?.dn) - parseDN(b[1]?.dn);
+            if (dnDiff !== 0) return dnDiff;
+            return `${a[1]?.nachname || ''} ${a[1]?.vorname || ''}`.localeCompare(`${b[1]?.nachname || ''} ${b[1]?.vorname || ''}`, 'de');
+        });
+
+    if (!entries.length) {
+        list.innerHTML = '<div class="career-management-empty">Keine aktiven Mitarbeiter vorhanden.</div>';
+        return;
+    }
+
+    list.innerHTML = entries.map(([uId, user]) => {
+        const name = `${user.vorname || ''} ${user.nachname || ''}`.trim() || uId;
+        const current = getEmployeeCareerPathKey(uId);
+        return `
+            <div class="career-management-row">
+                <div class="career-management-person">
+                    <b>${escapeHtml(name)}</b>
+                    <span>${escapeHtml(formatStaffDn(user.dn))}</span>
+                </div>
+                <select id="careerPathSelect_${uId}" class="career-management-select" aria-label="Laufbahn für ${escapeHtml(name)}">
+                    <option value="none" ${current === 'none' ? 'selected' : ''}>Noch nicht festgelegt</option>
+                    <option value="doctor" ${current === 'doctor' ? 'selected' : ''}>Arzt</option>
+                    <option value="paramedic" ${current === 'paramedic' ? 'selected' : ''}>Paramedic</option>
+                    <option value="both" ${current === 'both' ? 'selected' : ''}>Arzt & Paramedic</option>
+                </select>
+                <button type="button" class="btn career-management-save" onclick="saveEmployeeCareerPath('${uId}')">💾 Speichern</button>
+            </div>
+        `;
+    }).join('');
+}
+
+async function saveEmployeeCareerPath(uId) {
+    if (!canCurrentUserManageCareerPaths()) {
+        alert('Keine Berechtigung zum Verwalten von Mitarbeiterlaufbahnen.');
+        return;
+    }
+    if (!cachedUsers?.[uId]) {
+        alert('Der Mitarbeiter wurde nicht gefunden.');
+        return;
+    }
+
+    const select = document.getElementById('careerPathSelect_' + uId);
+    if (!select) return;
+    const selected = normalizeEmployeeCareerPath(select.value);
+
+    try {
+        const ref = db.ref('data/employeeCareerPaths/' + uId);
+        if (selected === 'none') {
+            await ref.remove();
+        } else {
+            await ref.set({
+                path: selected,
+                updatedAt: Date.now(),
+                updatedBy: `${sessionUser?.vorname || ''} ${sessionUser?.nachname || ''}`.trim() || 'MMD Cloud',
+                updatedById: getUserAccountId(sessionUser)
+            });
+        }
+        const person = cachedUsers[uId] || {};
+        const name = `${person.vorname || ''} ${person.nachname || ''}`.trim() || uId;
+        logAdminAudit('Mitarbeiterlaufbahn geändert', `${name}: ${EMPLOYEE_CAREER_PATHS[selected]?.label || EMPLOYEE_CAREER_PATHS.none.label}`);
+        showToast('✅ Laufbahn wurde gespeichert.', 'success');
+    } catch (err) {
+        console.error('Mitarbeiterlaufbahn konnte nicht gespeichert werden:', err);
+        showToast('⚠️ Laufbahn konnte nicht gespeichert werden.', 'error', 5000);
+    }
+}
+
 function renderStaffDirectory() {
     const grid = document.getElementById('staffDirectoryGrid');
     const badge = document.getElementById('staffCountBadge');
@@ -5640,6 +5778,7 @@ function renderStaffDirectory() {
                     <div class="staff-dn-pill">${escapeHtml(dnFormatted)}</div>
                     <h3 class="staff-name-title">${escapeHtml(u.vorname || '')} ${escapeHtml(u.nachname || '')}</h3>
                     <div class="staff-roles-container">${renderUserRoleBadges(u)}</div>
+                    <div class="staff-card-career">${getEmployeeCareerPathBadge(uId)}</div>
                     ${canManageRegistrations ? `
                         <div style="margin-top:8px;font-size:12px;font-weight:800;color:${getUserStatusDisplay(u.status).color};">${getUserStatusDisplay(u.status).text}</div>
                         ${u.status !== 'approved' ? `
@@ -5714,6 +5853,7 @@ function openStaffDetailModal(uId) {
                 <div class="staff-detail-roles">${renderUserRoleBadges(user)}</div>
                 <div class="staff-detail-meta-grid">
                     ${statusMeta}
+                    <div><span>Laufbahn</span><b>${escapeHtml(getEmployeeCareerPathLabel(uId))}</b></div>
                     <div><span>Diensttage</span><b>${days === null ? 'Nicht hinterlegt' : days}</b></div>
                     <div><span>Profilbild</span><b>${customPhoto ? '✅ Vorhanden' : '📷 Standardlogo'}</b></div>
                 </div>
@@ -11095,7 +11235,7 @@ _w.togglePrivateEventOption = togglePrivateEventOption;
 _w.toggleAllCalendarRoles = toggleAllCalendarRoles;
 _w.handleCalendarCreatorSelectionChange = handleCalendarCreatorSelectionChange;
 _w.respondToCalendarInvite = respondToCalendarInvite;
-_w.renderStaffDirectory = renderStaffDirectory; _w.resetStaffDirectoryFilters = resetStaffDirectoryFilters; _w.openStaffDetailModal = openStaffDetailModal; _w.closeStaffDetailModal = closeStaffDetailModal; _w.toggleStaffPhotoChecklistBody = toggleStaffPhotoChecklistBody;
+_w.renderStaffDirectory = renderStaffDirectory; _w.resetStaffDirectoryFilters = resetStaffDirectoryFilters; _w.openStaffDetailModal = openStaffDetailModal; _w.closeStaffDetailModal = closeStaffDetailModal; _w.renderCareerManagementPanel = renderCareerManagementPanel; _w.saveEmployeeCareerPath = saveEmployeeCareerPath; _w.toggleStaffPhotoChecklistBody = toggleStaffPhotoChecklistBody;
 _w.syncOfficialServiceNumbersFromRoster = syncOfficialServiceNumbersFromRoster;
 _w.filterStaffDirectory = filterStaffDirectory;
 _w.openStaffPhotoUploadModal = openStaffPhotoUploadModal;

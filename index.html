@@ -11,7 +11,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
-    <link rel="stylesheet" href="style.css?v=6.8.7f">
+    <link rel="stylesheet" href="style.css?v=6.8.7g">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏥</text></svg>">
 </head>
 <body>
@@ -384,6 +384,18 @@
                         <button type="button" id="btnTogglePhotoChecklist" class="btn photo-checklist-toggle-btn" style="display:none;" aria-expanded="false" onclick="toggleStaffPhotoChecklist()">📋 Foto liste</button>
                     </div>
                 </div>
+            </div>
+
+
+            <div id="staffCareerManagementPanel" class="staff-career-management-panel" style="display:none;">
+                <div class="career-management-head">
+                    <div>
+                        <h3>💼 Personalabteilung – Mitarbeiterlaufbahnen</h3>
+                        <p>Hier kann die Laufbahn aktiver Mitarbeiter festgelegt werden. Ohne Entscheidung bleibt „Noch nicht festgelegt“ bestehen.</p>
+                    </div>
+                    <span class="career-management-permission-note">Berechtigung: Mitarbeiterlaufbahn verwalten</span>
+                </div>
+                <div id="staffCareerManagementList" class="career-management-list"></div>
             </div>
 
             <div class="staff-filter-bar">
@@ -1864,6 +1876,7 @@
                                         <div class="role-perm-box"><label for="roleFlagManageFeedback" class="perm-check"><input type="checkbox" id="roleFlagManageFeedback"> <b>💡 Wünsche & Bugs bearbeiten</b></label><span class="perm-desc">Sieht im Wünsche & Bugs Bereich den zusätzlichen Reiter zum Prüfen und Bearbeiten aller Meldungen.</span></div>
                                         <div class="role-perm-box"><label for="delFlagFeedback" class="perm-check"><input type="checkbox" id="delFlagFeedback"> <b>🗑️ Meldungen löschen</b></label><span class="perm-desc">Darf Wünsche und Fehlerberichte dauerhaft aus dem System löschen.</span></div>
                                         <div class="role-perm-box"><label for="roleFlagManageMemberAccess" class="perm-check"><input type="checkbox" id="roleFlagManageMemberAccess"> <b>👥 Mitarbeiter freigeben & Rollen verteilen</b></label><span class="perm-desc">Darf Mitarbeiter freigeben oder sperren und Rollen im dafür vorgesehenen Umfang vergeben.</span></div>
+                                        <div class="role-perm-box"><label for="roleFlagManageCareerPaths" class="perm-check"><input type="checkbox" id="roleFlagManageCareerPaths"> <b>🩺 Mitarbeiterlaufbahn verwalten</b></label><span class="perm-desc">Darf für Mitarbeiter die Laufbahn Arzt, Paramedic, beide Laufbahnen oder „Noch nicht festgelegt“ verwalten.</span></div>
                                         <div class="role-perm-box"><label for="roleFlagManageMaintenance" class="perm-check"><input type="checkbox" id="roleFlagManageMaintenance"> <b>🛠️ Wartungsmodus verwalten</b></label><span class="perm-desc">Darf den Wartungsmodus ein- und ausschalten und behält währenddessen den nötigen Verwaltungszugriff.</span></div>
                                         <div class="role-perm-box"><label for="roleFlagEditSanctionsCatalog" class="perm-check"><input type="checkbox" id="roleFlagEditSanctionsCatalog"> <b>⚖️ Sanktionskatalog bearbeiten</b></label><span class="perm-desc">Darf den vollständigen Sanktionskatalog und die allgemeinen Sanktionsregeln über das Stiftsymbol live bearbeiten.</span></div>
                                         <div class="role-perm-box"><label for="roleFlagViewChiefMaterials" class="perm-check"><input type="checkbox" id="roleFlagViewChiefMaterials"> <b>⭐ Chief Materialliste sehen</b></label><span class="perm-desc">Blendet den Hauptreiter „Chief Ebene“ mit Materialbestand und Historie ein.</span></div>
@@ -2217,6 +2230,6 @@
         </div>
     </div>
 
-    <script src="app.js?v=6.8.7f"></script>
+    <script src="app.js?v=6.8.7g"></script>
 </body>
 </html>

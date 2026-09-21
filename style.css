@@ -3566,8 +3566,8 @@ html, body { max-width: 100%; overflow-x: hidden; }
     outline-offset: 2px;
 }
 .staff-detail-card {
-    max-width: 720px;
-    width: min(94vw, 720px);
+    max-width: 980px;
+    width: min(96vw, 980px);
 }
 .mmd-modal-head {
     display: flex;
@@ -3584,8 +3584,8 @@ html, body { max-width: 100%; overflow-x: hidden; }
 }
 .staff-detail-layout {
     display: grid;
-    grid-template-columns: 190px minmax(0,1fr);
-    gap: 20px;
+    grid-template-columns: 250px minmax(0,1fr);
+    gap: 28px;
     align-items: start;
 }
 .staff-detail-photo-wrap {
@@ -3607,12 +3607,12 @@ html, body { max-width: 100%; overflow-x: hidden; }
     border-radius: 999px;
     background: rgba(56,189,248,.1);
     color: var(--primary);
-    font-size: 10px;
+    font-size: 12px;
     font-weight: 900;
 }
 .staff-detail-info h2 {
     margin: 8px 0;
-    font-size: 22px;
+    font-size: 28px;
 }
 .staff-detail-roles { margin-bottom: 14px; }
 .staff-detail-meta-grid {
@@ -3629,14 +3629,14 @@ html, body { max-width: 100%; overflow-x: hidden; }
 .staff-detail-meta-grid span {
     display: block;
     color: var(--text-muted);
-    font-size: 8px;
+    font-size: 11px;
     font-weight: 850;
     text-transform: uppercase;
 }
 .staff-detail-meta-grid b {
     display: block;
-    margin-top: 3px;
-    font-size: 10px;
+    margin-top: 4px;
+    font-size: 14px;
 }
 .staff-detail-actions {
     display: flex;
@@ -3663,6 +3663,45 @@ html, body { max-width: 100%; overflow-x: hidden; }
     color: var(--danger);
     border: 1px solid rgba(244,63,94,.3);
 }
+
+
+.staff-card-career { margin-top: 10px; }
+.staff-career-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 9px;
+    border-radius: 999px;
+    border: 1px solid rgba(148,163,184,.18);
+    background: rgba(15,23,42,.54);
+    color: var(--text-main);
+    font-size: 11px;
+    font-weight: 800;
+}
+.staff-career-badge.career-none { color: var(--text-muted); }
+.staff-career-badge.career-doctor { color: #38bdf8; border-color: rgba(56,189,248,.28); background: rgba(56,189,248,.08); }
+.staff-career-badge.career-paramedic { color: #34d399; border-color: rgba(52,211,153,.28); background: rgba(52,211,153,.08); }
+.staff-career-badge.career-both { color: #c084fc; border-color: rgba(192,132,252,.28); background: rgba(192,132,252,.08); }
+
+.staff-career-management-panel {
+    margin: 0 0 18px;
+    padding: 18px;
+    border: 1px solid rgba(236,72,153,.28);
+    border-radius: 16px;
+    background: linear-gradient(180deg, rgba(236,72,153,.07), rgba(15,23,42,.42));
+}
+.career-management-head { display:flex; align-items:flex-start; justify-content:space-between; gap:14px; margin-bottom:14px; }
+.career-management-head h3 { margin:0; color:#f472b6; font-size:17px; }
+.career-management-head p { margin:5px 0 0; color:var(--text-muted); font-size:12px; }
+.career-management-permission-note { flex-shrink:0; padding:5px 9px; border-radius:999px; border:1px solid rgba(236,72,153,.22); color:#f9a8d4; font-size:10px; font-weight:800; }
+.career-management-list { display:flex; flex-direction:column; gap:8px; }
+.career-management-row { display:grid; grid-template-columns:minmax(180px,1fr) minmax(220px,280px) auto; gap:10px; align-items:center; padding:10px 12px; border:1px solid rgba(148,163,184,.12); border-radius:12px; background:rgba(8,12,20,.4); }
+.career-management-person { min-width:0; display:flex; flex-direction:column; gap:2px; }
+.career-management-person b { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:13px; }
+.career-management-person span { color:var(--primary); font-size:11px; font-weight:800; }
+.career-management-select { width:100%; }
+.career-management-save { width:auto; margin:0; padding:8px 12px; white-space:nowrap; }
+.career-management-empty { padding:16px; text-align:center; color:var(--text-muted); }
 
 /* Nur offene Admin-Aufgaben */
 .admin-open-tasks {
@@ -3978,9 +4017,11 @@ html, body { max-width: 100%; overflow-x: hidden; }
     }
 
     .staff-detail-layout {
-        grid-template-columns: 130px minmax(0,1fr);
-        gap: 14px;
+        grid-template-columns: 180px minmax(0,1fr);
+        gap: 18px;
     }
+    .career-management-row { grid-template-columns: 1fr; }
+    .career-management-head { flex-direction: column; }
     .staff-detail-meta-grid {
         grid-template-columns: 1fr;
     }
