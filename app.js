@@ -1,5 +1,5 @@
 // ============================================================
-//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.8.7j
+//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.8.8
 //  Firebase Realtime Database (Compat SDK v10)
 // ============================================================
 
@@ -182,7 +182,7 @@ const db = firebase.database();
 const auth = firebase.auth();
 const FIREBASE_AUTH_EMAIL_DOMAIN = 'mmd-login.invalid';
 
-const APP_VERSION = 'v6.8.7j';
+const APP_VERSION = 'v6.8.8';
 const PRESENCE_HEARTBEAT_MS = 30 * 1000;
 const PRESENCE_STALE_MS = 3 * 60 * 1000;
 
@@ -462,11 +462,11 @@ function setupUnifiedEditorModals(){
     ['szenarienInlineModal','gehaltInlineModal','sanctionsCatalogEditorModal','editModal','archivEditModal','pricesInlineModal','guideInlineModal','commandsInlineModal','linksInlineModal','calendarEventModal','staffPhotoUploadModal','userPermissionsModal','assignRolesModal','examBuilderModal','changelogWriterModal','hierarchieInlineModal'].forEach(id=>document.getElementById(id)?.querySelector('.modal-card')?.classList.add('mmd-editor-card'));
 }
 function findMainTabButton(tabId){return Array.from(document.querySelectorAll('.tab-btn,.nav-sub-btn')).find(btn=>(btn.getAttribute('onclick')||'').includes(`switchTab('${tabId}'`))||null;}
-function canSearchSection(tabId){if(isMaintenanceRestrictedSession())return tabId==='docTab';if(tabId==='chiefTab')return canCurrentUserViewChiefMaterials();return !!document.getElementById(tabId);}
+function canSearchSection(tabId){if(isMaintenanceRestrictedSession())return tabId==='docTab';if(tabId==='chiefTab')return canCurrentUserViewChiefMaterials();if(tabId==='personnelTab')return typeof canCurrentUserAccessPersonnelArea==='function'?canCurrentUserAccessPersonnelArea():canCurrentUserManageCareerPaths();return !!document.getElementById(tabId);}
 function buildGlobalSearchResults(query){
     const q=normalizeUiSearchText(query);
     const sections=[
-        ['docTab','📝','Dokumentation & Einsatz','patient behandlung einsatz material medizin'],['statsTab','📊','Statistik & Archiv','statistik archiv schicht patienten protokoll'],['calendarTab','📅','Kalender','kalender termine dienstbesprechung'],['examTab','🎓','Ausbildung','ausbildung pruefung prüfung'],['staffTab','👥','Mitarbeiter Kartei','mitarbeiter personal kartei dn'],['hierarchieTab','🌳','Hierarchie','hierarchie leitung abteilung'],['miscTab','💰','Gehaltstabelle','gehalt sold rang'],['guideTab','📋','Funk & Codes','funk codes status ten code streife'],['commandTab','💻','Commands','command befehl commands'],['linksTab','🔗','Links & Dokumente','links dokumente leitfaden'],['sanctionsTab','⚖️','Sanktionskatalog','sanktion paragraf paragraph verstoß verstoss'],['newsTab','📰','News','news schwarzes brett ankuendigung ankündigung'],['settingsTab','⚙️','Einstellungen','einstellungen passwort diensttage'],['chiefTab','⭐','Chief Ebene','chief material bestand']
+        ['docTab','📝','Dokumentation & Einsatz','patient behandlung einsatz material medizin'],['statsTab','📊','Statistik & Archiv','statistik archiv schicht patienten protokoll'],['calendarTab','📅','Kalender','kalender termine dienstbesprechung'],['examTab','🎓','Ausbildung','ausbildung pruefung prüfung'],['personnelTab','💼','Personalabteilung','personal personalakte sanktion rankup rang urlaub abwesenheit'],['staffTab','👥','Mitarbeiter Kartei','mitarbeiter personal kartei dn'],['hierarchieTab','🌳','Hierarchie','hierarchie leitung abteilung'],['miscTab','💰','Gehaltstabelle','gehalt sold rang'],['guideTab','📋','Funk & Codes','funk codes status ten code streife'],['commandTab','💻','Commands','command befehl commands'],['linksTab','🔗','Links & Dokumente','links dokumente leitfaden'],['sanctionsTab','⚖️','Sanktionskatalog','sanktion paragraf paragraph verstoß verstoss'],['newsTab','📰','News','news schwarzes brett ankuendigung ankündigung'],['settingsTab','⚙️','Einstellungen','einstellungen passwort diensttage'],['chiefTab','⭐','Chief Ebene','chief material bestand']
     ].filter(([tabId])=>canSearchSection(tabId));
     const results=[];
     sections.forEach(([tabId,icon,title,keywords])=>{if(!q||normalizeUiSearchText(title+' '+keywords).includes(q))results.push({kind:'section',tabId,icon,title,subtitle:'Bereich öffnen'});});
@@ -530,6 +530,18 @@ let hierarchieDaten = JSON.parse(JSON.stringify(defaultHierarchieData));
 
 /* ── Vollständiger Gesamt-Changelog (Entwicklungsverlauf) ───── */
 const systemChangelogs = [
+    {
+        id: "sys_v6_8_8", version: "v6.8.8", date: "22.09.2026", ts: 1790035200000,
+        category: "Neue Funktion", title: "Personalabteilung ausgebaut",
+        changes: [
+            "Die Personalabteilung besitzt jetzt Übersicht, Personalakten, Mitarbeiterkalender und einen Bereich zum Anlegen neuer Mitarbeiter.",
+            "Personalakten führen Sanktionen mit Bericht, Rankups mit Grund und allgemeine Notizen chronologisch.",
+            "Doctor- und Paramedic-Laufbahn können parallel geführt werden; die zugehörigen Ränge können gleichzeitig sichtbar sein.",
+            "Urlaub und entschuldigte Abwesenheit werden intern mit Zeitraum verwaltet, in der Mitarbeiterkartei aber nur als Status angezeigt.",
+            "Abgelaufene Abwesenheiten bleiben sichtbar und werden in der Personalabteilung rot zur Rückkehrprüfung markiert.",
+            "Rang und aktueller Abwesenheitsstatus sind in der Mitarbeiterkartei in Mehrfach- und Einzelansicht sichtbar."
+        ]
+    },
     {
         id: "sys_v6_8_7j", version: "v6.8.7j", date: "21.09.2026", ts: 1790009100000,
         category: "Fehlerbehebung", title: "Rollenspeichern stabilisiert",
@@ -1621,7 +1633,7 @@ const defaultRoles = {
         canSendEmployeeNotices:true, canViewEmployeeNoticeRead:true, delEmployeeNotices:false,
         canEditPrices:false, canEditGuide:false, canEditCommands:false, canEditLinks:false,
         canViewChiefMaterials:false, canEditChiefMaterials:false,
-        canManageMemberAccess:true, canManageCareerPaths:true, canManageMaintenance:false,
+        canManageMemberAccess:true, canManageCareerPaths:true, canViewPersonnelRecords:true, canManagePersonnelRecords:true, canManagePersonnelAbsences:true, canManagePersonnelRanks:true, canCreateEmployees:true, canManageMaintenance:false,
         canEditSanctionsCatalog:true,
         canViewExamSolutions:false,
         delPatient:false, delArchiv:false, delGuide:false, delCommands:false, delLinks:false, delNews:true, delExams:false, delUsers:false, canManageFeedback:false, delFeedback:false,
@@ -1723,6 +1735,11 @@ const ROLE_PROPERTY_MAP = {
     delFlagPhotos: 'delPhotos',
     roleFlagManageMemberAccess: 'canManageMemberAccess',
     roleFlagManageCareerPaths: 'canManageCareerPaths',
+    roleFlagViewPersonnelRecords: 'canViewPersonnelRecords',
+    roleFlagManagePersonnelRecords: 'canManagePersonnelRecords',
+    roleFlagManagePersonnelAbsences: 'canManagePersonnelAbsences',
+    roleFlagManagePersonnelRanks: 'canManagePersonnelRanks',
+    roleFlagCreateEmployees: 'canCreateEmployees',
     roleFlagManageMaintenance: 'canManageMaintenance',
     roleFlagEditSanctionsCatalog: 'canEditSanctionsCatalog',
     delFlagCalendar: 'delCalendar',
@@ -2761,8 +2778,9 @@ function applyUserPermissions(user) {
     const isMaster = !!eff.isMasterAdmin;
     const isAdminOrMaster = (eff.isAdmin || isMaster);
     const canPostDirect = !!(eff.canPostNews || isMaster);
-    const canAccessPersonnel = !!(eff.canManageCareerPaths || isMaster);
+    const canAccessPersonnel = !!(eff.canManageCareerPaths || eff.canViewPersonnelRecords || eff.canManagePersonnelRecords || eff.canManagePersonnelAbsences || eff.canManagePersonnelRanks || eff.canCreateEmployees || isMaster);
     renderCareerManagementPanel();
+    if (typeof refreshPersonnelModule === 'function') refreshPersonnelModule();
 
     const personnelTabBtn = document.getElementById('personnelTabNavBtn');
     if (personnelTabBtn) personnelTabBtn.style.display = canAccessPersonnel ? 'inline-flex' : 'none';
@@ -3465,6 +3483,7 @@ function startFirebaseListeners() {
         renderCalendarMonth();
         renderStaffDirectory();
         renderCareerManagementPanel();
+        if (typeof renderPersonnelWorkspace === 'function') renderPersonnelWorkspace();
         renderEmployeeNoticeRecipientOptions();
         renderEmployeeNoticeFeedPanels();
         updateNavigationBadges();
@@ -3476,6 +3495,7 @@ function startFirebaseListeners() {
         cachedEmployeeCareerPaths = s.val() || {};
         renderStaffDirectory();
         renderCareerManagementPanel();
+        if (typeof renderPersonnelWorkspace === 'function') renderPersonnelWorkspace();
     });
     db.ref('data/exams').on('value', s => {
         const raw = s.val() || {};
@@ -5628,9 +5648,9 @@ function getVisibleStaffEntries() {
 
 const EMPLOYEE_CAREER_PATHS = Object.freeze({
     none: { label: 'Noch nicht festgelegt', icon: '➖' },
-    doctor: { label: 'Arzt', icon: '🩺' },
+    doctor: { label: 'Doctor', icon: '🩺' },
     paramedic: { label: 'Paramedic', icon: '🚑' },
-    both: { label: 'Arzt & Paramedic', icon: '⚕️' }
+    both: { label: 'Doctor & Paramedic', icon: '⚕️' }
 });
 
 function normalizeEmployeeCareerPath(value) {
@@ -5816,6 +5836,8 @@ function renderStaffDirectory() {
                     <h3 class="staff-name-title">${escapeHtml(u.vorname || '')} ${escapeHtml(u.nachname || '')}</h3>
                     <div class="staff-roles-container">${renderUserRoleBadges(u)}</div>
                     <div class="staff-card-career">${getEmployeeCareerPathBadge(uId)}</div>
+                    <div class="staff-card-ranks">${typeof getEmployeeRankBadges === 'function' ? getEmployeeRankBadges(uId) : ''}</div>
+                    ${typeof getEmployeeAbsenceBadge === 'function' && getEmployeeAbsenceBadge(uId) ? `<div class="staff-card-absence">${getEmployeeAbsenceBadge(uId)}</div>` : ''}
                     ${canManageRegistrations ? `
                         <div style="margin-top:8px;font-size:12px;font-weight:800;color:${getUserStatusDisplay(u.status).color};">${getUserStatusDisplay(u.status).text}</div>
                         ${u.status !== 'approved' ? `
@@ -5891,6 +5913,8 @@ function openStaffDetailModal(uId) {
                 <div class="staff-detail-meta-grid">
                     ${statusMeta}
                     <div><span>Laufbahn</span><b>${escapeHtml(getEmployeeCareerPathLabel(uId))}</b></div>
+                    <div><span>Rang</span><b>${escapeHtml(typeof getEmployeeRankLabels === 'function' ? getEmployeeRankLabels(uId).join(' · ') : 'Noch nicht festgelegt')}</b></div>
+                    ${typeof getEmployeePublicAbsence === 'function' && getEmployeePublicAbsence(uId) ? `<div class="staff-detail-absence"><span>Abwesenheit</span><b>${escapeHtml(getEmployeePublicAbsence(uId).label)}</b></div>` : ''}
                     <div><span>Diensttage</span><b>${days === null ? 'Nicht hinterlegt' : days}</b></div>
                     <div><span>Profilbild</span><b>${customPhoto ? '✅ Vorhanden' : '📷 Standardlogo'}</b></div>
                 </div>
@@ -11097,7 +11121,7 @@ function toggleMainNavGroup(menuId, btn, event) {
 }
 
 function switchTab(tabId, btn) {
-    if (tabId === 'personnelTab' && !canCurrentUserManageCareerPaths()) {
+    if (tabId === 'personnelTab' && !(typeof canCurrentUserAccessPersonnelArea === 'function' ? canCurrentUserAccessPersonnelArea() : canCurrentUserManageCareerPaths())) {
         alert('Keine Berechtigung für den Bereich Personalabteilung.');
         return;
     }
@@ -11120,7 +11144,7 @@ function switchTab(tabId, btn) {
 
     if (tabId === 'calendarTab') { renderCalendarMonth(); setCalendarView(activeCalendarView); }
     if (tabId === 'staffTab') renderStaffDirectory();
-    if (tabId === 'personnelTab') renderCareerManagementPanel();
+    if (tabId === 'personnelTab') { if (typeof renderPersonnelWorkspace === 'function') renderPersonnelWorkspace(); else renderCareerManagementPanel(); }
     if (tabId === 'miscTab') renderGehaltTab(cachedGehaltData);
     if (tabId === 'sanctionsTab') renderSanctionsCatalog();
     if (tabId === 'chiefTab') renderChiefMaterialsTab();
@@ -11324,3 +11348,114 @@ _w.closeInlineRejectBox = closeInlineRejectBox;
 _w.saveInlineRejection = saveInlineRejection;
 _w.deleteFeedbackEntry = deleteFeedbackEntry;
 _w.exportFeedbackListMarkdown = exportFeedbackListMarkdown;
+
+
+const PERSONNEL_RANKS = Object.freeze({
+    trainee:{label:'Trainee',track:'common-low',order:1}, solo:{label:'Solo',track:'common-low',order:2},
+    emt:{label:'EMT',track:'common-low',order:3}, a_emt:{label:'A-EMT',track:'common-low',order:4},
+    resident_physician:{label:'Resident Physician',track:'doctor',order:5}, physician:{label:'Physician',track:'doctor',order:6}, attending:{label:'Attending',track:'doctor',order:7},
+    paramedic:{label:'Paramedic',track:'paramedic',order:5}, senior_paramedic:{label:'Senior Paramedic',track:'paramedic',order:6}, medical_supervisor:{label:'Medical Supervisor',track:'paramedic',order:7},
+    lieutenant:{label:'Lieutenant',track:'common-high',order:8}, chief_physician:{label:'Chief Physician',track:'common-high',order:9}, fod:{label:'F.o.D',track:'common-high',order:10},
+    domo:{label:'D.o.M.O',track:'common-high',order:11}, deputy_chief:{label:'Deputy Chief',track:'common-high',order:12}, ass_chief:{label:'Ass. Chief',track:'common-high',order:13}, chief:{label:'Chief',track:'common-high',order:14}
+});
+const PERSONNEL_COMMON_RANKS=['trainee','solo','emt','a_emt','lieutenant','chief_physician','fod','domo','deputy_chief','ass_chief','chief'];
+const PERSONNEL_DOCTOR_RANKS=['resident_physician','physician','attending'];
+const PERSONNEL_PARAMEDIC_RANKS=['paramedic','senior_paramedic','medical_supervisor'];
+const PERSONNEL_ABSENCE_TYPES=Object.freeze({vacation:{label:'Urlaub',icon:'🏖️'},excused:{label:'Entschuldigt abwesend',icon:'📝'}});
+let cachedEmployeeRanks={},cachedEmployeeAbsenceStatus={},cachedPersonnelRecords={},cachedPersonnelAbsences={},activePersonnelEmployeeId='',activePersonnelView='overview';
+
+function getPersonnelPermissions(){
+    const eff=sessionUser?getUserEffectivePermissions(sessionUser):{},master=!!eff.isMasterAdmin;
+    return {canAccess:!!(master||eff.canManageCareerPaths||eff.canViewPersonnelRecords||eff.canManagePersonnelRecords||eff.canManagePersonnelAbsences||eff.canManagePersonnelRanks||eff.canCreateEmployees),
+        canViewRecords:!!(master||eff.canViewPersonnelRecords||eff.canManagePersonnelRecords||eff.canManagePersonnelRanks),canManageRecords:!!(master||eff.canManagePersonnelRecords),
+        canManageAbsences:!!(master||eff.canManagePersonnelAbsences),canManageRanks:!!(master||eff.canManagePersonnelRanks),canManageCareer:!!(master||eff.canManageCareerPaths),canCreateEmployees:!!(master||eff.canCreateEmployees)};
+}
+function canCurrentUserAccessPersonnelArea(){return getPersonnelPermissions().canAccess;}
+function normalizePersonnelRankKey(v){const k=String(v||'').trim();return PERSONNEL_RANKS[k]?k:'';}
+function personnelUserName(uId){const u=cachedUsers?.[uId]||{};return `${u.vorname||''} ${u.nachname||''}`.trim()||uId;}
+function getEmployeeRankData(uId){const x=cachedEmployeeRanks?.[uId]||{};return {common:normalizePersonnelRankKey(x.common),doctor:normalizePersonnelRankKey(x.doctor),paramedic:normalizePersonnelRankKey(x.paramedic)};}
+function getEmployeeRankKeys(uId){const r=getEmployeeRankData(uId),career=getEmployeeCareerPathKey(uId);if(r.common&&PERSONNEL_RANKS[r.common]?.track==='common-high')return[r.common];const b=[];if((career==='doctor'||career==='both')&&r.doctor)b.push(r.doctor);if((career==='paramedic'||career==='both')&&r.paramedic)b.push(r.paramedic);return b.length?b:(r.common?[r.common]:[]);}
+function getEmployeeRankLabels(uId){const k=getEmployeeRankKeys(uId);return k.length?k.map(x=>PERSONNEL_RANKS[x]?.label||x):['Noch nicht festgelegt'];}
+function getEmployeeRankBadges(uId){const k=getEmployeeRankKeys(uId);if(!k.length)return '<span class="staff-rank-badge rank-none">🎖️ Rang: Noch nicht festgelegt</span>';return k.map(x=>`<span class="staff-rank-badge rank-${escapeHtml(PERSONNEL_RANKS[x]?.track||'common')}">🎖️ ${escapeHtml(PERSONNEL_RANKS[x]?.label||x)}</span>`).join('');}
+function getEmployeePublicAbsence(uId){const x=cachedEmployeeAbsenceStatus?.[uId];if(!x||x.active!==true||!PERSONNEL_ABSENCE_TYPES[x.type])return null;const m=PERSONNEL_ABSENCE_TYPES[x.type];return {type:x.type,label:m.label,icon:m.icon};}
+function getEmployeeAbsenceBadge(uId){const x=getEmployeePublicAbsence(uId);return x?`<span class="staff-absence-badge">${x.icon} ${escapeHtml(x.label)}</span>`:'';}
+function personnelTodayIso(){return new Date().toLocaleDateString('sv-SE');}
+function formatPersonnelDate(v){const raw=String(v||'');if(!raw)return '—';const d=new Date(raw+'T00:00:00');return Number.isNaN(d.getTime())?raw:d.toLocaleDateString('de-DE');}
+function isPersonnelAbsenceDue(x){return !!(x&&x.status!=='returned'&&x.active!==false&&x.endDate&&personnelTodayIso()>String(x.endDate));}
+function getPersonnelActiveAbsence(uId){return Object.values(cachedPersonnelAbsences?.[uId]||{}).find(x=>x&&x.status!=='returned'&&x.active!==false)||null;}
+function getPersonnelApprovedEntries(){return Object.entries(cachedUsers||{}).filter(([,u])=>{const st=u?.status||((u?.isAdmin||u?.isMasterAdmin)?'approved':'pending');return !!u&&st==='approved';}).sort((a,b)=>{const da=parseDN(a[1]?.dn),dbb=parseDN(b[1]?.dn);return da!==dbb?da-dbb:personnelUserName(a[0]).localeCompare(personnelUserName(b[0]),'de');});}
+function buildPersonnelRankOptions(keys,selected,placeholder='Nicht festgelegt'){return `<option value="">${escapeHtml(placeholder)}</option>`+keys.map(k=>`<option value="${k}" ${selected===k?'selected':''}>${escapeHtml(PERSONNEL_RANKS[k].label)}</option>`).join('');}
+
+function switchPersonnelView(view){if(!canCurrentUserAccessPersonnelArea())return;activePersonnelView=['overview','files','calendar','create'].includes(view)?view:'overview';renderPersonnelWorkspace();}
+function renderPersonnelWorkspace(){
+    const root=document.getElementById('personnelTab');if(!root)return;const p=getPersonnelPermissions();if(!p.canAccess)return;
+    const vis={files:p.canViewRecords||p.canManageCareer||p.canManageRanks,calendar:p.canViewRecords||p.canManageAbsences,create:p.canCreateEmployees};
+    ['files','calendar','create'].forEach(k=>{const b=document.getElementById('personnelNav_'+k);if(b)b.style.display=vis[k]?'':'none';});
+    if(activePersonnelView!=='overview'&&!vis[activePersonnelView])activePersonnelView='overview';
+    document.querySelectorAll('.personnel-pane').forEach(e=>e.classList.toggle('active',e.id==='personnelPane_'+activePersonnelView));
+    document.querySelectorAll('.personnel-nav-btn').forEach(e=>e.classList.toggle('active',e.id==='personnelNav_'+activePersonnelView));
+    const c=document.getElementById('personnelAbsenceCreateCard');if(c)c.style.display=p.canManageAbsences?'':'none';
+    renderPersonnelOverview();renderPersonnelEmployeeList();renderPersonnelEmployeeDetail();renderPersonnelCalendar();renderPersonnelCreateForm();
+}
+function renderPersonnelOverview(){
+    const due=[];let vacation=0,excused=0;Object.entries(cachedPersonnelAbsences||{}).forEach(([uId,map])=>Object.entries(map||{}).forEach(([id,x])=>{if(!x||x.status==='returned'||x.active===false)return;if(x.type==='vacation')vacation++;if(x.type==='excused')excused++;if(isPersonnelAbsenceDue(x))due.push({uId,id,x});}));
+    const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=String(v);};set('personnelStatEmployees',getPersonnelApprovedEntries().length);set('personnelStatVacation',vacation);set('personnelStatExcused',excused);set('personnelStatDue',due.length);const navBadge=document.getElementById('personnelDueBadge');if(navBadge){navBadge.textContent=String(due.length);navBadge.style.display=due.length?'inline-flex':'none';}
+    const box=document.getElementById('personnelReturnAlerts');if(!box)return;const canConfirm=getPersonnelPermissions().canManageAbsences;
+    box.innerHTML=due.length?due.sort((a,b)=>String(a.x.endDate).localeCompare(String(b.x.endDate))).map(({uId,id,x})=>`<div class="personnel-return-alert"><div><b>${escapeHtml(personnelUserName(uId))}</b><span>${escapeHtml(PERSONNEL_ABSENCE_TYPES[x.type]?.label||'Abwesenheit')} endete am ${escapeHtml(formatPersonnelDate(x.endDate))}</span></div>${canConfirm?`<button type="button" class="btn personnel-small-btn" onclick="confirmPersonnelReturn('${uId}','${id}')">✅ Rückkehr bestätigen</button>`:'<strong>🔴 Rückkehr prüfen</strong>'}</div>`).join(''):'<div class="personnel-empty-state">✅ Keine offenen Rückkehrprüfungen.</div>';
+}
+function renderPersonnelEmployeeList(){
+    const box=document.getElementById('personnelEmployeeList');if(!box)return;const q=(document.getElementById('personnelEmployeeSearch')?.value||'').trim().toLowerCase();
+    const entries=getPersonnelApprovedEntries().filter(([uId,u])=>!q||`${u.dn||''} ${u.vorname||''} ${u.nachname||''} ${getEmployeeRankLabels(uId).join(' ')}`.toLowerCase().includes(q));
+    if(!activePersonnelEmployeeId||!cachedUsers[activePersonnelEmployeeId])activePersonnelEmployeeId=entries[0]?.[0]||'';
+    box.innerHTML=entries.length?entries.map(([uId,u])=>`<button type="button" class="personnel-employee-row ${activePersonnelEmployeeId===uId?'active':''}" onclick="selectPersonnelEmployee('${uId}')"><span class="personnel-employee-dn">${escapeHtml(formatStaffDn(u.dn))}</span><span><b>${escapeHtml(personnelUserName(uId))}</b><small>${escapeHtml(getEmployeeRankLabels(uId).join(' · '))}</small></span>${getEmployeePublicAbsence(uId)?'<em>●</em>':''}</button>`).join(''):'<div class="personnel-empty-state">Keine Mitarbeiter gefunden.</div>';
+}
+function selectPersonnelEmployee(uId){activePersonnelEmployeeId=uId;renderPersonnelEmployeeList();renderPersonnelEmployeeDetail();}
+function renderPersonnelTimelineItem(item){const d=item.ts?new Date(item.ts).toLocaleString('de-DE'):'—',x=item.x||{};if(item.type==='sanction')return `<article class="personnel-timeline-item sanction"><div><b>⚖️ ${escapeHtml(x.title||'Sanktion')}</b><span>${escapeHtml(d)} · ${escapeHtml(x.createdBy||'')}</span></div><p>${formatTextWithLinks(x.report||'')}</p></article>`;if(item.type==='rankup')return `<article class="personnel-timeline-item rankup"><div><b>🎖️ Rangänderung</b><span>${escapeHtml(d)} · ${escapeHtml(x.createdBy||'')}</span></div><p>${escapeHtml(x.summary||'')}${x.reason?`<br><strong>Grund: ${escapeHtml(x.reason)}</strong>`:''}${x.note?`<br>${escapeHtml(x.note)}`:''}</p></article>`;return `<article class="personnel-timeline-item note"><div><b>🗒️ Notiz</b><span>${escapeHtml(d)} · ${escapeHtml(x.createdBy||'')}</span></div><p>${formatTextWithLinks(x.text||'')}</p></article>`;}
+function renderPersonnelEmployeeDetail(){
+    const box=document.getElementById('personnelEmployeeDetail');if(!box)return;const uId=activePersonnelEmployeeId,user=cachedUsers?.[uId];if(!uId||!user){box.innerHTML='<div class="personnel-empty-state">Wähle links einen Mitarbeiter aus.</div>';return;}
+    const p=getPersonnelPermissions(),career=getEmployeeCareerPathKey(uId),ranks=getEmployeeRankData(uId),record=cachedPersonnelRecords?.[uId]||{},timeline=[];Object.entries(record.sanctions||{}).forEach(([id,x])=>timeline.push({id,type:'sanction',ts:Number(x.createdAt)||0,x}));Object.entries(record.notes||{}).forEach(([id,x])=>timeline.push({id,type:'note',ts:Number(x.createdAt)||0,x}));Object.entries(record.rankups||{}).forEach(([id,x])=>timeline.push({id,type:'rankup',ts:Number(x.createdAt)||0,x}));timeline.sort((a,b)=>b.ts-a.ts);const abs=getPersonnelActiveAbsence(uId);
+    box.innerHTML=`<div class="personnel-file-head"><span class="personnel-file-dn">${escapeHtml(formatStaffDn(user.dn))}</span><h3>${escapeHtml(personnelUserName(uId))}</h3><div class="personnel-file-badges">${getEmployeeCareerPathBadge(uId)} ${getEmployeeRankBadges(uId)} ${getEmployeeAbsenceBadge(uId)}</div></div>
+    <div class="personnel-file-grid">${(p.canManageCareer||p.canManageRanks)?`<section class="personnel-card"><h4>🎖️ Laufbahn & Ränge</h4>${p.canManageCareer?`<label>Laufbahn</label><div class="personnel-inline-row"><select id="personnelCareerSelect"><option value="none" ${career==='none'?'selected':''}>Noch nicht festgelegt</option><option value="doctor" ${career==='doctor'?'selected':''}>Doctor</option><option value="paramedic" ${career==='paramedic'?'selected':''}>Paramedic</option><option value="both" ${career==='both'?'selected':''}>Doctor & Paramedic</option></select><button type="button" class="btn personnel-small-btn" onclick="savePersonnelCareer('${uId}')">Speichern</button></div>`:''}${p.canManageRanks?`<label>Gemeinsamer Rang</label><select id="personnelRankCommon">${buildPersonnelRankOptions(PERSONNEL_COMMON_RANKS,ranks.common)}</select>${career==='doctor'||career==='both'?`<label>Doctor-Rang</label><select id="personnelRankDoctor">${buildPersonnelRankOptions(PERSONNEL_DOCTOR_RANKS,ranks.doctor)}</select>`:''}${career==='paramedic'||career==='both'?`<label>Paramedic-Rang</label><select id="personnelRankParamedic">${buildPersonnelRankOptions(PERSONNEL_PARAMEDIC_RANKS,ranks.paramedic)}</select>`:''}<label>Grund der Rangänderung</label><select id="personnelRankReason"><option value="">Bitte wählen</option><option>Ausbildung</option><option>Wiedereinstellung</option><option>Sonder-Rankup</option></select><label>Zusatz / Begründung</label><input type="text" id="personnelRankNote" maxlength="180" placeholder="Optionaler Zusatz"><button type="button" class="btn personnel-primary-btn" onclick="savePersonnelRanks('${uId}')">🎖️ Ränge speichern</button>`:''}</section>`:''}${p.canManageRecords?`<section class="personnel-card"><h4>⚖️ Sanktion zur Akte</h4><input type="text" id="personnelSanctionTitle" maxlength="120" placeholder="Verstoß / Sanktion"><textarea id="personnelSanctionReport" rows="5" maxlength="3000" placeholder="Bericht zur Sanktion …"></textarea><button type="button" class="btn personnel-danger-btn" onclick="addPersonnelSanction('${uId}')">⚖️ Sanktion eintragen</button></section><section class="personnel-card"><h4>🗒️ Allgemeine Notiz</h4><textarea id="personnelNoteText" rows="5" maxlength="2000" placeholder="z. B. Namensänderung oder interner Hinweis …"></textarea><button type="button" class="btn personnel-primary-btn" onclick="addPersonnelNote('${uId}')">🗒️ Notiz hinzufügen</button></section>`:''}</div>
+    ${abs?`<div class="personnel-current-absence ${isPersonnelAbsenceDue(abs)?'due':''}"><b>${escapeHtml(PERSONNEL_ABSENCE_TYPES[abs.type]?.label||'Abwesenheit')}</b><span>Intern: ${escapeHtml(formatPersonnelDate(abs.startDate))} – ${escapeHtml(formatPersonnelDate(abs.endDate))}</span></div>`:''}<section class="personnel-timeline-card"><div class="personnel-section-title"><h4>📚 Personalhistorie</h4><span>${timeline.length} Einträge</span></div><div class="personnel-timeline">${timeline.length?timeline.map(renderPersonnelTimelineItem).join(''):'<div class="personnel-empty-state">Noch keine Akteneinträge vorhanden.</div>'}</div></section>`;
+}
+async function savePersonnelCareer(uId){if(!getPersonnelPermissions().canManageCareer)return;const value=normalizeEmployeeCareerPath(document.getElementById('personnelCareerSelect')?.value);try{const ref=db.ref('data/employeeCareerPaths/'+uId);if(value==='none')await ref.remove();else await ref.set({path:value,updatedAt:Date.now(),updatedBy:personnelUserName(getUserAccountId(sessionUser)),updatedById:getUserAccountId(sessionUser)});showToast('✅ Laufbahn gespeichert.','success');}catch(err){console.error(err);showToast('⚠️ Laufbahn konnte nicht gespeichert werden.','error',5000);}}
+function rankStateSummary(r){const a=[];if(r.common)a.push(PERSONNEL_RANKS[r.common]?.label);if(r.doctor)a.push('Doctor: '+PERSONNEL_RANKS[r.doctor]?.label);if(r.paramedic)a.push('Paramedic: '+PERSONNEL_RANKS[r.paramedic]?.label);return a.filter(Boolean).join(' · ')||'Noch nicht festgelegt';}
+async function savePersonnelRanks(uId){if(!getPersonnelPermissions().canManageRanks)return;const old=getEmployeeRankData(uId),career=getEmployeeCareerPathKey(uId),next={common:normalizePersonnelRankKey(document.getElementById('personnelRankCommon')?.value),doctor:(career==='doctor'||career==='both')?normalizePersonnelRankKey(document.getElementById('personnelRankDoctor')?.value):'',paramedic:(career==='paramedic'||career==='both')?normalizePersonnelRankKey(document.getElementById('personnelRankParamedic')?.value):''};if(JSON.stringify(old)===JSON.stringify(next)){showToast('Keine Rangänderung vorhanden.','info');return;}const reason=(document.getElementById('personnelRankReason')?.value||'').trim();if(!reason){alert('Bitte einen Grund für die Rangänderung auswählen.');return;}const note=(document.getElementById('personnelRankNote')?.value||'').trim(),now=Date.now(),author=personnelUserName(getUserAccountId(sessionUser)),authorId=getUserAccountId(sessionUser),h=db.ref(`data/personnelRecords/${uId}/rankups`).push(),updates={};updates[`data/employeeRanks/${uId}`]={...next,updatedAt:now,updatedBy:author,updatedById:authorId};updates[`data/personnelRecords/${uId}/rankups/${h.key}`]={createdAt:now,createdBy:author,createdById:authorId,reason,note,summary:`${rankStateSummary(old)} → ${rankStateSummary(next)}`};try{await db.ref().update(updates);logAdminAudit('Mitarbeiterrang geändert',`${personnelUserName(uId)}: ${rankStateSummary(old)} → ${rankStateSummary(next)} (${reason})`);showToast('✅ Ränge und Historie gespeichert.','success');}catch(err){console.error(err);showToast('⚠️ Ränge konnten nicht gespeichert werden.','error',5000);}}
+async function addPersonnelSanction(uId){if(!getPersonnelPermissions().canManageRecords)return;const title=(document.getElementById('personnelSanctionTitle')?.value||'').trim(),report=(document.getElementById('personnelSanctionReport')?.value||'').trim();if(!title||!report){alert('Bitte Verstoß/Sanktion und Bericht ausfüllen.');return;}try{await db.ref(`data/personnelRecords/${uId}/sanctions`).push({title,report,createdAt:Date.now(),createdBy:personnelUserName(getUserAccountId(sessionUser)),createdById:getUserAccountId(sessionUser)});logAdminAudit('Sanktion zur Personalakte',`${personnelUserName(uId)}: ${title}`);showToast('✅ Sanktion wurde zur Personalakte hinzugefügt.','success');}catch(err){console.error(err);showToast('⚠️ Sanktion konnte nicht gespeichert werden.','error',5000);}}
+async function addPersonnelNote(uId){if(!getPersonnelPermissions().canManageRecords)return;const text=(document.getElementById('personnelNoteText')?.value||'').trim();if(!text){alert('Bitte eine Notiz eingeben.');return;}try{await db.ref(`data/personnelRecords/${uId}/notes`).push({text,createdAt:Date.now(),createdBy:personnelUserName(getUserAccountId(sessionUser)),createdById:getUserAccountId(sessionUser)});logAdminAudit('Notiz zur Personalakte',`${personnelUserName(uId)}: Notiz hinzugefügt`);showToast('✅ Notiz wurde hinzugefügt.','success');}catch(err){console.error(err);showToast('⚠️ Notiz konnte nicht gespeichert werden.','error',5000);}}
+
+function renderPersonnelCalendar(){
+    const employeeSel=document.getElementById('personnelAbsenceEmployee'),filterEmployee=document.getElementById('personnelCalendarEmployeeFilter'),filterRank=document.getElementById('personnelCalendarRankFilter'),list=document.getElementById('personnelCalendarList');if(!list)return;
+    const entries=getPersonnelApprovedEntries(),opts='<option value="">Mitarbeiter wählen</option>'+entries.map(([uId,u])=>`<option value="${uId}">${escapeHtml(formatStaffDn(u.dn))} · ${escapeHtml(personnelUserName(uId))}</option>`).join('');
+    if(employeeSel){const v=employeeSel.value;employeeSel.innerHTML=opts;employeeSel.value=entries.some(([id])=>id===v)?v:'';}if(filterEmployee){const v=filterEmployee.value;filterEmployee.innerHTML='<option value="all">Alle Mitarbeiter</option>'+entries.map(([uId])=>`<option value="${uId}">${escapeHtml(personnelUserName(uId))}</option>`).join('');filterEmployee.value=entries.some(([id])=>id===v)?v:'all';}
+    if(filterRank&&!filterRank.dataset.ready){filterRank.innerHTML='<option value="all">Alle Ränge</option>'+Object.entries(PERSONNEL_RANKS).sort((a,b)=>a[1].order-b[1].order||a[1].label.localeCompare(b[1].label,'de')).map(([k,v])=>`<option value="${k}">${escapeHtml(v.label)}</option>`).join('');filterRank.dataset.ready='1';}
+    const ef=filterEmployee?.value||'all',rf=filterRank?.value||'all',rows=[];Object.entries(cachedPersonnelAbsences||{}).forEach(([uId,map])=>Object.entries(map||{}).forEach(([id,x])=>{if(!x||(ef!=='all'&&uId!==ef)||(rf!=='all'&&!getEmployeeRankKeys(uId).includes(rf)))return;rows.push({uId,id,x});}));rows.sort((a,b)=>String(b.x.startDate||'').localeCompare(String(a.x.startDate||'')));const canConfirm=getPersonnelPermissions().canManageAbsences;
+    list.innerHTML=rows.length?rows.map(({uId,id,x})=>{const due=isPersonnelAbsenceDue(x),returned=x.status==='returned';return `<div class="personnel-calendar-row ${due?'due':''} ${returned?'returned':''}"><div><b>${escapeHtml(personnelUserName(uId))}</b><span>${escapeHtml(getEmployeeRankLabels(uId).join(' · '))}</span></div><div><b>${escapeHtml(PERSONNEL_ABSENCE_TYPES[x.type]?.label||'Abwesenheit')}</b><span>${escapeHtml(formatPersonnelDate(x.startDate))} – ${escapeHtml(formatPersonnelDate(x.endDate))}</span></div><div class="personnel-calendar-note">${escapeHtml(x.note||'')}</div><div>${returned?'<span class="personnel-status-ok">✅ Rückkehr bestätigt</span>':due?(canConfirm?`<button type="button" class="btn personnel-small-btn danger" onclick="confirmPersonnelReturn('${uId}','${id}')">🔴 Rückkehr prüfen</button>`:'<span class="personnel-status-due">🔴 Rückkehr prüfen</span>'):'<span class="personnel-status-active">● Läuft</span>'}</div></div>`;}).join(''):'<div class="personnel-empty-state">Keine Abwesenheiten für diesen Filter.</div>';
+}
+async function addPersonnelAbsence(){if(!getPersonnelPermissions().canManageAbsences)return;const uId=document.getElementById('personnelAbsenceEmployee')?.value||'',type=document.getElementById('personnelAbsenceType')?.value||'',startDate=document.getElementById('personnelAbsenceStart')?.value||'',endDate=document.getElementById('personnelAbsenceEnd')?.value||'',note=(document.getElementById('personnelAbsenceNote')?.value||'').trim();if(!uId||!PERSONNEL_ABSENCE_TYPES[type]||!startDate||!endDate){alert('Bitte Mitarbeiter, Art und Zeitraum vollständig angeben.');return;}if(endDate<startDate){alert('Das Enddatum darf nicht vor dem Startdatum liegen.');return;}if(getPersonnelActiveAbsence(uId)){alert('Für diesen Mitarbeiter gibt es bereits eine noch nicht abgeschlossene Abwesenheit.');return;}const now=Date.now(),author=personnelUserName(getUserAccountId(sessionUser)),authorId=getUserAccountId(sessionUser),ref=db.ref(`data/personnelAbsences/${uId}`).push(),updates={};updates[`data/personnelAbsences/${uId}/${ref.key}`]={type,startDate,endDate,note,status:'active',active:true,createdAt:now,createdBy:author,createdById:authorId};updates[`data/employeeAbsenceStatus/${uId}`]={type,active:true,updatedAt:now,updatedBy:author,updatedById:authorId};try{await db.ref().update(updates);logAdminAudit('Abwesenheit eingetragen',`${personnelUserName(uId)}: ${PERSONNEL_ABSENCE_TYPES[type].label} ${startDate}–${endDate}`);showToast('✅ Abwesenheit eingetragen.','success');}catch(err){console.error(err);showToast('⚠️ Abwesenheit konnte nicht gespeichert werden.','error',5000);}}
+async function confirmPersonnelReturn(uId,id){if(!getPersonnelPermissions().canManageAbsences)return;if(!confirm(`Rückkehr von ${personnelUserName(uId)} bestätigen? Der öffentliche Abwesenheitsstatus wird danach entfernt.`))return;const now=Date.now(),author=personnelUserName(getUserAccountId(sessionUser)),authorId=getUserAccountId(sessionUser),updates={};updates[`data/personnelAbsences/${uId}/${id}/status`]='returned';updates[`data/personnelAbsences/${uId}/${id}/active`]=false;updates[`data/personnelAbsences/${uId}/${id}/returnedAt`]=now;updates[`data/personnelAbsences/${uId}/${id}/returnedBy`]=author;updates[`data/personnelAbsences/${uId}/${id}/returnedById`]=authorId;updates[`data/employeeAbsenceStatus/${uId}`]=null;try{await db.ref().update(updates);logAdminAudit('Rückkehr bestätigt',`${personnelUserName(uId)} wurde aus der Abwesenheit zurückgemeldet.`);showToast('✅ Rückkehr bestätigt.','success');}catch(err){console.error(err);showToast('⚠️ Rückkehr konnte nicht bestätigt werden.','error',5000);}}
+
+function renderPersonnelCreateForm(){const career=document.getElementById('personnelCreateCareer'),rank=document.getElementById('personnelCreateRank');if(!career||!rank)return;const c=career.value||'none',allowed=PERSONNEL_COMMON_RANKS.filter(k=>PERSONNEL_RANKS[k].track==='common-low');if(c==='doctor'||c==='both')allowed.push(...PERSONNEL_DOCTOR_RANKS);if(c==='paramedic'||c==='both')allowed.push(...PERSONNEL_PARAMEDIC_RANKS);allowed.push(...PERSONNEL_COMMON_RANKS.filter(k=>PERSONNEL_RANKS[k].track==='common-high'));const old=rank.value;rank.innerHTML=allowed.map(k=>`<option value="${k}" ${old===k?'selected':''}>${escapeHtml(PERSONNEL_RANKS[k].label)}</option>`).join('');if(!allowed.includes(old))rank.value='trainee';}
+async function createPersonnelEmployee(){
+    const p=getPersonnelPermissions();if(!p.canCreateEmployees)return;const v=(document.getElementById('personnelCreateFirstName')?.value||'').trim(),n=(document.getElementById('personnelCreateLastName')?.value||'').trim(),dn=(document.getElementById('personnelCreateDn')?.value||'').trim(),password=(document.getElementById('personnelCreatePassword')?.value||'').trim(),career=normalizeEmployeeCareerPath(document.getElementById('personnelCreateCareer')?.value),rank=normalizePersonnelRankKey(document.getElementById('personnelCreateRank')?.value)||'trainee';
+    if(!v||!n||!dn||password.length<6){alert('Bitte Vorname, Nachname, DN und ein vorläufiges Passwort mit mindestens 6 Zeichen ausfüllen.');return;}if(Object.values(cachedUsers||{}).some(u=>String(u?.dn||'').replace(/\D/g,'')===String(dn).replace(/\D/g,''))){alert('Diese Dienstnummer ist bereits vergeben.');return;}
+    const loginKey=generateUserId(v,n),uId=loginKey;if(!uId){alert('Ungültiger Name.');return;}const known=await readLoginDirectory(loginKey);if(known.exists&&!known.deleted){alert('Dieser Mitarbeitername ist bereits registriert.');return;}let version=known.exists&&known.deleted?Math.max(1,Number(known.version)||1)+1:1,ctx=null,userStored=false,secondaryDb=null;
+    try{for(let i=0;i<25;i++,version++){try{ctx=await createSecondaryAuthAccount(uId,version,password,false);break;}catch(err){if(err?.code==='auth/email-already-in-use')continue;throw err;}}if(!ctx?.user)throw new Error('Kein freier technischer Zugang verfügbar.');secondaryDb=ctx.app.database();const todayIso=new Date().toLocaleDateString('sv-SE'),baseUser={accountId:uId,loginKey,vorname:v,nachname:n,dn,status:'pending',date:new Date().toLocaleDateString('de-DE'),einstellungsDatum:todayIso,roles:{mitarbeiter:true},photoUrl:'mdlogo.png',authUid:ctx.user.uid,authVersion:version};baseUser.serverPermissions=buildServerPermissions(baseUser);await secondaryDb.ref(`data/authIndex/${ctx.user.uid}`).set(uId);if(known.exists&&known.deleted)await secondaryDb.ref(`data/loginDirectory/${loginKey}`).update({version,accountId:uId,deleted:false});else await secondaryDb.ref(`data/loginDirectory/${loginKey}`).set({version,accountId:uId});await secondaryDb.ref(`data/users/${uId}`).set(baseUser);userStored=true;await closeSecondaryAuthAccount(ctx);ctx=null;const eff=getUserEffectivePermissions(sessionUser);if(eff.canManageMemberAccess||eff.isMasterAdmin)await db.ref(`data/users/${uId}/status`).set('approved');const author=personnelUserName(getUserAccountId(sessionUser)),authorId=getUserAccountId(sessionUser),now=Date.now();if(career!=='none'&&p.canManageCareer)await db.ref(`data/employeeCareerPaths/${uId}`).set({path:career,updatedAt:now,updatedBy:author,updatedById:authorId});if(p.canManageRanks)await db.ref(`data/employeeRanks/${uId}`).set({common:PERSONNEL_RANKS[rank]?.track?.startsWith('common')?rank:'',doctor:PERSONNEL_RANKS[rank]?.track==='doctor'?rank:'',paramedic:PERSONNEL_RANKS[rank]?.track==='paramedic'?rank:'',updatedAt:now,updatedBy:author,updatedById:authorId});logAdminAudit('Mitarbeiter angelegt',`${v} ${n} (${formatStaffDn(dn)}) wurde über die Personalabteilung angelegt.`);['personnelCreateFirstName','personnelCreateLastName','personnelCreateDn','personnelCreatePassword'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});showToast((eff.canManageMemberAccess||eff.isMasterAdmin)?'✅ Mitarbeiter wurde angelegt und freigeschaltet.':'✅ Mitarbeiter wurde angelegt und wartet auf Freischaltung.','success',5000);activePersonnelEmployeeId=uId;switchPersonnelView('files');}
+    catch(err){console.error('Mitarbeiter konnte nicht angelegt werden:',err);if(ctx&&!userStored){try{if(secondaryDb){await secondaryDb.ref(`data/loginDirectory/${loginKey}`).remove();await secondaryDb.ref(`data/authIndex/${ctx.user.uid}`).remove();}}catch(_){}try{await ctx.user?.delete();}catch(_){}try{await closeSecondaryAuthAccount(ctx);}catch(_){}}showToast(userStored?'⚠️ Mitarbeiterkonto wurde angelegt, aber Nacharbeiten konnten nicht vollständig gespeichert werden.':'⚠️ Mitarbeiter konnte nicht angelegt werden. Bestehende Konten wurden nicht verändert.','error',6500);}
+}
+function refreshPersonnelModule(){
+    db.ref('data/employeeRanks').off();db.ref('data/employeeAbsenceStatus').off();db.ref('data/personnelRecords').off();db.ref('data/personnelAbsences').off();
+    if(!sessionUser){cachedEmployeeRanks={};cachedEmployeeAbsenceStatus={};cachedPersonnelRecords={};cachedPersonnelAbsences={};return;}
+    db.ref('data/employeeRanks').on('value',x=>{cachedEmployeeRanks=x.val()||{};renderStaffDirectory();renderPersonnelWorkspace();});
+    db.ref('data/employeeAbsenceStatus').on('value',x=>{cachedEmployeeAbsenceStatus=x.val()||{};renderStaffDirectory();renderPersonnelWorkspace();});
+    const p=getPersonnelPermissions();if(p.canViewRecords)db.ref('data/personnelRecords').on('value',x=>{cachedPersonnelRecords=x.val()||{};renderPersonnelWorkspace();});else cachedPersonnelRecords={};if(p.canViewRecords||p.canManageAbsences)db.ref('data/personnelAbsences').on('value',x=>{cachedPersonnelAbsences=x.val()||{};renderPersonnelWorkspace();});else cachedPersonnelAbsences={};renderPersonnelWorkspace();
+}
+
+if (typeof window !== 'undefined') {
+    Object.assign(window, {
+        switchPersonnelView, renderPersonnelWorkspace, renderPersonnelEmployeeList, selectPersonnelEmployee,
+        renderPersonnelCalendar, renderPersonnelCreateForm, savePersonnelCareer, savePersonnelRanks,
+        addPersonnelSanction, addPersonnelNote, addPersonnelAbsence, confirmPersonnelReturn, createPersonnelEmployee
+    });
+}
+

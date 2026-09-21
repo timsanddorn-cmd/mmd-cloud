@@ -1,15 +1,17 @@
 # MMD Cloud – PROJECT STATUS
 
 **Aktuell bestätigte stabile Live-Version:** v6.8.7j  
-**Aktueller Entwicklungsstand:** v6.8.7j  
-**Status v6.8.7j:** 🟢 LIVE GETESTET UND BESTÄTIGT  
-**Datum:** 21.09.2026
+**Aktueller Entwicklungsstand:** v6.8.8  
+**Status v6.8.8:** 🟡 PERSONALVERWALTUNG IMPLEMENTIERT / LIVE-TEST AUSSTEHEND  
+**Datum:** 22.09.2026
 
 ---
 
 ## 1. Verbindliche Basis
 
 **v6.8.7j = bestätigte stabile Code-Rollback-Basis**
+
+v6.8.8 baut auf der bestätigten stabilen Basis v6.8.7j auf. Bis zum vollständigen Live-Test bleibt v6.8.7j die sichere Rollback-Basis.
 
 v6.8.7j baut auf v6.8.7i auf. Das Speichern im Bereich Rollen & Rechte wurde stabilisiert und die Laufbahn-Berechtigung in den ServerPermissions-Rules ausdrücklich ergänzt.
 
@@ -255,3 +257,41 @@ Behoben:
 Wichtig:
 - Die aktualisierte `database.rules.final.json` wurde am 21.09.2026 in Firebase veröffentlicht und anschließend erfolgreich live getestet.
 - Login, Passwörter, Account-IDs, Rollen-IDs und Auth-Zuordnungen wurden nicht verändert.
+
+
+---
+
+## 17. Personalabteilung v6.8.8
+
+Neu:
+- übersichtliche Personal-Arbeitsseite mit vier Bereichen: Übersicht, Personalakten, Mitarbeiterkalender und Neuer Mitarbeiter,
+- Personalakten mit Laufbahn, aktuellen Rängen, Rankup-Historie mit Grund, Sanktionen mit Bericht und allgemeinen Notizen,
+- verbindliche Rangstruktur:
+  - Trainee → Solo → EMT → A-EMT,
+  - Doctor: Resident Physician → Physician → Attending,
+  - Paramedic: Paramedic → Senior Paramedic → Medical Supervisor,
+  - gemeinsam: Lieutenant → Chief Physician → F.o.D → D.o.M.O → Deputy Chief → Ass. Chief → Chief,
+- Doctor- und Paramedic-Laufbahn können gleichzeitig geführt werden; beide laufbahnspezifischen Ränge können parallel sichtbar sein,
+- Mitarbeiterkalender für Urlaub und entschuldigte Abwesenheit mit Filter nach Mitarbeiter und Rang,
+- die Mitarbeiterkartei zeigt bei Abwesenheit ausschließlich „Urlaub“ oder „Entschuldigt abwesend“, keine internen Zeiträume,
+- nach Ablauf einer Abwesenheit erscheint im Personalbereich eine rote Rückkehrprüfung; der öffentliche Status bleibt bestehen, bis die Personalabteilung die Rückkehr bestätigt,
+- neue Mitarbeiter können über den Personalbereich mit einem vorläufigen Passwort über den bestehenden sicheren Registrierungsweg angelegt werden,
+- Rang, Laufbahn und öffentlicher Abwesenheitsstatus erscheinen in Mehrfach- und Einzelansicht der Mitarbeiterkartei.
+
+Neue Rollenrechte:
+- `canViewPersonnelRecords`,
+- `canManagePersonnelRecords`,
+- `canManagePersonnelAbsences`,
+- `canManagePersonnelRanks`,
+- `canCreateEmployees`.
+
+Sicherheit / Daten:
+- bestehende Benutzerkonten werden nicht migriert,
+- Login, Passwörter bestehender Konten, Account-IDs, `authIndex` und `loginDirectory` werden nicht umgebaut,
+- interne Personalakten und Abwesenheitszeiträume sind durch Firebase Rules auf Personalberechtigungen beschränkt,
+- für alle freigeschalteten Mitarbeiter lesbar sind nur Laufbahn, Rang und aktueller Abwesenheitsstatus,
+- die neuen Daten liegen getrennt unter `employeeRanks`, `employeeAbsenceStatus`, `personnelRecords` und `personnelAbsences`,
+- v6.8.7j bleibt bis zum bestätigten Live-Test die stabile Rollback-Basis.
+
+Firebase:
+- vor dem vollständigen Live-Test muss die zu v6.8.8 gehörende `database.rules.final.json` veröffentlicht werden.
