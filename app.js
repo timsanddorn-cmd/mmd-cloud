@@ -1,5 +1,5 @@
 // ============================================================
-//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.8.7h
+//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.8.7i
 //  Firebase Realtime Database (Compat SDK v10)
 // ============================================================
 
@@ -182,7 +182,7 @@ const db = firebase.database();
 const auth = firebase.auth();
 const FIREBASE_AUTH_EMAIL_DOMAIN = 'mmd-login.invalid';
 
-const APP_VERSION = 'v6.8.7h';
+const APP_VERSION = 'v6.8.7i';
 const PRESENCE_HEARTBEAT_MS = 30 * 1000;
 const PRESENCE_STALE_MS = 3 * 60 * 1000;
 
@@ -530,6 +530,16 @@ let hierarchieDaten = JSON.parse(JSON.stringify(defaultHierarchieData));
 
 /* ── Vollständiger Gesamt-Changelog (Entwicklungsverlauf) ───── */
 const systemChangelogs = [
+    {
+        id: "sys_v6_8_7i", version: "v6.8.7i", date: "21.09.2026", ts: 1790008200000,
+        category: "Fehlerbehebung", title: "Checkboxen in Rollen & Rechte vereinheitlicht",
+        changes: [
+            "Alle Rechte-Karten zeigen jetzt sichtbar ein Checkbox-Feld.",
+            "Das feste Kalender-Grundrecht wird als angehakt und gesperrt dargestellt, statt ohne Kästchen.",
+            "Deaktivierte Systemrechte bleiben sichtbar und sind optisch eindeutig gesperrt.",
+            "Die Rollen- und Berechtigungslogik selbst wurde nicht verändert."
+        ]
+    },
     {
         id: "sys_v6_8_7h", version: "v6.8.7h", date: "21.09.2026", ts: 1790007300000,
         category: "Verbesserung", title: "Eigener Hauptbereich für die Personalabteilung",
