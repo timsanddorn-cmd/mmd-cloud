@@ -5613,7 +5613,7 @@ function getEmployeeCareerPathLabel(uId) {
 function getEmployeeCareerPathBadge(uId) {
     const key = getEmployeeCareerPathKey(uId);
     const meta = EMPLOYEE_CAREER_PATHS[key] || EMPLOYEE_CAREER_PATHS.none;
-    return \`<span class="staff-career-badge career-\${key}">\${meta.icon} Laufbahn: \${escapeHtml(meta.label)}</span>\`;
+    return `<span class="staff-career-badge career-${key}">${meta.icon} Laufbahn: ${escapeHtml(meta.label)}</span>`;
 }
 
 function canCurrentUserManageCareerPaths() {
@@ -5642,7 +5642,7 @@ function renderCareerManagementPanel() {
         .sort((a, b) => {
             const dnDiff = parseDN(a[1]?.dn) - parseDN(b[1]?.dn);
             if (dnDiff !== 0) return dnDiff;
-            return \`\${a[1]?.nachname || ''} \${a[1]?.vorname || ''}\`.localeCompare(\`\${b[1]?.nachname || ''} \${b[1]?.vorname || ''}\`, 'de');
+            return `${a[1]?.nachname || ''} ${a[1]?.vorname || ''}`.localeCompare(`${b[1]?.nachname || ''} ${b[1]?.vorname || ''}`, 'de');
         });
 
     if (!entries.length) {
@@ -5651,23 +5651,23 @@ function renderCareerManagementPanel() {
     }
 
     list.innerHTML = entries.map(([uId, user]) => {
-        const name = \`\${user.vorname || ''} \${user.nachname || ''}\`.trim() || uId;
+        const name = `${user.vorname || ''} ${user.nachname || ''}`.trim() || uId;
         const current = getEmployeeCareerPathKey(uId);
-        return \`
+        return `
             <div class="career-management-row">
                 <div class="career-management-person">
-                    <b>\${escapeHtml(name)}</b>
-                    <span>\${escapeHtml(formatStaffDn(user.dn))}</span>
+                    <b>${escapeHtml(name)}</b>
+                    <span>${escapeHtml(formatStaffDn(user.dn))}</span>
                 </div>
-                <select id="careerPathSelect_\${uId}" class="career-management-select" aria-label="Laufbahn für \${escapeHtml(name)}">
-                    <option value="none" \${current === 'none' ? 'selected' : ''}>Noch nicht festgelegt</option>
-                    <option value="doctor" \${current === 'doctor' ? 'selected' : ''}>Arzt</option>
-                    <option value="paramedic" \${current === 'paramedic' ? 'selected' : ''}>Paramedic</option>
-                    <option value="both" \${current === 'both' ? 'selected' : ''}>Arzt & Paramedic</option>
+                <select id="careerPathSelect_${uId}" class="career-management-select" aria-label="Laufbahn für ${escapeHtml(name)}">
+                    <option value="none" ${current === 'none' ? 'selected' : ''}>Noch nicht festgelegt</option>
+                    <option value="doctor" ${current === 'doctor' ? 'selected' : ''}>Arzt</option>
+                    <option value="paramedic" ${current === 'paramedic' ? 'selected' : ''}>Paramedic</option>
+                    <option value="both" ${current === 'both' ? 'selected' : ''}>Arzt & Paramedic</option>
                 </select>
-                <button type="button" class="btn career-management-save" onclick="saveEmployeeCareerPath('\${uId}')">💾 Speichern</button>
+                <button type="button" class="btn career-management-save" onclick="saveEmployeeCareerPath('${uId}')">💾 Speichern</button>
             </div>
-        \`;
+        `;
     }).join('');
 }
 
@@ -5693,13 +5693,13 @@ async function saveEmployeeCareerPath(uId) {
             await ref.set({
                 path: selected,
                 updatedAt: Date.now(),
-                updatedBy: \`\${sessionUser?.vorname || ''} \${sessionUser?.nachname || ''}\`.trim() || 'MMD Cloud',
+                updatedBy: `${sessionUser?.vorname || ''} ${sessionUser?.nachname || ''}`.trim() || 'MMD Cloud',
                 updatedById: getUserAccountId(sessionUser)
             });
         }
         const person = cachedUsers[uId] || {};
-        const name = \`\${person.vorname || ''} \${person.nachname || ''}\`.trim() || uId;
-        logAdminAudit('Mitarbeiterlaufbahn geändert', \`\${name}: \${EMPLOYEE_CAREER_PATHS[selected]?.label || EMPLOYEE_CAREER_PATHS.none.label}\`);
+        const name = `${person.vorname || ''} ${person.nachname || ''}`.trim() || uId;
+        logAdminAudit('Mitarbeiterlaufbahn geändert', `${name}: ${EMPLOYEE_CAREER_PATHS[selected]?.label || EMPLOYEE_CAREER_PATHS.none.label}`);
         showToast('✅ Laufbahn wurde gespeichert.', 'success');
     } catch (err) {
         console.error('Mitarbeiterlaufbahn konnte nicht gespeichert werden:', err);
