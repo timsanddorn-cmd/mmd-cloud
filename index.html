@@ -170,6 +170,7 @@
             <button type="button" class="tab-btn" onclick="switchTab('statsTab', this)">📊 Statistik & Archiv</button>
             <button type="button" class="tab-btn tab-btn-calendar nav-badge-host" id="calendarTabNavBtn" onclick="switchTab('calendarTab', this)">📅 Kalender <span id="calendarPendingBadge" class="nav-count-badge" style="display:none;">0</span></button>
             <button type="button" class="tab-btn" id="examTabNavBtn" onclick="switchTab('examTab', this)">🎓 Ausbildung</button>
+            <button type="button" class="tab-btn" id="personnelTabNavBtn" style="display:none;" onclick="switchTab('personnelTab', this)">💼 Personalabteilung</button>
 
             <div class="nav-group">
                 <button type="button" class="tab-btn nav-group-toggle" id="staffNavGroupBtn" aria-expanded="false" aria-controls="staffNavGroupMenu" onclick="toggleMainNavGroup('staffNavGroupMenu', this, event)">
@@ -369,6 +370,26 @@
             </div>
         </div>
 
+
+        <!-- REITER: PERSONALABTEILUNG -->
+        <div id="personnelTab" class="tab-content">
+            <div class="content-header-bar" style="margin-bottom:18px;">
+                <h2 style="margin:0 0 4px 0;color:#f472b6;">💼 Personalabteilung</h2>
+                <p style="margin:0;color:var(--text-muted);font-size:13px;">Zentraler Bereich für Personalthemen. Weitere Funktionen können hier künftig ergänzt werden.</p>
+            </div>
+
+            <div id="staffCareerManagementPanel" class="staff-career-management-panel" style="display:none;">
+                <div class="career-management-head">
+                    <div>
+                        <h3>🩺 Mitarbeiterlaufbahnen</h3>
+                        <p>Hier kann die Laufbahn aktiver Mitarbeiter festgelegt werden. Ohne Entscheidung bleibt „Noch nicht festgelegt“ bestehen.</p>
+                    </div>
+                    <span class="career-management-permission-note">Berechtigung: Mitarbeiterlaufbahn verwalten</span>
+                </div>
+                <div id="staffCareerManagementList" class="career-management-list"></div>
+            </div>
+        </div>
+
         <!-- REITER: MITARBEITER KARTEI -->
         <div id="staffTab" class="tab-content">
             <div class="staff-header-toolbar">
@@ -384,18 +405,6 @@
                         <button type="button" id="btnTogglePhotoChecklist" class="btn photo-checklist-toggle-btn" style="display:none;" aria-expanded="false" onclick="toggleStaffPhotoChecklist()">📋 Foto liste</button>
                     </div>
                 </div>
-            </div>
-
-
-            <div id="staffCareerManagementPanel" class="staff-career-management-panel" style="display:none;">
-                <div class="career-management-head">
-                    <div>
-                        <h3>💼 Personalabteilung – Mitarbeiterlaufbahnen</h3>
-                        <p>Hier kann die Laufbahn aktiver Mitarbeiter festgelegt werden. Ohne Entscheidung bleibt „Noch nicht festgelegt“ bestehen.</p>
-                    </div>
-                    <span class="career-management-permission-note">Berechtigung: Mitarbeiterlaufbahn verwalten</span>
-                </div>
-                <div id="staffCareerManagementList" class="career-management-list"></div>
             </div>
 
             <div class="staff-filter-bar">
@@ -2230,6 +2239,6 @@
         </div>
     </div>
 
-    <script src="app.js?v=6.8.7g"></script>
+    <script src="app.js?v=6.8.7h"></script>
 </body>
 </html>
