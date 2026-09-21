@@ -1,8 +1,8 @@
 # MMD Cloud – PROJECT STATUS
 
 **Aktuell bestätigte stabile Live-Version:** v6.8.6a  
-**Aktueller Entwicklungsstand:** v6.8.7h  
-**Status v6.8.7h:** 🟡 DN-SYNCHRONISIERUNG BESTÄTIGT / GESAMTER LIVE-GEGENCHECK NOCH AUSSTEHEND  
+**Aktueller Entwicklungsstand:** v6.8.7i  
+**Status v6.8.7i:** 🟡 DN-SYNCHRONISIERUNG BESTÄTIGT / GESAMTER LIVE-GEGENCHECK NOCH AUSSTEHEND  
 **Datum:** 21.09.2026
 
 ---
@@ -11,7 +11,7 @@
 
 **v6.8.6a = bestätigte stabile Code-Rollback-Basis**
 
-v6.8.7h baut auf v6.8.7g auf. Der Personalabteilung wurde ein eigener Hauptbereich gegeben; die Laufbahnverwaltung wurde aus der Mitarbeiterkartei dorthin verschoben.
+v6.8.7i baut auf v6.8.7h auf. Die Checkbox-Darstellung im Bereich Rollen & Rechte wurde vollständig vereinheitlicht.
 
 Firebase Auth, Passwörter, `authIndex`, `loginDirectory` und bestehende Account-IDs wurden nicht verändert. Die Rollenverwaltung erhielt ausschließlich die neue Berechtigung `canManageCareerPaths`; die Realtime-Database-Rules wurden nur für den neuen getrennten Pfad `data/employeeCareerPaths` ergänzt.
 
@@ -223,3 +223,20 @@ Nicht verändert:
 - Login, Registrierung, Passwörter, Account-IDs, `authIndex`, `loginDirectory`,
 - Mitarbeiterfoto-Workflow,
 - bestehende Rollen-IDs.
+
+
+---
+
+## 15. Rollen & Rechte – Checkboxen v6.8.7i
+
+Geprüft:
+- alle 37 vergebbaren Berechtigungen sind weiterhin vollständig mit der Rollenlogik verbunden,
+- jede vergebbare Rechte-Karte besitzt eine Checkbox,
+- das feste Kalender-Grundrecht besitzt jetzt ebenfalls ein sichtbares, angehaktes und gesperrtes Kästchen,
+- deaktivierte Systemrechte bleiben sichtbar und werden nicht ausgeblendet,
+- Checkboxen besitzen eine feste Größe und native Browser-Darstellung.
+
+Nicht verändert:
+- Berechtigungswerte und Rollenlogik,
+- Firebase Rules,
+- Benutzerkonten, Login, Passwörter und Rollen-IDs.
