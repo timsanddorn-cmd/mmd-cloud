@@ -1,15 +1,15 @@
 # MMD Cloud – PROJECT STATUS
 
-**Aktuell bestätigte stabile Live-Version:** v6.8.6a  
+**Aktuell bestätigte stabile Live-Version:** v6.8.7j  
 **Aktueller Entwicklungsstand:** v6.8.7j  
-**Status v6.8.7j:** 🟡 DN-SYNCHRONISIERUNG BESTÄTIGT / GESAMTER LIVE-GEGENCHECK NOCH AUSSTEHEND  
+**Status v6.8.7j:** 🟢 LIVE GETESTET UND BESTÄTIGT  
 **Datum:** 21.09.2026
 
 ---
 
 ## 1. Verbindliche Basis
 
-**v6.8.6a = bestätigte stabile Code-Rollback-Basis**
+**v6.8.7j = bestätigte stabile Code-Rollback-Basis**
 
 v6.8.7j baut auf v6.8.7i auf. Das Speichern im Bereich Rollen & Rechte wurde stabilisiert und die Laufbahn-Berechtigung in den ServerPermissions-Rules ausdrücklich ergänzt.
 
@@ -129,7 +129,7 @@ Bestätigt:
 
 Damit gilt die **DN-Synchronisierung als erfolgreich abgeschlossen**.
 
-Der vollständige Live-Gegencheck der zusätzlichen Funktionen aus v6.8.7 steht weiterhin aus.
+Der aktuelle Stand v6.8.7j wurde am 21.09.2026 inklusive aktualisierter Firebase Rules live getestet und vom Nutzer als funktionierend bestätigt.
 
 ---
 
@@ -156,7 +156,7 @@ Historische Datensätze wie frühere Prüfungsabgaben oder alte Protokolle behal
 
 ## 11. Rollback / Nachvollziehbarkeit
 
-**v6.8.6a bleibt vorerst die bestätigte stabile Code-Rollback-Basis.**
+**v6.8.7j ist die bestätigte stabile Code-Rollback-Basis.**
 
 Ein reiner Code-Rollback setzt bereits synchronisierte Dienstnummern nicht automatisch zurück.
 
@@ -169,20 +169,19 @@ Firebase Rules müssen weder für die Synchronisierung noch für einen Code-Roll
 
 ---
 
-## 12. Noch offener Live-Gegencheck
+## 12. Live-Gegencheck abgeschlossen
 
-Für v6.8.7/v6.8.7f müssen bei Gelegenheit noch die Komfortfunktionen geprüft werden, insbesondere:
-- Heute-Bereich,
-- „Meine offenen Dinge“,
-- Kalender Monat/Liste,
-- Mitarbeiter-Detailansicht,
-- Admin-Aufgabenliste,
-- globale Schnellsuche,
-- Aktualitätshinweise,
-- mobile Darstellung,
-- bestehende Kernfunktionen.
+Am 21.09.2026 wurde der aktuelle Stand **v6.8.7j** inklusive der aktualisierten Firebase Rules vom Nutzer live getestet.
 
-Nach erfolgreichem Gesamtcheck kann v6.8.7f als neue stabile Live- und Rollback-Version bestätigt werden.
+Bestätigt:
+- Rollen & Rechte funktionieren,
+- Checkboxen werden vollständig angezeigt,
+- Rollen lassen sich speichern,
+- Personalabteilungs-Bereich und Laufbahnverwaltung funktionieren,
+- die aktualisierten Firebase Rules sind veröffentlicht,
+- der getestete aktuelle Stand funktioniert im Live-System.
+
+Damit ist **v6.8.7j die bestätigte stabile Live- und Code-Rollback-Version**.
 
 
 ---
@@ -254,5 +253,5 @@ Behoben:
 - `canManageCareerPaths` ist als eigene boolesche Server-Berechtigung in den Firebase Rules definiert.
 
 Wichtig:
-- Wegen der ergänzten ServerPermissions-Regel muss die aktuelle `database.rules.final.json` in Firebase veröffentlicht werden, falls diese Rules noch nicht live sind.
+- Die aktualisierte `database.rules.final.json` wurde am 21.09.2026 in Firebase veröffentlicht und anschließend erfolgreich live getestet.
 - Login, Passwörter, Account-IDs, Rollen-IDs und Auth-Zuordnungen wurden nicht verändert.
