@@ -4556,3 +4556,32 @@ td,
   .personnel-calendar-row{grid-template-columns:1fr}.personnel-calendar-row>div:last-child{grid-column:auto}
   .personnel-return-alert{grid-template-columns:1fr}.personnel-inline-row{grid-template-columns:1fr}
 }
+
+/* ============================================================
+   v6.8.9 – Personalakte & Kündigungsarchiv
+   ============================================================ */
+.personnel-internal-badge{display:inline-flex;align-items:center;padding:5px 9px;border-radius:999px;font-size:11px;font-weight:800;border:1px solid rgba(148,163,184,.18)}
+.personnel-internal-badge.status-ticket{color:#facc15;border-color:rgba(250,204,21,.35);background:rgba(250,204,21,.08)}
+.personnel-internal-badge.status-inactive{color:#fb923c;border-color:rgba(251,146,60,.35);background:rgba(251,146,60,.08)}
+.personnel-internal-badge.status-termination_review{color:var(--danger);border-color:rgba(244,63,94,.35);background:rgba(244,63,94,.08)}
+.personnel-topic-row{width:100%;display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:center;border:1px solid rgba(148,163,184,.12);background:rgba(8,12,20,.35);color:var(--text-main);padding:10px 12px;border-radius:10px;margin-top:7px;text-align:left;cursor:pointer}
+.personnel-topic-row:hover{border-color:rgba(244,114,182,.35);background:rgba(236,72,153,.07)}
+.personnel-topic-row>span{font-size:18px}.personnel-topic-row>div{display:flex;flex-direction:column;gap:2px}.personnel-topic-row small{color:var(--text-muted);font-size:10px}.personnel-topic-row>strong{font-size:10px;color:var(--primary)}
+.personnel-row-signals{display:flex;gap:3px;align-items:center}
+.personnel-readonly-row{display:flex;justify-content:space-between;gap:12px;padding:9px 10px;border-radius:9px;background:rgba(148,163,184,.06);margin-bottom:8px}.personnel-readonly-row span{color:var(--text-muted);font-size:11px}
+.personnel-two-col{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.personnel-three-col{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.personnel-profile-card textarea{resize:vertical}
+.personnel-termination-card{border-color:rgba(244,63,94,.22);background:rgba(244,63,94,.04)}
+.personnel-timeline-item.event{border-left:3px solid #a78bfa}
+.personnel-create-subtitle{margin:18px 0 8px;font-weight:900;color:var(--text-main);font-size:13px}.personnel-create-subtitle span{font-weight:600;color:var(--text-muted);font-size:10px}
+.personnel-create-extra-grid{padding-top:2px}
+.personnel-create-wide{grid-column:1/-1}
+.personnel-archive-toolbar{margin-bottom:12px}.personnel-archive-toolbar input{max-width:430px}
+.personnel-archive-list{display:flex;flex-direction:column;gap:9px}
+.personnel-archive-row{display:grid;grid-template-columns:1.2fr 1.5fr 1.1fr auto;gap:14px;align-items:center;padding:13px;border:1px solid rgba(148,163,184,.13);border-radius:12px;background:rgba(8,12,20,.35)}
+.personnel-archive-main{display:flex;align-items:center;gap:10px}.personnel-archive-main h4{margin:0 0 3px}.personnel-archive-main small{color:var(--text-muted);font-size:10px}
+.personnel-archive-reason{display:flex;flex-direction:column;gap:3px}.personnel-archive-reason span,.personnel-archive-meta span{color:var(--text-muted);font-size:10px}.personnel-archive-reason b{font-size:11px;line-height:1.35}
+.personnel-archive-meta{display:flex;flex-direction:column;gap:3px}.personnel-archive-meta b{color:var(--text-main)}
+@media(max-width:1000px){.personnel-archive-row{grid-template-columns:1fr 1fr}.personnel-archive-row>.btn{grid-column:1/-1}.personnel-three-col{grid-template-columns:1fr}}
+@media(max-width:650px){.personnel-two-col,.personnel-three-col{grid-template-columns:1fr}.personnel-archive-row{grid-template-columns:1fr}.personnel-archive-row>.btn{grid-column:auto}.personnel-topic-row{grid-template-columns:auto 1fr}.personnel-topic-row>strong{grid-column:1/-1}}
