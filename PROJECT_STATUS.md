@@ -1,9 +1,9 @@
 # MMD Cloud – PROJECT STATUS
 
 **Aktuell bestätigte stabile Live-Version:** v6.8.6a  
-**Aktueller Entwicklungsstand:** v6.8.7f  
-**Status v6.8.7f:** 🟡 DN-SYNCHRONISIERUNG BESTÄTIGT / GESAMTER LIVE-GEGENCHECK NOCH AUSSTEHEND  
-**Datum:** 20.09.2026
+**Aktueller Entwicklungsstand:** v6.8.7g  
+**Status v6.8.7g:** 🟡 DN-SYNCHRONISIERUNG BESTÄTIGT / GESAMTER LIVE-GEGENCHECK NOCH AUSSTEHEND  
+**Datum:** 21.09.2026
 
 ---
 
@@ -11,9 +11,9 @@
 
 **v6.8.6a = bestätigte stabile Code-Rollback-Basis**
 
-v6.8.7f baut auf v6.8.7e auf. Zusätzlich wurde die horizontale Bedienung der Bestands Historie nach oben verlegt.
+v6.8.7g baut auf v6.8.7f auf. Zusätzlich wurden Mitarbeiterlaufbahnen für die Personalabteilung und eine größere Mitarbeiter-Einzelansicht ergänzt.
 
-Firebase Auth, Passwörter, Rollen, Berechtigungen, `authIndex`, `loginDirectory` und Realtime-Database-Rules wurden nicht verändert.
+Firebase Auth, Passwörter, `authIndex`, `loginDirectory` und bestehende Account-IDs wurden nicht verändert. Die Rollenverwaltung erhielt ausschließlich die neue Berechtigung `canManageCareerPaths`; die Realtime-Database-Rules wurden nur für den neuen getrennten Pfad `data/employeeCareerPaths` ergänzt.
 
 ---
 
@@ -183,3 +183,24 @@ Für v6.8.7/v6.8.7f müssen bei Gelegenheit noch die Komfortfunktionen geprüft 
 - bestehende Kernfunktionen.
 
 Nach erfolgreichem Gesamtcheck kann v6.8.7f als neue stabile Live- und Rollback-Version bestätigt werden.
+
+
+---
+
+## 13. Mitarbeiterlaufbahnen v6.8.7g
+
+Neu:
+- Laufbahn je Mitarbeiter: „Noch nicht festgelegt“, „Arzt“, „Paramedic“ oder „Arzt & Paramedic“,
+- standardmäßige Anzeige in der Mitarbeiter-Mehrfachansicht und in der Einzelansicht,
+- eigener Personalabteilungs-Bereich innerhalb der Mitarbeiterkartei zur Vergabe,
+- neue Rollenberechtigung „Mitarbeiterlaufbahn verwalten“ (`canManageCareerPaths`),
+- Personalabteilung besitzt dieses Recht standardmäßig; Master Admin durch Vollzugriff ebenfalls,
+- Laufbahndaten werden getrennt von Account-/Login-Daten unter `data/employeeCareerPaths/{accountId}` gespeichert,
+- bestehende Mitarbeiter ohne Eintrag erscheinen automatisch als „Noch nicht festgelegt“,
+- Mitarbeiter-Einzelansicht wurde auf Desktop deutlich vergrößert und bleibt mobil responsiv.
+
+Sicherheit:
+- kein Eingriff in Firebase Auth, Passwörter, `authIndex`, `loginDirectory` oder stabile Account-IDs,
+- bestehende Benutzerobjekte werden für Laufbahnen nicht erweitert,
+- Lesen der Laufbahn ist für freigeschaltete Mitarbeiter erlaubt,
+- Schreiben ist ausschließlich mit `canManageCareerPaths` oder als Master Admin erlaubt.
