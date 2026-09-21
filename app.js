@@ -11451,3 +11451,11 @@ function refreshPersonnelModule(){
     const p=getPersonnelPermissions();if(p.canViewRecords)db.ref('data/personnelRecords').on('value',x=>{cachedPersonnelRecords=x.val()||{};renderPersonnelWorkspace();});else cachedPersonnelRecords={};if(p.canViewRecords||p.canManageAbsences)db.ref('data/personnelAbsences').on('value',x=>{cachedPersonnelAbsences=x.val()||{};renderPersonnelWorkspace();});else cachedPersonnelAbsences={};renderPersonnelWorkspace();
 }
 
+if (typeof window !== 'undefined') {
+    Object.assign(window, {
+        switchPersonnelView, renderPersonnelWorkspace, renderPersonnelEmployeeList, selectPersonnelEmployee,
+        renderPersonnelCalendar, renderPersonnelCreateForm, savePersonnelCareer, savePersonnelRanks,
+        addPersonnelSanction, addPersonnelNote, addPersonnelAbsence, confirmPersonnelReturn, createPersonnelEmployee
+    });
+}
+
