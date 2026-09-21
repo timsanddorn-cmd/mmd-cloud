@@ -11,7 +11,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
-    <link rel="stylesheet" href="style.css?v=6.8.7i">
+    <link rel="stylesheet" href="style.css?v=6.8.7j">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏥</text></svg>">
 </head>
 <body>
@@ -1974,7 +1974,7 @@
                             </div>
 
                             <div style="display:flex; justify-content:space-between; margin-top:10px;">
-                                <button type="button" class="btn" style="background:var(--success); color:#080c14; width:auto; padding:10px 24px;" onclick="speichereRolle()">💾 Rolle speichern</button>
+                                <button type="button" id="btnSaveRole" class="btn role-save-btn" style="background:var(--success); color:#080c14; width:auto; padding:10px 24px;" onclick="speichereRolle()">💾 Rolle speichern</button>
                                 <button type="button" id="btnDeleteRole" class="btn" style="background:rgba(244,63,94,0.15); color:var(--danger); width:auto; padding:10px 24px;" onclick="loescheRolle()">🗑️ Rolle löschen</button>
                             </div>
                         </div>
@@ -2239,6 +2239,6 @@
         </div>
     </div>
 
-    <script src="app.js?v=6.8.7i"></script>
+    <script src="app.js?v=6.8.7j"></script>
 </body>
 </html>

@@ -854,6 +854,18 @@ body {
     padding-left: 24px;
 }
 
+.role-save-btn {
+    position: relative;
+    z-index: 3;
+    pointer-events: auto;
+    cursor: pointer;
+    min-width: 160px;
+}
+.role-save-btn:disabled {
+    opacity: .72;
+    cursor: wait;
+}
+
 /* KALENDER DESIGN & EINLADUNGEN */
 .calendar-header-toolbar {
     display: flex;
