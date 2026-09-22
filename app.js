@@ -1,5 +1,5 @@
 // ============================================================
-//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.9.4
+//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.9.5
 //  Firebase Realtime Database (Compat SDK v10)
 // ============================================================
 
@@ -182,7 +182,7 @@ const db = firebase.database();
 const auth = firebase.auth();
 const FIREBASE_AUTH_EMAIL_DOMAIN = 'mmd-login.invalid';
 
-const APP_VERSION = 'v6.9.4';
+const APP_VERSION = 'v6.9.5';
 const PRESENCE_HEARTBEAT_MS = 30 * 1000;
 const PRESENCE_STALE_MS = 3 * 60 * 1000;
 
@@ -567,6 +567,16 @@ let hierarchieDaten = JSON.parse(JSON.stringify(defaultHierarchieData));
 
 /* ── Vollständiger Gesamt-Changelog (Entwicklungsverlauf) ───── */
 const systemChangelogs = [
+    {
+        id: "sys_v6_9_5", version: "v6.9.5", date: "22.09.2026", ts: 1790092200000,
+        category: "Fehlerbehebung", title: "Changelog Scroll und Überschriften bereinigt",
+        changes: [
+            "Alte konkurrierende Scroll-Limits des Changelog-Inhalts wurden entfernt.",
+            "Das gesamte Changelog-Fenster ist jetzt der einzige vertikale Scrollbereich.",
+            "Optische Trennstriche zwischen Changelog-Überschriften werden bei der Anzeige entfernt.",
+            "Bindestriche innerhalb normaler Wörter bleiben unverändert."
+        ]
+    },
     {
         id: "sys_v6_9_4", version: "v6.9.4", date: "22.09.2026", ts: 1790088600000,
         category: "Fehlerbehebung", title: "Changelog vollständig scrollbar",
@@ -7295,6 +7305,8 @@ function renderChangelogModal() {
         'Technische Änderung': 'changelog-badge-tech'
     };
 
+    const cleanChangelogHeading = (value) => String(value || '').replace(/\s+[–—-]\s+/g, ' ').replace(/\s{2,}/g, ' ').trim();
+
     const customList = Object.entries(cachedCustomChangelogs || {}).map(([id, item]) => Object.assign({ id, isCustom: true }, item));
     const allEntries = [...customList, ...systemChangelogs].sort((a, b) => (b.ts || 0) - (a.ts || 0));
 
@@ -7309,7 +7321,7 @@ function renderChangelogModal() {
                         <span class="changelog-version-tag">${escapeHtml(entry.version)}</span>
                         ${isCurrent ? '<span class="changelog-current-badge">AKTUELL</span>' : ''}
                         <span class="changelog-badge ${bClass}">${escapeHtml(displayCategory)}</span>
-                        <b>${escapeHtml(entry.title)}</b>
+                        <b>${escapeHtml(cleanChangelogHeading(entry.title))}</b>
                     </div>
                     <span class="changelog-date">📅 ${escapeHtml(entry.date)}</span>
                 </div>
@@ -7345,7 +7357,7 @@ function renderChangelogModal() {
         const entries = group.entries;
         const newest = entries[0];
         const oldest = entries[entries.length - 1];
-        const uniqueTitles = [...new Set(entries.map(entry => String(entry.title || '').trim()).filter(Boolean))];
+        const uniqueTitles = [...new Set(entries.map(entry => cleanChangelogHeading(entry.title)).filter(Boolean))];
         const visibleTitles = uniqueTitles.slice(0, 6);
         const hiddenCount = Math.max(0, uniqueTitles.length - visibleTitles.length);
         const versionLabel = group.family === 'Weitere' ? 'Weitere Einträge' : `${group.family}.x`;
@@ -7381,7 +7393,7 @@ function renderChangelogModal() {
         ${archiveEntries.length ? `
             <details class="changelog-archive">
                 <summary>
-                    <span>📦 Archiv – kompakt</span>
+                    <span>📦 Archiv kompakt</span>
                     <small>${archiveEntries.length} ältere Versionen in ${archiveGroups.length} ${archiveGroups.length === 1 ? 'Gruppe' : 'Gruppen'} zusammengefasst</small>
                 </summary>
                 <div class="changelog-archive-list">
@@ -8700,7 +8712,7 @@ function openExamSolutionModal(examId) {
     const content = document.getElementById('examSolutionModalContent');
     if (!modal || !title || !content) return;
 
-    title.textContent = `👁️ Musterlösung – ${ex.title || 'Prüfung'}`;
+    title.textContent = `👁️ Musterlösung ${ex.title || 'Prüfung'}`;
     let fachIndex = 0;
     const questionsHtml = (ex.questions || []).map((q, idx) => {
         if (q.isInfo || q.type === 'text') {
