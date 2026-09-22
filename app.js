@@ -1,5 +1,5 @@
 // ============================================================
-//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.8.12
+//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.8.13
 //  Firebase Realtime Database (Compat SDK v10)
 // ============================================================
 
@@ -182,7 +182,7 @@ const db = firebase.database();
 const auth = firebase.auth();
 const FIREBASE_AUTH_EMAIL_DOMAIN = 'mmd-login.invalid';
 
-const APP_VERSION = 'v6.8.12';
+const APP_VERSION = 'v6.8.13';
 const PRESENCE_HEARTBEAT_MS = 30 * 1000;
 const PRESENCE_STALE_MS = 3 * 60 * 1000;
 
@@ -530,6 +530,14 @@ let hierarchieDaten = JSON.parse(JSON.stringify(defaultHierarchieData));
 
 /* ── Vollständiger Gesamt-Changelog (Entwicklungsverlauf) ───── */
 const systemChangelogs = [
+    {
+        id: "sys_v6_8_13", version: "v6.8.13", date: "22.09.2026", ts: 1790053200000,
+        category: "Fehlerbehebung", title: "Zeilenumbruch in Personalhistorie korrigiert",
+        changes: [
+            "Sehr lange Texte ohne Leerzeichen brechen innerhalb der Personalhistorie jetzt sauber um.",
+            "Auch lange Links und Zeichenfolgen bleiben innerhalb der Karte und verursachen kein horizontales Überlaufen mehr."
+        ]
+    },
     {
         id: "sys_v6_8_12", version: "v6.8.12", date: "22.09.2026", ts: 1790049600000,
         category: "Fehlerbehebung", title: "Sanktionen in Personalakten bearbeitbar",
