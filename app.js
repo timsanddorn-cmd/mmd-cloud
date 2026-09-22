@@ -1,5 +1,5 @@
 // ============================================================
-//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.8.11
+//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.8.12
 //  Firebase Realtime Database (Compat SDK v10)
 // ============================================================
 
@@ -182,7 +182,7 @@ const db = firebase.database();
 const auth = firebase.auth();
 const FIREBASE_AUTH_EMAIL_DOMAIN = 'mmd-login.invalid';
 
-const APP_VERSION = 'v6.8.11';
+const APP_VERSION = 'v6.8.12';
 const PRESENCE_HEARTBEAT_MS = 30 * 1000;
 const PRESENCE_STALE_MS = 3 * 60 * 1000;
 
@@ -530,6 +530,15 @@ let hierarchieDaten = JSON.parse(JSON.stringify(defaultHierarchieData));
 
 /* ── Vollständiger Gesamt-Changelog (Entwicklungsverlauf) ───── */
 const systemChangelogs = [
+    {
+        id: "sys_v6_8_12", version: "v6.8.12", date: "22.09.2026", ts: 1790049600000,
+        category: "Fehlerbehebung", title: "Sanktionen in Personalakten bearbeitbar",
+        changes: [
+            "Ausgestellte Sanktionen können von berechtigten Personalmitarbeitern direkt in der Personalhistorie bearbeitet werden.",
+            "Sanktionen können nach Sicherheitsabfrage gelöscht werden.",
+            "Bearbeiten und Löschen werden im Admin-Audit protokolliert."
+        ]
+    },
     {
         id: "sys_v6_8_11", version: "v6.8.11", date: "22.09.2026", ts: 1790046000000,
         category: "Fehlerbehebung", title: "Personalakten-Dropdowns und Ränge korrigiert",
@@ -11404,7 +11413,7 @@ const PERSONNEL_COMMON_RANKS=['trainee','solo','emt','a_emt','lieutenant','chief
 const PERSONNEL_DOCTOR_RANKS=['resident_physician','physician','attending'];
 const PERSONNEL_PARAMEDIC_RANKS=['paramedic','senior_paramedic','medical_supervisor'];
 const PERSONNEL_ABSENCE_TYPES=Object.freeze({vacation:{label:'Urlaub',icon:'🏖️'},excused:{label:'Entschuldigt abwesend',icon:'📝'}});
-let cachedEmployeeRanks={},cachedEmployeeAbsenceStatus={},cachedPersonnelRecords={},cachedPersonnelAbsences={},cachedPersonnelProfiles={},cachedPersonnelDepartures={},activePersonnelEmployeeId='',activePersonnelView='overview',personnelProfileEditingId='';
+let cachedEmployeeRanks={},cachedEmployeeAbsenceStatus={},cachedPersonnelRecords={},cachedPersonnelAbsences={},cachedPersonnelProfiles={},cachedPersonnelDepartures={},activePersonnelEmployeeId='',activePersonnelView='overview',personnelProfileEditingId='',activePersonnelSanctionEditId='';
 let personnelMasterlistImportRunning=false,personnelMasterlistImportDone=false;
 const PERSONNEL_MASTERLIST_RANK_SOURCE='masterlist-v6.8.11';
 
@@ -11510,11 +11519,15 @@ function renderPersonnelEmployeeList(){
     if(!activePersonnelEmployeeId||!cachedUsers[activePersonnelEmployeeId])activePersonnelEmployeeId=entries[0]?.[0]||'';
     box.innerHTML=entries.length?entries.map(([uId,u])=>{const internal=getPersonnelInternalStatus(uId);return `<button type="button" class="personnel-employee-row ${activePersonnelEmployeeId===uId?'active':''}" onclick="selectPersonnelEmployee('${uId}')"><span class="personnel-employee-dn">${escapeHtml(formatStaffDn(u.dn))}</span><span><b>${escapeHtml(personnelUserName(uId))}</b><small>${escapeHtml(getEmployeeRankLabels(uId).join(' · '))}</small></span><em class="personnel-row-signals">${getEmployeePublicAbsence(uId)?'●':''}${internal!=='none'?PERSONNEL_INTERNAL_STATUSES[internal].icon:''}</em></button>`;}).join(''):'<div class="personnel-empty-state">Keine Mitarbeiter gefunden.</div>';
 }
-function selectPersonnelEmployee(uId){activePersonnelEmployeeId=uId;personnelProfileEditingId='';renderPersonnelEmployeeList();renderPersonnelEmployeeDetail();}
+function selectPersonnelEmployee(uId){activePersonnelEmployeeId=uId;personnelProfileEditingId='';activePersonnelSanctionEditId='';renderPersonnelEmployeeList();renderPersonnelEmployeeDetail();}
 function togglePersonnelProfileEdit(uId,enabled){if(!getPersonnelPermissions().canManageRecords)return;personnelProfileEditingId=enabled?uId:'';renderPersonnelEmployeeDetail();if(enabled)setTimeout(()=>document.getElementById('personnelProfilePhone')?.focus(),0);}
-function renderPersonnelTimelineItem(item){
-    const d=item.ts?new Date(item.ts).toLocaleString('de-DE'):'—',x=item.x||{};
-    if(item.type==='sanction')return `<article class="personnel-timeline-item sanction"><div><b>⚖️ ${escapeHtml(x.title||'Sanktion')}</b><span>${escapeHtml(d)} · ${escapeHtml(x.createdBy||'')}</span></div><p>${formatTextWithLinks(x.report||'')}</p></article>`;
+function renderPersonnelTimelineItem(item,uId){
+    const d=item.ts?new Date(item.ts).toLocaleString('de-DE'):'—',x=item.x||{},canManage=getPersonnelPermissions().canManageRecords;
+    if(item.type==='sanction'){
+        const editKey=`${uId}:${item.id}`,editing=canManage&&activePersonnelSanctionEditId===editKey;
+        if(editing)return `<article class="personnel-timeline-item sanction editing"><div class="personnel-timeline-head"><b>⚖️ Sanktion bearbeiten</b><span>${escapeHtml(d)} · ${escapeHtml(x.createdBy||'')}</span></div><div class="personnel-sanction-edit"><label>Titel / Sanktion</label><input id="personnelSanctionEditTitle_${item.id}" type="text" maxlength="120" value="${escapeHtml(x.title||'')}"><label>Bericht</label><textarea id="personnelSanctionEditReport_${item.id}" rows="5" maxlength="3000">${escapeHtml(x.report||'')}</textarea><div class="personnel-sanction-edit-actions"><button type="button" class="btn personnel-primary-btn" onclick="savePersonnelSanctionEdit('${uId}','${item.id}')">💾 Speichern</button><button type="button" class="btn personnel-secondary-btn" onclick="cancelPersonnelSanctionEdit()">Abbrechen</button></div></div></article>`;
+        return `<article class="personnel-timeline-item sanction"><div class="personnel-timeline-head"><b>⚖️ ${escapeHtml(x.title||'Sanktion')}</b><span>${escapeHtml(d)} · ${escapeHtml(x.createdBy||'')}</span></div><p>${formatTextWithLinks(x.report||'')}</p>${canManage?`<div class="personnel-timeline-actions"><button type="button" class="personnel-timeline-action edit" onclick="editPersonnelSanction('${uId}','${item.id}')">✏️ Bearbeiten</button><button type="button" class="personnel-timeline-action delete" onclick="deletePersonnelSanction('${uId}','${item.id}')">🗑️ Löschen</button></div>`:''}</article>`;
+    }
     if(item.type==='rankup')return `<article class="personnel-timeline-item rankup"><div><b>🎖️ Rangänderung</b><span>${escapeHtml(d)} · ${escapeHtml(x.createdBy||'')}</span></div><p>${escapeHtml(x.summary||'')}${x.reason?`<br><strong>Grund: ${escapeHtml(x.reason)}</strong>`:''}${x.note?`<br>${escapeHtml(x.note)}`:''}</p></article>`;
     if(item.type==='event')return `<article class="personnel-timeline-item event"><div><b>📌 ${escapeHtml(x.title||'Personalereignis')}</b><span>${escapeHtml(d)} · ${escapeHtml(x.createdBy||'')}</span></div>${x.detail?`<p>${escapeHtml(x.detail)}</p>`:''}</article>`;
     return `<article class="personnel-timeline-item note"><div><b>🗒️ Notiz</b><span>${escapeHtml(d)} · ${escapeHtml(x.createdBy||'')}</span></div><p>${formatTextWithLinks(x.text||'')}</p></article>`;
@@ -11540,7 +11553,7 @@ function renderPersonnelEmployeeDetail(){
       ${p.canManageRecords?`<section class="personnel-card"><h4>⚖️ Sanktion zur Akte</h4><input type="text" id="personnelSanctionTitle" maxlength="120" placeholder="Verstoß / Sanktion"><textarea id="personnelSanctionReport" rows="5" maxlength="3000" placeholder="Bericht zur Sanktion …"></textarea><button type="button" class="btn personnel-danger-btn" onclick="addPersonnelSanction('${uId}')">⚖️ Sanktion eintragen</button></section><section class="personnel-card"><h4>🗒️ Allgemeine Notiz</h4><textarea id="personnelNoteText" rows="5" maxlength="2000" placeholder="z. B. Namensänderung oder interner Hinweis …"></textarea><button type="button" class="btn personnel-primary-btn" onclick="addPersonnelNote('${uId}')">🗒️ Notiz hinzufügen</button></section>`:''}
       ${p.canManageDepartures?`<section class="personnel-card personnel-termination-card"><h4>📦 Kündigung / Austritt</h4><label>Kündigungsdatum</label><input type="date" id="personnelTerminationDate" value="${personnelTodayIso()}"><label>Kündigungsgrund</label><textarea id="personnelTerminationReason" rows="3" maxlength="1000" placeholder="Grund für Kündigung / Austritt …"></textarea><button type="button" class="btn personnel-danger-btn" onclick="terminatePersonnelEmployee('${uId}')">📦 Mitarbeiter ins Kündigungsarchiv</button></section>`:''}
     </div>
-    ${abs?`<div class="personnel-current-absence ${isPersonnelAbsenceDue(abs)?'due':''}"><b>${escapeHtml(PERSONNEL_ABSENCE_TYPES[abs.type]?.label||'Abwesenheit')}</b><span>Intern: ${escapeHtml(formatPersonnelDate(abs.startDate))} – ${escapeHtml(formatPersonnelDate(abs.endDate))}</span></div>`:''}<section class="personnel-timeline-card"><div class="personnel-section-title"><h4>📚 Personalhistorie</h4><span>${timeline.length} Einträge</span></div><div class="personnel-timeline">${timeline.length?timeline.map(renderPersonnelTimelineItem).join(''):'<div class="personnel-empty-state">Noch keine Akteneinträge vorhanden.</div>'}</div></section>`;
+    ${abs?`<div class="personnel-current-absence ${isPersonnelAbsenceDue(abs)?'due':''}"><b>${escapeHtml(PERSONNEL_ABSENCE_TYPES[abs.type]?.label||'Abwesenheit')}</b><span>Intern: ${escapeHtml(formatPersonnelDate(abs.startDate))} – ${escapeHtml(formatPersonnelDate(abs.endDate))}</span></div>`:''}<section class="personnel-timeline-card"><div class="personnel-section-title"><h4>📚 Personalhistorie</h4><span>${timeline.length} Einträge</span></div><div class="personnel-timeline">${timeline.length?timeline.map(item=>renderPersonnelTimelineItem(item,uId)).join(''):'<div class="personnel-empty-state">Noch keine Akteneinträge vorhanden.</div>'}</div></section>`;
 }
 
 async function savePersonnelProfile(uId){
@@ -11570,6 +11583,21 @@ async function savePersonnelCareer(uId){if(!getPersonnelPermissions().canManageC
 function rankStateSummary(r){const a=[];if(r.common)a.push(PERSONNEL_RANKS[r.common]?.label);if(r.doctor)a.push('Doctor: '+PERSONNEL_RANKS[r.doctor]?.label);if(r.paramedic)a.push('Paramedic: '+PERSONNEL_RANKS[r.paramedic]?.label);return a.filter(Boolean).join(' · ')||'Noch nicht festgelegt';}
 async function savePersonnelRanks(uId){if(!getPersonnelPermissions().canManageRanks)return;const old=getEmployeeRankData(uId),career=getEmployeeCareerPathKey(uId),doctorEl=document.getElementById('personnelRankDoctor'),paramedicEl=document.getElementById('personnelRankParamedic'),next={common:normalizePersonnelRankKey(document.getElementById('personnelRankCommon')?.value),doctor:doctorEl?normalizePersonnelRankKey(doctorEl.value):'',paramedic:paramedicEl?normalizePersonnelRankKey(paramedicEl.value):''};if(JSON.stringify(old)===JSON.stringify(next)){showToast('Keine Rangänderung vorhanden.','info');return;}const reason=(document.getElementById('personnelRankReason')?.value||'').trim();if(!reason){alert('Bitte einen Grund für die Rangänderung auswählen.');return;}const note=(document.getElementById('personnelRankNote')?.value||'').trim(),now=Date.now(),author=personnelUserName(getUserAccountId(sessionUser)),authorId=getUserAccountId(sessionUser),h=db.ref(`data/personnelRecords/${uId}/rankups`).push(),updates={};updates[`data/employeeRanks/${uId}`]={...next,source:'manual',updatedAt:now,updatedBy:author,updatedById:authorId};updates[`data/personnelRecords/${uId}/rankups/${h.key}`]={createdAt:now,createdBy:author,createdById:authorId,reason,note,summary:`${rankStateSummary(old)} → ${rankStateSummary(next)}`};try{await db.ref().update(updates);await addPersonnelEvent(uId,'rank','Rangänderung',`${rankStateSummary(old)} → ${rankStateSummary(next)} · Grund: ${reason}`);logAdminAudit('Mitarbeiterrang geändert',`${personnelUserName(uId)}: ${rankStateSummary(old)} → ${rankStateSummary(next)} (${reason})`);showToast('✅ Ränge und Historie gespeichert.','success');}catch(err){console.error(err);showToast('⚠️ Ränge konnten nicht gespeichert werden.','error',5000);}}
 async function addPersonnelSanction(uId){if(!getPersonnelPermissions().canManageRecords)return;const title=(document.getElementById('personnelSanctionTitle')?.value||'').trim(),report=(document.getElementById('personnelSanctionReport')?.value||'').trim();if(!title||!report){alert('Bitte Verstoß/Sanktion und Bericht ausfüllen.');return;}try{await db.ref(`data/personnelRecords/${uId}/sanctions`).push({title,report,createdAt:Date.now(),createdBy:personnelUserName(getUserAccountId(sessionUser)),createdById:getUserAccountId(sessionUser)});logAdminAudit('Sanktion zur Personalakte',`${personnelUserName(uId)}: ${title}`);showToast('✅ Sanktion wurde zur Personalakte hinzugefügt.','success');}catch(err){console.error(err);showToast('⚠️ Sanktion konnte nicht gespeichert werden.','error',5000);}}
+function editPersonnelSanction(uId,sanctionId){if(!getPersonnelPermissions().canManageRecords)return;if(!cachedPersonnelRecords?.[uId]?.sanctions?.[sanctionId])return;activePersonnelSanctionEditId=`${uId}:${sanctionId}`;renderPersonnelEmployeeDetail();}
+function cancelPersonnelSanctionEdit(){activePersonnelSanctionEditId='';renderPersonnelEmployeeDetail();}
+async function savePersonnelSanctionEdit(uId,sanctionId){
+    if(!getPersonnelPermissions().canManageRecords)return;const current=cachedPersonnelRecords?.[uId]?.sanctions?.[sanctionId];if(!current)return;
+    const title=(document.getElementById(`personnelSanctionEditTitle_${sanctionId}`)?.value||'').trim(),report=(document.getElementById(`personnelSanctionEditReport_${sanctionId}`)?.value||'').trim();
+    if(!title||!report){alert('Titel und Bericht dürfen nicht leer sein.');return;}
+    try{await db.ref(`data/personnelRecords/${uId}/sanctions/${sanctionId}`).update({title,report});activePersonnelSanctionEditId='';logAdminAudit('Sanktion bearbeitet',`${personnelUserName(uId)}: ${current.title||'Sanktion'} → ${title}`);showToast('✅ Sanktion wurde aktualisiert.','success');}
+    catch(err){console.error(err);showToast('⚠️ Sanktion konnte nicht aktualisiert werden.','error',5000);}
+}
+async function deletePersonnelSanction(uId,sanctionId){
+    if(!getPersonnelPermissions().canManageRecords)return;const current=cachedPersonnelRecords?.[uId]?.sanctions?.[sanctionId];if(!current)return;
+    if(!confirm(`Sanktion „${current.title||'Sanktion'}“ bei ${personnelUserName(uId)} wirklich löschen? Dieser Vorgang kann nicht rückgängig gemacht werden.`))return;
+    try{await db.ref(`data/personnelRecords/${uId}/sanctions/${sanctionId}`).remove();if(activePersonnelSanctionEditId===`${uId}:${sanctionId}`)activePersonnelSanctionEditId='';logAdminAudit('Sanktion gelöscht',`${personnelUserName(uId)}: ${current.title||'Sanktion'}`);showToast('✅ Sanktion wurde gelöscht.','success');}
+    catch(err){console.error(err);showToast('⚠️ Sanktion konnte nicht gelöscht werden.','error',5000);}
+}
 async function addPersonnelNote(uId){if(!getPersonnelPermissions().canManageRecords)return;const text=(document.getElementById('personnelNoteText')?.value||'').trim();if(!text){alert('Bitte eine Notiz eingeben.');return;}try{await db.ref(`data/personnelRecords/${uId}/notes`).push({text,createdAt:Date.now(),createdBy:personnelUserName(getUserAccountId(sessionUser)),createdById:getUserAccountId(sessionUser)});logAdminAudit('Notiz zur Personalakte',`${personnelUserName(uId)}: Notiz hinzugefügt`);showToast('✅ Notiz wurde hinzugefügt.','success');}catch(err){console.error(err);showToast('⚠️ Notiz konnte nicht gespeichert werden.','error',5000);}}
 
 function renderPersonnelCalendar(){
@@ -11603,7 +11631,7 @@ if (typeof window !== 'undefined') {
     Object.assign(window, {
         switchPersonnelView, renderPersonnelWorkspace, renderPersonnelEmployeeList, selectPersonnelEmployee,
         renderPersonnelCalendar, renderPersonnelCreateForm, savePersonnelCareer, savePersonnelRanks, togglePersonnelProfileEdit,
-        addPersonnelSanction, addPersonnelNote, addPersonnelAbsence, confirmPersonnelReturn, createPersonnelEmployee,
+        addPersonnelSanction, editPersonnelSanction, cancelPersonnelSanctionEdit, savePersonnelSanctionEdit, deletePersonnelSanction, addPersonnelNote, addPersonnelAbsence, confirmPersonnelReturn, createPersonnelEmployee,
         savePersonnelProfile, terminatePersonnelEmployee, renderPersonnelArchive, rehirePersonnelEmployee
     });
 }
