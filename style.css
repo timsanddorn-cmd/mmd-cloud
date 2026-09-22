@@ -1,5 +1,5 @@
 /* ============================================================
-   MMD CLOUD – Medical Center Web-App  |  style.css v6.9.3
+   MMD CLOUD – Medical Center Web-App  |  style.css v6.9.4
    ============================================================ */
 
 :root {
@@ -5784,5 +5784,86 @@ tbody tr:hover {
         width: 100%;
         justify-content: space-between;
         margin-left: 0;
+    }
+}
+
+
+/* ============================================================
+   v6.9.4 – Changelog Scroll-Fix
+   ============================================================ */
+.changelog-modal-card {
+    width: min(95vw, 900px);
+    height: min(90vh, 860px);
+    height: min(90dvh, 860px);
+    max-width: 900px;
+    max-height: none;
+    padding: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+.changelog-modal-head {
+    flex: 0 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 14px;
+    padding: 22px 24px 14px;
+    border-bottom: 1px solid var(--border);
+}
+.changelog-modal-head h3 {
+    margin: 0;
+    color: var(--primary);
+}
+.changelog-modal-head p {
+    margin: 4px 0 0;
+    color: var(--text-muted);
+    font-size: 12px;
+}
+.changelog-modal-scroll {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-gutter: stable;
+    padding: 16px 24px 24px;
+}
+.changelog-modal-footer {
+    flex: 0 0 auto;
+    display: flex;
+    justify-content: flex-end;
+    padding: 12px 24px 18px;
+    border-top: 1px solid rgba(148,163,184,.10);
+    background: rgba(11,17,29,.97);
+}
+.changelog-modal-close-btn {
+    width: auto;
+    margin: 0;
+    background: var(--primary);
+    color: #080c14;
+    font-weight: 800;
+}
+/* Kein verschachteltes Scrollen mehr im Archiv selbst. */
+.changelog-archive[open] .changelog-archive-list {
+    max-height: none;
+    overflow: visible;
+    overscroll-behavior: auto;
+    scrollbar-gutter: auto;
+    padding-right: 12px;
+}
+@media(max-width:640px){
+    .changelog-modal-card {
+        width: 100%;
+        height: calc(100dvh - 16px);
+    }
+    .changelog-modal-head {
+        align-items: flex-start;
+        padding: 16px 16px 12px;
+    }
+    .changelog-modal-scroll {
+        padding: 14px 16px 20px;
+    }
+    .changelog-modal-footer {
+        padding: 10px 16px 14px;
     }
 }
