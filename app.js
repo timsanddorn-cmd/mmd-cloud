@@ -1,5 +1,5 @@
 // ============================================================
-//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.8.14
+//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.9.0
 //  Firebase Realtime Database (Compat SDK v10)
 // ============================================================
 
@@ -182,7 +182,7 @@ const db = firebase.database();
 const auth = firebase.auth();
 const FIREBASE_AUTH_EMAIL_DOMAIN = 'mmd-login.invalid';
 
-const APP_VERSION = 'v6.8.14';
+const APP_VERSION = 'v6.9.0';
 const PRESENCE_HEARTBEAT_MS = 30 * 1000;
 const PRESENCE_STALE_MS = 3 * 60 * 1000;
 
@@ -458,8 +458,45 @@ function renderContentFreshnessHints(){
     set('linksLastUpdated',getLatestContentMeta(cachedLinks));
 }
 
+function filterAdminPermissionMatrix(){
+    const editor=document.getElementById('adminRoleEditorCard');if(!editor)return;
+    const q=normalizeUiSearchText(document.getElementById('adminPermissionSearch')?.value||'');
+    editor.querySelectorAll('.admin-permission-section').forEach(section=>{
+        let visible=0;
+        section.querySelectorAll('.role-perm-box').forEach(box=>{
+            const match=!q||normalizeUiSearchText(box.textContent||'').includes(q);
+            box.style.display=match?'':'none';if(match)visible++;
+        });
+        section.style.display=visible?'':'none';
+        if(q&&visible)section.classList.remove('collapsed');
+    });
+}
+function setupAdminPermissionWorkspace(){
+    const editor=document.getElementById('adminRoleEditorCard');if(!editor)return;
+    editor.querySelectorAll('h5').forEach((heading,index)=>{
+        const section=heading.parentElement;if(!section?.querySelector('.role-perm-box'))return;
+        section.classList.add('admin-permission-section');
+        heading.classList.add('admin-permission-section-title');
+        heading.setAttribute('role','button');heading.tabIndex=0;
+        if(!section.dataset.permissionReady){if(index>0)section.classList.add('collapsed');section.dataset.permissionReady='1';}
+        const sync=()=>heading.setAttribute('aria-expanded',section.classList.contains('collapsed')?'false':'true');sync();
+        const toggle=()=>{section.classList.toggle('collapsed');sync();};
+        heading.onclick=toggle;
+        heading.onkeydown=event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();toggle();}};
+    });
+    if(!document.getElementById('adminPermissionSearch')){
+        const meta=editor.querySelector('.role-meta-grid');
+        const toolbar=document.createElement('div');toolbar.className='admin-permission-toolbar';
+        toolbar.innerHTML='<div><b>Rechte konfigurieren</b><span>Kategorien öffnen oder gezielt nach einem Recht suchen.</span></div><label class="admin-permission-search"><span>🔎</span><input type="search" id="adminPermissionSearch" placeholder="Rechte durchsuchen …" autocomplete="off"></label>';
+        (meta||editor.firstElementChild)?.insertAdjacentElement('afterend',toolbar);
+        toolbar.querySelector('input')?.addEventListener('input',filterAdminPermissionMatrix);
+    }
+    filterAdminPermissionMatrix();
+}
+
 function setupUnifiedEditorModals(){
     ['szenarienInlineModal','gehaltInlineModal','sanctionsCatalogEditorModal','editModal','archivEditModal','pricesInlineModal','guideInlineModal','commandsInlineModal','linksInlineModal','calendarEventModal','staffPhotoUploadModal','userPermissionsModal','assignRolesModal','examBuilderModal','changelogWriterModal','hierarchieInlineModal'].forEach(id=>document.getElementById(id)?.querySelector('.modal-card')?.classList.add('mmd-editor-card'));
+    setupAdminPermissionWorkspace();
 }
 function findMainTabButton(tabId){return Array.from(document.querySelectorAll('.tab-btn,.nav-sub-btn')).find(btn=>(btn.getAttribute('onclick')||'').includes(`switchTab('${tabId}'`))||null;}
 function canSearchSection(tabId){if(isMaintenanceRestrictedSession())return tabId==='docTab';if(tabId==='chiefTab')return canCurrentUserViewChiefMaterials();if(tabId==='personnelTab')return typeof canCurrentUserAccessPersonnelArea==='function'?canCurrentUserAccessPersonnelArea():canCurrentUserManageCareerPaths();return !!document.getElementById(tabId);}
@@ -530,6 +567,18 @@ let hierarchieDaten = JSON.parse(JSON.stringify(defaultHierarchieData));
 
 /* ── Vollständiger Gesamt-Changelog (Entwicklungsverlauf) ───── */
 const systemChangelogs = [
+    {
+        id: "sys_v6_9_0", version: "v6.9.0", date: "22.09.2026", ts: 1790074800000,
+        category: "Design", title: "Modern Workspace & Personalabteilung Audit",
+        changes: [
+            "Personalabteilung visuell entschlackt und in klarere Arbeitsbereiche gegliedert.",
+            "Sanktion, Notiz und Kündigung sind kompakte Aktionsbereiche statt dauerhaft geöffneter Formulare.",
+            "Admin-Rollenmatrix erhält einklappbare Berechtigungsgruppen und eine Rechtesuche.",
+            "Globale Oberfläche, Navigation, Tabellen, Formulare und Modale wurden vereinheitlicht.",
+            "Manuelles Zurücksetzen der Laufbahn auf Noch nicht festgelegt bleibt jetzt dauerhaft gespeichert.",
+            "Mehrere kleinere UI- und Textinkonsistenzen aus der Personal- und Adminverwaltung wurden korrigiert."
+        ]
+    },
     {
         id: "sys_v6_8_14", version: "v6.8.14", date: "22.09.2026", ts: 1790067600000,
         category: "Verbesserung", title: "Personalverwaltung – Arbeitsabläufe vervollständigt",
@@ -5724,8 +5773,8 @@ function normalizeEmployeeCareerPath(value) {
 }
 
 function getEmployeeCareerPathKey(uId) {
-    const stored=normalizeEmployeeCareerPath(cachedEmployeeCareerPaths?.[uId]?.path);
-    if(stored!=='none')return stored;
+    const storedEntry=cachedEmployeeCareerPaths?.[uId];
+    if(storedEntry&&Object.prototype.hasOwnProperty.call(storedEntry,'path'))return normalizeEmployeeCareerPath(storedEntry.path);
     const seed=typeof getPersonnelMasterlistSeedForUser==='function'?getPersonnelMasterlistSeedForUser(cachedUsers?.[uId]):null;
     return normalizeEmployeeCareerPath(seed?.career);
 }
@@ -9035,6 +9084,7 @@ async function verifyAdminKeyPassword() {
         switchAdminTab('adminSubTabOverview', document.getElementById('btnAdminSubOverview'));
         renderAdminUserTable(cachedUsers);
         renderAdminRolesList();
+        setupAdminPermissionWorkspace();
         refreshFirebaseAuthMigrationPanel();
         renderPasswordChangeStatusPanel();
         renderMaintenanceAdminPanel();
@@ -11535,7 +11585,7 @@ function personnelTrainerOptions(selected=''){
 }
 async function addPersonnelEvent(uId,type,title,detail=''){if(!uId)return;const now=Date.now(),author=personnelUserName(getUserAccountId(sessionUser)),authorId=getUserAccountId(sessionUser);try{await db.ref(`data/personnelRecords/${uId}/events`).push({type:String(type||'event'),title:String(title||'Personalereignis'),detail:String(detail||''),createdAt:now,createdBy:author,createdById:authorId});}catch(err){console.warn('Personalhistorie-Ereignis konnte nicht gespeichert werden:',err);}}
 
-function switchPersonnelView(view){if(!canCurrentUserAccessPersonnelArea())return;activePersonnelView=['overview','files','calendar','create','archive'].includes(view)?view:'overview';renderPersonnelWorkspace();}
+function switchPersonnelView(view){if(!canCurrentUserAccessPersonnelArea())return;activePersonnelView=['overview','files','calendar','create','archive'].includes(view)?view:'overview';if(activePersonnelView!=='files'){personnelProfileEditingId='';activePersonnelSanctionEditId='';activePersonnelNoteEditId='';}if(activePersonnelView!=='calendar')activePersonnelAbsenceEditId='';renderPersonnelWorkspace();}
 function renderPersonnelWorkspace(){
     const root=document.getElementById('personnelTab');if(!root)return;const p=getPersonnelPermissions();if(!p.canAccess)return;
     const vis={files:p.canViewRecords||p.canManageCareer||p.canManageRanks,calendar:p.canViewRecords||p.canManageAbsences,create:p.canCreateEmployees,archive:p.canViewRecords||p.canManageDepartures};
@@ -11576,6 +11626,22 @@ function renderPersonnelTimelineItem(item,uId){
     if(editing)return `<article class="personnel-timeline-item note editing"><div class="personnel-timeline-head"><b>🗒️ Notiz bearbeiten</b><span>${escapeHtml(d)} · ${escapeHtml(x.createdBy||'')}</span></div><div class="personnel-record-edit"><label>Notiz</label><textarea id="personnelNoteEditText_${item.id}" rows="5" maxlength="2000">${escapeHtml(x.text||'')}</textarea><div class="personnel-record-edit-actions"><button type="button" class="btn personnel-primary-btn" onclick="savePersonnelNoteEdit('${uId}','${item.id}')">💾 Speichern</button><button type="button" class="btn personnel-secondary-btn" onclick="cancelPersonnelNoteEdit()">Abbrechen</button></div></div></article>`;
     return `<article class="personnel-timeline-item note"><div class="personnel-timeline-head"><b>🗒️ Notiz</b><span>${escapeHtml(d)} · ${escapeHtml(x.createdBy||'')}</span></div><p>${formatTextWithLinks(x.text||'')}</p>${canManage?`<div class="personnel-timeline-actions"><button type="button" class="personnel-timeline-action edit" onclick="editPersonnelNote('${uId}','${item.id}')">✏️ Bearbeiten</button><button type="button" class="personnel-timeline-action delete" onclick="deletePersonnelNote('${uId}','${item.id}')">🗑️ Löschen</button></div>`:''}</article>`;
 }
+function enhancePersonnelDetailWorkspace(root){
+    if(!root)return;
+    root.querySelectorAll('.personnel-file-grid > .personnel-card').forEach(card=>{
+        const title=card.querySelector(':scope > h4');if(!title)return;
+        const label=(title.textContent||'').trim();
+        const kind=label.includes('Sanktion')?'sanction':label.includes('Allgemeine Notiz')?'note':label.includes('Kündigung / Austritt')?'termination':'';
+        if(!kind)return;
+        card.classList.add('personnel-action-card','action-'+kind,'collapsed');
+        title.classList.add('personnel-action-card-title');
+        title.setAttribute('role','button');title.setAttribute('aria-expanded','false');title.tabIndex=0;
+        const toggle=()=>{const collapsed=card.classList.toggle('collapsed');title.setAttribute('aria-expanded',collapsed?'false':'true');};
+        title.onclick=toggle;
+        title.onkeydown=event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();toggle();}};
+    });
+}
+
 function renderPersonnelEmployeeDetail(){
     const box=document.getElementById('personnelEmployeeDetail');if(!box)return;const uId=activePersonnelEmployeeId,user=cachedUsers?.[uId];if(!uId||!user){box.innerHTML='<div class="personnel-empty-state">Wähle links einen Mitarbeiter aus.</div>';return;}
     const p=getPersonnelPermissions(),career=getEmployeeCareerPathKey(uId),ranks=getEmployeeRankData(uId),record=cachedPersonnelRecords?.[uId]||{},profile=getPersonnelProfile(uId),internal=getPersonnelInternalStatus(uId),timeline=[],profileEditing=personnelProfileEditingId===uId,showDoctorRank=(career==='doctor'||career==='both'||!!ranks.doctor),showParamedicRank=(career==='paramedic'||career==='both'||!!ranks.paramedic);
@@ -11598,12 +11664,13 @@ function renderPersonnelEmployeeDetail(){
       ${p.canManageDepartures?`<section class="personnel-card personnel-termination-card"><h4>📦 Kündigung / Austritt</h4><label>Kündigungsdatum</label><input type="date" id="personnelTerminationDate" value="${personnelTodayIso()}"><label>Kündigungsgrund</label><textarea id="personnelTerminationReason" rows="3" maxlength="1000" placeholder="Grund für Kündigung / Austritt …"></textarea><button type="button" class="btn personnel-danger-btn" onclick="terminatePersonnelEmployee('${uId}')">📦 Mitarbeiter ins Kündigungsarchiv</button></section>`:''}
     </div>
     ${abs?`<div class="personnel-current-absence ${isPersonnelAbsenceDue(abs)?'due':''}"><b>${escapeHtml(PERSONNEL_ABSENCE_TYPES[abs.type]?.label||'Abwesenheit')}</b><span>Intern: ${escapeHtml(formatPersonnelDate(abs.startDate))} – ${escapeHtml(formatPersonnelDate(abs.endDate))}</span></div>`:''}<section class="personnel-timeline-card"><div class="personnel-section-title"><h4>📚 Personalhistorie</h4><span>${timeline.length} Einträge</span></div><div class="personnel-timeline">${timeline.length?timeline.map(item=>renderPersonnelTimelineItem(item,uId)).join(''):'<div class="personnel-empty-state">Noch keine Akteneinträge vorhanden.</div>'}</div></section>`;
+    enhancePersonnelDetailWorkspace(box);
 }
 
 async function savePersonnelProfile(uId){
     if(!getPersonnelPermissions().canManageRecords)return;const old=getPersonnelProfile(uId),internalStatus=String(document.getElementById('personnelProfileInternalStatus')?.value||'none');
     const data={phone:(document.getElementById('personnelProfilePhone')?.value||'').trim(),secondJob:(document.getElementById('personnelProfileSecondJob')?.value||'').trim(),additionalFunctions:(document.getElementById('personnelProfileFunctions')?.value||'').trim(),instructedBy:(document.getElementById('personnelProfileInstructedBy')?.value||'').trim(),hiredBy:(document.getElementById('personnelProfileHiredBy')?.value||'').trim(),swornIn:document.getElementById('personnelProfileSworn')?.value||'no',firstAidCourse:document.getElementById('personnelProfileFirstAid')?.value||'no',treatmentInstruction:document.getElementById('personnelProfileTreatment')?.value||'no',internalStatus:PERSONNEL_INTERNAL_STATUSES[internalStatus]?internalStatus:'none',updatedAt:Date.now(),updatedBy:personnelUserName(getUserAccountId(sessionUser)),updatedById:getUserAccountId(sessionUser)};
-    try{await db.ref('data/personnelProfiles/'+uId).set(data);if(String(old.internalStatus||'none')!==data.internalStatus)await addPersonnelEvent(uId,'status','Interner Personalstatus geändert',`${PERSONNEL_INTERNAL_STATUSES[String(old.internalStatus||'none')]?.label||'Kein offener Status'} → ${PERSONNEL_INTERNAL_STATUSES[data.internalStatus].label}`);personnelProfileEditingId='';logAdminAudit('Personalstammdaten gespeichert',`${personnelUserName(uId)}: Stammdaten / Qualifikationen aktualisiert`);showToast('✅ Personalstammdaten gespeichert.','success');}catch(err){console.error(err);showToast('⚠️ Personalstammdaten konnten nicht gespeichert werden.','error',5000);}
+    try{await db.ref('data/personnelProfiles/'+uId).set(data);if(String(old.internalStatus||'none')!==data.internalStatus)await addPersonnelEvent(uId,'status','Interner Personalstatus geändert',`${PERSONNEL_INTERNAL_STATUSES[String(old.internalStatus||'none')]?.label||'Kein offener Status'} → ${PERSONNEL_INTERNAL_STATUSES[data.internalStatus].label}`);personnelProfileEditingId='';renderPersonnelEmployeeDetail();logAdminAudit('Personalstammdaten gespeichert',`${personnelUserName(uId)}: Stammdaten / Qualifikationen aktualisiert`);showToast('✅ Personalstammdaten gespeichert.','success');}catch(err){console.error(err);showToast('⚠️ Personalstammdaten konnten nicht gespeichert werden.','error',5000);}
 }
 
 async function terminatePersonnelEmployee(uId){
@@ -11623,10 +11690,10 @@ async function rehirePersonnelEmployee(departureId){
     try{await db.ref().update(updates);await addPersonnelEvent(uId,'rehire','Wiedereinstellung',`${formatPersonnelDate(today)} · bestehende Personalakte fortgeführt`);logAdminAudit('Mitarbeiter wiedereingestellt',`${personnelUserName(uId)} wurde aus dem Kündigungsarchiv reaktiviert.`);showToast('✅ Mitarbeiter wurde wiedereingestellt. Personalakte und Historie bleiben erhalten.','success',5500);activePersonnelEmployeeId=uId;switchPersonnelView('files');}catch(err){console.error(err);showToast('⚠️ Wiedereinstellung konnte nicht gespeichert werden.','error',6500);}
 }
 
-async function savePersonnelCareer(uId){if(!getPersonnelPermissions().canManageCareer)return;const oldValue=getEmployeeCareerPathKey(uId),value=normalizeEmployeeCareerPath(document.getElementById('personnelCareerSelect')?.value);try{const ref=db.ref('data/employeeCareerPaths/'+uId);if(value==='none')await ref.remove();else await ref.set({path:value,source:'manual',updatedAt:Date.now(),updatedBy:personnelUserName(getUserAccountId(sessionUser)),updatedById:getUserAccountId(sessionUser)});if(oldValue!==value)await addPersonnelEvent(uId,'career','Laufbahn geändert',`${EMPLOYEE_CAREER_PATHS[oldValue]?.label||EMPLOYEE_CAREER_PATHS.none.label} → ${EMPLOYEE_CAREER_PATHS[value]?.label||EMPLOYEE_CAREER_PATHS.none.label}`);showToast('✅ Laufbahn gespeichert.','success');}catch(err){console.error(err);showToast('⚠️ Laufbahn konnte nicht gespeichert werden.','error',5000);}}
+async function savePersonnelCareer(uId){if(!getPersonnelPermissions().canManageCareer)return;const oldValue=getEmployeeCareerPathKey(uId),value=normalizeEmployeeCareerPath(document.getElementById('personnelCareerSelect')?.value);try{const ref=db.ref('data/employeeCareerPaths/'+uId);await ref.set({path:value,source:'manual',updatedAt:Date.now(),updatedBy:personnelUserName(getUserAccountId(sessionUser)),updatedById:getUserAccountId(sessionUser)});if(oldValue!==value)await addPersonnelEvent(uId,'career','Laufbahn geändert',`${EMPLOYEE_CAREER_PATHS[oldValue]?.label||EMPLOYEE_CAREER_PATHS.none.label} → ${EMPLOYEE_CAREER_PATHS[value]?.label||EMPLOYEE_CAREER_PATHS.none.label}`);showToast('✅ Laufbahn gespeichert.','success');}catch(err){console.error(err);showToast('⚠️ Laufbahn konnte nicht gespeichert werden.','error',5000);}}
 function rankStateSummary(r){const a=[];if(r.common)a.push(PERSONNEL_RANKS[r.common]?.label);if(r.doctor)a.push('Doctor: '+PERSONNEL_RANKS[r.doctor]?.label);if(r.paramedic)a.push('Paramedic: '+PERSONNEL_RANKS[r.paramedic]?.label);return a.filter(Boolean).join(' · ')||'Noch nicht festgelegt';}
 async function savePersonnelRanks(uId){if(!getPersonnelPermissions().canManageRanks)return;const old=getEmployeeRankData(uId),career=getEmployeeCareerPathKey(uId),doctorEl=document.getElementById('personnelRankDoctor'),paramedicEl=document.getElementById('personnelRankParamedic'),next={common:normalizePersonnelRankKey(document.getElementById('personnelRankCommon')?.value),doctor:doctorEl?normalizePersonnelRankKey(doctorEl.value):'',paramedic:paramedicEl?normalizePersonnelRankKey(paramedicEl.value):''};if(JSON.stringify(old)===JSON.stringify(next)){showToast('Keine Rangänderung vorhanden.','info');return;}const reason=(document.getElementById('personnelRankReason')?.value||'').trim();if(!reason){alert('Bitte einen Grund für die Rangänderung auswählen.');return;}const note=(document.getElementById('personnelRankNote')?.value||'').trim(),now=Date.now(),author=personnelUserName(getUserAccountId(sessionUser)),authorId=getUserAccountId(sessionUser),h=db.ref(`data/personnelRecords/${uId}/rankups`).push(),updates={};updates[`data/employeeRanks/${uId}`]={...next,source:'manual',updatedAt:now,updatedBy:author,updatedById:authorId};updates[`data/personnelRecords/${uId}/rankups/${h.key}`]={createdAt:now,createdBy:author,createdById:authorId,reason,note,summary:`${rankStateSummary(old)} → ${rankStateSummary(next)}`};try{await db.ref().update(updates);await addPersonnelEvent(uId,'rank','Rangänderung',`${rankStateSummary(old)} → ${rankStateSummary(next)} · Grund: ${reason}`);logAdminAudit('Mitarbeiterrang geändert',`${personnelUserName(uId)}: ${rankStateSummary(old)} → ${rankStateSummary(next)} (${reason})`);showToast('✅ Ränge und Historie gespeichert.','success');}catch(err){console.error(err);showToast('⚠️ Ränge konnten nicht gespeichert werden.','error',5000);}}
-async function addPersonnelSanction(uId){if(!getPersonnelPermissions().canManageRecords)return;const title=(document.getElementById('personnelSanctionTitle')?.value||'').trim(),report=(document.getElementById('personnelSanctionReport')?.value||'').trim();if(!title||!report){alert('Bitte Verstoß/Sanktion und Bericht ausfüllen.');return;}try{await db.ref(`data/personnelRecords/${uId}/sanctions`).push({title,report,createdAt:Date.now(),createdBy:personnelUserName(getUserAccountId(sessionUser)),createdById:getUserAccountId(sessionUser)});logAdminAudit('Sanktion zur Personalakte',`${personnelUserName(uId)}: ${title}`);showToast('✅ Sanktion wurde zur Personalakte hinzugefügt.','success');}catch(err){console.error(err);showToast('⚠️ Sanktion konnte nicht gespeichert werden.','error',5000);}}
+async function addPersonnelSanction(uId){if(!getPersonnelPermissions().canManageRecords)return;const title=(document.getElementById('personnelSanctionTitle')?.value||'').trim(),report=(document.getElementById('personnelSanctionReport')?.value||'').trim();if(!title||!report){alert('Bitte Verstoß/Sanktion und Bericht ausfüllen.');return;}try{await db.ref(`data/personnelRecords/${uId}/sanctions`).push({title,report,createdAt:Date.now(),createdBy:personnelUserName(getUserAccountId(sessionUser)),createdById:getUserAccountId(sessionUser)});const titleInput=document.getElementById('personnelSanctionTitle'),reportInput=document.getElementById('personnelSanctionReport'),drawer=document.getElementById('personnelSanctionDrawer');if(titleInput)titleInput.value='';if(reportInput)reportInput.value='';if(drawer)drawer.open=false;logAdminAudit('Sanktion zur Personalakte',`${personnelUserName(uId)}: ${title}`);showToast('✅ Sanktion wurde zur Personalakte hinzugefügt.','success');}catch(err){console.error(err);showToast('⚠️ Sanktion konnte nicht gespeichert werden.','error',5000);}}
 function editPersonnelSanction(uId,sanctionId){if(!getPersonnelPermissions().canManageRecords)return;if(!cachedPersonnelRecords?.[uId]?.sanctions?.[sanctionId])return;activePersonnelSanctionEditId=`${uId}:${sanctionId}`;renderPersonnelEmployeeDetail();}
 function cancelPersonnelSanctionEdit(){activePersonnelSanctionEditId='';renderPersonnelEmployeeDetail();}
 async function savePersonnelSanctionEdit(uId,sanctionId){
@@ -11642,7 +11709,7 @@ async function deletePersonnelSanction(uId,sanctionId){
     try{await db.ref(`data/personnelRecords/${uId}/sanctions/${sanctionId}`).remove();if(activePersonnelSanctionEditId===`${uId}:${sanctionId}`)activePersonnelSanctionEditId='';logAdminAudit('Sanktion gelöscht',`${personnelUserName(uId)}: ${current.title||'Sanktion'}`);showToast('✅ Sanktion wurde gelöscht.','success');}
     catch(err){console.error(err);showToast('⚠️ Sanktion konnte nicht gelöscht werden.','error',5000);}
 }
-async function addPersonnelNote(uId){if(!getPersonnelPermissions().canManageRecords)return;const text=(document.getElementById('personnelNoteText')?.value||'').trim();if(!text){alert('Bitte eine Notiz eingeben.');return;}try{await db.ref(`data/personnelRecords/${uId}/notes`).push({text,createdAt:Date.now(),createdBy:personnelUserName(getUserAccountId(sessionUser)),createdById:getUserAccountId(sessionUser)});const input=document.getElementById('personnelNoteText');if(input)input.value='';logAdminAudit('Notiz zur Personalakte',`${personnelUserName(uId)}: Notiz hinzugefügt`);showToast('✅ Notiz wurde hinzugefügt.','success');}catch(err){console.error(err);showToast('⚠️ Notiz konnte nicht gespeichert werden.','error',5000);}}
+async function addPersonnelNote(uId){if(!getPersonnelPermissions().canManageRecords)return;const text=(document.getElementById('personnelNoteText')?.value||'').trim();if(!text){alert('Bitte eine Notiz eingeben.');return;}try{await db.ref(`data/personnelRecords/${uId}/notes`).push({text,createdAt:Date.now(),createdBy:personnelUserName(getUserAccountId(sessionUser)),createdById:getUserAccountId(sessionUser)});const input=document.getElementById('personnelNoteText'),drawer=document.getElementById('personnelNoteDrawer');if(input)input.value='';if(drawer)drawer.open=false;logAdminAudit('Notiz zur Personalakte',`${personnelUserName(uId)}: Notiz hinzugefügt`);showToast('✅ Notiz wurde hinzugefügt.','success');}catch(err){console.error(err);showToast('⚠️ Notiz konnte nicht gespeichert werden.','error',5000);}}
 function editPersonnelNote(uId,noteId){if(!getPersonnelPermissions().canManageRecords)return;if(!cachedPersonnelRecords?.[uId]?.notes?.[noteId])return;activePersonnelNoteEditId=`${uId}:${noteId}`;renderPersonnelEmployeeDetail();}
 function cancelPersonnelNoteEdit(){activePersonnelNoteEditId='';renderPersonnelEmployeeDetail();}
 async function savePersonnelNoteEdit(uId,noteId){

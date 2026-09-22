@@ -11,7 +11,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
-    <link rel="stylesheet" href="style.css?v=6.8.14">
+    <link rel="stylesheet" href="style.css?v=6.9.0">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏥</text></svg>">
 </head>
 <body>
@@ -375,13 +375,14 @@
         <div id="personnelTab" class="tab-content">
             <div class="content-header-bar personnel-header">
                 <div>
+                    <span class="workspace-eyebrow">PERSONAL WORKSPACE</span>
                     <h2>💼 Personalabteilung</h2>
-                    <p>Mitarbeiter verwalten, Personalakten pflegen und Abwesenheiten im Blick behalten.</p>
+                    <p>Teamstatus, Personalakten, Abwesenheiten und Personalvorgänge in einer klaren Arbeitsansicht.</p>
                 </div>
-                <div class="personnel-header-note">Interner Personalbereich</div>
+                <div class="personnel-header-note">Interne Personalverwaltung</div>
             </div>
 
-            <div class="personnel-nav">
+            <div class="personnel-nav" aria-label="Personalbereiche">
                 <button type="button" id="personnelNav_overview" class="personnel-nav-btn active" onclick="switchPersonnelView('overview')">📊 Übersicht</button>
                 <button type="button" id="personnelNav_files" class="personnel-nav-btn" onclick="switchPersonnelView('files')">🗂️ Personalakten</button>
                 <button type="button" id="personnelNav_calendar" class="personnel-nav-btn" onclick="switchPersonnelView('calendar')">📅 Mitarbeiterkalender</button>
@@ -390,35 +391,56 @@
             </div>
 
             <div id="personnelPane_overview" class="personnel-pane active">
-                <div class="personnel-stat-grid">
-                    <div class="personnel-stat-card"><span>👥 Mitarbeiter</span><b id="personnelStatEmployees">0</b></div>
-                    <div class="personnel-stat-card"><span>🏖️ Urlaub</span><b id="personnelStatVacation">0</b></div>
-                    <div class="personnel-stat-card"><span>📝 Entschuldigt abwesend</span><b id="personnelStatExcused">0</b></div>
-                    <div class="personnel-stat-card alert"><span>🔴 Rückkehr prüfen</span><b id="personnelStatDue">0</b></div>
-                    <div class="personnel-stat-card"><span>🟡 Perso-Ticket offen</span><b id="personnelStatTickets">0</b></div>
-                    <div class="personnel-stat-card"><span>🟠 Inaktivität prüfen</span><b id="personnelStatInactive">0</b></div>
-                    <div class="personnel-stat-card alert"><span>🔴 Kündigung prüfen</span><b id="personnelStatTermination">0</b></div>
+                <div class="personnel-summary-grid">
+                    <article class="personnel-summary-card personnel-summary-team">
+                        <span class="personnel-summary-icon">👥</span>
+                        <div><small>Aktives Team</small><b id="personnelStatEmployees">0</b><span>freigeschaltete Mitarbeiter</span></div>
+                    </article>
+                    <article class="personnel-summary-card">
+                        <div class="personnel-summary-head"><span>🌴 Abwesenheiten</span><small>aktuell</small></div>
+                        <div class="personnel-summary-split">
+                            <div><span>Urlaub</span><b id="personnelStatVacation">0</b></div>
+                            <div><span>Entschuldigt</span><b id="personnelStatExcused">0</b></div>
+                        </div>
+                    </article>
+                    <article class="personnel-summary-card">
+                        <div class="personnel-summary-head"><span>🧭 Personalthemen</span><small>offen</small></div>
+                        <div class="personnel-summary-split">
+                            <div><span>Perso-Tickets</span><b id="personnelStatTickets">0</b></div>
+                            <div><span>Inaktivität</span><b id="personnelStatInactive">0</b></div>
+                        </div>
+                    </article>
+                    <article class="personnel-summary-card personnel-summary-attention">
+                        <div class="personnel-summary-head"><span>⚠️ Aufmerksamkeit</span><small>prüfen</small></div>
+                        <div class="personnel-summary-split">
+                            <div><span>Rückkehr</span><b id="personnelStatDue">0</b></div>
+                            <div><span>Kündigung</span><b id="personnelStatTermination">0</b></div>
+                        </div>
+                    </article>
                 </div>
-                <section class="personnel-section-card">
-                    <div class="personnel-section-title">
-                        <h3>🧭 Offene Personalthemen</h3>
-                        <span>Interne Hinweise – nur für die Personalverwaltung.</span>
-                    </div>
-                    <div id="personnelStatusAlerts"></div>
-                </section>
-                <section class="personnel-section-card">
-                    <div class="personnel-section-title">
-                        <h3>🔔 Rückkehrprüfungen</h3>
-                        <span>Bleibt offen, bis die Personalabteilung die Rückkehr bestätigt.</span>
-                    </div>
-                    <div id="personnelReturnAlerts"></div>
-                </section>
+                <div class="personnel-overview-columns">
+                    <section class="personnel-section-card">
+                        <div class="personnel-section-title">
+                            <h3>🧭 Offene Personalthemen</h3>
+                            <span>Interne Hinweise und Vorgänge.</span>
+                        </div>
+                        <div id="personnelStatusAlerts"></div>
+                    </section>
+                    <section class="personnel-section-card">
+                        <div class="personnel-section-title">
+                            <h3>🔔 Rückkehrprüfungen</h3>
+                            <span>Nur Fälle mit Handlungsbedarf.</span>
+                        </div>
+                        <div id="personnelReturnAlerts"></div>
+                    </section>
+                </div>
             </div>
 
             <div id="personnelPane_files" class="personnel-pane">
                 <div class="personnel-files-layout">
                     <aside class="personnel-employee-sidebar">
-                        <input type="text" id="personnelEmployeeSearch" placeholder="🔍 Mitarbeiter suchen …" oninput="renderPersonnelEmployeeList()">
+                        <div class="personnel-sidebar-head"><b>👥 Mitarbeiter</b><small>Personalakte auswählen</small></div>
+                        <input type="text" id="personnelEmployeeSearch" placeholder="🔍 Name, DN oder Rang …" oninput="renderPersonnelEmployeeList()">
                         <div id="personnelEmployeeList" class="personnel-employee-list"></div>
                     </aside>
                     <main id="personnelEmployeeDetail" class="personnel-employee-detail">
@@ -960,7 +982,7 @@
 
                     <div id="instrTabInstructorAllowedExams" class="admin-subtab-content">
                         <h4 style="margin:0 0 8px 0; color:#a855f7;">👥 Mitarbeiterfreigabe & Ausbildungsrollen</h4>
-                        <p style="color:var(--text-muted); font-size:12px; margin-top:0;">Hier werden neue Mitarbeiter freigegeben oder gesperrt und die vorgesehenen Ausbildungsrollen verwaltet. Ausbildungsleitung und Personalabteilung dürfen dabei ausschließlich Ausbildungsleitung, Ausbilder und Mitarbeiter vergeben.</p>
+                        <p style="color:var(--text-muted); font-size:12px; margin-top:0;">Hier werden neue Mitarbeiter freigegeben oder gesperrt und die vorgesehenen Ausbildungsrollen verwaltet. Ausbildungsleitung bleibt auf Ausbildungsleitung, Ausbilder und Mitarbeiter begrenzt. Die Personalabteilung darf zusätzlich CLS, EHK und Luftrettung vergeben.</p>
                         <div class="table-responsive">
                             <table>
                                 <thead><tr><th>Mitarbeiter Name</th><th>DN</th><th>Rollen</th><th>Status</th><th style="text-align:right;">Aktion</th></tr></thead>
@@ -1894,7 +1916,7 @@
                             <span class="admin-overview-icon">📷</span>
                             <span class="admin-overview-value" id="adminOverviewMissingPhotosCount">0</span>
                             <span class="admin-overview-label">Profilbilder fehlen</span>
-                            <small>Foto liste öffnen</small>
+                            <small>Fotoliste öffnen</small>
                         </button>
                         <button type="button" id="adminOverviewPasswordsCard" class="admin-overview-tile" onclick="openAdminOverviewSection('adminSubTabSystem')">
                             <span class="admin-overview-icon">🔐</span>
@@ -1996,10 +2018,10 @@
                                         <div class="role-perm-box"><label for="roleFlagManageMemberAccess" class="perm-check"><input type="checkbox" id="roleFlagManageMemberAccess"> <b>👥 Mitarbeiter freigeben & Rollen verteilen</b></label><span class="perm-desc">Darf Mitarbeiter freigeben oder sperren und Rollen im dafür vorgesehenen Umfang vergeben.</span></div>
                                         <div class="role-perm-box"><label for="roleFlagManageCareerPaths" class="perm-check"><input type="checkbox" id="roleFlagManageCareerPaths"> <b>🩺 Mitarbeiterlaufbahn verwalten</b></label><span class="perm-desc">Darf Doctor, Paramedic, beide Laufbahnen oder „Noch nicht festgelegt“ verwalten.</span></div>
                                         <div class="role-perm-box"><label for="roleFlagViewPersonnelRecords" class="perm-check"><input type="checkbox" id="roleFlagViewPersonnelRecords"> <b>🗂️ Personalakten sehen</b></label><span class="perm-desc">Darf interne Personalakten, Historie und Abwesenheitszeiträume einsehen.</span></div>
-                                        <div class="role-perm-box"><label for="roleFlagManagePersonnelRecords" class="perm-check"><input type="checkbox" id="roleFlagManagePersonnelRecords"> <b>📝 Personalakten bearbeiten</b></label><span class="perm-desc">Darf Sanktionen mit Bericht und allgemeine Personalnotizen eintragen.</span></div>
+                                        <div class="role-perm-box"><label for="roleFlagManagePersonnelRecords" class="perm-check"><input type="checkbox" id="roleFlagManagePersonnelRecords"> <b>📝 Personalakten bearbeiten</b></label><span class="perm-desc">Darf Personalstammdaten sowie Sanktionen und allgemeine Notizen anlegen, bearbeiten und löschen.</span></div>
                                         <div class="role-perm-box"><label for="roleFlagManagePersonnelRanks" class="perm-check"><input type="checkbox" id="roleFlagManagePersonnelRanks"> <b>🎖️ Ränge verwalten</b></label><span class="perm-desc">Darf aktuelle Ränge ändern und Rankups mit Grund in der Historie dokumentieren.</span></div>
                                         <div class="role-perm-box"><label for="roleFlagManagePersonnelDepartures" class="perm-check"><input type="checkbox" id="roleFlagManagePersonnelDepartures"> <b>📦 Kündigungen &amp; Wiedereinstellungen</b></label><span class="perm-desc">Darf Mitarbeiter in das Kündigungsarchiv übernehmen und bestehende Konten später wieder aktivieren. Benötigt zusätzlich die Mitarbeiterzugriffs-Berechtigung.</span></div>
-                                        <div class="role-perm-box"><label for="roleFlagManagePersonnelAbsences" class="perm-check"><input type="checkbox" id="roleFlagManagePersonnelAbsences"> <b>📅 Urlaub &amp; Abwesenheit verwalten</b></label><span class="perm-desc">Darf Abwesenheiten eintragen und die Rückkehr eines Mitarbeiters bestätigen.</span></div>
+                                        <div class="role-perm-box"><label for="roleFlagManagePersonnelAbsences" class="perm-check"><input type="checkbox" id="roleFlagManagePersonnelAbsences"> <b>📅 Urlaub &amp; Abwesenheit verwalten</b></label><span class="perm-desc">Darf Abwesenheiten eintragen, bearbeiten, frühzeitig beenden und Rückkehrprüfungen bestätigen.</span></div>
                                         <div class="role-perm-box"><label for="roleFlagCreateEmployees" class="perm-check"><input type="checkbox" id="roleFlagCreateEmployees"> <b>➕ Neue Mitarbeiter anlegen</b></label><span class="perm-desc">Darf neue Mitarbeiterkonten über den Personalbereich anlegen.</span></div>
                                         <div class="role-perm-box"><label for="roleFlagManageMaintenance" class="perm-check"><input type="checkbox" id="roleFlagManageMaintenance"> <b>🛠️ Wartungsmodus verwalten</b></label><span class="perm-desc">Darf den Wartungsmodus ein- und ausschalten und behält währenddessen den nötigen Verwaltungszugriff.</span></div>
                                         <div class="role-perm-box"><label for="roleFlagEditSanctionsCatalog" class="perm-check"><input type="checkbox" id="roleFlagEditSanctionsCatalog"> <b>⚖️ Sanktionskatalog bearbeiten</b></label><span class="perm-desc">Darf den vollständigen Sanktionskatalog und die allgemeinen Sanktionsregeln über das Stiftsymbol live bearbeiten.</span></div>
@@ -2354,6 +2376,6 @@
         </div>
     </div>
 
-    <script src="app.js?v=6.8.14"></script>
+    <script src="app.js?v=6.9.0"></script>
 </body>
 </html>
