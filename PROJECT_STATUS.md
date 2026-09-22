@@ -1,8 +1,8 @@
 # MMD Cloud – PROJECT STATUS
 
 **Aktuell bestätigte stabile Live-Version:** v6.8.7j  
-**Aktueller Entwicklungsstand:** v6.9.3  
-**Status v6.9.3:** 🟡 LIVE-TEST KORREKTUREN / NACHPRÜFUNG AUSSTEHEND  
+**Aktueller Entwicklungsstand:** v6.9.4  
+**Status v6.9.4:** 🟡 CHANGELOG-SCROLL NACHGEBESSERT / NACHPRÜFUNG AUSSTEHEND  
 **Datum:** 22.09.2026
 
 ---
@@ -611,6 +611,22 @@ Behoben:
 - Sanktionen und allgemeine Notizen zeigen für berechtigte Personalmitarbeiter einen dauerhaft sichtbaren Mülleimer direkt im Kopf des Historieneintrags.
 - Die bestehenden Sicherheitsabfragen und Audit-Logs beim Löschen bleiben erhalten.
 - Rangänderungen und automatische Personalereignisse bleiben unveränderbare Historieneinträge.
+
+Sicherheit:
+- keine Änderung an Firebase Rules,
+- keine Änderung an Firebase Auth, `authIndex`, `loginDirectory`, Account-IDs, Passwörtern oder Rollen,
+- keine Migration erforderlich.
+
+
+---
+
+## 28. v6.9.4 – Changelog vollständig scrollbar
+
+Behoben:
+- Der Changelog besitzt jetzt genau einen zentralen Scrollbereich im Inhaltsbereich des Modals.
+- Die zusätzliche verschachtelte Scrollfläche des aufgeklappten Archivs wurde entfernt.
+- Kopfbereich und Schließen-Leiste bleiben außerhalb des Scrollbereichs.
+- Der komplette Archivinhalt kann dadurch bis zum letzten Eintrag durchgescrollt werden.
 
 Sicherheit:
 - keine Änderung an Firebase Rules,
