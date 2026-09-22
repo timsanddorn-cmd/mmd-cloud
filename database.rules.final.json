@@ -254,7 +254,7 @@
         ".read": "auth != null && root.child('data').child('authIndex').child(auth.uid).exists() && root.child('data').child('users').child(root.child('data').child('authIndex').child(auth.uid).val()).child('status').val() == 'approved'",
         "$userId": {
           ".write": "auth != null && root.child('data').child('authIndex').child(auth.uid).exists() && root.child('data').child('users').child(root.child('data').child('authIndex').child(auth.uid).val()).child('status').val() == 'approved' && (root.child('data').child('users').child(root.child('data').child('authIndex').child(auth.uid).val()).child('serverPermissions').child('isMasterAdmin').val() == true || root.child('data').child('users').child(root.child('data').child('authIndex').child(auth.uid).val()).child('serverPermissions').child('canManageCareerPaths').val() == true)",
-          ".validate": "newData.val() == null || (newData.hasChildren(['path','updatedAt','updatedBy','updatedById']) && (newData.child('path').val() == 'doctor' || newData.child('path').val() == 'paramedic' || newData.child('path').val() == 'both') && newData.child('updatedAt').isNumber() && newData.child('updatedBy').isString() && newData.child('updatedById').isString())"
+          ".validate": "newData.val() == null || (newData.hasChildren(['path','updatedAt','updatedBy','updatedById']) && (newData.child('path').val() == 'none' || newData.child('path').val() == 'doctor' || newData.child('path').val() == 'paramedic' || newData.child('path').val() == 'both') && newData.child('updatedAt').isNumber() && newData.child('updatedBy').isString() && newData.child('updatedById').isString())"
         }
       },
       "employeeRanks": {
