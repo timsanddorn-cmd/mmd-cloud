@@ -1,8 +1,8 @@
 # MMD Cloud – PROJECT STATUS
 
 **Aktuell bestätigte stabile Live-Version:** v6.8.7j  
-**Aktueller Entwicklungsstand:** v6.9.0  
-**Status v6.9.0:** 🟡 MODERN WORKSPACE + PERSONAL-/ADMIN-AUDIT / LIVE-TEST AUSSTEHEND  
+**Aktueller Entwicklungsstand:** v6.9.1  
+**Status v6.9.1:** 🟡 CHANGELOG AUF AKTUELL + ARCHIV REDUZIERT / LIVE-TEST AUSSTEHEND  
 **Datum:** 22.09.2026
 
 ---
@@ -563,3 +563,21 @@ Sicherheit / Migration:
   2. die drei bestehenden Mitarbeiterhinweis-Rechte erhalten eigene Boolean-Validierungen.
 - Die neue Rule-Datei muss nach dem Merge vor dem Live-Test von v6.9.0 in Firebase veröffentlicht werden.
 - bestätigte stabile Rollback-Basis bleibt v6.8.7j.
+
+
+---
+
+## 25. v6.9.1 – Changelog Archiv
+
+Geändert:
+- Beim Öffnen des Changelogs wird standardmäßig nur noch der neueste Eintrag angezeigt.
+- Der aktuellste Eintrag ist zusätzlich mit `AKTUELL` gekennzeichnet.
+- Alle älteren System- und benutzerdefinierten Changelog-Einträge bleiben vollständig erhalten.
+- Ältere Einträge liegen in einem standardmäßig geschlossenen Bereich `📦 Archiv`.
+- Das Archiv zeigt direkt die Anzahl der älteren Versionen und kann bei Bedarf aufgeklappt werden.
+- Die Changelog-Datenstruktur und der Master-Admin-Writer wurden nicht verändert.
+
+Sicherheit:
+- keine Änderung an Firebase Rules,
+- keine Änderung an Firebase Auth, `authIndex`, `loginDirectory`, Account-IDs, Passwörtern oder Rollen,
+- keine Migration erforderlich.
