@@ -1,5 +1,5 @@
 // ============================================================
-//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.9.3
+//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.9.4
 //  Firebase Realtime Database (Compat SDK v10)
 // ============================================================
 
@@ -182,7 +182,7 @@ const db = firebase.database();
 const auth = firebase.auth();
 const FIREBASE_AUTH_EMAIL_DOMAIN = 'mmd-login.invalid';
 
-const APP_VERSION = 'v6.9.3';
+const APP_VERSION = 'v6.9.4';
 const PRESENCE_HEARTBEAT_MS = 30 * 1000;
 const PRESENCE_STALE_MS = 3 * 60 * 1000;
 
@@ -567,6 +567,15 @@ let hierarchieDaten = JSON.parse(JSON.stringify(defaultHierarchieData));
 
 /* ── Vollständiger Gesamt-Changelog (Entwicklungsverlauf) ───── */
 const systemChangelogs = [
+    {
+        id: "sys_v6_9_4", version: "v6.9.4", date: "22.09.2026", ts: 1790088600000,
+        category: "Fehlerbehebung", title: "Changelog vollständig scrollbar",
+        changes: [
+            "Der Changelog verwendet jetzt nur noch einen zentralen Scrollbereich.",
+            "Das Archiv besitzt keine zweite verschachtelte Scrollfläche mehr.",
+            "Auch lange Archive lassen sich dadurch zuverlässig bis zum letzten Eintrag durchscrollen."
+        ]
+    },
     {
         id: "sys_v6_9_3", version: "v6.9.3", date: "22.09.2026", ts: 1790085000000,
         category: "Fehlerbehebung", title: "Live-Test Korrekturen in Changelog und Personalakte",
