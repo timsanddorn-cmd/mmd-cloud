@@ -1,5 +1,5 @@
 // ============================================================
-//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.9.5
+//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.9.6
 //  Firebase Realtime Database (Compat SDK v10)
 // ============================================================
 
@@ -182,7 +182,7 @@ const db = firebase.database();
 const auth = firebase.auth();
 const FIREBASE_AUTH_EMAIL_DOMAIN = 'mmd-login.invalid';
 
-const APP_VERSION = 'v6.9.5';
+const APP_VERSION = 'v6.9.6';
 const PRESENCE_HEARTBEAT_MS = 30 * 1000;
 const PRESENCE_STALE_MS = 3 * 60 * 1000;
 
@@ -567,6 +567,16 @@ let hierarchieDaten = JSON.parse(JSON.stringify(defaultHierarchieData));
 
 /* ── Vollständiger Gesamt-Changelog (Entwicklungsverlauf) ───── */
 const systemChangelogs = [
+    {
+        id: "sys_v6_9_6", version: "v6.9.6", date: "22.09.2026", ts: 1790095800000,
+        category: "Fehlerbehebung", title: "Changelog Archiv technisch neu aufgebaut",
+        changes: [
+            "Das Archiv verwendet kein HTML-details-Element mehr.",
+            "Das gesamte Changelog-Overlay ist jetzt der einzige Scrollcontainer.",
+            "Changelog-Karte, Timeline und Archiv besitzen keine eigenen Scrollgrenzen mehr.",
+            "Das Archiv wird über einen normalen Button ein- und ausgeklappt."
+        ]
+    },
     {
         id: "sys_v6_9_5", version: "v6.9.5", date: "22.09.2026", ts: 1790092200000,
         category: "Fehlerbehebung", title: "Changelog Scroll und Überschriften bereinigt",
@@ -7234,11 +7244,24 @@ function openChangelogModal() {
     if (!modal) return;
     renderChangelogModal();
     modal.style.display = 'flex';
+    modal.scrollTop = 0;
 }
 
 function closeChangelogModal() {
     const modal = document.getElementById('changelogModal');
     if (modal) modal.style.display = 'none';
+}
+
+function toggleChangelogArchive() {
+    const panel = document.getElementById('changelogArchivePanel');
+    const button = document.getElementById('changelogArchiveToggle');
+    if (!panel || !button) return;
+    const opening = panel.hidden;
+    panel.hidden = !opening;
+    button.setAttribute('aria-expanded', opening ? 'true' : 'false');
+    button.classList.toggle('is-open', opening);
+    const icon = button.querySelector('.changelog-archive-toggle-icon');
+    if (icon) icon.textContent = opening ? '−' : '+';
 }
 
 function openChangelogWriterModal() {
@@ -7391,15 +7414,18 @@ function renderChangelogModal() {
             ${renderEntry(currentEntry, true)}
         </section>
         ${archiveEntries.length ? `
-            <details class="changelog-archive">
-                <summary>
-                    <span>📦 Archiv kompakt</span>
+            <section class="changelog-archive changelog-archive-static">
+                <button type="button" id="changelogArchiveToggle" class="changelog-archive-toggle" aria-expanded="false" aria-controls="changelogArchivePanel" onclick="toggleChangelogArchive()">
+                    <span class="changelog-archive-toggle-title">📦 Archiv kompakt</span>
                     <small>${archiveEntries.length} ältere Versionen in ${archiveGroups.length} ${archiveGroups.length === 1 ? 'Gruppe' : 'Gruppen'} zusammengefasst</small>
-                </summary>
-                <div class="changelog-archive-list">
-                    ${archiveGroups.map(renderArchiveGroup).join('')}
+                    <span class="changelog-archive-toggle-icon" aria-hidden="true">+</span>
+                </button>
+                <div id="changelogArchivePanel" class="changelog-archive-panel" hidden>
+                    <div class="changelog-archive-list">
+                        ${archiveGroups.map(renderArchiveGroup).join('')}
+                    </div>
                 </div>
-            </details>
+            </section>
         ` : ''}
     `;
 }
@@ -11531,7 +11557,7 @@ _w.togglePostNewsForm = togglePostNewsForm; _w.speichereNeueNews = speichereNeue
 _w.toggleProposeNewsForm = toggleProposeNewsForm; _w.submitNewsProposal = submitNewsProposal; _w.approveNewsProposal = approveNewsProposal;
 _w.markNewsAsRead = markNewsAsRead; _w.openNewsReadersModal = openNewsReadersModal; _w.closeNewsReadersModal = closeNewsReadersModal;
 _w.openEditNewsModal = openEditNewsModal;
-_w.openChangelogModal = openChangelogModal; _w.closeChangelogModal = closeChangelogModal;
+_w.openChangelogModal = openChangelogModal; _w.closeChangelogModal = closeChangelogModal; _w.toggleChangelogArchive = toggleChangelogArchive;
 _w.openChangelogWriterModal = openChangelogWriterModal; _w.closeChangelogWriterModal = closeChangelogWriterModal; _w.saveCustomChangelogEntry = saveCustomChangelogEntry;
 _w.openGehaltInlineModal = openGehaltInlineModal; _w.closeGehaltInlineModal = closeGehaltInlineModal; _w.saveGehaltInline = saveGehaltInline; _w.addGehaltRowInline = addGehaltRowInline; _w.removeGehaltRowInline = removeGehaltRowInline;
 _w.renderSanctionsCatalog = renderSanctionsCatalog; _w.setSanctionsFilter = setSanctionsFilter; _w.resetSanctionsFilters = resetSanctionsFilters; _w.toggleSanctionsRules = toggleSanctionsRules;
