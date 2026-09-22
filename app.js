@@ -1,5 +1,5 @@
 // ============================================================
-//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.9.0
+//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.9.1
 //  Firebase Realtime Database (Compat SDK v10)
 // ============================================================
 
@@ -182,7 +182,7 @@ const db = firebase.database();
 const auth = firebase.auth();
 const FIREBASE_AUTH_EMAIL_DOMAIN = 'mmd-login.invalid';
 
-const APP_VERSION = 'v6.9.0';
+const APP_VERSION = 'v6.9.1';
 const PRESENCE_HEARTBEAT_MS = 30 * 1000;
 const PRESENCE_STALE_MS = 3 * 60 * 1000;
 
@@ -567,6 +567,15 @@ let hierarchieDaten = JSON.parse(JSON.stringify(defaultHierarchieData));
 
 /* ── Vollständiger Gesamt-Changelog (Entwicklungsverlauf) ───── */
 const systemChangelogs = [
+    {
+        id: "sys_v6_9_1", version: "v6.9.1", date: "22.09.2026", ts: 1790077800000,
+        category: "Verbesserung", title: "Changelog übersichtlicher dargestellt",
+        changes: [
+            "Im Changelog wird standardmäßig nur noch die aktuellste Version angezeigt.",
+            "Alle älteren Versionen bleiben vollständig erhalten und liegen in einem einklappbaren Archiv.",
+            "Das Archiv zeigt direkt, wie viele ältere Einträge vorhanden sind."
+        ]
+    },
     {
         id: "sys_v6_9_0", version: "v6.9.0", date: "22.09.2026", ts: 1790074800000,
         category: "Design", title: "Modern Workspace & Personalabteilung Audit",
@@ -7260,27 +7269,49 @@ function renderChangelogModal() {
     const customList = Object.entries(cachedCustomChangelogs || {}).map(([id, item]) => Object.assign({ id, isCustom: true }, item));
     const allEntries = [...customList, ...systemChangelogs].sort((a, b) => (b.ts || 0) - (a.ts || 0));
 
-    cont.innerHTML = allEntries.map(entry => {
+    const renderEntry = (entry, isCurrent = false) => {
         const displayCategory = entry.category === 'Technische Änderung' ? 'Verbesserung' : (entry.category === 'Bugfix' ? 'Fehlerbehebung' : entry.category);
         const bClass = catBadgeClassMap[displayCategory] || 'changelog-badge-update';
         const itemsHtml = (entry.changes || []).map(ch => `<li>${escapeHtml(ch)}</li>`).join('');
-
         return `
-            <div class="changelog-card">
+            <div class="changelog-card ${isCurrent ? 'changelog-card-current' : ''}">
                 <div class="changelog-header">
-                    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+                    <div class="changelog-title-line">
                         <span class="changelog-version-tag">${escapeHtml(entry.version)}</span>
-                        <span class="changelog-badge ${bClass}">${escapeHtml(entry.category)}</span>
-                        <b style="color:var(--text-main);font-size:15px;">${escapeHtml(entry.title)}</b>
+                        ${isCurrent ? '<span class="changelog-current-badge">AKTUELL</span>' : ''}
+                        <span class="changelog-badge ${bClass}">${escapeHtml(displayCategory)}</span>
+                        <b>${escapeHtml(entry.title)}</b>
                     </div>
                     <span class="changelog-date">📅 ${escapeHtml(entry.date)}</span>
                 </div>
-                <ul class="changelog-items-list">
-                    ${itemsHtml}
-                </ul>
+                <ul class="changelog-items-list">${itemsHtml}</ul>
             </div>
         `;
-    }).join('');
+    };
+
+    if (!allEntries.length) {
+        cont.innerHTML = '<div class="changelog-empty">Noch keine Changelog-Einträge vorhanden.</div>';
+        return;
+    }
+
+    const [currentEntry, ...archiveEntries] = allEntries;
+    cont.innerHTML = `
+        <section class="changelog-current-section">
+            <div class="changelog-section-label">Aktuelle Version</div>
+            ${renderEntry(currentEntry, true)}
+        </section>
+        ${archiveEntries.length ? `
+            <details class="changelog-archive">
+                <summary>
+                    <span>📦 Archiv</span>
+                    <small>${archiveEntries.length} ältere ${archiveEntries.length === 1 ? 'Version' : 'Versionen'}</small>
+                </summary>
+                <div class="changelog-archive-list">
+                    ${archiveEntries.map(entry => renderEntry(entry, false)).join('')}
+                </div>
+            </details>
+        ` : ''}
+    `;
 }
 
 /* ── PERSÖNLICHE MITARBEITERHINWEISE ───────────────────────── */
