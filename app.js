@@ -1,5 +1,5 @@
 // ============================================================
-//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.9.1
+//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.9.2
 //  Firebase Realtime Database (Compat SDK v10)
 // ============================================================
 
@@ -182,7 +182,7 @@ const db = firebase.database();
 const auth = firebase.auth();
 const FIREBASE_AUTH_EMAIL_DOMAIN = 'mmd-login.invalid';
 
-const APP_VERSION = 'v6.9.1';
+const APP_VERSION = 'v6.9.2';
 const PRESENCE_HEARTBEAT_MS = 30 * 1000;
 const PRESENCE_STALE_MS = 3 * 60 * 1000;
 
@@ -567,6 +567,16 @@ let hierarchieDaten = JSON.parse(JSON.stringify(defaultHierarchieData));
 
 /* ── Vollständiger Gesamt-Changelog (Entwicklungsverlauf) ───── */
 const systemChangelogs = [
+    {
+        id: "sys_v6_9_2", version: "v6.9.2", date: "22.09.2026", ts: 1790081400000,
+        category: "Verbesserung", title: "Changelog-Historie kompakt zusammengefasst",
+        changes: [
+            "Die aktuelle Version bleibt weiterhin einzeln und vollständig sichtbar.",
+            "Ältere Changelog-Einträge werden im Archiv nach Versionsfamilien gebündelt statt als dutzende Einzelkarten angezeigt.",
+            "Jede Archivgruppe zeigt nur die wichtigsten Titel sowie die Anzahl zusammengefasster Versionen.",
+            "Die ursprünglichen Changelog-Daten bleiben erhalten; geändert wird ausschließlich die kompakte Darstellung."
+        ]
+    },
     {
         id: "sys_v6_9_1", version: "v6.9.1", date: "22.09.2026", ts: 1790077800000,
         category: "Verbesserung", title: "Changelog übersichtlicher dargestellt",
@@ -7295,6 +7305,55 @@ function renderChangelogModal() {
     }
 
     const [currentEntry, ...archiveEntries] = allEntries;
+
+    const getVersionFamily = (entry) => {
+        const match = String(entry.version || '').match(/^v(\d+)\.(\d+)/i);
+        return match ? `v${match[1]}.${match[2]}` : 'Weitere';
+    };
+
+    const archiveGroups = [];
+    archiveEntries.forEach(entry => {
+        const family = getVersionFamily(entry);
+        let group = archiveGroups.find(item => item.family === family);
+        if (!group) {
+            group = { family, entries: [] };
+            archiveGroups.push(group);
+        }
+        group.entries.push(entry);
+    });
+
+    const renderArchiveGroup = (group) => {
+        const entries = group.entries;
+        const newest = entries[0];
+        const oldest = entries[entries.length - 1];
+        const uniqueTitles = [...new Set(entries.map(entry => String(entry.title || '').trim()).filter(Boolean))];
+        const visibleTitles = uniqueTitles.slice(0, 6);
+        const hiddenCount = Math.max(0, uniqueTitles.length - visibleTitles.length);
+        const versionLabel = group.family === 'Weitere' ? 'Weitere Einträge' : `${group.family}.x`;
+        const dateLabel = newest?.date === oldest?.date
+            ? String(newest?.date || '')
+            : `${String(oldest?.date || '')} – ${String(newest?.date || '')}`;
+
+        const titleItems = visibleTitles.map(title => `<li>${escapeHtml(title)}</li>`).join('');
+        const moreItem = hiddenCount
+            ? `<li><b>+${hiddenCount}</b> weitere kleinere Änderungen, Korrekturen und Verbesserungen</li>`
+            : '';
+
+        return `
+            <div class="changelog-card">
+                <div class="changelog-header">
+                    <div class="changelog-title-line">
+                        <span class="changelog-version-tag">${escapeHtml(versionLabel)}</span>
+                        <span class="changelog-badge changelog-badge-change">Zusammenfassung</span>
+                        <b>${entries.length} ${entries.length === 1 ? 'Version' : 'Versionen'} gebündelt</b>
+                    </div>
+                    <span class="changelog-date">📅 ${escapeHtml(dateLabel)}</span>
+                </div>
+                <ul class="changelog-items-list">${titleItems}${moreItem}</ul>
+            </div>
+        `;
+    };
+
     cont.innerHTML = `
         <section class="changelog-current-section">
             <div class="changelog-section-label">Aktuelle Version</div>
@@ -7303,11 +7362,11 @@ function renderChangelogModal() {
         ${archiveEntries.length ? `
             <details class="changelog-archive">
                 <summary>
-                    <span>📦 Archiv</span>
-                    <small>${archiveEntries.length} ältere ${archiveEntries.length === 1 ? 'Version' : 'Versionen'}</small>
+                    <span>📦 Archiv – kompakt</span>
+                    <small>${archiveEntries.length} ältere Versionen in ${archiveGroups.length} ${archiveGroups.length === 1 ? 'Gruppe' : 'Gruppen'} zusammengefasst</small>
                 </summary>
                 <div class="changelog-archive-list">
-                    ${archiveEntries.map(entry => renderEntry(entry, false)).join('')}
+                    ${archiveGroups.map(renderArchiveGroup).join('')}
                 </div>
             </details>
         ` : ''}

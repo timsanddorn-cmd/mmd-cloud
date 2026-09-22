@@ -1,8 +1,8 @@
 # MMD Cloud – PROJECT STATUS
 
 **Aktuell bestätigte stabile Live-Version:** v6.8.7j  
-**Aktueller Entwicklungsstand:** v6.9.1  
-**Status v6.9.1:** 🟡 CHANGELOG AUF AKTUELL + ARCHIV REDUZIERT / LIVE-TEST AUSSTEHEND  
+**Aktueller Entwicklungsstand:** v6.9.2  
+**Status v6.9.2:** 🟡 CHANGELOG-HISTORIE KOMPAKT ZUSAMMENGEFASST / LIVE-TEST AUSSTEHEND  
 **Datum:** 22.09.2026
 
 ---
@@ -576,6 +576,24 @@ Geändert:
 - Ältere Einträge liegen in einem standardmäßig geschlossenen Bereich `📦 Archiv`.
 - Das Archiv zeigt direkt die Anzahl der älteren Versionen und kann bei Bedarf aufgeklappt werden.
 - Die Changelog-Datenstruktur und der Master-Admin-Writer wurden nicht verändert.
+
+Sicherheit:
+- keine Änderung an Firebase Rules,
+- keine Änderung an Firebase Auth, `authIndex`, `loginDirectory`, Account-IDs, Passwörtern oder Rollen,
+- keine Migration erforderlich.
+
+
+---
+
+## 26. v6.9.2 – Changelog-Historie kompakt
+
+Geändert:
+- Die aktuelle Version bleibt einzeln und vollständig sichtbar.
+- Die bisher einzeln dargestellten älteren Changelog-Versionen werden im Archiv nach Versionsfamilien gebündelt.
+- Jede Gruppe zeigt maximal sechs zentrale Änderungstitel.
+- Weitere kleinere Änderungen werden nur noch als Anzahl zusammengefasst.
+- Das Archiv zeigt Anzahl der älteren Versionen und Anzahl der daraus gebildeten Gruppen.
+- Die zugrunde liegenden System- und Custom-Changelog-Daten werden nicht gelöscht oder umgebaut.
 
 Sicherheit:
 - keine Änderung an Firebase Rules,
