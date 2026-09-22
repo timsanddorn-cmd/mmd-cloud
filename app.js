@@ -458,8 +458,45 @@ function renderContentFreshnessHints(){
     set('linksLastUpdated',getLatestContentMeta(cachedLinks));
 }
 
+function filterAdminPermissionMatrix(){
+    const editor=document.getElementById('adminRoleEditorCard');if(!editor)return;
+    const q=normalizeUiSearchText(document.getElementById('adminPermissionSearch')?.value||'');
+    editor.querySelectorAll('.admin-permission-section').forEach(section=>{
+        let visible=0;
+        section.querySelectorAll('.role-perm-box').forEach(box=>{
+            const match=!q||normalizeUiSearchText(box.textContent||'').includes(q);
+            box.style.display=match?'':'none';if(match)visible++;
+        });
+        section.style.display=visible?'':'none';
+        if(q&&visible)section.classList.remove('collapsed');
+    });
+}
+function setupAdminPermissionWorkspace(){
+    const editor=document.getElementById('adminRoleEditorCard');if(!editor)return;
+    editor.querySelectorAll('h5').forEach((heading,index)=>{
+        const section=heading.parentElement;if(!section?.querySelector('.role-perm-box'))return;
+        section.classList.add('admin-permission-section');
+        heading.classList.add('admin-permission-section-title');
+        heading.setAttribute('role','button');heading.tabIndex=0;
+        if(!section.dataset.permissionReady){if(index>0)section.classList.add('collapsed');section.dataset.permissionReady='1';}
+        const sync=()=>heading.setAttribute('aria-expanded',section.classList.contains('collapsed')?'false':'true');sync();
+        const toggle=()=>{section.classList.toggle('collapsed');sync();};
+        heading.onclick=toggle;
+        heading.onkeydown=event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();toggle();}};
+    });
+    if(!document.getElementById('adminPermissionSearch')){
+        const meta=editor.querySelector('.role-meta-grid');
+        const toolbar=document.createElement('div');toolbar.className='admin-permission-toolbar';
+        toolbar.innerHTML='<div><b>Rechte konfigurieren</b><span>Kategorien öffnen oder gezielt nach einem Recht suchen.</span></div><label class="admin-permission-search"><span>🔎</span><input type="search" id="adminPermissionSearch" placeholder="Rechte durchsuchen …" autocomplete="off"></label>';
+        (meta||editor.firstElementChild)?.insertAdjacentElement('afterend',toolbar);
+        toolbar.querySelector('input')?.addEventListener('input',filterAdminPermissionMatrix);
+    }
+    filterAdminPermissionMatrix();
+}
+
 function setupUnifiedEditorModals(){
     ['szenarienInlineModal','gehaltInlineModal','sanctionsCatalogEditorModal','editModal','archivEditModal','pricesInlineModal','guideInlineModal','commandsInlineModal','linksInlineModal','calendarEventModal','staffPhotoUploadModal','userPermissionsModal','assignRolesModal','examBuilderModal','changelogWriterModal','hierarchieInlineModal'].forEach(id=>document.getElementById(id)?.querySelector('.modal-card')?.classList.add('mmd-editor-card'));
+    setupAdminPermissionWorkspace();
 }
 function findMainTabButton(tabId){return Array.from(document.querySelectorAll('.tab-btn,.nav-sub-btn')).find(btn=>(btn.getAttribute('onclick')||'').includes(`switchTab('${tabId}'`))||null;}
 function canSearchSection(tabId){if(isMaintenanceRestrictedSession())return tabId==='docTab';if(tabId==='chiefTab')return canCurrentUserViewChiefMaterials();if(tabId==='personnelTab')return typeof canCurrentUserAccessPersonnelArea==='function'?canCurrentUserAccessPersonnelArea():canCurrentUserManageCareerPaths();return !!document.getElementById(tabId);}
@@ -9047,6 +9084,7 @@ async function verifyAdminKeyPassword() {
         switchAdminTab('adminSubTabOverview', document.getElementById('btnAdminSubOverview'));
         renderAdminUserTable(cachedUsers);
         renderAdminRolesList();
+        setupAdminPermissionWorkspace();
         refreshFirebaseAuthMigrationPanel();
         renderPasswordChangeStatusPanel();
         renderMaintenanceAdminPanel();
@@ -11588,6 +11626,22 @@ function renderPersonnelTimelineItem(item,uId){
     if(editing)return `<article class="personnel-timeline-item note editing"><div class="personnel-timeline-head"><b>🗒️ Notiz bearbeiten</b><span>${escapeHtml(d)} · ${escapeHtml(x.createdBy||'')}</span></div><div class="personnel-record-edit"><label>Notiz</label><textarea id="personnelNoteEditText_${item.id}" rows="5" maxlength="2000">${escapeHtml(x.text||'')}</textarea><div class="personnel-record-edit-actions"><button type="button" class="btn personnel-primary-btn" onclick="savePersonnelNoteEdit('${uId}','${item.id}')">💾 Speichern</button><button type="button" class="btn personnel-secondary-btn" onclick="cancelPersonnelNoteEdit()">Abbrechen</button></div></div></article>`;
     return `<article class="personnel-timeline-item note"><div class="personnel-timeline-head"><b>🗒️ Notiz</b><span>${escapeHtml(d)} · ${escapeHtml(x.createdBy||'')}</span></div><p>${formatTextWithLinks(x.text||'')}</p>${canManage?`<div class="personnel-timeline-actions"><button type="button" class="personnel-timeline-action edit" onclick="editPersonnelNote('${uId}','${item.id}')">✏️ Bearbeiten</button><button type="button" class="personnel-timeline-action delete" onclick="deletePersonnelNote('${uId}','${item.id}')">🗑️ Löschen</button></div>`:''}</article>`;
 }
+function enhancePersonnelDetailWorkspace(root){
+    if(!root)return;
+    root.querySelectorAll('.personnel-file-grid > .personnel-card').forEach(card=>{
+        const title=card.querySelector(':scope > h4');if(!title)return;
+        const label=(title.textContent||'').trim();
+        const kind=label.includes('Sanktion')?'sanction':label.includes('Allgemeine Notiz')?'note':label.includes('Kündigung / Austritt')?'termination':'';
+        if(!kind)return;
+        card.classList.add('personnel-action-card','action-'+kind,'collapsed');
+        title.classList.add('personnel-action-card-title');
+        title.setAttribute('role','button');title.setAttribute('aria-expanded','false');title.tabIndex=0;
+        const toggle=()=>{const collapsed=card.classList.toggle('collapsed');title.setAttribute('aria-expanded',collapsed?'false':'true');};
+        title.onclick=toggle;
+        title.onkeydown=event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();toggle();}};
+    });
+}
+
 function renderPersonnelEmployeeDetail(){
     const box=document.getElementById('personnelEmployeeDetail');if(!box)return;const uId=activePersonnelEmployeeId,user=cachedUsers?.[uId];if(!uId||!user){box.innerHTML='<div class="personnel-empty-state">Wähle links einen Mitarbeiter aus.</div>';return;}
     const p=getPersonnelPermissions(),career=getEmployeeCareerPathKey(uId),ranks=getEmployeeRankData(uId),record=cachedPersonnelRecords?.[uId]||{},profile=getPersonnelProfile(uId),internal=getPersonnelInternalStatus(uId),timeline=[],profileEditing=personnelProfileEditingId===uId,showDoctorRank=(career==='doctor'||career==='both'||!!ranks.doctor),showParamedicRank=(career==='paramedic'||career==='both'||!!ranks.paramedic);
@@ -11610,6 +11664,7 @@ function renderPersonnelEmployeeDetail(){
       ${p.canManageDepartures?`<section class="personnel-card personnel-termination-card"><h4>📦 Kündigung / Austritt</h4><label>Kündigungsdatum</label><input type="date" id="personnelTerminationDate" value="${personnelTodayIso()}"><label>Kündigungsgrund</label><textarea id="personnelTerminationReason" rows="3" maxlength="1000" placeholder="Grund für Kündigung / Austritt …"></textarea><button type="button" class="btn personnel-danger-btn" onclick="terminatePersonnelEmployee('${uId}')">📦 Mitarbeiter ins Kündigungsarchiv</button></section>`:''}
     </div>
     ${abs?`<div class="personnel-current-absence ${isPersonnelAbsenceDue(abs)?'due':''}"><b>${escapeHtml(PERSONNEL_ABSENCE_TYPES[abs.type]?.label||'Abwesenheit')}</b><span>Intern: ${escapeHtml(formatPersonnelDate(abs.startDate))} – ${escapeHtml(formatPersonnelDate(abs.endDate))}</span></div>`:''}<section class="personnel-timeline-card"><div class="personnel-section-title"><h4>📚 Personalhistorie</h4><span>${timeline.length} Einträge</span></div><div class="personnel-timeline">${timeline.length?timeline.map(item=>renderPersonnelTimelineItem(item,uId)).join(''):'<div class="personnel-empty-state">Noch keine Akteneinträge vorhanden.</div>'}</div></section>`;
+    enhancePersonnelDetailWorkspace(box);
 }
 
 async function savePersonnelProfile(uId){
