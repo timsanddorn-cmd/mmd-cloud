@@ -1,5 +1,5 @@
 /* ============================================================
-   MMD CLOUD – Medical Center Web-App  |  style.css v6.9.4
+   MMD CLOUD – Medical Center Web-App  |  style.css v6.9.5
    ============================================================ */
 
 :root {
@@ -639,9 +639,9 @@ body {
     display: flex;
     flex-direction: column;
     gap: 16px;
-    max-height: 65vh;
-    overflow-y: auto;
-    padding-right: 6px;
+    max-height: none;
+    overflow: visible;
+    padding-right: 0;
 }
 
 .changelog-card {
@@ -5715,11 +5715,11 @@ tbody tr:hover {
 
 /* Changelog: das geöffnete Archiv scrollt unabhängig im Modal. */
 .changelog-archive[open] .changelog-archive-list {
-    max-height: min(52vh, 520px);
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    scrollbar-gutter: stable;
-    padding-right: 8px;
+    max-height: none;
+    overflow: visible;
+    overscroll-behavior: auto;
+    scrollbar-gutter: auto;
+    padding-right: 12px;
 }
 
 /* Rangfelder: identische Feldhöhe trotz zweizeiliger Beschriftung. */
@@ -5865,5 +5865,56 @@ tbody tr:hover {
     }
     .changelog-modal-footer {
         padding: 10px 16px 14px;
+    }
+}
+
+
+/* ============================================================
+   v6.9.5 Changelog Scroll und Überschriften
+   ============================================================ */
+#changelogModal {
+    overflow: hidden;
+}
+#changelogModal .changelog-modal-card {
+    width: min(95vw, 900px);
+    height: auto;
+    max-height: min(90vh, 860px);
+    max-height: min(90dvh, 860px);
+    overflow-x: hidden;
+    overflow-y: auto;
+    display: block;
+    overscroll-behavior: contain;
+    scrollbar-gutter: stable;
+}
+#changelogModal .changelog-modal-head,
+#changelogModal .changelog-modal-footer {
+    position: static;
+}
+#changelogModal .changelog-modal-scroll,
+#changelogModal .changelog-timeline-list {
+    display: flex;
+    flex-direction: column;
+    flex: none;
+    min-height: auto;
+    max-height: none;
+    overflow: visible;
+    overscroll-behavior: auto;
+    scrollbar-gutter: auto;
+}
+#changelogModal .changelog-archive,
+#changelogModal .changelog-archive[open],
+#changelogModal .changelog-archive-list,
+#changelogModal .changelog-archive[open] .changelog-archive-list {
+    max-height: none;
+    overflow: visible;
+}
+@media(max-width:768px){
+    #changelogModal {
+        overflow-y: auto;
+    }
+    #changelogModal .changelog-modal-card {
+        width: 100%;
+        max-height: calc(100dvh - 16px);
+        overflow-y: auto;
     }
 }
