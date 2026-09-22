@@ -1,8 +1,8 @@
 # MMD Cloud – PROJECT STATUS
 
 **Aktuell bestätigte stabile Live-Version:** v6.8.7j  
-**Aktueller Entwicklungsstand:** v6.8.12  
-**Status v6.8.12:** 🟡 SANKTIONSBEARBEITUNG ERGÄNZT / LIVE-TEST AUSSTEHEND  
+**Aktueller Entwicklungsstand:** v6.8.13  
+**Status v6.8.13:** 🟡 PERSONALHISTORIE-FORMATIERUNG KORRIGIERT / LIVE-TEST AUSSTEHEND  
 **Datum:** 22.09.2026
 
 ---
@@ -441,3 +441,16 @@ Berechtigung:
 Firebase:
 - keine Änderung an `database.rules.final.json` nötig; die bestehenden Regeln erlauben Update und Delete bereits,
 - keine Änderung an Firebase Auth, `authIndex`, `loginDirectory`, Account-IDs oder Passwörtern.
+
+
+---
+
+## 22. Personalverwaltung v6.8.13 – Zeilenumbruch in der Personalhistorie
+
+Behoben:
+- sehr lange Texte ohne Leerzeichen bleiben innerhalb der Historienkarte,
+- lange Links und andere untrennbare Zeichenfolgen werden umgebrochen,
+- die Karte kann dadurch nicht mehr horizontal aus dem Layout herauswachsen.
+
+Es handelt sich ausschließlich um eine Darstellungs-/CSS-Korrektur.
+Keine Änderung an Firebase Auth, `authIndex`, `loginDirectory`, Account-IDs, Passwörtern oder `database.rules.final.json`.

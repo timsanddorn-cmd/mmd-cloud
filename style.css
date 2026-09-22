@@ -4500,10 +4500,13 @@ td,
 .personnel-current-absence span{color:var(--text-muted);font-size:11px}
 .personnel-current-absence.due{border-color:rgba(244,63,94,.4);background:rgba(244,63,94,.08);color:var(--danger)}
 .personnel-timeline{display:flex;flex-direction:column;gap:8px}
-.personnel-timeline-item{padding:11px 12px;border:1px solid rgba(148,163,184,.12);border-radius:10px;background:rgba(8,12,20,.35)}
+.personnel-timeline-item{padding:11px 12px;border:1px solid rgba(148,163,184,.12);border-radius:10px;background:rgba(8,12,20,.35);min-width:0;max-width:100%;overflow:hidden}
 .personnel-timeline-item>div{display:flex;justify-content:space-between;gap:10px}
 .personnel-timeline-item span{color:var(--text-muted);font-size:10px}
-.personnel-timeline-item p{margin:7px 0 0;line-height:1.5;font-size:12px}
+.personnel-timeline-item p{margin:7px 0 0;line-height:1.5;font-size:12px;max-width:100%;min-width:0;overflow-wrap:anywhere;word-break:break-word;white-space:normal}
+.personnel-timeline-item p a{overflow-wrap:anywhere;word-break:break-all;max-width:100%}
+.personnel-timeline-item>div,.personnel-timeline-head{min-width:0;max-width:100%;flex-wrap:wrap}
+.personnel-timeline-item>div>*{min-width:0;overflow-wrap:anywhere;word-break:break-word}
 .personnel-timeline-item.sanction{border-left:3px solid var(--danger)}
 .personnel-timeline-item.rankup{border-left:3px solid var(--primary)}
 .personnel-timeline-item.note{border-left:3px solid var(--warning)}
