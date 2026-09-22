@@ -4631,3 +4631,20 @@ td,
 .personnel-rank-change-meta{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:8px}
 @media(max-width:900px){.personnel-rank-fields{grid-template-columns:1fr 1fr}}
 @media(max-width:650px){.personnel-current-rank-summary,.personnel-rank-fields,.personnel-rank-change-meta{grid-template-columns:1fr}}
+
+
+/* ============================================================
+   v6.8.12 – Sanktionen bearbeiten & löschen
+   ============================================================ */
+.personnel-timeline-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.personnel-timeline-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}
+.personnel-timeline-action{border:1px solid rgba(148,163,184,.18);background:rgba(15,23,42,.55);color:var(--text-main);padding:6px 9px;border-radius:8px;font-size:10px;font-weight:800;cursor:pointer}
+.personnel-timeline-action.edit:hover{border-color:rgba(56,189,248,.4);background:rgba(56,189,248,.08);color:#7dd3fc}
+.personnel-timeline-action.delete{border-color:rgba(244,63,94,.22);color:var(--danger)}
+.personnel-timeline-action.delete:hover{border-color:rgba(244,63,94,.45);background:rgba(244,63,94,.08)}
+.personnel-timeline-item.sanction.editing{border-color:rgba(244,114,182,.34);background:rgba(236,72,153,.05)}
+.personnel-sanction-edit{display:flex;flex-direction:column;gap:5px;margin-top:10px}
+.personnel-sanction-edit label{font-size:10px;color:var(--text-muted);font-weight:800}
+.personnel-sanction-edit input,.personnel-sanction-edit textarea{margin:0!important}
+.personnel-sanction-edit-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+.personnel-sanction-edit-actions .btn{margin-top:0}
