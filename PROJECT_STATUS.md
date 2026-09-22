@@ -1,8 +1,8 @@
 # MMD Cloud – PROJECT STATUS
 
 **Aktuell bestätigte stabile Live-Version:** v6.8.7j  
-**Aktueller Entwicklungsstand:** v6.9.5  
-**Status v6.9.5:** 🟡 CHANGELOG SCROLL UND ÜBERSCHRIFTEN BEREINIGT / NACHPRÜFUNG AUSSTEHEND  
+**Aktueller Entwicklungsstand:** v6.9.6  
+**Status v6.9.6:** 🟡 CHANGELOG ARCHIV STRUKTURELL NEU AUFGEBAUT / NACHPRÜFUNG AUSSTEHEND  
 **Datum:** 22.09.2026
 
 ---
@@ -645,6 +645,23 @@ Behoben:
 - Sichtbare Changelog-Überschriften werden ohne optische Trennstriche zwischen Wortgruppen dargestellt.
 - Auch die Überschriften „MMD Cloud Changelog“, „Archiv kompakt“, „Chief Ebene Materialverwaltung“ und „Musterlösung“ wurden bereinigt.
 - Bindestriche innerhalb normaler Wörter wie „Live-Test“ bleiben bestehen.
+
+Sicherheit:
+- keine Änderung an Firebase Rules,
+- keine Änderung an Firebase Auth, `authIndex`, `loginDirectory`, Account-IDs, Passwörtern oder Rollen,
+- keine Migration erforderlich.
+
+
+---
+
+## 30. v6.9.6 Changelog Archiv strukturell neu aufgebaut
+
+Behoben:
+- Das bisherige `<details>` Element des kompakten Archivs wurde vollständig entfernt.
+- Das Archiv wird jetzt über einen normalen Button und einen ein-/ausblendbaren Inhaltsbereich gesteuert.
+- Nur noch `#changelogModal` selbst darf vertikal scrollen.
+- Modal-Karte, Timeline, aktueller Bereich, Archiv und Archivliste haben ausdrücklich keine eigene `max-height` oder vertikale `overflow` Begrenzung.
+- Beim Öffnen startet der Changelog immer oben.
 
 Sicherheit:
 - keine Änderung an Firebase Rules,
