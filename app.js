@@ -1,5 +1,5 @@
 // ============================================================
-//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.9.2
+//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.9.3
 //  Firebase Realtime Database (Compat SDK v10)
 // ============================================================
 
@@ -182,7 +182,7 @@ const db = firebase.database();
 const auth = firebase.auth();
 const FIREBASE_AUTH_EMAIL_DOMAIN = 'mmd-login.invalid';
 
-const APP_VERSION = 'v6.9.2';
+const APP_VERSION = 'v6.9.3';
 const PRESENCE_HEARTBEAT_MS = 30 * 1000;
 const PRESENCE_STALE_MS = 3 * 60 * 1000;
 
@@ -567,6 +567,16 @@ let hierarchieDaten = JSON.parse(JSON.stringify(defaultHierarchieData));
 
 /* ── Vollständiger Gesamt-Changelog (Entwicklungsverlauf) ───── */
 const systemChangelogs = [
+    {
+        id: "sys_v6_9_3", version: "v6.9.3", date: "22.09.2026", ts: 1790085000000,
+        category: "Fehlerbehebung", title: "Live-Test Korrekturen in Changelog und Personalakte",
+        changes: [
+            "Das geöffnete Changelog-Archiv besitzt jetzt einen eigenen scrollbar begrenzten Inhaltsbereich.",
+            "Die drei Rangfelder in der Personalakte sind gleich hoch und sauber auf einer Linie ausgerichtet.",
+            "Löschbare Sanktionen und allgemeine Notizen zeigen wieder einen klar sichtbaren Mülleimer direkt im Kopf des Historieneintrags.",
+            "Rangänderungen und automatische Personalereignisse bleiben als unveränderbare Historie geschützt."
+        ]
+    },
     {
         id: "sys_v6_9_2", version: "v6.9.2", date: "22.09.2026", ts: 1790081400000,
         category: "Verbesserung", title: "Changelog-Historie kompakt zusammengefasst",
@@ -11708,13 +11718,13 @@ function renderPersonnelTimelineItem(item,uId){
     if(item.type==='sanction'){
         const editKey=`${uId}:${item.id}`,editing=canManage&&activePersonnelSanctionEditId===editKey;
         if(editing)return `<article class="personnel-timeline-item sanction editing"><div class="personnel-timeline-head"><b>⚖️ Sanktion bearbeiten</b><span>${escapeHtml(d)} · ${escapeHtml(x.createdBy||'')}</span></div><div class="personnel-record-edit"><label>Titel / Sanktion</label><input id="personnelSanctionEditTitle_${item.id}" type="text" maxlength="120" value="${escapeHtml(x.title||'')}"><label>Bericht</label><textarea id="personnelSanctionEditReport_${item.id}" rows="5" maxlength="3000">${escapeHtml(x.report||'')}</textarea><div class="personnel-record-edit-actions"><button type="button" class="btn personnel-primary-btn" onclick="savePersonnelSanctionEdit('${uId}','${item.id}')">💾 Speichern</button><button type="button" class="btn personnel-secondary-btn" onclick="cancelPersonnelSanctionEdit()">Abbrechen</button></div></div></article>`;
-        return `<article class="personnel-timeline-item sanction"><div class="personnel-timeline-head"><b>⚖️ ${escapeHtml(x.title||'Sanktion')}</b><span>${escapeHtml(d)} · ${escapeHtml(x.createdBy||'')}</span></div><p>${formatTextWithLinks(x.report||'')}</p>${canManage?`<div class="personnel-timeline-actions"><button type="button" class="personnel-timeline-action edit" onclick="editPersonnelSanction('${uId}','${item.id}')">✏️ Bearbeiten</button><button type="button" class="personnel-timeline-action delete" onclick="deletePersonnelSanction('${uId}','${item.id}')">🗑️ Löschen</button></div>`:''}</article>`;
+        return `<article class="personnel-timeline-item sanction"><div class="personnel-timeline-head"><b>⚖️ ${escapeHtml(x.title||'Sanktion')}</b><div class="personnel-timeline-head-tools"><span>${escapeHtml(d)} · ${escapeHtml(x.createdBy||'')}</span>${canManage?`<button type="button" class="personnel-timeline-trash" onclick="deletePersonnelSanction('${uId}','${item.id}')" title="Sanktion löschen" aria-label="Sanktion löschen">🗑️</button>`:''}</div></div><p>${formatTextWithLinks(x.report||'')}</p>${canManage?`<div class="personnel-timeline-actions"><button type="button" class="personnel-timeline-action edit" onclick="editPersonnelSanction('${uId}','${item.id}')">✏️ Bearbeiten</button></div>`:''}</article>`;
     }
     if(item.type==='rankup')return `<article class="personnel-timeline-item rankup"><div><b>🎖️ Rangänderung</b><span>${escapeHtml(d)} · ${escapeHtml(x.createdBy||'')}</span></div><p>${escapeHtml(x.summary||'')}${x.reason?`<br><strong>Grund: ${escapeHtml(x.reason)}</strong>`:''}${x.note?`<br>${escapeHtml(x.note)}`:''}</p></article>`;
     if(item.type==='event')return `<article class="personnel-timeline-item event"><div><b>📌 ${escapeHtml(x.title||'Personalereignis')}</b><span>${escapeHtml(d)} · ${escapeHtml(x.createdBy||'')}</span></div>${x.detail?`<p>${escapeHtml(x.detail)}</p>`:''}</article>`;
     const editKey=`${uId}:${item.id}`,editing=canManage&&activePersonnelNoteEditId===editKey;
     if(editing)return `<article class="personnel-timeline-item note editing"><div class="personnel-timeline-head"><b>🗒️ Notiz bearbeiten</b><span>${escapeHtml(d)} · ${escapeHtml(x.createdBy||'')}</span></div><div class="personnel-record-edit"><label>Notiz</label><textarea id="personnelNoteEditText_${item.id}" rows="5" maxlength="2000">${escapeHtml(x.text||'')}</textarea><div class="personnel-record-edit-actions"><button type="button" class="btn personnel-primary-btn" onclick="savePersonnelNoteEdit('${uId}','${item.id}')">💾 Speichern</button><button type="button" class="btn personnel-secondary-btn" onclick="cancelPersonnelNoteEdit()">Abbrechen</button></div></div></article>`;
-    return `<article class="personnel-timeline-item note"><div class="personnel-timeline-head"><b>🗒️ Notiz</b><span>${escapeHtml(d)} · ${escapeHtml(x.createdBy||'')}</span></div><p>${formatTextWithLinks(x.text||'')}</p>${canManage?`<div class="personnel-timeline-actions"><button type="button" class="personnel-timeline-action edit" onclick="editPersonnelNote('${uId}','${item.id}')">✏️ Bearbeiten</button><button type="button" class="personnel-timeline-action delete" onclick="deletePersonnelNote('${uId}','${item.id}')">🗑️ Löschen</button></div>`:''}</article>`;
+    return `<article class="personnel-timeline-item note"><div class="personnel-timeline-head"><b>🗒️ Notiz</b><div class="personnel-timeline-head-tools"><span>${escapeHtml(d)} · ${escapeHtml(x.createdBy||'')}</span>${canManage?`<button type="button" class="personnel-timeline-trash" onclick="deletePersonnelNote('${uId}','${item.id}')" title="Notiz löschen" aria-label="Notiz löschen">🗑️</button>`:''}</div></div><p>${formatTextWithLinks(x.text||'')}</p>${canManage?`<div class="personnel-timeline-actions"><button type="button" class="personnel-timeline-action edit" onclick="editPersonnelNote('${uId}','${item.id}')">✏️ Bearbeiten</button></div>`:''}</article>`;
 }
 function enhancePersonnelDetailWorkspace(root){
     if(!root)return;

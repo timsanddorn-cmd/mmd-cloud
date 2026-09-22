@@ -1,8 +1,8 @@
 # MMD Cloud – PROJECT STATUS
 
 **Aktuell bestätigte stabile Live-Version:** v6.8.7j  
-**Aktueller Entwicklungsstand:** v6.9.2  
-**Status v6.9.2:** 🟡 CHANGELOG-HISTORIE KOMPAKT ZUSAMMENGEFASST / LIVE-TEST AUSSTEHEND  
+**Aktueller Entwicklungsstand:** v6.9.3  
+**Status v6.9.3:** 🟡 LIVE-TEST KORREKTUREN / NACHPRÜFUNG AUSSTEHEND  
 **Datum:** 22.09.2026
 
 ---
@@ -594,6 +594,23 @@ Geändert:
 - Weitere kleinere Änderungen werden nur noch als Anzahl zusammengefasst.
 - Das Archiv zeigt Anzahl der älteren Versionen und Anzahl der daraus gebildeten Gruppen.
 - Die zugrunde liegenden System- und Custom-Changelog-Daten werden nicht gelöscht oder umgebaut.
+
+Sicherheit:
+- keine Änderung an Firebase Rules,
+- keine Änderung an Firebase Auth, `authIndex`, `loginDirectory`, Account-IDs, Passwörtern oder Rollen,
+- keine Migration erforderlich.
+
+
+---
+
+## 27. v6.9.3 – Live-Test Korrekturen
+
+Behoben:
+- Das geöffnete Changelog-Archiv besitzt einen eigenen begrenzten Scrollbereich.
+- Gemeinsamer Rang, Doctor-Rang und Paramedic-Rang sind trotz unterschiedlich langer Beschriftungen gleich hoch und auf einer Linie ausgerichtet.
+- Sanktionen und allgemeine Notizen zeigen für berechtigte Personalmitarbeiter einen dauerhaft sichtbaren Mülleimer direkt im Kopf des Historieneintrags.
+- Die bestehenden Sicherheitsabfragen und Audit-Logs beim Löschen bleiben erhalten.
+- Rangänderungen und automatische Personalereignisse bleiben unveränderbare Historieneinträge.
 
 Sicherheit:
 - keine Änderung an Firebase Rules,
