@@ -1,8 +1,8 @@
 # MMD Cloud – PROJECT STATUS
 
 **Aktuell bestätigte stabile Live-Version:** v6.8.7j  
-**Aktueller Entwicklungsstand:** v6.8.11  
-**Status v6.8.11:** 🟡 PERSONALAKTEN-DROPDOWNS & RÄNGE KORRIGIERT / LIVE-TEST AUSSTEHEND  
+**Aktueller Entwicklungsstand:** v6.8.12  
+**Status v6.8.12:** 🟡 SANKTIONSBEARBEITUNG ERGÄNZT / LIVE-TEST AUSSTEHEND  
 **Datum:** 22.09.2026
 
 ---
@@ -421,3 +421,23 @@ Sicherheit:
 - keine Änderung an Account-IDs oder Passwörtern,
 - `database.rules.final.json` bleibt unverändert,
 - stabile Rollback-Basis bleibt v6.8.7j.
+
+
+---
+
+## 21. Personalverwaltung v6.8.12 – Sanktionen bearbeiten & löschen
+
+Personalakten:
+- ausgestellte Sanktionen zeigen für berechtigte Personalmitarbeiter die Aktionen `Bearbeiten` und `Löschen`,
+- Bearbeiten erfolgt direkt innerhalb der Personalhistorie,
+- Titel und Bericht können geändert werden,
+- Löschen erfordert eine Sicherheitsabfrage,
+- beide Aktionen werden im Admin-Audit protokolliert.
+
+Berechtigung:
+- Bearbeiten und Löschen verwenden weiterhin ausschließlich `canManagePersonnelRecords` bzw. Masteradmin,
+- reine Lese-Berechtigungen erhalten keine Aktionsbuttons.
+
+Firebase:
+- keine Änderung an `database.rules.final.json` nötig; die bestehenden Regeln erlauben Update und Delete bereits,
+- keine Änderung an Firebase Auth, `authIndex`, `loginDirectory`, Account-IDs oder Passwörtern.
