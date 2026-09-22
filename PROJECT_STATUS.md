@@ -1,8 +1,8 @@
 # MMD Cloud – PROJECT STATUS
 
 **Aktuell bestätigte stabile Live-Version:** v6.8.7j  
-**Aktueller Entwicklungsstand:** v6.8.13  
-**Status v6.8.13:** 🟡 PERSONALHISTORIE-FORMATIERUNG KORRIGIERT / LIVE-TEST AUSSTEHEND  
+**Aktueller Entwicklungsstand:** v6.8.14  
+**Status v6.8.14:** 🟡 PERSONALVERWALTUNGS-WORKFLOW VERVOLLSTÄNDIGT / LIVE-TEST AUSSTEHEND  
 **Datum:** 22.09.2026
 
 ---
@@ -454,3 +454,43 @@ Behoben:
 
 Es handelt sich ausschließlich um eine Darstellungs-/CSS-Korrektur.
 Keine Änderung an Firebase Auth, `authIndex`, `loginDirectory`, Account-IDs, Passwörtern oder `database.rules.final.json`.
+
+
+---
+
+## 23. Personalverwaltung v6.8.14 – Workflow vervollständigt
+
+Stammdaten & neuer Mitarbeiter:
+- `Eingewiesen durch` und `Eingestellt durch` sind Dropdowns.
+- Als neue Auswahl erscheinen freigeschaltete Mitarbeiter mit Rolle `ausbilder` oder `personalabteilung`.
+- Historische Bestandswerte bleiben auswählbar, auch wenn die Person heute keine dieser Rollen mehr besitzt.
+- Vereidigung, Erste-Hilfe-Kurs und Behandlungseinweisung verwenden nur noch `Ja` / `Nein`.
+- Standardwert ist `Nein`; `Nicht festgelegt` wurde aus der Oberfläche entfernt.
+
+Laufbahn & Ränge:
+- gemeinsame Einstiegsränge bis einschließlich A-EMT können parallel zu Doctor- und Paramedic-Rängen geführt werden,
+- Beispiel: `A-EMT · Physician · Senior Paramedic`,
+- gemeinsame Führungsränge bleiben weiterhin übergeordnet/exklusiv in der Anzeige.
+
+Personalhistorie:
+- Bearbeitete Sanktionen schließen nach erfolgreichem Speichern zuverlässig den Bearbeitungsmodus.
+- Zeilenumbrüche in Sanktionen und Notizen bleiben in der Anzeige erhalten.
+- Allgemeine Notizen können bearbeitet und gelöscht werden.
+- Bearbeiten/Löschen wird weiterhin über `canManagePersonnelRecords` geschützt und im Audit protokolliert.
+
+Mitarbeiterkalender:
+- aktive Abwesenheiten können bearbeitet werden (Art, Von, Bis, interne Notiz),
+- aktive Abwesenheiten können vor dem geplanten Enddatum frühzeitig beendet werden,
+- Rückkehrstatus und öffentlicher Abwesenheitsstatus werden dabei konsistent aktualisiert,
+- Änderungen werden in Personalhistorie und Audit protokolliert.
+
+Rollenvergabe Personalabteilung:
+- Personalabteilung darf zusätzlich `CLS`, `EHK` und `Luftrettung` vergeben,
+- Ausbildungsleitung und andere Rollen mit `canManageMemberAccess` behalten ihren bisherigen eingeschränkten Rollenbereich,
+- Rollen-IDs, Auth-Struktur, `authIndex`, `loginDirectory`, Account-IDs und Passwörter bleiben unverändert.
+
+Firebase:
+- `database.rules.final.json` wurde ausschließlich für die drei zusätzlichen Rollenvergaben durch `personalabteilung` erweitert.
+- Diese Rules müssen vor dem Live-Test der neuen Rollenvergabe in Firebase veröffentlicht werden.
+- Keine Datenmigration erforderlich.
+- Code-Rollback: v6.8.13; stabile Live-Rollback-Basis bleibt v6.8.7j.
