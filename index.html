@@ -11,7 +11,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
-    <link rel="stylesheet" href="style.css?v=6.8.13">
+    <link rel="stylesheet" href="style.css?v=6.8.14">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏥</text></svg>">
 </head>
 <body>
@@ -474,11 +474,11 @@
                         <div><label for="personnelCreatePhone">Telefonnummer</label><input type="text" id="personnelCreatePhone" autocomplete="off"></div>
                         <div><label for="personnelCreateSecondJob">Zweitjob</label><input type="text" id="personnelCreateSecondJob" autocomplete="off"></div>
                         <div class="personnel-create-wide"><label for="personnelCreateFunctions">Interne Funktionen / Zusatzaufgaben</label><input type="text" id="personnelCreateFunctions" autocomplete="off" placeholder="z. B. Personalabteilung, Luftrettung"></div>
-                        <div><label for="personnelCreateInstructedBy">Eingewiesen durch</label><input type="text" id="personnelCreateInstructedBy" autocomplete="off"></div>
-                        <div><label for="personnelCreateHiredBy">Eingestellt durch</label><input type="text" id="personnelCreateHiredBy" autocomplete="off"></div>
-                        <div><label for="personnelCreateSworn">Vereidigung</label><select id="personnelCreateSworn"><option value="unknown">Nicht festgelegt</option><option value="yes">Ja</option><option value="no">Nein</option></select></div>
-                        <div><label for="personnelCreateFirstAid">Erste-Hilfe-Kurs</label><select id="personnelCreateFirstAid"><option value="unknown">Nicht festgelegt</option><option value="yes">Ja</option><option value="no">Nein</option></select></div>
-                        <div><label for="personnelCreateTreatment">Behandlungseinweisung</label><select id="personnelCreateTreatment"><option value="unknown">Nicht festgelegt</option><option value="yes">Ja</option><option value="no">Nein</option></select></div>
+                        <div><label for="personnelCreateInstructedBy">Eingewiesen durch</label><select id="personnelCreateInstructedBy"><option value="">Nicht angegeben</option></select></div>
+                        <div><label for="personnelCreateHiredBy">Eingestellt durch</label><select id="personnelCreateHiredBy"><option value="">Nicht angegeben</option></select></div>
+                        <div><label for="personnelCreateSworn">Vereidigung</label><select id="personnelCreateSworn"><option value="no" selected>Nein</option><option value="yes">Ja</option></select></div>
+                        <div><label for="personnelCreateFirstAid">Erste-Hilfe-Kurs</label><select id="personnelCreateFirstAid"><option value="no" selected>Nein</option><option value="yes">Ja</option></select></div>
+                        <div><label for="personnelCreateTreatment">Behandlungseinweisung</label><select id="personnelCreateTreatment"><option value="no" selected>Nein</option><option value="yes">Ja</option></select></div>
                     </div>
                     <div class="personnel-create-hint">Der neue Zugang wird mit der Rolle „Mitarbeiter“ angelegt. Das vorläufige Passwort muss der Person anschließend mitgeteilt werden. E-Mail-Adresse und Discord-ID werden nicht benötigt.</div>
                     <button type="button" class="btn personnel-primary-btn personnel-create-submit" onclick="createPersonnelEmployee()">✅ Mitarbeiter anlegen</button>
@@ -2354,6 +2354,6 @@
         </div>
     </div>
 
-    <script src="app.js?v=6.8.13"></script>
+    <script src="app.js?v=6.8.14"></script>
 </body>
 </html>
