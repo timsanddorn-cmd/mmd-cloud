@@ -1,8 +1,8 @@
 # MMD Cloud – PROJECT STATUS
 
 **Aktuell bestätigte stabile Live-Version:** v6.8.7j  
-**Aktueller Entwicklungsstand:** v6.8.14  
-**Status v6.8.14:** 🟡 PERSONALVERWALTUNGS-WORKFLOW VERVOLLSTÄNDIGT / LIVE-TEST AUSSTEHEND  
+**Aktueller Entwicklungsstand:** v6.9.0  
+**Status v6.9.0:** 🟡 MODERN WORKSPACE + PERSONAL-/ADMIN-AUDIT / LIVE-TEST AUSSTEHEND  
 **Datum:** 22.09.2026
 
 ---
@@ -494,3 +494,72 @@ Firebase:
 - Diese Rules müssen vor dem Live-Test der neuen Rollenvergabe in Firebase veröffentlicht werden.
 - Keine Datenmigration erforderlich.
 - Code-Rollback: v6.8.13; stabile Live-Rollback-Basis bleibt v6.8.7j.
+
+
+---
+
+## 24. v6.9.0 – Modern Workspace & Audit
+
+Ziel:
+- Personalabteilung nach den vielen Funktionsänderungen vollständig gegenprüfen,
+- sichtbare Überladung reduzieren,
+- gesamte MMD Cloud einschließlich Adminbereich visuell vereinheitlichen,
+- bekannte Logik- und Rule-Inkonsistenzen korrigieren, ohne Auth-/Login-Strukturen umzubauen.
+
+Personalabteilung:
+- Übersicht von sieben gleichwertigen Einzelkarten auf vier logisch gruppierte Statuskarten reduziert:
+  - aktives Team,
+  - Abwesenheiten,
+  - offene Personalthemen,
+  - Fälle mit Aufmerksamkeit.
+- Offene Personalthemen und Rückkehrprüfungen stehen nebeneinander und werden mobil gestapelt.
+- Mitarbeiterliste kompakter und klarer beschriftet.
+- Personalakte bleibt zweigeteilt in Stammdaten und Laufbahn/Ränge.
+- Sanktion, allgemeine Notiz und Kündigung/Austritt werden als kompakte einklappbare Aktionskarten dargestellt.
+- Personalhistorie bleibt dauerhaft sichtbar.
+- Beim Wechsel des Personalbereichs werden offene Bearbeitungszustände sauber zurückgesetzt.
+- Nach dem Speichern von Stammdaten wird die Ansicht unmittelbar neu aufgebaut.
+- Neue Sanktionen/Notizen leeren ihre Eingabefelder nach erfolgreichem Speichern.
+
+Gefundener Laufbahn-Bug:
+- bei Masterlisten-Mitarbeitern konnte `Noch nicht festgelegt` bisher nicht dauerhaft gesetzt werden,
+- Ursache: das Löschen des Career-Pfads aktivierte sofort wieder den Masterlisten-Fallback,
+- v6.9.0 speichert deshalb `path: "none"` ausdrücklich als manuellen Wert,
+- `database.rules.final.json` erlaubt dafür zusätzlich ausschließlich den bestehenden Wert `none` neben `doctor`, `paramedic` und `both`.
+
+Adminbereich:
+- Berechtigungsgruppen in der Rollenmatrix werden einklappbar.
+- Eine Rechtesuche filtert die Berechtigungskarten live.
+- Gruppen werden beim Suchen automatisch geöffnet.
+- Adminnavigation, Übersichtsflächen und Rollenbereich wurden optisch entschlackt.
+- Hinweistext zur Rollenvergabe wurde an v6.8.14 angepasst: Personalabteilung darf zusätzlich CLS, EHK und Luftrettung vergeben.
+- Beschreibungen der Personalakten- und Abwesenheitsrechte wurden an die tatsächlich vorhandenen Bearbeiten-/Löschen-/Frühzeitig-Beenden-Funktionen angepasst.
+
+Rule-Audit:
+- Rollen-Editor: 43 wirksame `SERVER_PERMISSION_KEYS`.
+- Vor v6.9.0 fehlten bei drei bereits verwendeten Feldern eigene serverseitige Validierungen:
+  - `canSendEmployeeNotices`,
+  - `canViewEmployeeNoticeRead`,
+  - `delEmployeeNotices`.
+- v6.9.0 ergänzt diese drei Boolean-Validierungen nach dem bestehenden Berechtigungsmuster.
+- Dadurch werden keine neuen Rechte vergeben; die Rules werden nur vollständiger und typstrenger.
+
+Globales UI:
+- ruhigere Oberflächenhierarchie und einheitliche Abstände,
+- Topbar in Informationszeile + kompakte Werkzeugleiste aufgeteilt,
+- Hauptnavigation optisch vereinheitlicht,
+- Seitenköpfe, Formulare, Tabellen, Karten und Modale auf ein gemeinsames Surface-System gebracht,
+- responsive Darstellung für Personalbereich, Adminbereich und allgemeine Navigation erweitert,
+- bestehende Funktionen und Datenpfade bleiben erhalten.
+
+Sicherheit / Migration:
+- keine Änderung an Firebase Auth,
+- keine Änderung an `authIndex`,
+- keine Änderung an `loginDirectory`,
+- keine Änderung an Account-IDs, Passwörtern oder Rollen-IDs,
+- keine Datenmigration notwendig.
+- `database.rules.final.json` wurde in zwei eng begrenzten Punkten geändert:
+  1. `employeeCareerPaths.path` darf zusätzlich `none` enthalten,
+  2. die drei bestehenden Mitarbeiterhinweis-Rechte erhalten eigene Boolean-Validierungen.
+- Die neue Rule-Datei muss nach dem Merge vor dem Live-Test von v6.9.0 in Firebase veröffentlicht werden.
+- bestätigte stabile Rollback-Basis bleibt v6.8.7j.
