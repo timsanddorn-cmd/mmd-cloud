@@ -1,8 +1,8 @@
 # MMD Cloud – PROJECT STATUS
 
 **Aktuell bestätigte stabile Live-Version:** v6.8.7j  
-**Aktueller Entwicklungsstand:** v6.9.7  
-**Status v6.9.7:** 🟡 PERSONALABTEILUNG NEU STRUKTURIERT / LIVE-TEST AUSSTEHEND  
+**Aktueller Entwicklungsstand:** v6.9.8  
+**Status v6.9.8:** 🟡 HISTORISCHES KÜNDIGUNGSARCHIV AUS MASTERLISTE ERGÄNZT / LIVE-TEST AUSSTEHEND  
 **Datum:** 23.09.2026
 
 ---
@@ -697,3 +697,43 @@ Unverändert:
 Teststatus:
 - technische Nachprüfung nach Merge erforderlich,
 - anschließender Live-Test der Personalabteilung erforderlich.
+
+
+---
+
+## 32. v6.9.8 Historisches Kündigungsarchiv aus Masterliste
+
+Quelle:
+- `Kopie von Storytime _ SAMD MASTERLISTE 3.0.xlsx`
+- Tabellenblatt `Kündigungen`.
+
+Geändert:
+- 47 historische Kündigungs- und Austrittseinträge aus der Masterliste werden in das bestehende Kündigungsarchiv übernommen,
+- übernommen werden ausschließlich archiv-relevante Felder:
+  - DN,
+  - Name,
+  - Einstellungsdatum,
+  - Austrittsdatum,
+  - Diensttage bis zum Austritt,
+  - gekündigt durch,
+  - letzter Rang,
+  - Kündigungsgrund,
+- E-Mail-Adressen und Discord-IDs werden ausdrücklich nicht importiert,
+- Alt-Einträge werden als `Historischer Bestand` gekennzeichnet,
+- das Einstellungsdatum wird im Archiv zusätzlich sichtbar angezeigt,
+- historische Einträge werden nicht mit aktuellen Benutzerkonten verknüpft,
+- der Import ist idempotent: deterministische Legacy-IDs plus Signaturprüfung verhindern doppelte Einträge,
+- bereits vorhandene identische Archivdatensätze werden nicht erneut geschrieben.
+
+Cache:
+- `index.html` lädt `style.css` und `app.js` jetzt mit Cache-Version `v6.9.8`.
+
+Sicherheit:
+- keine Änderung an Firebase Auth,
+- keine Änderung an Accounts, Account-IDs, Passwörtern, Rollen, `authIndex` oder `loginDirectory`,
+- keine Änderung an `database.rules.final.json`,
+- keine neue Rule-Veröffentlichung erforderlich.
+
+Teststatus:
+- Syntax-/Diff-Prüfung vor Merge,
+- anschließend Live-Test des Kündigungsarchivs erforderlich.
