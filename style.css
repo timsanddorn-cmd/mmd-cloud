@@ -6329,3 +6329,33 @@ tbody tr:hover {
         width:100%;
     }
 }
+
+
+/* ============================================================
+   v6.9.11 – wiederkehrende UI-Hilfsklassen
+   ============================================================ */
+.ui-title-primary{margin:0;color:var(--primary)}
+.ui-title-warning{margin:0;color:var(--warning)}
+.ui-m0{margin:0}
+.ui-section-head-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    border-bottom:1px solid var(--border);
+    padding-bottom:12px;
+    margin-bottom:16px;
+}
+.ui-auto-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+    gap:10px;
+}
+.ui-action-row-end{
+    display:flex;
+    justify-content:flex-end;
+    gap:10px;
+    margin-top:20px;
+}
+.ui-subtle-copy{margin:0;color:var(--text-muted);font-size:13px}
+.ui-subtle-note{margin:4px 0 0;color:var(--text-muted);font-size:12px}
+.ui-muted-12{font-size:12px;color:var(--text-muted)}
