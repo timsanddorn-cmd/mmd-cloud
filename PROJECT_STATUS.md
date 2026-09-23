@@ -1,9 +1,9 @@
 # MMD Cloud – PROJECT STATUS
 
 **Aktuell bestätigte stabile Live-Version:** v6.8.7j  
-**Aktueller Entwicklungsstand:** v6.9.6  
-**Status v6.9.6:** 🟡 CHANGELOG ARCHIV STRUKTURELL NEU AUFGEBAUT / NACHPRÜFUNG AUSSTEHEND  
-**Datum:** 22.09.2026
+**Aktueller Entwicklungsstand:** v6.9.7  
+**Status v6.9.7:** 🟡 PERSONALABTEILUNG NEU STRUKTURIERT / LIVE-TEST AUSSTEHEND  
+**Datum:** 23.09.2026
 
 ---
 
@@ -667,3 +667,33 @@ Sicherheit:
 - keine Änderung an Firebase Rules,
 - keine Änderung an Firebase Auth, `authIndex`, `loginDirectory`, Account-IDs, Passwörtern oder Rollen,
 - keine Migration erforderlich.
+
+
+---
+
+## 31. v6.9.7 Personalabteilung neu strukturiert
+
+Ziel:
+- die Personalabteilung nicht weiter mit gleichwertigen Karten zu überladen,
+- echte Arbeitsprioritäten sichtbar machen,
+- tägliche Personalführung klar von Verwaltungsprozessen trennen.
+
+Geändert:
+- die Personalübersicht beginnt jetzt mit „Was braucht heute Aufmerksamkeit?“,
+- offene Rückkehrprüfungen, Kündigungsprüfungen, Perso-Tickets und Inaktivität stehen bewusst vor reinen Teamstatistiken,
+- Teamgröße und laufende Abwesenheiten wurden in einen eigenen sekundären Bereich „Team im Blick“ verschoben,
+- die Navigation ist in „Arbeitsbereiche“ und „Personalvorgänge“ gegliedert,
+- Personalakten erhalten eine sichtbare Drei-Schritt-Orientierung: Mitarbeiter auswählen → Personalakte bearbeiten → Historie prüfen,
+- Stammdaten, Laufbahn/Ränge, Maßnahmen und Historie werden visuell stärker voneinander getrennt,
+- Kalender, Mitarbeiteranlage und Kündigungsarchiv erhalten jeweils eine klarere Bereichskennzeichnung.
+
+Unverändert:
+- keine Änderung an Personal-Datenpfaden,
+- keine Änderung an Berechtigungen oder Rollen,
+- keine Änderung an Firebase Auth, Accounts, Account-IDs, Passwörtern, `authIndex` oder `loginDirectory`,
+- keine Änderung an `database.rules.final.json`,
+- keine Datenmigration erforderlich.
+
+Teststatus:
+- technische Nachprüfung nach Merge erforderlich,
+- anschließender Live-Test der Personalabteilung erforderlich.
