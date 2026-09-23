@@ -1,5 +1,5 @@
 // ============================================================
-//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.9.9
+//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.9.10
 //  Firebase Realtime Database (Compat SDK v10)
 // ============================================================
 
@@ -182,7 +182,7 @@ const db = firebase.database();
 const auth = firebase.auth();
 const FIREBASE_AUTH_EMAIL_DOMAIN = 'mmd-login.invalid';
 
-const APP_VERSION = 'v6.9.9';
+const APP_VERSION = 'v6.9.10';
 const PRESENCE_HEARTBEAT_MS = 30 * 1000;
 const PRESENCE_STALE_MS = 3 * 60 * 1000;
 
@@ -567,6 +567,16 @@ let hierarchieDaten = JSON.parse(JSON.stringify(defaultHierarchieData));
 
 /* ── Vollständiger Gesamt-Changelog (Entwicklungsverlauf) ───── */
 const systemChangelogs = [
+    {
+        id: "sys_v6_9_10", version: "v6.9.10", date: "23.09.2026", ts: 1790146800000,
+        category: "Fehlerbehebung", title: "Historisches Kündigungsarchiv unabhängig vom Import sichtbar",
+        changes: [
+            "Das Kündigungsarchiv kombiniert gespeicherte Firebase-Einträge direkt mit den 47 historischen Masterlisten-Datensätzen.",
+            "Die Anzeige hängt dadurch nicht mehr davon ab, ob der einmalige Legacy-Import zuvor erfolgreich geschrieben hat.",
+            "Dauerhaft gelöschte historische Einträge werden über Löschmarker weiterhin ausgeblendet.",
+            "Der bestehende Firebase-Import bleibt als Persistenzhilfe erhalten."
+        ]
+    },
     {
         id: "sys_v6_9_9", version: "v6.9.9", date: "23.09.2026", ts: 1790145000000,
         category: "Verbesserung", title: "Kündigungsarchiv löschbar und Texttrenner bereinigt",
@@ -11666,7 +11676,7 @@ const PERSONNEL_COMMON_RANKS=['trainee','solo','emt','a_emt','lieutenant','chief
 const PERSONNEL_DOCTOR_RANKS=['resident_physician','physician','attending'];
 const PERSONNEL_PARAMEDIC_RANKS=['paramedic','senior_paramedic','medical_supervisor'];
 const PERSONNEL_ABSENCE_TYPES=Object.freeze({vacation:{label:'Urlaub',icon:'🏖️'},excused:{label:'Entschuldigt abwesend',icon:'📝'}});
-let cachedEmployeeRanks={},cachedEmployeeAbsenceStatus={},cachedPersonnelRecords={},cachedPersonnelAbsences={},cachedPersonnelProfiles={},cachedPersonnelDepartures={},activePersonnelEmployeeId='',activePersonnelView='overview',personnelProfileEditingId='',activePersonnelSanctionEditId='',activePersonnelNoteEditId='',activePersonnelAbsenceEditId='';
+let cachedEmployeeRanks={},cachedEmployeeAbsenceStatus={},cachedPersonnelRecords={},cachedPersonnelAbsences={},cachedPersonnelProfiles={},cachedPersonnelDepartures={},cachedPersonnelDepartureDeletions={},activePersonnelEmployeeId='',activePersonnelView='overview',personnelProfileEditingId='',activePersonnelSanctionEditId='',activePersonnelNoteEditId='',activePersonnelAbsenceEditId='';
 let personnelMasterlistImportRunning=false,personnelMasterlistImportDone=false;
 const PERSONNEL_MASTERLIST_RANK_SOURCE='masterlist-v6.8.11';
 const PERSONNEL_MASTERLIST_DEPARTURE_SOURCE='masterlist-v6.9.8';
@@ -11896,8 +11906,34 @@ async function terminatePersonnelEmployee(uId){
     try{await db.ref().update(updates);await addPersonnelEvent(uId,'departure','Kündigung / Austritt',`${formatPersonnelDate(date)} · ${reason}`);logAdminAudit('Mitarbeiter gekündigt',`${personnelUserName(uId)}: ${reason}`);showToast('✅ Mitarbeiter wurde archiviert und gesperrt.','success',5000);activePersonnelEmployeeId='';switchPersonnelView('archive');}catch(err){console.error(err);showToast('⚠️ Kündigung konnte nicht vollständig gespeichert werden.','error',6500);}
 }
 
+function getPersonnelArchiveEntries(){
+    const merged=new Map(Object.entries(cachedPersonnelDepartures||{}).filter(([,x])=>x));
+    const signature=x=>[
+        normalizePersonnelDn(x?.dn),
+        String(x?.name||'').trim().toLocaleLowerCase('de-DE'),
+        String(x?.departureDate||''),
+        String(x?.reason||'').trim().toLocaleLowerCase('de-DE')
+    ].join('|');
+    const signatures=new Set([...merged.values()].map(signature));
+    for(const seed of PERSONNEL_MASTERLIST_DEPARTURE_SEED){
+        const id='legacy_'+seed.sourceId;
+        if(cachedPersonnelDepartureDeletions?.[id])continue;
+        const item={
+            dn:seed.dn,name:seed.name,employmentDate:seed.employmentDate,departureDate:seed.departureDate,
+            serviceDays:Number(seed.serviceDays)||0,terminatedBy:seed.terminatedBy,lastRank:seed.lastRank,
+            career:'',reason:seed.reason,source:PERSONNEL_MASTERLIST_DEPARTURE_SOURCE,
+            sourceEntryId:seed.sourceId,legacy:true,createdAt:Date.parse(seed.departureDate+'T12:00:00Z')||0
+        };
+        const sig=signature(item);
+        if(!merged.has(id)&&!signatures.has(sig)){merged.set(id,item);signatures.add(sig);}
+    }
+    return [...merged.entries()];
+}
 function renderPersonnelArchive(){
-    const box=document.getElementById('personnelArchiveList');if(!box)return;const q=(document.getElementById('personnelArchiveSearch')?.value||'').trim().toLowerCase(),rows=Object.entries(cachedPersonnelDepartures||{}).filter(([,x])=>x).filter(([,x])=>!q||`${x.name||''} ${x.dn||''} ${x.lastRank||''} ${x.reason||''}`.toLowerCase().includes(q)).sort((a,b)=>String(b[1].departureDate||'').localeCompare(String(a[1].departureDate||''))),p=getPersonnelPermissions();
+    const box=document.getElementById('personnelArchiveList');if(!box)return;
+    const q=(document.getElementById('personnelArchiveSearch')?.value||'').trim().toLowerCase();
+    const rows=getPersonnelArchiveEntries().filter(([,x])=>!q||`${x.name||''} ${x.dn||''} ${x.lastRank||''} ${x.reason||''}`.toLowerCase().includes(q)).sort((a,b)=>String(b[1].departureDate||'').localeCompare(String(a[1].departureDate||'')));
+    const p=getPersonnelPermissions();
     box.innerHTML=rows.length?rows.map(([id,x])=>{const u=cachedUsers?.[x.userId],rehired=!!x.rehiredAt,canRehire=p.canManageDepartures&&u&&u.status!=='approved'&&!rehired,canDelete=p.canManageDepartures;return `<article class="personnel-archive-row"><div class="personnel-archive-main"><span class="personnel-file-dn">${escapeHtml(formatStaffDn(x.dn))}</span><div><h4>${escapeHtml(x.name||x.userId||'Unbekannt')}</h4><small>${escapeHtml(formatPersonnelDate(x.departureDate))} · ${escapeHtml(x.lastRank||'Rang nicht hinterlegt')}${x.legacy?' · Historischer Bestand':''}</small></div></div><div class="personnel-archive-reason"><span>Grund</span><b>${escapeHtml(x.reason||'—')}</b></div><div class="personnel-archive-meta"><span>Eingestellt: <b>${escapeHtml(formatPersonnelDate(x.employmentDate||''))}</b></span><span>Gekündigt durch: <b>${escapeHtml(x.terminatedBy||'—')}</b></span><span>Diensttage: <b>${Number(x.serviceDays)||0}</b></span>${rehired?`<span class="personnel-status-ok">✅ Wiedereingestellt am ${escapeHtml(formatPersonnelDate(x.rehiredDate||''))}</span>`:''}</div><div class="personnel-archive-actions">${canRehire?`<button type="button" class="btn personnel-primary-btn" onclick="rehirePersonnelEmployee('${id}')">↩️ Wiedereinstellen</button>`:''}${canDelete?`<button type="button" class="btn personnel-small-btn danger" onclick="deletePersonnelArchiveEntry('${id}')">🗑️ Löschen</button>`:''}</div></article>`;}).join(''):'<div class="personnel-empty-state">Keine Einträge im Kündigungsarchiv gefunden.</div>';
 }
 async function deletePersonnelArchiveEntry(departureId){
@@ -12008,7 +12044,7 @@ function refreshPersonnelModule(){
     if(!sessionUser){cachedEmployeeRanks={};cachedEmployeeAbsenceStatus={};cachedPersonnelRecords={};cachedPersonnelAbsences={};cachedPersonnelProfiles={};cachedPersonnelDepartures={};return;}
     db.ref('data/employeeRanks').on('value',x=>{cachedEmployeeRanks=x.val()||{};renderStaffDirectory();renderPersonnelWorkspace();});
     db.ref('data/employeeAbsenceStatus').on('value',x=>{cachedEmployeeAbsenceStatus=x.val()||{};renderStaffDirectory();renderPersonnelWorkspace();});
-    const p=getPersonnelPermissions();if(p.canViewRecords)db.ref('data/personnelRecords').on('value',x=>{cachedPersonnelRecords=x.val()||{};renderPersonnelWorkspace();});else cachedPersonnelRecords={};if(p.canViewRecords||p.canManageAbsences)db.ref('data/personnelAbsences').on('value',x=>{cachedPersonnelAbsences=x.val()||{};renderPersonnelWorkspace();});else cachedPersonnelAbsences={};if(p.canViewRecords)db.ref('data/personnelProfiles').on('value',x=>{cachedPersonnelProfiles=x.val()||{};renderPersonnelWorkspace();});else cachedPersonnelProfiles={};if(p.canViewRecords||p.canManageDepartures)db.ref('data/personnelDepartures').on('value',x=>{cachedPersonnelDepartures=x.val()||{};renderPersonnelWorkspace();});else cachedPersonnelDepartures={};renderPersonnelWorkspace();importPersonnelMasterlistDefaults();
+    const p=getPersonnelPermissions();if(p.canViewRecords)db.ref('data/personnelRecords').on('value',x=>{cachedPersonnelRecords=x.val()||{};renderPersonnelWorkspace();});else cachedPersonnelRecords={};if(p.canViewRecords||p.canManageAbsences)db.ref('data/personnelAbsences').on('value',x=>{cachedPersonnelAbsences=x.val()||{};renderPersonnelWorkspace();});else cachedPersonnelAbsences={};if(p.canViewRecords)db.ref('data/personnelProfiles').on('value',x=>{cachedPersonnelProfiles=x.val()||{};renderPersonnelWorkspace();});else cachedPersonnelProfiles={};if(p.canViewRecords||p.canManageDepartures)db.ref('data/personnelDepartures').on('value',x=>{cachedPersonnelDepartures=x.val()||{};renderPersonnelWorkspace();});else cachedPersonnelDepartures={};if(p.canViewRecords||p.canManageDepartures)db.ref('data/personnelDepartureDeletions').on('value',x=>{cachedPersonnelDepartureDeletions=x.val()||{};renderPersonnelWorkspace();});else cachedPersonnelDepartureDeletions={};renderPersonnelWorkspace();importPersonnelMasterlistDefaults();
 }
 
 if (typeof window !== 'undefined') {
