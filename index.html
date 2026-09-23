@@ -383,60 +383,95 @@
             </div>
 
             <div class="personnel-nav" aria-label="Personalbereiche">
-                <button type="button" id="personnelNav_overview" class="personnel-nav-btn active" onclick="switchPersonnelView('overview')">📊 Übersicht</button>
-                <button type="button" id="personnelNav_files" class="personnel-nav-btn" onclick="switchPersonnelView('files')">🗂️ Personalakten</button>
-                <button type="button" id="personnelNav_calendar" class="personnel-nav-btn" onclick="switchPersonnelView('calendar')">📅 Mitarbeiterkalender</button>
-                <button type="button" id="personnelNav_create" class="personnel-nav-btn" onclick="switchPersonnelView('create')">➕ Neuer Mitarbeiter</button>
-                <button type="button" id="personnelNav_archive" class="personnel-nav-btn" onclick="switchPersonnelView('archive')">📦 Kündigungsarchiv</button>
+                <div class="personnel-nav-group">
+                    <span class="personnel-nav-label">Arbeitsbereiche</span>
+                    <div class="personnel-nav-actions">
+                        <button type="button" id="personnelNav_overview" class="personnel-nav-btn active" onclick="switchPersonnelView('overview')">📊 Übersicht</button>
+                        <button type="button" id="personnelNav_files" class="personnel-nav-btn" onclick="switchPersonnelView('files')">🗂️ Personalakten</button>
+                        <button type="button" id="personnelNav_calendar" class="personnel-nav-btn" onclick="switchPersonnelView('calendar')">📅 Mitarbeiterkalender</button>
+                    </div>
+                </div>
+                <div class="personnel-nav-group personnel-nav-group-process">
+                    <span class="personnel-nav-label">Personalvorgänge</span>
+                    <div class="personnel-nav-actions">
+                        <button type="button" id="personnelNav_create" class="personnel-nav-btn" onclick="switchPersonnelView('create')">➕ Neuer Mitarbeiter</button>
+                        <button type="button" id="personnelNav_archive" class="personnel-nav-btn" onclick="switchPersonnelView('archive')">📦 Kündigungsarchiv</button>
+                    </div>
+                </div>
             </div>
 
             <div id="personnelPane_overview" class="personnel-pane active">
-                <div class="personnel-summary-grid">
-                    <article class="personnel-summary-card personnel-summary-team">
-                        <span class="personnel-summary-icon">👥</span>
-                        <div><small>Aktives Team</small><b id="personnelStatEmployees">0</b><span>freigeschaltete Mitarbeiter</span></div>
-                    </article>
-                    <article class="personnel-summary-card">
-                        <div class="personnel-summary-head"><span>🌴 Abwesenheiten</span><small>aktuell</small></div>
-                        <div class="personnel-summary-split">
-                            <div><span>Urlaub</span><b id="personnelStatVacation">0</b></div>
-                            <div><span>Entschuldigt</span><b id="personnelStatExcused">0</b></div>
-                        </div>
-                    </article>
-                    <article class="personnel-summary-card">
-                        <div class="personnel-summary-head"><span>🧭 Personalthemen</span><small>offen</small></div>
-                        <div class="personnel-summary-split">
-                            <div><span>Perso-Tickets</span><b id="personnelStatTickets">0</b></div>
-                            <div><span>Inaktivität</span><b id="personnelStatInactive">0</b></div>
-                        </div>
-                    </article>
-                    <article class="personnel-summary-card personnel-summary-attention">
-                        <div class="personnel-summary-head"><span>⚠️ Aufmerksamkeit</span><small>prüfen</small></div>
-                        <div class="personnel-summary-split">
-                            <div><span>Rückkehr</span><b id="personnelStatDue">0</b></div>
-                            <div><span>Kündigung</span><b id="personnelStatTermination">0</b></div>
-                        </div>
-                    </article>
+                <div class="personnel-overview-intro">
+                    <div>
+                        <span class="personnel-overview-kicker">Tagesübersicht</span>
+                        <h3>Was braucht heute Aufmerksamkeit?</h3>
+                        <p>Offene Vorgänge stehen bewusst zuerst. Reine Teamzahlen folgen danach als Orientierung.</p>
+                    </div>
+                    <span class="personnel-overview-hint">Priorität: offene Fälle vor Statistik</span>
                 </div>
-                <div class="personnel-overview-columns">
-                    <section class="personnel-section-card">
-                        <div class="personnel-section-title">
-                            <h3>🧭 Offene Personalthemen</h3>
-                            <span>Interne Hinweise und Vorgänge.</span>
-                        </div>
-                        <div id="personnelStatusAlerts"></div>
-                    </section>
-                    <section class="personnel-section-card">
-                        <div class="personnel-section-title">
-                            <h3>🔔 Rückkehrprüfungen</h3>
-                            <span>Nur Fälle mit Handlungsbedarf.</span>
-                        </div>
-                        <div id="personnelReturnAlerts"></div>
-                    </section>
-                </div>
+
+                <section class="personnel-priority-panel">
+                    <div class="personnel-priority-stats">
+                        <article class="personnel-summary-card personnel-summary-attention">
+                            <div class="personnel-summary-head"><span>⚠️ Handlungsbedarf</span><small>jetzt prüfen</small></div>
+                            <div class="personnel-summary-split">
+                                <div><span>Rückkehr</span><b id="personnelStatDue">0</b></div>
+                                <div><span>Kündigung</span><b id="personnelStatTermination">0</b></div>
+                            </div>
+                        </article>
+                        <article class="personnel-summary-card personnel-summary-topics">
+                            <div class="personnel-summary-head"><span>🧭 Offene Personalthemen</span><small>intern</small></div>
+                            <div class="personnel-summary-split">
+                                <div><span>Perso-Tickets</span><b id="personnelStatTickets">0</b></div>
+                                <div><span>Inaktivität</span><b id="personnelStatInactive">0</b></div>
+                            </div>
+                        </article>
+                    </div>
+                    <div class="personnel-overview-columns">
+                        <section class="personnel-section-card">
+                            <div class="personnel-section-title">
+                                <div><span class="personnel-section-kicker">Bearbeitung</span><h3>🧭 Offene Personalthemen</h3></div>
+                                <span>Direkt zur betroffenen Personalakte.</span>
+                            </div>
+                            <div id="personnelStatusAlerts"></div>
+                        </section>
+                        <section class="personnel-section-card">
+                            <div class="personnel-section-title">
+                                <div><span class="personnel-section-kicker">Rückmeldung</span><h3>🔔 Rückkehrprüfungen</h3></div>
+                                <span>Abgelaufene Abwesenheiten abschließen.</span>
+                            </div>
+                            <div id="personnelReturnAlerts"></div>
+                        </section>
+                    </div>
+                </section>
+
+                <section class="personnel-team-panel">
+                    <div class="personnel-team-panel-head">
+                        <div><span class="personnel-section-kicker">Orientierung</span><h3>Team im Blick</h3></div>
+                        <span>Aktueller Personalbestand und Abwesenheiten.</span>
+                    </div>
+                    <div class="personnel-team-summary">
+                        <article class="personnel-summary-card personnel-summary-team">
+                            <span class="personnel-summary-icon">👥</span>
+                            <div><small>Aktives Team</small><b id="personnelStatEmployees">0</b><span>freigeschaltete Mitarbeiter</span></div>
+                        </article>
+                        <article class="personnel-summary-card">
+                            <div class="personnel-summary-head"><span>🌴 Abwesenheiten</span><small>aktuell</small></div>
+                            <div class="personnel-summary-split">
+                                <div><span>Urlaub</span><b id="personnelStatVacation">0</b></div>
+                                <div><span>Entschuldigt</span><b id="personnelStatExcused">0</b></div>
+                            </div>
+                        </article>
+                    </div>
+                </section>
             </div>
 
             <div id="personnelPane_files" class="personnel-pane">
+                <div class="personnel-pane-guide">
+                    <div><span>1</span><b>Mitarbeiter auswählen</b><small>Links nach Name, DN oder Rang suchen.</small></div>
+                    <div><span>2</span><b>Personalakte bearbeiten</b><small>Stammdaten, Laufbahn und Maßnahmen bleiben klar getrennt.</small></div>
+                    <div><span>3</span><b>Historie prüfen</b><small>Änderungen und Vorgänge chronologisch nachvollziehen.</small></div>
+                </div>
                 <div class="personnel-files-layout">
                     <aside class="personnel-employee-sidebar">
                         <div class="personnel-sidebar-head"><b>👥 Mitarbeiter</b><small>Personalakte auswählen</small></div>
