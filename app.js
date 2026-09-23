@@ -974,7 +974,7 @@ const systemChangelogs = [
             "Prüfungen werden jetzt nach einzelnen richtigen Antwortmöglichkeiten bepunktet; falsch gesetzte Antworten ziehen innerhalb der jeweiligen Frage Punkte ab, jedoch nie unter 0 Punkte.",
             "Prüfungsdetails zeigen zuerst vollständig richtige und danach falsche oder nicht vollständig richtige Antworten inklusive Punktestand und hinterlegter richtiger Lösung.",
             "Nicht bestandene Prüfungen können von berechtigten Ausbildern oder der Ausbildungsleitung zur Wiederholung freigegeben werden, ohne den Fehlversuch zu löschen.",
-            "Ältere nicht bestandene Prüfungsergebnisse ohne gespeicherte Prüfungs-ID werden – wenn eindeutig möglich – über den Prüfungsnamen der aktuellen Prüfung zugeordnet und können ebenfalls wieder freigegeben werden.",
+            "Ältere nicht bestandene Prüfungsergebnisse ohne gespeicherte Prüfungs-ID werden, wenn eindeutig möglich, über den Prüfungsnamen der aktuellen Prüfung zugeordnet und können ebenfalls wieder freigegeben werden.",
             "Die wichtigen allgemeinen Sanktionsregeln wurden deutlich größer und auffälliger hervorgehoben.",
             "Die Darstellung wurde für Computer, Tablets und Smartphones angepasst."
         ]
@@ -2126,7 +2126,7 @@ function updateMaintenanceBanner() {
         return;
     }
     banner.style.display = 'flex';
-    const suffix = cachedMaintenanceState.message ? ` – ${cachedMaintenanceState.message}` : '';
+    const suffix = cachedMaintenanceState.message ? `: ${cachedMaintenanceState.message}` : '';
     banner.textContent = `🛠️ Wartungsmodus aktiv${suffix}`;
 }
 
@@ -6245,7 +6245,7 @@ async function sendMissingPhotoEmployeeNotice(uId) {
     }
 
     const recipientName = `${recipient.vorname || ''} ${recipient.nachname || ''}`.trim() || uId;
-    const recipientLabel = `${formatStaffDn(recipient.dn)} – ${recipientName}`;
+    const recipientLabel = `${formatStaffDn(recipient.dn)} · ${recipientName}`;
     if (!confirm(`Foto-Hinweis jetzt an ${recipientLabel} senden?`)) return;
 
     const title = 'Fehlendes Mitarbeiterfoto';
@@ -7646,7 +7646,7 @@ async function sendEmployeeNotice() {
     recipients.forEach(([recipientId, recipient]) => {
         const noticeId = db.ref(`data/employeeNotices/${recipientId}`).push().key;
         const recipientName = `${recipient.vorname || ''} ${recipient.nachname || ''}`.trim();
-        recipientNames.push(`${formatStaffDn(recipient.dn)} – ${recipientName || recipientId}`);
+        recipientNames.push(`${formatStaffDn(recipient.dn)} · ${recipientName || recipientId}`);
         updates[`${recipientId}/${noticeId}`] = {
             id: noticeId,
             recipientId,
@@ -7764,7 +7764,7 @@ function renderEmployeeNoticeFeedPanels() {
                         return `
                             <div class="employee-notice-manage-row">
                                 <div class="employee-notice-manage-main">
-                                    <b>${notice.recipientDn ? escapeHtml(formatStaffDn(notice.recipientDn)) + ' – ' : ''}${escapeHtml(notice.recipientName || recipientId)}</b>
+                                    <b>${notice.recipientDn ? escapeHtml(formatStaffDn(notice.recipientDn)) + ' · ' : ''}${escapeHtml(notice.recipientName || recipientId)}</b>
                                     <span>${escapeHtml(notice.title || 'Hinweis')}</span>
                                     <small>von ${escapeHtml(notice.senderName || 'Leitung')} · ${formatTimestampShort(notice.createdAt)}</small>
                                 </div>
