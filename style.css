@@ -6048,3 +6048,247 @@ tbody tr:hover {
         grid-row: 1;
     }
 }
+
+
+/* ============================================================
+   v6.9.7 – Personalabteilung: klare Arbeits- und Führungshierarchie
+   ============================================================ */
+.personnel-nav {
+    display: grid;
+    grid-template-columns: minmax(0,1.35fr) minmax(0,.85fr);
+    gap: 10px;
+    padding: 10px;
+}
+.personnel-nav-group {
+    min-width: 0;
+    padding: 8px;
+    border: 1px solid rgba(148,163,184,.10);
+    border-radius: 11px;
+    background: rgba(15,23,42,.28);
+}
+.personnel-nav-group-process {
+    background: rgba(8,12,20,.32);
+}
+.personnel-nav-label {
+    display: block;
+    margin: 0 4px 7px;
+    color: var(--text-muted);
+    font-size: 9px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: .75px;
+}
+.personnel-nav-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+.personnel-nav-actions .personnel-nav-btn {
+    flex: 1 1 128px;
+}
+.personnel-overview-intro {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 18px;
+    padding: 4px 2px 13px;
+}
+.personnel-overview-intro h3 {
+    margin: 3px 0 4px;
+    font-size: 18px;
+}
+.personnel-overview-intro p {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 11px;
+}
+.personnel-overview-kicker,
+.personnel-section-kicker {
+    color: #f9a8d4;
+    font-size: 9px;
+    font-weight: 900;
+    letter-spacing: .8px;
+    text-transform: uppercase;
+}
+.personnel-overview-hint {
+    flex: 0 0 auto;
+    padding: 6px 9px;
+    border: 1px solid rgba(244,114,182,.18);
+    border-radius: 999px;
+    background: rgba(236,72,153,.05);
+    color: var(--text-muted);
+    font-size: 9px;
+    font-weight: 800;
+}
+.personnel-priority-panel {
+    padding: 13px;
+    border: 1px solid rgba(244,63,94,.14);
+    border-radius: 16px;
+    background: linear-gradient(145deg,rgba(244,63,94,.035),rgba(8,12,20,.28));
+}
+.personnel-priority-stats {
+    display: grid;
+    grid-template-columns: repeat(2,minmax(0,1fr));
+    gap: 10px;
+    margin-bottom: 10px;
+}
+.personnel-priority-stats .personnel-summary-card {
+    min-height: 102px;
+}
+.personnel-summary-topics {
+    border-color: rgba(245,158,11,.15);
+}
+.personnel-priority-panel .personnel-overview-columns .personnel-section-card {
+    background: rgba(8,12,20,.38);
+}
+.personnel-section-title > div {
+    min-width: 0;
+}
+.personnel-section-title > div h3,
+.personnel-team-panel-head h3 {
+    margin: 2px 0 0;
+}
+.personnel-team-panel {
+    margin-top: 14px;
+    padding: 13px;
+    border: 1px solid rgba(148,163,184,.10);
+    border-radius: 16px;
+    background: rgba(15,23,42,.32);
+}
+.personnel-team-panel-head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 10px;
+    padding: 0 2px;
+}
+.personnel-team-panel-head h3 {
+    font-size: 14px;
+}
+.personnel-team-panel-head > span {
+    color: var(--text-muted);
+    font-size: 10px;
+}
+.personnel-team-summary {
+    display: grid;
+    grid-template-columns: minmax(0,.8fr) minmax(0,1.2fr);
+    gap: 10px;
+}
+.personnel-team-summary .personnel-summary-card {
+    min-height: 96px;
+}
+.personnel-pane-guide {
+    display: grid;
+    grid-template-columns: repeat(3,minmax(0,1fr));
+    gap: 8px;
+    margin-bottom: 12px;
+    padding: 10px;
+    border: 1px solid rgba(56,189,248,.11);
+    border-radius: 14px;
+    background: rgba(8,12,20,.30);
+}
+.personnel-pane-guide > div {
+    display: grid;
+    grid-template-columns: 27px minmax(0,1fr);
+    grid-template-rows: auto auto;
+    column-gap: 8px;
+    align-items: center;
+    min-width: 0;
+    padding: 8px 9px;
+    border-radius: 10px;
+    background: rgba(15,23,42,.42);
+}
+.personnel-pane-guide > div > span {
+    grid-row: 1 / 3;
+    width: 27px;
+    height: 27px;
+    display: grid;
+    place-items: center;
+    border-radius: 9px;
+    background: rgba(56,189,248,.10);
+    border: 1px solid rgba(56,189,248,.18);
+    color: #7dd3fc;
+    font-size: 11px;
+    font-weight: 900;
+}
+.personnel-pane-guide b {
+    font-size: 10px;
+}
+.personnel-pane-guide small {
+    margin-top: 1px;
+    color: var(--text-muted);
+    font-size: 9px;
+    line-height: 1.25;
+}
+.personnel-files-layout {
+    gap: 14px;
+}
+.personnel-employee-sidebar {
+    border-top: 2px solid rgba(56,189,248,.28);
+}
+.personnel-employee-detail {
+    min-width: 0;
+}
+.personnel-file-head {
+    border-left: 3px solid rgba(244,114,182,.52);
+}
+.personnel-profile-card {
+    border-top: 2px solid rgba(56,189,248,.24);
+}
+.personnel-rank-card {
+    border-top: 2px solid rgba(168,85,247,.24);
+}
+.personnel-timeline-card {
+    border-top: 2px solid rgba(245,158,11,.20);
+}
+.personnel-action-card {
+    opacity: .96;
+}
+.personnel-action-card.collapsed {
+    background: rgba(8,12,20,.22);
+}
+#personnelPane_calendar > .personnel-section-card:first-child {
+    border-top: 2px solid rgba(56,189,248,.22);
+}
+#personnelPane_calendar > .personnel-section-card:last-child {
+    border-top: 2px solid rgba(245,158,11,.20);
+}
+#personnelPane_create .personnel-create-card {
+    border-top: 2px solid rgba(34,197,94,.24);
+}
+#personnelPane_archive .personnel-section-card {
+    border-top: 2px solid rgba(244,63,94,.22);
+}
+
+@media (max-width: 900px) {
+    .personnel-nav {
+        grid-template-columns: 1fr;
+    }
+    .personnel-overview-intro,
+    .personnel-team-panel-head {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+    .personnel-priority-stats,
+    .personnel-team-summary {
+        grid-template-columns: 1fr;
+    }
+    .personnel-pane-guide {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 720px) {
+    .personnel-nav-actions {
+        display: grid;
+        grid-template-columns: 1fr;
+    }
+    .personnel-overview-hint {
+        white-space: normal;
+    }
+    .personnel-priority-panel,
+    .personnel-team-panel {
+        padding: 10px;
+    }
+}
