@@ -1,5 +1,5 @@
 // ============================================================
-//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.9.6
+//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.9.7
 //  Firebase Realtime Database (Compat SDK v10)
 // ============================================================
 
@@ -182,7 +182,7 @@ const db = firebase.database();
 const auth = firebase.auth();
 const FIREBASE_AUTH_EMAIL_DOMAIN = 'mmd-login.invalid';
 
-const APP_VERSION = 'v6.9.6';
+const APP_VERSION = 'v6.9.7';
 const PRESENCE_HEARTBEAT_MS = 30 * 1000;
 const PRESENCE_STALE_MS = 3 * 60 * 1000;
 
@@ -567,6 +567,16 @@ let hierarchieDaten = JSON.parse(JSON.stringify(defaultHierarchieData));
 
 /* ── Vollständiger Gesamt-Changelog (Entwicklungsverlauf) ───── */
 const systemChangelogs = [
+    {
+        id: "sys_v6_9_7", version: "v6.9.7", date: "23.09.2026", ts: 1790140740000,
+        category: "Verbesserung", title: "Personalabteilung klarer strukturiert",
+        changes: [
+            "Die Personalübersicht priorisiert jetzt offene Fälle und Rückkehrprüfungen vor reinen Teamzahlen.",
+            "Navigation und Personalvorgänge sind visuell in Arbeitsbereiche und Verwaltungsprozesse getrennt.",
+            "Die Personalakten führen mit einer klaren Drei-Schritt-Orientierung von Mitarbeiterauswahl über Bearbeitung bis zur Historie.",
+            "Die bestehende Personal- und Berechtigungslogik bleibt unverändert; es wurden keine Firebase Rules angepasst."
+        ]
+    },
     {
         id: "sys_v6_9_6", version: "v6.9.6", date: "22.09.2026", ts: 1790095800000,
         category: "Fehlerbehebung", title: "Changelog Archiv technisch neu aufgebaut",
