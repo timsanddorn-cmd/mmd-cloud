@@ -1,5 +1,5 @@
 // ============================================================
-//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.9.8
+//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.9.9
 //  Firebase Realtime Database (Compat SDK v10)
 // ============================================================
 
@@ -182,7 +182,7 @@ const db = firebase.database();
 const auth = firebase.auth();
 const FIREBASE_AUTH_EMAIL_DOMAIN = 'mmd-login.invalid';
 
-const APP_VERSION = 'v6.9.8';
+const APP_VERSION = 'v6.9.9';
 const PRESENCE_HEARTBEAT_MS = 30 * 1000;
 const PRESENCE_STALE_MS = 3 * 60 * 1000;
 
@@ -568,6 +568,16 @@ let hierarchieDaten = JSON.parse(JSON.stringify(defaultHierarchieData));
 /* ── Vollständiger Gesamt-Changelog (Entwicklungsverlauf) ───── */
 const systemChangelogs = [
     {
+        id: "sys_v6_9_9", version: "v6.9.9", date: "23.09.2026", ts: 1790145000000,
+        category: "Verbesserung", title: "Kündigungsarchiv löschbar und Texttrenner bereinigt",
+        changes: [
+            "Berechtigte Personalmitarbeiter können Einträge im Kündigungsarchiv nach Sicherheitsabfrage löschen.",
+            "Gelöschte historische Masterlisten-Einträge werden dauerhaft vorgemerkt und nicht erneut importiert.",
+            "Die Firebase-Regeln erlauben die eng begrenzte Legacy-Struktur historischer Kündigungseinträge und die zugehörigen Löschmarker.",
+            "Unnötige optische Gedankenstriche in sichtbaren Überschriften und Hinweistexte wurden bereinigt; echte Datumsbereiche und normale Wort-Bindestriche bleiben erhalten."
+        ]
+    },
+    {
         id: "sys_v6_9_8", version: "v6.9.8", date: "23.09.2026", ts: 1790143200000,
         category: "Datenpflege", title: "Historisches Kündigungsarchiv aus Masterliste übernommen",
         changes: [
@@ -659,7 +669,7 @@ const systemChangelogs = [
     },
     {
         id: "sys_v6_8_14", version: "v6.8.14", date: "22.09.2026", ts: 1790067600000,
-        category: "Verbesserung", title: "Personalverwaltung – Arbeitsabläufe vervollständigt",
+        category: "Verbesserung", title: "Personalverwaltung: Arbeitsabläufe vervollständigt",
         changes: [
             "Eingewiesen durch und Eingestellt durch sind Dropdowns mit Ausbildern und Personalabteilung.",
             "Vereidigung, EHK und Behandlungseinweisung verwenden nur noch Ja/Nein und standardmäßig Nein.",
@@ -11698,8 +11708,9 @@ async function importPersonnelMasterlistDefaults(){
     personnelMasterlistImportRunning=true;
     try{
         const departurePromise=p.canManageDepartures?db.ref('data/personnelDepartures').once('value'):Promise.resolve({val:()=>({})});
-        const [uSnap,profileSnap,rankSnap,careerSnap,departureSnap]=await Promise.all([db.ref('data/users').once('value'),db.ref('data/personnelProfiles').once('value'),db.ref('data/employeeRanks').once('value'),db.ref('data/employeeCareerPaths').once('value'),departurePromise]);
-        const users=uSnap.val()||{},profiles=profileSnap.val()||{},ranks=rankSnap.val()||{},careers=careerSnap.val()||{},departuresStored=departureSnap.val()||{},byDn=new Map();
+        const departureDeletionPromise=p.canManageDepartures?db.ref('data/personnelDepartureDeletions').once('value'):Promise.resolve({val:()=>({})});
+        const [uSnap,profileSnap,rankSnap,careerSnap,departureSnap,departureDeletionSnap]=await Promise.all([db.ref('data/users').once('value'),db.ref('data/personnelProfiles').once('value'),db.ref('data/employeeRanks').once('value'),db.ref('data/employeeCareerPaths').once('value'),departurePromise,departureDeletionPromise]);
+        const users=uSnap.val()||{},profiles=profileSnap.val()||{},ranks=rankSnap.val()||{},careers=careerSnap.val()||{},departuresStored=departureSnap.val()||{},departureDeletions=departureDeletionSnap.val()||{},byDn=new Map();
         Object.entries(users).forEach(([id,u])=>{if(u?.dn!==undefined&&u?.dn!==null)byDn.set(normalizePersonnelDn(u.dn),[id,u]);});
         const updates={},now=Date.now(),author=personnelUserName(getUserAccountId(sessionUser)),authorId=getUserAccountId(sessionUser);let matched=0,changed=0,legacyDeparturesAdded=0;
         const set=(path,value)=>{updates[path]=value;changed++;};
@@ -11740,7 +11751,7 @@ async function importPersonnelMasterlistDefaults(){
             for(const seed of PERSONNEL_MASTERLIST_DEPARTURE_SEED){
                 const key='legacy_'+seed.sourceId;
                 const signature=departureSignature(seed);
-                if(departuresStored[key]||existingSignatures.has(signature))continue;
+                if(departureDeletions[key]||departuresStored[key]||existingSignatures.has(signature))continue;
                 updates[`data/personnelDepartures/${key}`]={
                     dn:seed.dn,
                     name:seed.name,
@@ -11887,7 +11898,26 @@ async function terminatePersonnelEmployee(uId){
 
 function renderPersonnelArchive(){
     const box=document.getElementById('personnelArchiveList');if(!box)return;const q=(document.getElementById('personnelArchiveSearch')?.value||'').trim().toLowerCase(),rows=Object.entries(cachedPersonnelDepartures||{}).filter(([,x])=>x).filter(([,x])=>!q||`${x.name||''} ${x.dn||''} ${x.lastRank||''} ${x.reason||''}`.toLowerCase().includes(q)).sort((a,b)=>String(b[1].departureDate||'').localeCompare(String(a[1].departureDate||''))),p=getPersonnelPermissions();
-    box.innerHTML=rows.length?rows.map(([id,x])=>{const u=cachedUsers?.[x.userId],rehired=!!x.rehiredAt,canRehire=p.canManageDepartures&&u&&u.status!=='approved'&&!rehired;return `<article class="personnel-archive-row"><div class="personnel-archive-main"><span class="personnel-file-dn">${escapeHtml(formatStaffDn(x.dn))}</span><div><h4>${escapeHtml(x.name||x.userId||'Unbekannt')}</h4><small>${escapeHtml(formatPersonnelDate(x.departureDate))} · ${escapeHtml(x.lastRank||'Rang nicht hinterlegt')}${x.legacy?' · Historischer Bestand':''}</small></div></div><div class="personnel-archive-reason"><span>Grund</span><b>${escapeHtml(x.reason||'—')}</b></div><div class="personnel-archive-meta"><span>Eingestellt: <b>${escapeHtml(formatPersonnelDate(x.employmentDate||''))}</b></span><span>Gekündigt durch: <b>${escapeHtml(x.terminatedBy||'—')}</b></span><span>Diensttage: <b>${Number(x.serviceDays)||0}</b></span>${rehired?`<span class="personnel-status-ok">✅ Wiedereingestellt am ${escapeHtml(formatPersonnelDate(x.rehiredDate||''))}</span>`:''}</div>${canRehire?`<button type="button" class="btn personnel-primary-btn" onclick="rehirePersonnelEmployee('${id}')">↩️ Wiedereinstellen</button>`:''}</article>`;}).join(''):'<div class="personnel-empty-state">Keine Einträge im Kündigungsarchiv gefunden.</div>';
+    box.innerHTML=rows.length?rows.map(([id,x])=>{const u=cachedUsers?.[x.userId],rehired=!!x.rehiredAt,canRehire=p.canManageDepartures&&u&&u.status!=='approved'&&!rehired,canDelete=p.canManageDepartures;return `<article class="personnel-archive-row"><div class="personnel-archive-main"><span class="personnel-file-dn">${escapeHtml(formatStaffDn(x.dn))}</span><div><h4>${escapeHtml(x.name||x.userId||'Unbekannt')}</h4><small>${escapeHtml(formatPersonnelDate(x.departureDate))} · ${escapeHtml(x.lastRank||'Rang nicht hinterlegt')}${x.legacy?' · Historischer Bestand':''}</small></div></div><div class="personnel-archive-reason"><span>Grund</span><b>${escapeHtml(x.reason||'—')}</b></div><div class="personnel-archive-meta"><span>Eingestellt: <b>${escapeHtml(formatPersonnelDate(x.employmentDate||''))}</b></span><span>Gekündigt durch: <b>${escapeHtml(x.terminatedBy||'—')}</b></span><span>Diensttage: <b>${Number(x.serviceDays)||0}</b></span>${rehired?`<span class="personnel-status-ok">✅ Wiedereingestellt am ${escapeHtml(formatPersonnelDate(x.rehiredDate||''))}</span>`:''}</div><div class="personnel-archive-actions">${canRehire?`<button type="button" class="btn personnel-primary-btn" onclick="rehirePersonnelEmployee('${id}')">↩️ Wiedereinstellen</button>`:''}${canDelete?`<button type="button" class="btn personnel-small-btn danger" onclick="deletePersonnelArchiveEntry('${id}')">🗑️ Löschen</button>`:''}</div></article>`;}).join(''):'<div class="personnel-empty-state">Keine Einträge im Kündigungsarchiv gefunden.</div>';
+}
+async function deletePersonnelArchiveEntry(departureId){
+    const p=getPersonnelPermissions();if(!p.canManageDepartures)return;
+    const dep=cachedPersonnelDepartures?.[departureId];if(!dep)return;
+    const label=dep.name||dep.userId||'Diesen Archiveintrag';
+    if(!confirm(`${label} wirklich dauerhaft aus dem Kündigungsarchiv löschen? Dieser Vorgang kann nicht rückgängig gemacht werden.`))return;
+    const now=Date.now(),author=personnelUserName(getUserAccountId(sessionUser)),authorId=getUserAccountId(sessionUser),updates={};
+    updates[`data/personnelDepartures/${departureId}`]=null;
+    if(dep.legacy===true||String(dep.source||'')===PERSONNEL_MASTERLIST_DEPARTURE_SOURCE||String(departureId).startsWith('legacy_masterlist_')){
+        updates[`data/personnelDepartureDeletions/${departureId}`]={deletedAt:now,deletedBy:author,deletedById:authorId,sourceEntryId:String(dep.sourceEntryId||'')};
+    }
+    try{
+        await db.ref().update(updates);
+        logAdminAudit('Kündigungsarchiv Eintrag gelöscht',`${label} (${formatStaffDn(dep.dn||'')}) wurde aus dem Kündigungsarchiv gelöscht.`);
+        showToast('✅ Archiveintrag wurde gelöscht.','success');
+    }catch(err){
+        console.error(err);
+        showToast('⚠️ Archiveintrag konnte nicht gelöscht werden.','error',5500);
+    }
 }
 async function rehirePersonnelEmployee(departureId){
     const p=getPersonnelPermissions();if(!p.canManageDepartures)return;const dep=cachedPersonnelDepartures?.[departureId];if(!dep?.userId||!cachedUsers?.[dep.userId]){alert('Das zugehörige Mitarbeiterkonto wurde nicht gefunden.');return;}const uId=dep.userId;if(!requireTargetUserManagement(uId))return;if(!confirm(`${personnelUserName(uId)} wieder einstellen? Die bestehende Personalakte und Historie bleiben erhalten.`))return;
@@ -11986,7 +12016,7 @@ if (typeof window !== 'undefined') {
         switchPersonnelView, renderPersonnelWorkspace, renderPersonnelEmployeeList, selectPersonnelEmployee,
         renderPersonnelCalendar, renderPersonnelCreateForm, savePersonnelCareer, savePersonnelRanks, togglePersonnelProfileEdit,
         addPersonnelSanction, editPersonnelSanction, cancelPersonnelSanctionEdit, savePersonnelSanctionEdit, deletePersonnelSanction, addPersonnelNote, editPersonnelNote, cancelPersonnelNoteEdit, savePersonnelNoteEdit, deletePersonnelNote, addPersonnelAbsence, editPersonnelAbsence, cancelPersonnelAbsenceEdit, savePersonnelAbsenceEdit, endPersonnelAbsenceEarly, confirmPersonnelReturn, createPersonnelEmployee,
-        savePersonnelProfile, terminatePersonnelEmployee, renderPersonnelArchive, rehirePersonnelEmployee
+        savePersonnelProfile, terminatePersonnelEmployee, renderPersonnelArchive, deletePersonnelArchiveEntry, rehirePersonnelEmployee
     });
 }
 
