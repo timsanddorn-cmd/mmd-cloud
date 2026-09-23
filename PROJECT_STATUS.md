@@ -1,8 +1,8 @@
 # MMD Cloud – PROJECT STATUS
 
 **Aktuell bestätigte stabile Live-Version:** v6.8.7j  
-**Aktueller Entwicklungsstand:** v6.9.9  
-**Status v6.9.9:** 🟡 KÜNDIGUNGSARCHIV LÖSCHBAR / LEGACY-IMPORT ABGESICHERT / LIVE-TEST AUSSTEHEND  
+**Aktueller Entwicklungsstand:** v6.9.10  
+**Status v6.9.10:** 🟡 KÜNDIGUNGSARCHIV MIT DIREKTEM MASTERLISTEN-FALLBACK / LIVE-TEST AUSSTEHEND  
 **Datum:** 23.09.2026
 
 ---
@@ -766,3 +766,29 @@ WICHTIG:
 Teststatus:
 - Syntax, JSON, Diff und Mergeability vor Merge prüfen,
 - anschließend Live-Test des Kündigungsarchivs erforderlich.
+
+
+---
+
+## 34. v6.9.10 Kündigungsarchiv mit direktem Masterlisten-Fallback
+
+Ursache:
+- die historischen Kündigungen wurden bisher erst sichtbar, wenn der einmalige Firebase-Import erfolgreich geschrieben hatte,
+- bei blockiertem oder noch nicht veröffentlichtem Rules-Stand blieb das Archiv deshalb leer.
+
+Geändert:
+- das Kündigungsarchiv kombiniert gespeicherte Firebase-Einträge direkt mit den 47 historischen Datensätzen aus der Masterliste,
+- die Anzeige funktioniert dadurch unabhängig vom einmaligen Persistenz-Import,
+- bereits gelöschte historische Einträge werden über `personnelDepartureDeletions` weiterhin ausgeblendet,
+- doppelte Datensätze werden anhand einer Signatur aus DN, Name, Austrittsdatum und Grund vermieden,
+- der bestehende Firebase-Import bleibt erhalten.
+
+Firebase Rules:
+- Leser des Kündigungsarchivs mit `canViewPersonnelRecords` dürfen nun auch die Löschmarker lesen,
+- Schreibrechte für Löschmarker bleiben unverändert auf Master Admin bzw. `canManagePersonnelDepartures` beschränkt,
+- `database.rules.final.json` wurde erneut geändert und muss vollständig neu veröffentlicht werden.
+
+Teststatus:
+- nach Merge Hard Refresh,
+- Kündigungsarchiv öffnen,
+- historische Einträge müssen sofort sichtbar sein.
