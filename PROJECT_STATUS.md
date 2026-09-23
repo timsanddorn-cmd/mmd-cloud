@@ -1,8 +1,8 @@
 # MMD Cloud – PROJECT STATUS
 
 **Aktuell bestätigte stabile Live-Version:** v6.8.7j  
-**Aktueller Entwicklungsstand:** v6.9.8  
-**Status v6.9.8:** 🟡 HISTORISCHES KÜNDIGUNGSARCHIV AUS MASTERLISTE ERGÄNZT / LIVE-TEST AUSSTEHEND  
+**Aktueller Entwicklungsstand:** v6.9.9  
+**Status v6.9.9:** 🟡 KÜNDIGUNGSARCHIV LÖSCHBAR / LEGACY-IMPORT ABGESICHERT / LIVE-TEST AUSSTEHEND  
 **Datum:** 23.09.2026
 
 ---
@@ -736,4 +736,33 @@ Sicherheit:
 
 Teststatus:
 - Syntax-/Diff-Prüfung vor Merge,
+- anschließend Live-Test des Kündigungsarchivs erforderlich.
+
+
+---
+
+## 33. v6.9.9 Kündigungsarchiv löschbar und Legacy-Import abgesichert
+
+Geändert:
+- berechtigte Personalmitarbeiter können Einträge im Kündigungsarchiv nach Sicherheitsabfrage löschen,
+- normale Archivdatensätze werden direkt entfernt,
+- historische Masterlisten-Einträge werden ebenfalls entfernt und zusätzlich mit einem dauerhaften Löschmarker versehen,
+- gelöschte historische Einträge werden dadurch bei späteren Masterlisten-Abgleichen nicht erneut angelegt,
+- Löschvorgänge werden weiterhin im Admin-Audit protokolliert,
+- Archivaktionen wurden optisch zusammengefasst,
+- unnötige sichtbare Gedankenstriche in Überschriften/Hinweistexte wurden bereinigt,
+- echte Datumsbereiche und normale Wort-Bindestriche bleiben unverändert.
+
+Firebase Rules:
+- `personnelDepartures` erlaubt weiterhin die normale bestehende Kündigungsstruktur,
+- zusätzlich ist die eng begrenzte Legacy-Struktur der historischen Masterlisten-Einträge zugelassen,
+- neuer Pfad `personnelDepartureDeletions` speichert ausschließlich Löschmarker für historische Archivdaten,
+- Schreibzugriff bleibt auf Master Admin bzw. `canManagePersonnelDepartures` beschränkt.
+
+WICHTIG:
+- `database.rules.final.json` wurde in v6.9.9 geändert,
+- die aktuelle Datei muss nach dem Merge erneut vollständig in Firebase veröffentlicht werden.
+
+Teststatus:
+- Syntax, JSON, Diff und Mergeability vor Merge prüfen,
 - anschließend Live-Test des Kündigungsarchivs erforderlich.
