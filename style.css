@@ -6292,3 +6292,40 @@ tbody tr:hover {
         padding: 10px;
     }
 }
+
+
+/* ============================================================
+   v6.9.9 – Kündigungsarchiv Aktionen
+   ============================================================ */
+.personnel-archive-actions{
+    display:flex;
+    flex-direction:column;
+    align-items:stretch;
+    gap:7px;
+    min-width:132px;
+}
+.personnel-archive-actions .btn{
+    width:100%;
+    margin:0;
+    white-space:nowrap;
+}
+@media(max-width:1000px){
+    .personnel-archive-actions{
+        grid-column:1/-1;
+        flex-direction:row;
+        flex-wrap:wrap;
+    }
+    .personnel-archive-actions .btn{
+        width:auto;
+        flex:1 1 160px;
+    }
+}
+@media(max-width:650px){
+    .personnel-archive-actions{
+        grid-column:auto;
+        flex-direction:column;
+    }
+    .personnel-archive-actions .btn{
+        width:100%;
+    }
+}
