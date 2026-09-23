@@ -1,8 +1,8 @@
 # MMD Cloud – PROJECT STATUS
 
 **Aktuell bestätigte stabile Live-Version:** v6.8.7j  
-**Aktueller Entwicklungsstand:** v6.9.10  
-**Status v6.9.10:** 🟡 KÜNDIGUNGSARCHIV MIT DIREKTEM MASTERLISTEN-FALLBACK / LIVE-TEST AUSSTEHEND  
+**Aktueller Entwicklungsstand:** v6.9.11  
+**Status v6.9.11:** 🟡 QUALITÄTSRUNDE UI / VERLINKUNGEN / RECHTE ABGESCHLOSSEN / LIVE-TEST AUSSTEHEND  
 **Datum:** 23.09.2026
 
 ---
@@ -792,3 +792,43 @@ Teststatus:
 - nach Merge Hard Refresh,
 - Kündigungsarchiv öffnen,
 - historische Einträge müssen sofort sichtbar sein.
+
+
+---
+
+## 35. v6.9.11 Qualitätsrunde UI, Verlinkungen und Rechte
+
+Begriffe:
+- sichtbare Bezeichnungen auf `Mitarbeiterkartei` vereinheitlicht,
+- sichtbare Bezeichnungen auf `Chief-Ebene` vereinheitlicht,
+- interne Rollen-ID `chiefebene` unverändert gelassen,
+- gemischte deutsch/englische Überschrift `Chief-Ebene of SAMD` zu `Chief-Ebene des SAMD` bereinigt.
+
+UI-Wartbarkeit:
+- 76 wiederkehrende Inline-Style-Vorkommen aus `index.html` entfernt,
+- dafür zentrale CSS-Hilfsklassen für Titel, Abschnittsköpfe, Grid-Layouts, Aktionszeilen und Hinweistext ergänzt,
+- versteckte Elemente und dynamisch per JavaScript gesteuerte `display`-Werte bewusst nicht auf Klassen umgestellt.
+
+Verlinkungs- und Funktionsaudit:
+- 528 HTML-IDs geprüft: keine doppelten IDs,
+- alle 14 per `switchTab()` verwendeten Tab-Ziele existieren,
+- 225 statische Inline-Aktionen geprüft: keine fehlende eigene Handler-Funktion,
+- 104 dynamisch erzeugte Handler geprüft: keine fehlende Anwendungsfunktion,
+- 126 Formular-Labels geprüft: jedes `for` besitzt ein vorhandenes Ziel,
+- keine leeren `href`-Links und keine kaputten internen Anker gefunden,
+- Chief-Materialverwaltung: alle verwendeten Handler vorhanden,
+- Admin-/Alt-Funktionen: keine toten dynamischen Aktionshandler gefunden.
+
+Rollen und Sonderrechte:
+- 43 sichtbare Rollen-/Rechte-Steuerelemente,
+- 43 Einträge im `ROLE_PROPERTY_MAP`,
+- 43 Server-Berechtigungen in den Firebase Rules,
+- Zuordnung 43/43 ohne fehlendes oder zusätzliches Recht.
+
+Stabilitätsstatus:
+- `v6.8.7j` bleibt vorerst die zuletzt bestätigte stabile Live-Version,
+- `v6.9.11` bleibt Entwicklungsstand bis der aktuelle Live-Test inklusive Kündigungsarchiv bestätigt ist.
+
+Firebase Rules:
+- `database.rules.final.json` wurde in v6.9.11 nicht verändert,
+- keine erneute Rules-Veröffentlichung allein wegen v6.9.11 erforderlich.

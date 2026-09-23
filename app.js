@@ -1,5 +1,5 @@
 // ============================================================
-//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.9.10
+//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.9.11
 //  Firebase Realtime Database (Compat SDK v10)
 // ============================================================
 
@@ -182,7 +182,7 @@ const db = firebase.database();
 const auth = firebase.auth();
 const FIREBASE_AUTH_EMAIL_DOMAIN = 'mmd-login.invalid';
 
-const APP_VERSION = 'v6.9.10';
+const APP_VERSION = 'v6.9.11';
 const PRESENCE_HEARTBEAT_MS = 30 * 1000;
 const PRESENCE_STALE_MS = 3 * 60 * 1000;
 
@@ -503,7 +503,7 @@ function canSearchSection(tabId){if(isMaintenanceRestrictedSession())return tabI
 function buildGlobalSearchResults(query){
     const q=normalizeUiSearchText(query);
     const sections=[
-        ['docTab','📝','Dokumentation & Einsatz','patient behandlung einsatz material medizin'],['statsTab','📊','Statistik & Archiv','statistik archiv schicht patienten protokoll'],['calendarTab','📅','Kalender','kalender termine dienstbesprechung'],['examTab','🎓','Ausbildung','ausbildung pruefung prüfung'],['personnelTab','💼','Personalabteilung','personal personalakte sanktion rankup rang urlaub abwesenheit perso ticket inaktiv kündigung wiedereinstellung archiv qualifikation'],['staffTab','👥','Mitarbeiter Kartei','mitarbeiter personal kartei dn'],['hierarchieTab','🌳','Hierarchie','hierarchie leitung abteilung'],['miscTab','💰','Gehaltstabelle','gehalt sold rang'],['guideTab','📋','Funk & Codes','funk codes status ten code streife'],['commandTab','💻','Commands','command befehl commands'],['linksTab','🔗','Links & Dokumente','links dokumente leitfaden'],['sanctionsTab','⚖️','Sanktionskatalog','sanktion paragraf paragraph verstoß verstoss'],['newsTab','📰','News','news schwarzes brett ankuendigung ankündigung'],['settingsTab','⚙️','Einstellungen','einstellungen passwort diensttage'],['chiefTab','⭐','Chief Ebene','chief material bestand']
+        ['docTab','📝','Dokumentation & Einsatz','patient behandlung einsatz material medizin'],['statsTab','📊','Statistik & Archiv','statistik archiv schicht patienten protokoll'],['calendarTab','📅','Kalender','kalender termine dienstbesprechung'],['examTab','🎓','Ausbildung','ausbildung pruefung prüfung'],['personnelTab','💼','Personalabteilung','personal personalakte sanktion rankup rang urlaub abwesenheit perso ticket inaktiv kündigung wiedereinstellung archiv qualifikation'],['staffTab','👥','Mitarbeiterkartei','mitarbeiter personal kartei dn'],['hierarchieTab','🌳','Hierarchie','hierarchie leitung abteilung'],['miscTab','💰','Gehaltstabelle','gehalt sold rang'],['guideTab','📋','Funk & Codes','funk codes status ten code streife'],['commandTab','💻','Commands','command befehl commands'],['linksTab','🔗','Links & Dokumente','links dokumente leitfaden'],['sanctionsTab','⚖️','Sanktionskatalog','sanktion paragraf paragraph verstoß verstoss'],['newsTab','📰','News','news schwarzes brett ankuendigung ankündigung'],['settingsTab','⚙️','Einstellungen','einstellungen passwort diensttage'],['chiefTab','⭐','Chief-Ebene','chief material bestand']
     ].filter(([tabId])=>canSearchSection(tabId));
     const results=[];
     sections.forEach(([tabId,icon,title,keywords])=>{if(!q||normalizeUiSearchText(title+' '+keywords).includes(q))results.push({kind:'section',tabId,icon,title,subtitle:'Bereich öffnen'});});
@@ -567,6 +567,16 @@ let hierarchieDaten = JSON.parse(JSON.stringify(defaultHierarchieData));
 
 /* ── Vollständiger Gesamt-Changelog (Entwicklungsverlauf) ───── */
 const systemChangelogs = [
+    {
+        id: "sys_v6_9_11", version: "v6.9.11", date: "23.09.2026", ts: 1790150400000,
+        category: "Qualität", title: "Begriffe, UI-Wartbarkeit und Rechte geprüft",
+        changes: [
+            "Sichtbare Bezeichnungen wurden auf Mitarbeiterkartei und Chief-Ebene vereinheitlicht.",
+            "Wiederkehrende Inline-Stile aus zentralen HTML-Bereichen wurden in gemeinsame CSS-Hilfsklassen überführt.",
+            "Navigation, Formularziele, Inline-Aktionen sowie selten genutzte Chief- und Adminbereiche wurden statisch auf fehlende Verknüpfungen geprüft.",
+            "Alle 43 konfigurierbaren Server-Berechtigungen des Rollen-Editors besitzen weiterhin eine passende Firebase-Validierung."
+        ]
+    },
     {
         id: "sys_v6_9_10", version: "v6.9.10", date: "23.09.2026", ts: 1790146800000,
         category: "Fehlerbehebung", title: "Historisches Kündigungsarchiv unabhängig vom Import sichtbar",
@@ -1021,7 +1031,7 @@ const systemChangelogs = [
         id: "sys_v6_5_0", version: "v6.5.0", date: "15.09.2026", ts: 1789423200000,
         category: "Neue Funktion", title: "Materialverwaltung hinzugefügt",
         changes: [
-            "Die Chief Ebene hat einen eigenen Bereich für die Materialverwaltung erhalten.",
+            "Die Chief-Ebene hat einen eigenen Bereich für die Materialverwaltung erhalten.",
             "Bestände, Verbrauch und Auffüllstatus können gemeinsam gepflegt werden.",
             "Die Bestands Historie zeigt frühere Einträge übersichtlich an."
         ]
@@ -1040,7 +1050,7 @@ const systemChangelogs = [
         changes: [
             "Die Anmeldung und Freischaltung neuer Mitarbeiter wurde verbessert.",
             "Wartende, aktive und gesperrte Konten werden deutlicher unterschieden.",
-            "Die Chief Ebene übernimmt die vorgesehenen Verwaltungsaufgaben."
+            "Die Chief-Ebene übernimmt die vorgesehenen Verwaltungsaufgaben."
         ]
     },
     {
@@ -1114,9 +1124,9 @@ const defaultGehaltData = [
     { id: "g_9",  rang: "Rang 9",  name: "Attending",                    command: "Mid Command",  q15: "11.500k", h1: "46.000k", styleVar: "var(--rank-mid)" },
     { id: "g_10", rang: "Rang 10", name: "Lieutenant / Field Op. Dir.",   command: "High Command", q15: "12.500k", h1: "50.000k", styleVar: "var(--rank-high)" },
     { id: "g_11", rang: "Rang 11", name: "Chief Phys. / Dir. of Med. Op.",command: "High Command", q15: "12.500k", h1: "50.000k", styleVar: "var(--rank-high)" },
-    { id: "g_12", rang: "Rang 12", name: "Deputy Chief",                 command: "Chiefebene",   q15: "15.000k", h1: "60.000k", styleVar: "var(--rank-chief)" },
-    { id: "g_13", rang: "Rang 13", name: "Assistant Chief",              command: "Chiefebene",   q15: "15.500k", h1: "62.000k", styleVar: "var(--rank-chief)" },
-    { id: "g_14", rang: "Rang 14", name: "Chief of SAMD",                 command: "Chiefebene",   q15: "16.250k", h1: "65.000k", styleVar: "var(--rank-chief)" },
+    { id: "g_12", rang: "Rang 12", name: "Deputy Chief",                 command: "Chief-Ebene",   q15: "15.000k", h1: "60.000k", styleVar: "var(--rank-chief)" },
+    { id: "g_13", rang: "Rang 13", name: "Assistant Chief",              command: "Chief-Ebene",   q15: "15.500k", h1: "62.000k", styleVar: "var(--rank-chief)" },
+    { id: "g_14", rang: "Rang 14", name: "Chief of SAMD",                 command: "Chief-Ebene",   q15: "16.250k", h1: "65.000k", styleVar: "var(--rank-chief)" },
     { id: "g_15", rang: "Rang 15", name: "Interne",                      command: "Interne",      q15: "0",       h1: "0",       styleVar: "var(--rank-interne)" }
 ];
 let cachedGehaltData = JSON.parse(JSON.stringify(defaultGehaltData));
@@ -1685,12 +1695,12 @@ const defaultSanctionsCatalog = {
         "rule_4": {
             "id": "rule_4",
             "order": 4,
-            "text": "Sanktionen werden von der Chiefebene und der Personalabteilung ausgestellt"
+            "text": "Sanktionen werden von der Chief-Ebene und der Personalabteilung ausgestellt"
         },
         "rule_5": {
             "id": "rule_5",
             "order": 5,
-            "text": "Je nach Schwere des Vergehens kann die Strafe auch vom High Command oder der Chiefebene verschärft werden (bis hin zur Kündigung)"
+            "text": "Je nach Schwere des Vergehens kann die Strafe auch vom High Command oder der Chief-Ebene verschärft werden (bis hin zur Kündigung)"
         }
     },
     "updatedAt": 0,
@@ -1698,7 +1708,7 @@ const defaultSanctionsCatalog = {
 };
 cachedSanctionsCatalog = JSON.parse(JSON.stringify(defaultSanctionsCatalog));
 
-/* ── Chief Ebene: Materialverwaltung (Grundlage: SAMD-Materialliste) ── */
+/* ── Chief-Ebene: Materialverwaltung (Grundlage: SAMD-Materialliste) ── */
 const CHIEF_MATERIAL_DEFS = [
     { id:'wundreiniger', name:'Wundreiniger', defaultMax:2500 },
     { id:'nahtset', name:'Nahtset', defaultMax:2500 },
@@ -1733,7 +1743,7 @@ const defaultRoles = {
         allowedCmdKats: [], allowedLinkKats: []
     },
     chiefebene: {
-        id:'chiefebene', name:'Chief Ebene', color:'#fbbf24', icon:'⭐', isSystem:true,
+        id:'chiefebene', name:'Chief-Ebene', color:'#fbbf24', icon:'⭐', isSystem:true,
         isAdmin:true, isMasterAdmin:false, canViewArchive:true, canEditAllPatients:true, delCalendar:true, canManagePhotos:true, delPhotos:true,
         isInstructor:true, canManageInstructors:true, canManageExams:true,
         canPostNews:true, canApproveNews:true, canViewNewsRead:true,
@@ -1885,7 +1895,7 @@ const ROLE_DISPLAY_ORDER = [
 
 const SYSTEM_ROLE_DISPLAY_NAMES = {
     masteradmin: 'Master Admin',
-    chiefebene: 'Chief Ebene',
+    chiefebene: 'Chief-Ebene',
     ausbildungsleitung: 'Ausbildungsleitung',
     ausbilder: 'Ausbilder',
     personalabteilung: 'Personalabteilung',
@@ -2291,7 +2301,7 @@ function getUserRolesList(user) {
             list = Object.keys(user.roles).filter(k => user.roles[k] === true);
         }
     }
-    // Kompatibilität für alte Konten: Die frühere Rolle "admin" wird seit v6.4.0 als Chief Ebene behandelt.
+    // Kompatibilität für alte Konten: Die frühere Rolle "admin" wird seit v6.4.0 als Chief-Ebene behandelt.
     list = list.map(roleId => roleId === 'admin' ? 'chiefebene' : roleId);
     if (user.isMasterAdmin && !list.includes('masteradmin')) {
         list.unshift('masteradmin');
@@ -3175,7 +3185,7 @@ async function migrateLegacyAdminRoleToChief() {
         if (rolesSnap.exists()) updates['data/roles/admin'] = null;
         if (!Object.keys(updates).length) return;
         await db.ref().update(updates);
-        logAdminAudit('Admin-Rolle migriert', `${changedUsers} alte Admin-Zuordnung(en) wurden auf Chief Ebene umgestellt.`);
+        logAdminAudit('Admin-Rolle migriert', `${changedUsers} alte Admin-Zuordnung(en) wurden auf Chief-Ebene umgestellt.`);
     } catch (err) {
         console.error('Migration der alten Admin-Rolle fehlgeschlagen:', err);
     }
@@ -6503,7 +6513,7 @@ function openHierarchieInlineModal() {
     if (!cont) return;
 
     const fields = [
-        { grp: "⭐ Chiefebene", items: [
+        { grp: "⭐ Chief-Ebene", items: [
             { k: "chief_01", label: "01 Chief of SAMD" },
             { k: "chief_02", label: "02 Ass. Chief of SAMD" },
             { k: "chief_03", label: "03 Deputy Chief of SAMD" }
@@ -10067,7 +10077,7 @@ function getAssignableRoleIdsForOperator(user = sessionUser) {
 
     const operatorRoleIds = getUserRolesList(user);
     if (operatorRoleIds.includes('chiefebene')) {
-        // Chief Ebene darf mit dem Mitgliedsrecht alle nicht geschützten Rollen unterhalb von Chief verteilen.
+        // Chief-Ebene darf mit dem Mitgliedsrecht alle nicht geschützten Rollen unterhalb von Chief verteilen.
         return new Set(Object.entries(cachedRoles)
             .filter(([roleId, role]) => roleId !== 'masteradmin' && roleId !== 'chiefebene' && roleId !== 'admin' && !role?.isMasterAdmin && !role?.isAdmin)
             .map(([roleId]) => roleId));
@@ -11154,7 +11164,7 @@ async function importChiefMaterialLegacyV660Once() {
 function canCurrentUserViewChiefMaterials() {
     if (!sessionUser) return false;
     const eff = getUserEffectivePermissions(sessionUser);
-    // Variante A: Auch Chief Ebene folgt ausschließlich den konfigurierbaren Häkchen.
+    // Variante A: Auch Chief-Ebene folgt ausschließlich den konfigurierbaren Häkchen.
     // Nur Master Admin besitzt unveränderlichen Vollzugriff.
     return !!(eff.isMasterAdmin || eff.canViewChiefMaterials || eff.canEditChiefMaterials);
 }
