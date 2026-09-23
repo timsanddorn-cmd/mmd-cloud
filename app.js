@@ -1,5 +1,5 @@
 // ============================================================
-//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.9.7
+//  MMD CLOUD – Medical Center Web-App  |  app.js  v6.9.8
 //  Firebase Realtime Database (Compat SDK v10)
 // ============================================================
 
@@ -182,7 +182,7 @@ const db = firebase.database();
 const auth = firebase.auth();
 const FIREBASE_AUTH_EMAIL_DOMAIN = 'mmd-login.invalid';
 
-const APP_VERSION = 'v6.9.7';
+const APP_VERSION = 'v6.9.8';
 const PRESENCE_HEARTBEAT_MS = 30 * 1000;
 const PRESENCE_STALE_MS = 3 * 60 * 1000;
 
@@ -567,6 +567,16 @@ let hierarchieDaten = JSON.parse(JSON.stringify(defaultHierarchieData));
 
 /* ── Vollständiger Gesamt-Changelog (Entwicklungsverlauf) ───── */
 const systemChangelogs = [
+    {
+        id: "sys_v6_9_8", version: "v6.9.8", date: "23.09.2026", ts: 1790143200000,
+        category: "Datenpflege", title: "Historisches Kündigungsarchiv aus Masterliste übernommen",
+        changes: [
+            "47 historische Kündigungs- und Austrittseinträge aus der bereitgestellten SAMD-Masterliste werden idempotent in das Kündigungsarchiv übernommen.",
+            "Übernommen werden ausschließlich archiv-relevante Daten wie DN, Name, Einstellungs- und Austrittsdatum, Diensttage, Bearbeiter, letzter Rang und Kündigungsgrund.",
+            "E-Mail-Adressen und Discord-IDs aus der Masterliste werden weiterhin nicht importiert.",
+            "Historische Einträge werden nicht mit aktiven Accounts verknüpft und können dadurch nicht versehentlich über den Archiv-Eintrag wiedereingestellt werden."
+        ]
+    },
     {
         id: "sys_v6_9_7", version: "v6.9.7", date: "23.09.2026", ts: 1790140740000,
         category: "Verbesserung", title: "Personalabteilung klarer strukturiert",
@@ -11649,6 +11659,8 @@ const PERSONNEL_ABSENCE_TYPES=Object.freeze({vacation:{label:'Urlaub',icon:'🏖
 let cachedEmployeeRanks={},cachedEmployeeAbsenceStatus={},cachedPersonnelRecords={},cachedPersonnelAbsences={},cachedPersonnelProfiles={},cachedPersonnelDepartures={},activePersonnelEmployeeId='',activePersonnelView='overview',personnelProfileEditingId='',activePersonnelSanctionEditId='',activePersonnelNoteEditId='',activePersonnelAbsenceEditId='';
 let personnelMasterlistImportRunning=false,personnelMasterlistImportDone=false;
 const PERSONNEL_MASTERLIST_RANK_SOURCE='masterlist-v6.8.11';
+const PERSONNEL_MASTERLIST_DEPARTURE_SOURCE='masterlist-v6.9.8';
+const PERSONNEL_MASTERLIST_DEPARTURE_SEED=Object.freeze([{"sourceId":"masterlist_003","dn":"16","name":"Robert Hoonrich","employmentDate":"2026-04-10","departureDate":"2026-05-01","serviceDays":21,"terminatedBy":"Hiroto Takahashi","lastRank":"EMT","reason":"Inaktivität"},{"sourceId":"masterlist_004","dn":"71","name":"Jason Stark","employmentDate":"2025-11-20","departureDate":"2026-05-01","serviceDays":162,"terminatedBy":"Hiroto Takahashi","lastRank":"Senior Paramedic","reason":"Eigenwunsch"},{"sourceId":"masterlist_005","dn":"5","name":"Basti Harper","employmentDate":"2025-09-04","departureDate":"2026-05-01","serviceDays":239,"terminatedBy":"Katarina Harper","lastRank":"F.O.D","reason":"Eigenwunsch"},{"sourceId":"masterlist_006","dn":"21","name":"Leo Scott","employmentDate":"2026-04-29","departureDate":"2026-05-03","serviceDays":4,"terminatedBy":"Hiroto Takahashi","lastRank":"Trainee","reason":"Zu Viele  Dienstvorschrift Verstöße"},{"sourceId":"masterlist_007","dn":"20","name":"Liam Evergreen","employmentDate":"2026-04-28","departureDate":"2026-05-06","serviceDays":8,"terminatedBy":"Emy Sonne","lastRank":"Solo Trainee","reason":"Ausreise/Bann"},{"sourceId":"masterlist_008","dn":"99","name":"Jonas Climson","employmentDate":"2025-02-01","departureDate":"2026-05-13","serviceDays":466,"terminatedBy":"Hiroto Takahashi","lastRank":"Attending","reason":"Kann Wiederkommen wann er Will"},{"sourceId":"masterlist_009","dn":"21","name":"Malik Woods","employmentDate":"2026-05-13","departureDate":"2026-05-17","serviceDays":4,"terminatedBy":"Emy Sonne","lastRank":"Trainee","reason":"Inaktivität"},{"sourceId":"masterlist_010","dn":"14","name":"George Murder","employmentDate":"2026-05-11","departureDate":"2026-05-18","serviceDays":7,"terminatedBy":"Hiroto Takahashi","lastRank":"Trainee","reason":"Discord Verlassen / Keine Rückmeldung"},{"sourceId":"masterlist_011","dn":"16","name":"Maax Boo","employmentDate":"2026-05-12","departureDate":"2026-05-19","serviceDays":7,"terminatedBy":"Nick Garcia","lastRank":"Trainee","reason":"Discord verlassen"},{"sourceId":"masterlist_012","dn":"27","name":"Emilio Gonzales","employmentDate":"2026-05-16","departureDate":"2026-05-24","serviceDays":8,"terminatedBy":"Nick Garcia","lastRank":"Trainee","reason":"Eigenwunsch"},{"sourceId":"masterlist_013","dn":"28","name":"Jake Gonzales","employmentDate":"2026-05-16","departureDate":"2026-05-24","serviceDays":8,"terminatedBy":"Nick Garcia","lastRank":"Trainee","reason":"Eigenwunsch"},{"sourceId":"masterlist_014","dn":"18","name":"Peter Fuchs","employmentDate":"2026-04-15","departureDate":"2026-05-25","serviceDays":40,"terminatedBy":"Nick Garcia","lastRank":"A-EMT","reason":"Inaktivität, Entscheidung LE & Perso - Einstellung wieder möglich von der 02"},{"sourceId":"masterlist_015","dn":"21","name":"Sam Black","employmentDate":"2026-05-25","departureDate":"2026-06-02","serviceDays":8,"terminatedBy":"Nick Garcia","lastRank":"Trainee","reason":"kann durch Private Probleme den Job nicht annehmen."},{"sourceId":"masterlist_016","dn":"20","name":"Mark Black","employmentDate":"2026-05-12","departureDate":"2026-06-03","serviceDays":22,"terminatedBy":"Nick Garcia","lastRank":"EMT","reason":"Eigenwunsch"},{"sourceId":"masterlist_017","dn":"20","name":"Tommy Morgenstern","employmentDate":"2026-06-04","departureDate":"2026-06-05","serviceDays":1,"terminatedBy":"Nick Garcia","lastRank":"Trainee","reason":"Hat ein Problem damit, auf andere DCs zu kommen."},{"sourceId":"masterlist_018","dn":"16","name":"Mikey Rey","employmentDate":"2026-05-21","departureDate":"2026-06-08","serviceDays":18,"terminatedBy":"Nick Garcia","lastRank":"Trainee","reason":"Eigenwunsch"},{"sourceId":"masterlist_019","dn":"30","name":"Franz Ege","employmentDate":"2026-06-01","departureDate":"2026-06-22","serviceDays":21,"terminatedBy":"Nick Garcia","lastRank":"Solo Trainee","reason":"Eigenwunsch"},{"sourceId":"masterlist_020","dn":"98","name":"Thomas Hardy","employmentDate":"2026-03-23","departureDate":"2026-06-23","serviceDays":92,"terminatedBy":"Nick Garcia","lastRank":"Trainee","reason":"Inaktivität"},{"sourceId":"masterlist_021","dn":"15","name":"Satoru Haywan Grey","employmentDate":"2026-05-24","departureDate":"2026-06-28","serviceDays":35,"terminatedBy":"Nick Garcia","lastRank":"Solo Trainee","reason":"Inaktivität & keine Reaktion auf Perso Ticket"},{"sourceId":"masterlist_022","dn":"10","name":"Fabio Leroux","employmentDate":"2026-02-12","departureDate":"2026-07-05","serviceDays":143,"terminatedBy":"Nick Garcia","lastRank":"A-EMT","reason":"Entscheidung Leitungsebene + Personalabteilung / Inaktivität"},{"sourceId":"masterlist_023","dn":"15","name":"Philipp Strada","employmentDate":"2026-07-03","departureDate":"2026-07-06","serviceDays":3,"terminatedBy":"Nick Garcia","lastRank":"Solo Trainee","reason":"Eigenwunsch"},{"sourceId":"masterlist_024","dn":"23","name":"Emy Sonne","employmentDate":"2026-01-19","departureDate":"2026-07-07","serviceDays":169,"terminatedBy":"Nick Garcia","lastRank":"Senior Paramedic","reason":"Eigenwunsch"},{"sourceId":"masterlist_025","dn":"20","name":"Adam Gonzalo","employmentDate":"2026-06-05","departureDate":"2026-07-07","serviceDays":32,"terminatedBy":"Nick Garcia","lastRank":"Trainee","reason":"Inaktivität"},{"sourceId":"masterlist_026","dn":"14","name":"Chiko Muerto","employmentDate":"2026-05-21","departureDate":"2026-07-09","serviceDays":49,"terminatedBy":"Nick Garcia","lastRank":"A-EMT","reason":"Eigenwunsch"},{"sourceId":"masterlist_027","dn":"18","name":"Andy Laken","employmentDate":"2026-06-01","departureDate":"2026-07-09","serviceDays":38,"terminatedBy":"Nick Garcia","lastRank":"Solo Trainee","reason":"Eigenwunsch"},{"sourceId":"masterlist_028","dn":"31","name":"Miguel Vega","employmentDate":"2026-06-12","departureDate":"2026-07-25","serviceDays":43,"terminatedBy":"Nick Garcia","lastRank":"Solo Trainee","reason":"Eigenwunsch"},{"sourceId":"masterlist_029","dn":"21","name":"Morgan Smit","employmentDate":"2026-06-22","departureDate":"2026-07-27","serviceDays":35,"terminatedBy":"Nick Garcia","lastRank":"Trainee","reason":"Inaktivität"},{"sourceId":"masterlist_030","dn":"28","name":"Jayden Blind","employmentDate":"2026-06-01","departureDate":"2026-07-27","serviceDays":56,"terminatedBy":"Nick Garcia","lastRank":"Trainee","reason":"Inaktivität"},{"sourceId":"masterlist_031","dn":"14","name":"Tyler Van Kliev","employmentDate":"2026-07-25","departureDate":"2026-07-29","serviceDays":4,"terminatedBy":"Mike Gonzalo","lastRank":"Trainee","reason":"Eigenwunsch"},{"sourceId":"masterlist_032","dn":"30","name":"Ranjid Mueller","employmentDate":"2026-06-26","departureDate":"2026-07-30","serviceDays":34,"terminatedBy":"Nick Garcia","lastRank":"Trainee","reason":"Inaktivität + Keine Rückmeldung im Ticket"},{"sourceId":"masterlist_033","dn":"11","name":"Hamid Grip","employmentDate":"2026-04-21","departureDate":"2026-08-02","serviceDays":103,"terminatedBy":"Nick Garcia","lastRank":"A-EMT","reason":"Inaktivität + keine Rückmeldung im Ticket"},{"sourceId":"masterlist_034","dn":"13","name":"John Deere","employmentDate":"2026-03-22","departureDate":"2026-08-02","serviceDays":133,"terminatedBy":"Nick Garcia","lastRank":"Senior Paramedic","reason":"Eigenwunsch nach Degradierung"},{"sourceId":"masterlist_035","dn":"97","name":"Enola Latscho Grey","employmentDate":"2026-01-19","departureDate":"2026-08-08","serviceDays":201,"terminatedBy":"Nick Garcia","lastRank":"EMT","reason":"Eigenwunsch"},{"sourceId":"masterlist_036","dn":"32","name":"Mortis Goblov","employmentDate":"2026-06-27","departureDate":"2026-08-08","serviceDays":42,"terminatedBy":"Nick Garcia","lastRank":"Solo Trainee","reason":"Eigenwunsch"},{"sourceId":"masterlist_037","dn":"16","name":"Robert Jung","employmentDate":"2026-07-25","departureDate":"2026-08-08","serviceDays":14,"terminatedBy":"Nick Garcia","lastRank":"Trainee","reason":"Eigenwunsch"},{"sourceId":"masterlist_038","dn":"14","name":"Sussi Hakari","employmentDate":"2026-07-30","departureDate":"2026-08-09","serviceDays":10,"terminatedBy":"Nick Garcia","lastRank":"Trainee","reason":"Eigenwunsch"},{"sourceId":"masterlist_039","dn":"11","name":"Emin Ali","employmentDate":"2026-08-12","departureDate":"2026-08-15","serviceDays":3,"terminatedBy":"Nick Garcia","lastRank":"Trainee","reason":"Eigenwunsch"},{"sourceId":"masterlist_040","dn":"28","name":"Shiver Wolf","employmentDate":"2026-08-12","departureDate":"2026-08-16","serviceDays":4,"terminatedBy":"Nick Garcia","lastRank":"Trainee","reason":"Eigenwunsch"},{"sourceId":"masterlist_041","dn":"13","name":"Kaito Wolf","employmentDate":"2026-08-12","departureDate":"2026-08-16","serviceDays":4,"terminatedBy":"Nick Garcia","lastRank":"Trainee","reason":"Eigenwunsch"},{"sourceId":"masterlist_042","dn":"14","name":"Yuki Wolf","employmentDate":"2026-08-12","departureDate":"2026-08-16","serviceDays":4,"terminatedBy":"Nick Garcia","lastRank":"Trainee","reason":"Eigenwunsch"},{"sourceId":"masterlist_043","dn":"15","name":"Lisa Diablo","employmentDate":"2026-07-25","departureDate":"2026-08-22","serviceDays":28,"terminatedBy":"Nick Garcia","lastRank":"Solo Trainee","reason":"Inaktivität + keine Rückmeldung im Ticket"},{"sourceId":"masterlist_044","dn":"11","name":"Peter Delano","employmentDate":"2026-08-25","departureDate":"2026-08-28","serviceDays":3,"terminatedBy":"Nick Garcia","lastRank":"Praktikant","reason":"Eigenwunsch"},{"sourceId":"masterlist_045","dn":"16","name":"John Hernandez","employmentDate":"2026-08-29","departureDate":"2026-09-04","serviceDays":6,"terminatedBy":"Nick Garcia","lastRank":"Trainee","reason":"Eigenwunsch"},{"sourceId":"masterlist_046","dn":"28","name":"Chantal Boxer","employmentDate":"2026-08-31","departureDate":"2026-09-04","serviceDays":4,"terminatedBy":"Hiroto Takahashi","lastRank":"EMT","reason":"Eigenwunsch nach Ermittlung DOJ"},{"sourceId":"masterlist_047","dn":"20","name":"Brian O'Conner","employmentDate":"2026-08-31","departureDate":"2026-09-04","serviceDays":4,"terminatedBy":"Nick Garcia","lastRank":"Trainee","reason":"Eigenwunsch"},{"sourceId":"masterlist_048","dn":"18","name":"Kai Black","employmentDate":"2026-07-15","departureDate":"2026-09-17","serviceDays":64,"terminatedBy":"Andy Harper","lastRank":"Trainee","reason":"Eigenwunsch"},{"sourceId":"masterlist_049","dn":"10","name":"Michael Akuma","employmentDate":"2026-07-11","departureDate":"2026-09-17","serviceDays":68,"terminatedBy":"Nick Garcia","lastRank":"Paramedic","reason":"Eigenwunsch"}]);
 
 function getPersonnelPermissions(){
     const eff=sessionUser?getUserEffectivePermissions(sessionUser):{},master=!!eff.isMasterAdmin;
@@ -11682,13 +11694,13 @@ function buildMasterlistRankState(rankKey){const rank=PERSONNEL_RANKS[rankKey];i
 async function importPersonnelMasterlistDefaults(){
     if(personnelMasterlistImportRunning||personnelMasterlistImportDone||!sessionUser)return;
     const p=getPersonnelPermissions(),eff=getUserEffectivePermissions(sessionUser),canUpdateUsers=!!(eff.isMasterAdmin||eff.isAdmin||eff.canManageMemberAccess||eff.canManageInstructors),canUpdateEmploymentDate=!!(eff.isMasterAdmin||eff.isAdmin||eff.canManageInstructors);
-    if(!p.canManageRecords&&!p.canManageRanks&&!p.canManageCareer&&!canUpdateUsers)return;
+    if(!p.canManageRecords&&!p.canManageRanks&&!p.canManageCareer&&!p.canManageDepartures&&!canUpdateUsers)return;
     personnelMasterlistImportRunning=true;
     try{
-        const [uSnap,profileSnap,rankSnap,careerSnap]=await Promise.all([db.ref('data/users').once('value'),db.ref('data/personnelProfiles').once('value'),db.ref('data/employeeRanks').once('value'),db.ref('data/employeeCareerPaths').once('value')]);
-        const users=uSnap.val()||{},profiles=profileSnap.val()||{},ranks=rankSnap.val()||{},careers=careerSnap.val()||{},byDn=new Map();
+        const [uSnap,profileSnap,rankSnap,careerSnap,departureSnap]=await Promise.all([db.ref('data/users').once('value'),db.ref('data/personnelProfiles').once('value'),db.ref('data/employeeRanks').once('value'),db.ref('data/employeeCareerPaths').once('value'),db.ref('data/personnelDepartures').once('value')]);
+        const users=uSnap.val()||{},profiles=profileSnap.val()||{},ranks=rankSnap.val()||{},careers=careerSnap.val()||{},departuresStored=departureSnap.val()||{},byDn=new Map();
         Object.entries(users).forEach(([id,u])=>{if(u?.dn!==undefined&&u?.dn!==null)byDn.set(normalizePersonnelDn(u.dn),[id,u]);});
-        const updates={},now=Date.now(),author=personnelUserName(getUserAccountId(sessionUser)),authorId=getUserAccountId(sessionUser);let matched=0,changed=0;
+        const updates={},now=Date.now(),author=personnelUserName(getUserAccountId(sessionUser)),authorId=getUserAccountId(sessionUser);let matched=0,changed=0,legacyDeparturesAdded=0;
         const set=(path,value)=>{updates[path]=value;changed++;};
         for(const seed of PERSONNEL_MASTERLIST_SEED){
             const hit=byDn.get(normalizePersonnelDn(seed.dn));if(!hit)continue;matched++;const [uId,user]=hit;
@@ -11716,7 +11728,42 @@ async function importPersonnelMasterlistDefaults(){
                 if(cur.source!=='manual'&&cur.source!==PERSONNEL_MASTERLIST_RANK_SOURCE)set(`data/employeeRanks/${uId}`,{...buildMasterlistRankState(seed.rank),source:PERSONNEL_MASTERLIST_RANK_SOURCE,updatedAt:now,updatedBy:author,updatedById:authorId});
             }
         }
-        if(changed){await db.ref().update(updates);logAdminAudit('SAMD-Masterliste übernommen',`${matched} Mitarbeiter abgeglichen · ${changed} fehlende Werte ergänzt`);}
+        if(p.canManageDepartures){
+            const departureSignature=x=>[
+                normalizePersonnelDn(x?.dn),
+                String(x?.name||'').trim().toLocaleLowerCase('de-DE'),
+                String(x?.departureDate||''),
+                String(x?.reason||'').trim().toLocaleLowerCase('de-DE')
+            ].join('|');
+            const existingSignatures=new Set(Object.values(departuresStored).filter(Boolean).map(departureSignature));
+            for(const seed of PERSONNEL_MASTERLIST_DEPARTURE_SEED){
+                const key='legacy_'+seed.sourceId;
+                const signature=departureSignature(seed);
+                if(departuresStored[key]||existingSignatures.has(signature))continue;
+                updates[`data/personnelDepartures/${key}`]={
+                    dn:seed.dn,
+                    name:seed.name,
+                    employmentDate:seed.employmentDate,
+                    departureDate:seed.departureDate,
+                    serviceDays:Number(seed.serviceDays)||0,
+                    terminatedBy:seed.terminatedBy,
+                    lastRank:seed.lastRank,
+                    career:'',
+                    reason:seed.reason,
+                    source:PERSONNEL_MASTERLIST_DEPARTURE_SOURCE,
+                    sourceEntryId:seed.sourceId,
+                    legacy:true,
+                    createdAt:Date.parse(seed.departureDate+'T12:00:00Z')||now
+                };
+                existingSignatures.add(signature);
+                changed++;
+                legacyDeparturesAdded++;
+            }
+        }
+        if(changed){
+            await db.ref().update(updates);
+            logAdminAudit('SAMD-Masterliste übernommen',`${matched} Mitarbeiter abgeglichen · ${changed} fehlende Werte ergänzt${legacyDeparturesAdded?` · ${legacyDeparturesAdded} Archiv-Einträge`:``}`);
+        }
         personnelMasterlistImportDone=true;
     }catch(err){console.warn('SAMD-Masterlisten-Abgleich konnte nicht vollständig ausgeführt werden:',err);}
     finally{personnelMasterlistImportRunning=false;}
