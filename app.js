@@ -503,7 +503,7 @@ function canSearchSection(tabId){if(isMaintenanceRestrictedSession())return tabI
 function buildGlobalSearchResults(query){
     const q=normalizeUiSearchText(query);
     const sections=[
-        ['docTab','📝','Dokumentation & Einsatz','patient behandlung einsatz material medizin'],['statsTab','📊','Statistik & Archiv','statistik archiv schicht patienten protokoll'],['calendarTab','📅','Kalender','kalender termine dienstbesprechung'],['examTab','🎓','Ausbildung','ausbildung pruefung prüfung'],['personnelTab','💼','Personalabteilung','personal personalakte sanktion rankup rang urlaub abwesenheit perso ticket inaktiv kündigung wiedereinstellung archiv qualifikation'],['staffTab','👥','Mitarbeiterkartei','mitarbeiter personal kartei dn'],['hierarchieTab','🌳','Hierarchie','hierarchie leitung abteilung'],['miscTab','💰','Gehaltstabelle','gehalt sold rang'],['guideTab','📋','Funk & Codes','funk codes status ten code streife'],['commandTab','💻','Commands','command befehl commands'],['linksTab','🔗','Links & Dokumente','links dokumente leitfaden'],['sanctionsTab','⚖️','Sanktionskatalog','sanktion paragraf paragraph verstoß verstoss'],['newsTab','📰','News','news schwarzes brett ankuendigung ankündigung'],['settingsTab','⚙️','Einstellungen','einstellungen passwort diensttage'],['chiefTab','⭐','chiefebene','chief material bestand']
+        ['docTab','📝','Dokumentation & Einsatz','patient behandlung einsatz material medizin'],['statsTab','📊','Statistik & Archiv','statistik archiv schicht patienten protokoll'],['calendarTab','📅','Kalender','kalender termine dienstbesprechung'],['examTab','🎓','Ausbildung','ausbildung pruefung prüfung'],['personnelTab','💼','Personalabteilung','personal personalakte sanktion rankup rang urlaub abwesenheit perso ticket inaktiv kündigung wiedereinstellung archiv qualifikation'],['staffTab','👥','Mitarbeiterkartei','mitarbeiter personal kartei dn'],['hierarchieTab','🌳','Hierarchie','hierarchie leitung abteilung'],['miscTab','💰','Gehaltstabelle','gehalt sold rang'],['guideTab','📋','Funk & Codes','funk codes status ten code streife'],['commandTab','💻','Commands','command befehl commands'],['linksTab','🔗','Links & Dokumente','links dokumente leitfaden'],['sanctionsTab','⚖️','Sanktionskatalog','sanktion paragraf paragraph verstoß verstoss'],['newsTab','📰','News','news schwarzes brett ankuendigung ankündigung'],['settingsTab','⚙️','Einstellungen','einstellungen passwort diensttage'],['chiefTab','⭐','Chief-Ebene','chief material bestand']
     ].filter(([tabId])=>canSearchSection(tabId));
     const results=[];
     sections.forEach(([tabId,icon,title,keywords])=>{if(!q||normalizeUiSearchText(title+' '+keywords).includes(q))results.push({kind:'section',tabId,icon,title,subtitle:'Bereich öffnen'});});
@@ -1743,7 +1743,7 @@ const defaultRoles = {
         allowedCmdKats: [], allowedLinkKats: []
     },
     chiefebene: {
-        id:'chiefebene', name:'chiefebene', color:'#fbbf24', icon:'⭐', isSystem:true,
+        id:'chiefebene', name:'Chief-Ebene', color:'#fbbf24', icon:'⭐', isSystem:true,
         isAdmin:true, isMasterAdmin:false, canViewArchive:true, canEditAllPatients:true, delCalendar:true, canManagePhotos:true, delPhotos:true,
         isInstructor:true, canManageInstructors:true, canManageExams:true,
         canPostNews:true, canApproveNews:true, canViewNewsRead:true,
@@ -1895,7 +1895,7 @@ const ROLE_DISPLAY_ORDER = [
 
 const SYSTEM_ROLE_DISPLAY_NAMES = {
     masteradmin: 'Master Admin',
-    chiefebene: 'chiefebene',
+    chiefebene: 'Chief-Ebene',
     ausbildungsleitung: 'Ausbildungsleitung',
     ausbilder: 'Ausbilder',
     personalabteilung: 'Personalabteilung',
