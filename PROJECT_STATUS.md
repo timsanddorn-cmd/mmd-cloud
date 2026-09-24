@@ -1,8 +1,8 @@
 # MMD Cloud – PROJECT STATUS
 
-**Aktuell bestätigte stabile Live-Version:** v6.8.7j  
+**Aktuell bestätigte stabile Live-Version:** v6.9.11  
 **Aktueller Entwicklungsstand:** v6.9.11  
-**Status v6.9.11:** 🟡 TECHNISCH NACHGEPRÜFT / UI, VERLINKUNGEN UND RECHTE SAUBER / LIVE-BESTÄTIGUNG AUSSTEHEND  
+**Status v6.9.11:** 🟢 LIVE BESTÄTIGT / UI, VERLINKUNGEN, RECHTE UND KÜNDIGUNGSARCHIV FUNKTIONIEREN  
 **Datum:** 24.09.2026
 
 ---
@@ -860,3 +860,27 @@ Bewertung:
 Firebase Rules:
 - `database.rules.final.json` wurde bei dieser Nachprüfung nicht verändert,
 - keine erneute Veröffentlichung allein wegen dieser Statusaktualisierung erforderlich.
+
+
+---
+
+## 37. v6.9.11 als stabile Live-Version bestätigt
+
+Live-Bestätigung am 24.09.2026:
+- Anmeldung funktioniert,
+- Personalabteilung funktioniert,
+- Kündigungsarchiv inklusive historischem Bestand funktioniert,
+- Löschen von Archiveinträgen funktioniert,
+- gelöschte historische Einträge bleiben nach Neuladen entfernt,
+- Chief-Materialverwaltung funktioniert,
+- Rollen- und Sichtbarkeitssteuerung funktionieren im Live-Betrieb,
+- GitHub-`main` ist durch das aktive Regelwerk `main schützen` geschützt,
+- aktuelle Firebase Realtime Database Rules wurden veröffentlicht.
+
+Status:
+- `v6.9.11` ist ab jetzt die bestätigte stabile Live-Version,
+- `v6.8.7j` bleibt nur noch als ältere bekannte Rollback-Basis dokumentiert.
+
+Firebase Rules:
+- keine Änderung an `database.rules.final.json` in dieser Statusaktualisierung,
+- aktuell bestätigter Rules-SHA bleibt `9dd556acc498d961e451b7990797ce958e1d1482`.
