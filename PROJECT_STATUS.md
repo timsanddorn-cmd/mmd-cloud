@@ -2,8 +2,8 @@
 
 **Aktuell bestätigte stabile Live-Version:** v6.8.7j  
 **Aktueller Entwicklungsstand:** v6.9.11  
-**Status v6.9.11:** 🟡 QUALITÄTSRUNDE UI / VERLINKUNGEN / RECHTE ABGESCHLOSSEN / LIVE-TEST AUSSTEHEND  
-**Datum:** 23.09.2026
+**Status v6.9.11:** 🟡 TECHNISCH NACHGEPRÜFT / UI, VERLINKUNGEN UND RECHTE SAUBER / LIVE-BESTÄTIGUNG AUSSTEHEND  
+**Datum:** 24.09.2026
 
 ---
 
@@ -832,3 +832,31 @@ Stabilitätsstatus:
 Firebase Rules:
 - `database.rules.final.json` wurde in v6.9.11 nicht verändert,
 - keine erneute Rules-Veröffentlichung allein wegen v6.9.11 erforderlich.
+
+
+---
+
+## 36. v6.9.11 Technische Nachprüfung am 24.09.2026
+
+Erneut auf dem echten `main` geprüft:
+- `main`-Basis vor der Nachprüfung: `54d1c9b30a61a04b7cb541dba5476b8f151e1f7b`,
+- JavaScript-Syntax gültig,
+- Firebase-Rules-JSON gültig,
+- CSS-Klammerstruktur gültig,
+- 528 HTML-IDs ohne Duplikate,
+- 225 statische Inline-Aktionen ohne fehlenden eigenen Handler,
+- 14 von 14 `switchTab()`-Zielen vorhanden,
+- 126 von 126 Formular-Labels besitzen ein vorhandenes Ziel,
+- Rollen-/Rechte-Abgleich weiterhin 43/43 zwischen UI, `ROLE_PROPERTY_MAP` und Firebase Rules,
+- keine Rückkehr der alten sichtbaren Begriffe `Mitarbeiter Kartei`, `Chief Ebene` oder `Chiefebene`,
+- Cache- und App-Version weiterhin konsistent auf `v6.9.11`.
+
+Bewertung:
+- kein neuer technischer Fehler in der statischen Nachprüfung gefunden,
+- keine zusätzliche Codeänderung erforderlich,
+- `v6.8.7j` bleibt bis zur bestätigten Live-Prüfung die letzte bestätigte stabile Live-Version,
+- `v6.9.11` ist technisch nachgeprüfter Entwicklungsstand.
+
+Firebase Rules:
+- `database.rules.final.json` wurde bei dieser Nachprüfung nicht verändert,
+- keine erneute Veröffentlichung allein wegen dieser Statusaktualisierung erforderlich.
